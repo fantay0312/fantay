@@ -1,0 +1,989 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* ── 模型与提供商 ──────────────────────────────────────────────────────────────────────────── */
+
+/* The pinned strip only needs an edge once something is running under it. */
+@keyframes settings-strip-edge {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+:is([data-fantay-shell], [data-client-type='desktop']) .settings-page-shell {
+  /* Where a row's name starts. Everything that belongs to a row hangs from this line. */
+  --agent-icon: 26px;
+  --agent-name-x: calc(var(--settings-row-x) + var(--agent-icon) + var(--settings-row-y));
+  /* Pinned, the strip shares the close button's band. */
+  --settings-strip-h: calc(var(--settings-control-h) + 2 * var(--settings-strip-pad));
+  /* The scroller's top padding: mirrors `.settings-content`, and responsive.css keeps the two together. */
+  --settings-content-y: 40px;
+  --provider-list-w: 184px;
+  --provider-field-gap: 16px;
+  --disclosure-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4.5 6.25 8 9.75l3.5-3.5' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+
+  /* ── Tab strip ───────────────────────────────────────────────────────────────────────────── */
+  /* The strip's own padding is taken back from the flow, so at rest it sits a section gap under the page heading and
+     a tab gap above the page, and only shows that padding once pinned. Sticky offsets start at the scroller's content
+     edge, so reaching the pane's real top means going back up through its padding. */
+  & .settings-execution-sticky {
+    top: calc(-1 * var(--settings-content-y));
+    margin-block: calc(-1 * var(--settings-strip-pad))
+      calc(var(--settings-tab-gap) - var(--settings-strip-pad) - var(--settings-section-gap));
+    padding-block: var(--settings-strip-pad);
+    background: var(--paper);
+  }
+  & .settings-execution-sticky::before {
+    display: none;
+  }
+  /* A shadow runs the hairline across the whole pane without widening the scroll area. */
+  & .settings-execution-sticky::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0;
+    height: 1px;
+    background: var(--line);
+    box-shadow: 0 0 0 100vmax var(--line);
+    clip-path: inset(0 -100vmax);
+    opacity: 0;
+    pointer-events: none;
+    animation: settings-strip-edge linear both;
+    animation-timeline: scroll(nearest block);
+    animation-range: 96px 116px;
+  }
+  & .settings-execution-sticky .seg-control {
+    display: inline-grid;
+    grid-template-columns: repeat(var(--seg-cols, 2), minmax(max-content, 1fr));
+    min-width: min(360px, 100%);
+    max-width: 100%;
+  }
+
+  /* ── 本机 CLI: head ──────────────────────────────────────────────────────────────────────── */
+  & .agent-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--settings-heading-gap);
+  }
+  & .agent-group-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 0;
+  }
+  & .agent-group-head-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  & .agent-group-head-actions {
+    flex: none;
+    gap: var(--settings-row-y);
+  }
+
+  /* ── 本机 CLI: rows ──────────────────────────────────────────────────────────────────────── */
+  & .agent-card {
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    transition: background-color 100ms var(--settings-ease);
+  }
+  /* Choosing a CLI only opens its settings: no "in use" mark, the row keeps its surface and only gains what it needs. */
+  & .agent-card.active,
+  & .agent-card.active:hover:not(.disabled) {
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  & .agent-card:not(.active, .disabled):hover {
+    background: var(--settings-hover);
+    box-shadow: none;
+  }
+  & .agent-grid-installed > :first-child {
+    border-top-left-radius: calc(var(--settings-radius) - 1px);
+    border-top-right-radius: calc(var(--settings-radius) - 1px);
+  }
+  & .agent-grid-installed > :last-child {
+    border-bottom-left-radius: calc(var(--settings-radius) - 1px);
+    border-bottom-right-radius: calc(var(--settings-radius) - 1px);
+  }
+  & .agent-grid-installed > * + * {
+    border-top: var(--settings-hairline);
+  }
+  & .agent-card-main {
+    display: flex;
+    align-items: center;
+    gap: var(--settings-row-y);
+    min-height: var(--settings-row-h);
+    padding: var(--settings-row-y) var(--settings-row-x);
+  }
+  /* The on/off switch closes every installed row, so the switches line up in one column. */
+  & .agent-card-enable {
+    flex: none;
+    margin-inline-start: 4px;
+  }
+  /* A switched-off CLI stays listed (a click still selects and switches it on) but reads as resting. */
+  & .agent-card--off .agent-card-select {
+    opacity: 0.48;
+    transition: opacity var(--dur-micro, 120ms) cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  & .agent-card--off .agent-card-select:hover {
+    opacity: 0.8;
+  }
+  & .agent-card-select {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: var(--settings-row-y);
+    min-width: 0;
+    /* It is a button, and the button primitive's fixed height would stop a signed-in row's third line growing it. */
+    height: auto;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    text-align: left;
+    white-space: normal;
+
+    &:hover:not(:disabled) {
+      border: 0;
+      background: none;
+    }
+    &:focus-visible {
+      outline: 2px solid var(--focus-ring-color);
+      outline-offset: 3px;
+    }
+  }
+  & .agent-card-select > :first-child,
+  & .agent-card-unavailable-row > :first-child {
+    flex: 0 0 var(--agent-icon);
+    border-radius: 6px;
+  }
+  & .agent-card-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+  & :is(.agent-card-name, .agent-card-name--amr) {
+    display: block;
+    overflow: hidden;
+    min-width: 0;
+    color: var(--ink);
+    font-size: var(--settings-type-label);
+    font-weight: 500;
+    line-height: 1.45;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  & .agent-card-title {
+    color: var(--ink);
+    font-weight: 500;
+  }
+  & :is(.agent-card-sub, .agent-card-description) {
+    display: block;
+    overflow: hidden;
+    min-width: 0;
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+    font-weight: 400;
+    line-height: 1.5;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  & .agent-card-sub:empty {
+    display: none;
+  }
+  & .agent-card-sub > * {
+    display: inline;
+    margin: 0;
+    padding: 0;
+    color: inherit;
+    font-family: var(--font-ui);
+    font-size: inherit;
+    font-variant-numeric: tabular-nums;
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: inherit;
+  }
+  & .agent-card-sub > * + *::before {
+    content: '·';
+    margin-inline: 6px;
+  }
+  & .agent-card-model-summary strong {
+    margin-left: 4px;
+    color: inherit;
+    font-weight: 400;
+  }
+  & .agent-card-benefit {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font-size: inherit;
+    font-weight: 400;
+  }
+  & .agent-card-benefit + .agent-card-benefit::before {
+    content: '·';
+    margin-inline: 6px;
+  }
+
+  /* ── 本机 CLI: the selected row's settings ───────────────────────────────────────────────── */
+  & .agent-card-config {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--settings-row-y);
+    margin: 0;
+    padding: 0 var(--settings-row-x) var(--settings-row-x) var(--agent-name-x);
+    border: 0;
+    border-radius: 0;
+    background: none;
+  }
+  /* The last field alone on its row takes both columns, so the right edge holds for any number of fields. */
+  & .agent-card-config > label.field:last-of-type:nth-of-type(odd) {
+    grid-column: 1 / -1;
+  }
+  & .agent-card-config > .hint {
+    grid-column: 1 / -1;
+    margin: -4px 0 0;
+    font-size: var(--settings-type-hint);
+  }
+  & .agent-card-config .field,
+  & .agent-cli-env-grid .field {
+    min-width: 0;
+    gap: 4px;
+  }
+  & .agent-card-config :is(.field, .od-select-trigger, .agent-model-select-wrap) {
+    width: 100%;
+    max-width: none;
+  }
+  & :is(.agent-card-config, .agent-cli-env) :is(.od-select-trigger, input) {
+    background-color: var(--surface);
+  }
+  & .agent-card-config .field-label {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  & .agent-model-source-badge::before {
+    content: '·';
+    margin: 0 6px 0 0;
+    color: var(--ink-faint);
+  }
+  & .agent-card-diagnostic {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    margin: 0 var(--settings-row-x) var(--settings-row-y) var(--agent-name-x);
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+    line-height: 1.5;
+
+    & > span {
+      color: inherit;
+    }
+    & > div {
+      flex: none;
+      align-self: center;
+    }
+    & button {
+      width: var(--settings-control-h);
+      height: var(--settings-control-h);
+      border: 0;
+      border-radius: var(--settings-control-radius);
+      background: none;
+      color: var(--ink-faint);
+    }
+    & button:hover {
+      background: var(--settings-hover);
+      color: var(--ink);
+    }
+  }
+
+  /* TokenToSea's account line and sign-in. */
+  & .agent-card-amr-email {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+    font-weight: 400;
+    line-height: 1.5;
+  }
+  & .agent-card-amr-profile-badge {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    color: var(--ink-faint);
+    font-size: var(--settings-type-meta);
+    font-weight: 400;
+    line-height: inherit;
+  }
+  & .agent-card-amr-email .agent-card-amr-balance {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: inherit;
+    line-height: inherit;
+  }
+  & .agent-card-amr-balance-label {
+    color: inherit;
+    font-weight: 400;
+  }
+  & .agent-card-amr-balance-value {
+    color: var(--ink);
+    font-weight: 500;
+  }
+  & .amr-auth-anchor,
+  & .amr-auth-anchor.amr-auth-anchor--sign-in {
+    flex: none;
+    align-self: center;
+    gap: 8px;
+    margin: 0;
+  }
+  & .agent-card-amr-upgrade {
+    height: var(--settings-control-h);
+    min-height: 0;
+    padding: 0 12px;
+    border-radius: var(--settings-control-radius);
+    background: var(--brand);
+    color: var(--on-brand);
+    font-size: var(--settings-type-control);
+    font-weight: 500;
+    transition: background-color 100ms var(--settings-ease);
+
+    &:hover:not(:disabled) {
+      background: var(--brand-hover);
+      color: var(--on-brand);
+      transform: none;
+    }
+  }
+  & .agent-card-amr-auth.settings-cloud-signin-callout__button {
+    height: var(--settings-control-h);
+    min-height: 0;
+    padding: 0 12px;
+    border: 1px solid transparent;
+    border-radius: var(--settings-control-radius);
+    background: var(--brand);
+    color: var(--on-brand);
+    font-size: var(--settings-type-control);
+    font-weight: 500;
+  }
+  & .agent-card-amr-auth.settings-cloud-signin-callout__button:hover {
+    background: var(--brand-hover);
+    color: var(--on-brand);
+  }
+  & .agent-card-amr-auth.settings-cloud-signin-callout__button :is(.amr-account-control__action, .amr-account-control__action:hover:not(:disabled)) {
+    border: 0;
+    background: transparent;
+    color: var(--on-brand);
+    box-shadow: none;
+  }
+  & .agent-card-amr-auth--placeholder {
+    display: none;
+  }
+
+  /* A connection test continues the row it ran from: same name line, no seam. */
+  & .agent-grid-installed > .agent-test-result-row {
+    gap: 8px;
+    padding: 0 var(--settings-row-x) var(--settings-row-x) var(--agent-name-x);
+    border-top: 0;
+    background: none;
+  }
+  & .agent-test-result-row .settings-test-status {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--ink-soft);
+  }
+  & .agent-test-result-row .settings-test-status.warn {
+    color: var(--warning-ink);
+  }
+  & .agent-test-result-row .settings-test-status.error {
+    color: var(--danger);
+  }
+  & .agent-test-result-row .settings-test-status.success::before,
+  & .field-inline-status.success::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    vertical-align: 0.12em;
+  }
+  & .settings-test-actions {
+    gap: 8px;
+    margin: 0;
+  }
+  & .settings-test-actions-hint {
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+    line-height: 1.5;
+  }
+
+  /* ── Folded rows ─────────────────────────────────────────────────────────────────────────── */
+  & .agent-disclosures {
+    display: flex;
+    flex-direction: column;
+    border: var(--settings-hairline);
+    border-radius: var(--settings-radius);
+    background: var(--surface);
+  }
+  & .agent-disclosures:empty {
+    display: none;
+  }
+  & .agent-disclosures > :is(.agent-install-collapse, .agent-cli-env) {
+    border: 0;
+    border-radius: 0;
+    background: none;
+  }
+  & .agent-disclosures > :is(.agent-install-collapse, .agent-cli-env) + :is(.agent-install-collapse, .agent-cli-env) {
+    border-top: var(--settings-hairline);
+  }
+  & :is(.agent-install-collapse-summary, .agent-cli-env-summary, .media-provider-coming-soon > summary) {
+    gap: 8px;
+    border-radius: 0;
+    transition: background-color 100ms var(--settings-ease);
+
+    &:focus-visible {
+      outline: 2px solid var(--focus-ring-color);
+      outline-offset: -2px;
+    }
+    &::before {
+      display: none;
+    }
+    &::after {
+      content: '';
+      flex: none;
+      width: 16px;
+      height: 16px;
+      margin-left: auto;
+      background: var(--ink-faint);
+      -webkit-mask: var(--disclosure-chevron) center / contain no-repeat;
+      mask: var(--disclosure-chevron) center / contain no-repeat;
+      transition: transform 200ms var(--settings-ease);
+    }
+  }
+  & :is(.agent-install-collapse, .agent-cli-env, .media-provider-coming-soon)[open] > summary::after {
+    transform: rotate(180deg);
+    transition-duration: 140ms;
+  }
+  /* The hover tone has to follow the group's corners, and only the outer ones. */
+  & :is(.agent-disclosures > :first-child, .settings-section-byok > .agent-cli-env, .media-provider-coming-soon) > summary {
+    border-top-left-radius: calc(var(--settings-radius) - 1px);
+    border-top-right-radius: calc(var(--settings-radius) - 1px);
+  }
+  & :is(.agent-disclosures > :last-child, .settings-section-byok > .agent-cli-env, .media-provider-coming-soon):not([open]) > summary {
+    border-bottom-left-radius: calc(var(--settings-radius) - 1px);
+    border-bottom-right-radius: calc(var(--settings-radius) - 1px);
+  }
+  & .agent-cli-env-summary-title {
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+  }
+  & .agent-cli-env-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--settings-row-y);
+    margin: 0;
+    padding: 0 var(--settings-row-x) var(--settings-row-x);
+    border: 0;
+  }
+  & .agent-cli-env-body .hint {
+    font-size: var(--settings-type-hint);
+  }
+  /* The disclosure already names this field; the label stays for assistive tech. */
+  & .settings-memory-advanced .agent-cli-env-body > .field > .field-label:first-child {
+    position: absolute;
+    overflow: hidden;
+    width: 1px;
+    height: 1px;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+  & .agent-cli-env-grid {
+    gap: var(--settings-row-y);
+  }
+  & .agent-cli-env-grid > label.field:last-of-type:nth-of-type(odd) {
+    grid-column: 1 / -1;
+  }
+
+  /* Install list: one row per CLI, each the same shape as an installed row. */
+  & .agent-grid-unavailable {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+  }
+  & .agent-card-unavailable {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0 var(--settings-row-y);
+    align-items: center;
+    min-height: var(--settings-row-h);
+    padding: var(--settings-row-y) var(--settings-row-x);
+    border-top: var(--settings-hairline);
+    opacity: 1;
+  }
+  & .agent-card-unavailable-row {
+    display: flex;
+    grid-column: 1;
+    align-items: center;
+    gap: var(--settings-row-y);
+    min-width: 0;
+    padding: 0;
+  }
+  & .agent-card-unavailable .agent-card-footer {
+    display: flex;
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  /* Under a heading that says 可安装, "not found on your PATH" repeats the heading on every row. Anything else, such
+     as a broken shim or a bad *_BIN override, is news and stays. */
+  & .agent-card-unavailable > [data-reason='not-on-path'] {
+    display: none;
+  }
+  /* A reason hangs from the name line and reads as one more line of the row. */
+  & .agent-card-unavailable > :not(.agent-card-unavailable-row, .agent-card-footer) {
+    grid-column: 1;
+    min-width: 0;
+    margin: 2px 0 0 calc(var(--agent-icon) + var(--settings-row-y));
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+
+    & * {
+      color: var(--ink-soft);
+      font-size: var(--settings-type-hint);
+      font-weight: 400;
+      line-height: 1.5;
+    }
+  }
+  & .agent-card-link--icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--settings-control-h);
+    height: var(--settings-control-h);
+    padding: 0;
+    border: 0;
+    border-radius: var(--settings-control-radius);
+    background: none;
+    color: var(--ink-faint);
+  }
+  & .agent-card-link--icon:hover {
+    background: var(--settings-hover);
+    color: var(--ink);
+  }
+  /* Eighteen rows of Docs and Rescan bury the one thing the list offers. They appear on the row in hand. */
+  & .agent-card-unavailable .agent-card-link--icon {
+    opacity: 0;
+    transition: opacity 100ms var(--settings-ease);
+  }
+  & .agent-card-unavailable:is(:hover, :focus-within) .agent-card-link--icon {
+    opacity: 1;
+  }
+  & .agent-install-guide {
+    margin: 0;
+    padding: 0 var(--settings-row-x) var(--settings-row-x);
+    border: 0;
+    background: none;
+  }
+  & :is(.agent-install-guide, .agent-install-path-hint) {
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+    line-height: 1.5;
+  }
+  & .agent-install-steps {
+    margin: 4px 0 0;
+    padding-left: 18px;
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+    line-height: 1.6;
+  }
+
+  /* First scan: the list's own shape, drawn empty, so rows arrive where they already appear to be. */
+  & .agent-scan-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-height: 0;
+    padding: 0;
+    border: var(--settings-hairline);
+    border-radius: var(--settings-radius);
+    background: var(--surface);
+    box-shadow: none;
+  }
+  & .agent-scan-card::before,
+  & .agent-scan-card__ring::after,
+  & .agent-scan-card__progress {
+    display: none;
+  }
+  & .agent-scan-card__stage {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--settings-row-y);
+    min-height: var(--settings-row-h);
+    padding: var(--settings-row-y) var(--settings-row-x);
+    text-align: left;
+  }
+  & .agent-scan-card__ring {
+    flex: none;
+    box-sizing: border-box;
+    width: 16px;
+    height: 16px;
+    margin: 0 5px;
+    border: 2px solid var(--line);
+    border-top-color: var(--ink);
+    background: none;
+    box-shadow: none;
+  }
+  & .agent-scan-card__stage strong {
+    color: var(--ink);
+    font-size: var(--settings-type-label);
+    font-weight: 500;
+    line-height: 1.45;
+  }
+  & .agent-scan-card__stage > span:not(.agent-scan-card__ring) {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+    line-height: 1.5;
+  }
+  & .agent-scan-card__rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+  }
+  & .agent-scan-card__rows span {
+    grid-template-columns: var(--agent-icon) minmax(0, 1fr);
+    grid-template-rows: 10px 8px;
+    gap: 8px var(--settings-row-y);
+    min-height: var(--settings-row-h);
+    padding: var(--settings-row-y) var(--settings-row-x);
+    border: 0;
+    border-top: var(--settings-hairline);
+    border-radius: 0;
+    background: none;
+    opacity: 1;
+  }
+  & .agent-scan-card__rows i {
+    width: var(--agent-icon);
+    height: var(--agent-icon);
+    border-radius: 6px;
+  }
+  & .agent-scan-card__rows b {
+    width: 140px;
+  }
+  & .agent-scan-card__rows em {
+    width: 220px;
+  }
+
+  /* ── API 提供商 and 媒体生成提供商: one master-detail page ───────────────────────────────── */
+  & .settings-providers {
+    display: grid;
+    grid-template-columns: var(--provider-list-w) minmax(0, 1fr);
+    column-gap: var(--settings-tab-gap);
+    align-items: start;
+  }
+  /* The list is longer than the form: pinning the form keeps it beside whichever provider was just picked. */
+  & :is(.settings-section-byok, .media-provider-column) {
+    position: sticky;
+    top: calc(var(--settings-strip-h) + var(--settings-row-y) - var(--settings-content-y));
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  & .settings-section-byok {
+    gap: var(--provider-field-gap);
+  }
+  & :is(.protocol-chips--providers, .media-provider-tabs, .protocol-chip-group--providers) {
+    display: block;
+    min-width: 0;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+  & .protocol-chip-group-label {
+    display: none;
+  }
+  & .protocol-chip-group-options {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  & .protocol-chips--providers .protocol-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    max-width: none;
+    height: var(--settings-control-h);
+    min-height: 0;
+    padding: 0 10px;
+    border: 0;
+    border-radius: var(--settings-control-radius);
+    background: transparent;
+    color: var(--ink-soft);
+    box-shadow: none;
+    font-size: var(--settings-type-control);
+    font-weight: 500;
+    line-height: 1.4;
+    text-align: left;
+    transition: background-color 100ms var(--settings-ease), color 100ms var(--settings-ease);
+
+    &:hover:not(.active) {
+      border: 0;
+      background: var(--settings-hover);
+      color: var(--ink);
+    }
+    &.active,
+    &.active:hover {
+      border: 0;
+      background: var(--settings-selected);
+      color: var(--ink);
+      box-shadow: none;
+    }
+    &:focus-visible {
+      outline: 2px solid var(--focus-ring-color);
+      outline-offset: -2px;
+    }
+    & > :is(.media-provider-chip-status, .protocol-chip-status) {
+      order: 1;
+      flex: none;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: transparent;
+      box-shadow: none;
+      animation: none;
+    }
+    /* No dot, no reserved room: long names only give way when there is a status to show. */
+    & > :is(.media-provider-chip-status.is-disconnected, .protocol-chip-status.is-unset) {
+      display: none;
+    }
+    & > :is(.media-provider-chip-status.is-connected, .protocol-chip-status.is-configured) {
+      background: var(--success);
+    }
+    & > span:not(.media-provider-chip-status, .protocol-chip-status) {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  /* The detail head centres on the first list row, so the two columns start on one line. */
+  & .settings-section-byok .section-head {
+    margin: 0;
+  }
+  & .settings-byok-title {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-height: var(--settings-control-h);
+  }
+  & .settings-byok-info-tooltip {
+    font-weight: 400;
+  }
+  /* A draft note reassures rather than warns, so it reads as the title's hint. */
+  & .settings-section-byok > .settings-test-status.warn {
+    margin-top: calc(4px - var(--provider-field-gap));
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--ink-soft);
+  }
+
+  /* ── One field stack ─────────────────────────────────────────────────────────────────────── */
+  & :is(.settings-section-byok .field, .media-provider-detail-field, .settings-byok-model-stack) {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  & .settings-byok-model-stack > .field + .field {
+    margin-top: calc(var(--provider-field-gap) - 4px);
+  }
+  & .field-label-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--settings-row-y);
+  }
+  & .field-row {
+    gap: 8px;
+  }
+  /* Customize stays after the input in the markup: a button placed first would become what the <label> activates, so
+     it is only drawn up onto the label line. */
+  & .settings-base-url-readonly {
+    position: relative;
+  }
+  & .settings-section-byok .settings-base-url-customize {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+  /* Side actions live on the label line, so every control keeps the column's full width and right edge. */
+  & .settings-section-byok :is(.settings-byok-key-link, .settings-base-url-customize) {
+    height: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--ink-soft);
+    font-size: var(--settings-type-meta);
+    font-weight: 400;
+    line-height: 1.45;
+
+    &:hover:not(:disabled),
+    &:focus-visible:not(:disabled) {
+      border: 0;
+      background: none;
+      color: var(--ink);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+  }
+  & :is(.settings-section-byok .field-label, .settings-byok-key-label, .settings-byok-field-label) {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0;
+  }
+  & .field-required {
+    margin-left: 2px;
+    color: var(--ink-faint);
+    font-weight: 400;
+  }
+  & .settings-section-byok .field-label-error {
+    margin-left: 8px;
+    color: var(--danger);
+    font-size: var(--settings-type-meta);
+    font-weight: 400;
+    line-height: 1.45;
+  }
+  & :is(.field-inline-status, .settings-section-byok .field-error) {
+    font-size: var(--settings-type-hint);
+    line-height: 1.5;
+  }
+  & :is(.field-inline-status, .field-inline-status.running, .field-inline-status.success) {
+    color: var(--ink-soft);
+  }
+  & .settings-section-byok .field-error {
+    color: var(--danger);
+  }
+  & .settings-section-byok input[aria-invalid='true'] {
+    border-color: var(--danger);
+  }
+  & .settings-section-byok :is(.settings-byok-required-empty, .settings-base-url-empty) input {
+    border-color: var(--line);
+    background-color: var(--surface);
+
+    &:hover:not(:focus) {
+      border-color: var(--ink-ghost);
+    }
+    &:focus {
+      border-color: var(--info);
+    }
+  }
+  /* Read-only is a tone, not a second kind of field. */
+  & .settings-section-byok .settings-base-url-readonly .field-row input[readonly] {
+    background-color: var(--sub);
+    color: var(--ink-soft);
+  }
+  & .field-row > input {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /* One secret field: the toggle sits inside the control on both pages. */
+  & :is(.settings-byok-key-input-wrap, .media-provider-secret-field) {
+    position: relative;
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  & :is(.settings-byok-key-input-wrap, .media-provider-secret-field) > input {
+    width: 100%;
+    padding-right: 36px;
+  }
+  & :is(.settings-byok-key-toggle, .secret-visibility-button) {
+    position: absolute;
+    top: 50%;
+    right: 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    min-width: 0;
+    height: 22px;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--ink-faint);
+    box-shadow: none;
+    transform: translateY(-50%);
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+      background: var(--sub);
+      color: var(--ink);
+      box-shadow: none;
+    }
+  }
+
+  /* ── One action row: what to know on the left, what to do on the right ───────────────────── */
+  & :is(.settings-byok-connection-test, .media-provider-detail-actions) {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    min-height: 0;
+    margin: 0;
+    padding: var(--provider-field-gap) 0 0;
+    border: 0;
+    border-top: var(--settings-hairline);
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+  }
+  & :is(.settings-byok-connection-test-status, .media-provider-detail-actions > .hint) {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: left;
+  }
+  & .settings-byok-ready {
+    color: var(--ink-soft);
+  }
+  & .settings-section-byok > .agent-cli-env {
+    margin-top: 8px;
+  }
+}

@@ -1,0 +1,709 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Shared work cards and the disclosure row (spec §12, §16). Motion and the warm needs-you fill come from the PA
+   tokens in fantay/styles/pa.css (--pa-*); colours are Fantay tokens. Warm is only for needs-you. */
+
+/* ── status glyph and word ─────────────────────────────────────────────────────────────── */
+
+.glyph {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  color: var(--ink-faint);
+}
+.glyph[data-kind='active'] {
+  color: var(--ink-soft);
+}
+.glyph[data-kind='needs'] {
+  color: var(--warning-ink);
+}
+.glyph[data-kind='completed'] {
+  color: var(--success-ink);
+}
+.glyph[data-kind='failed'] {
+  color: var(--accent-ink);
+}
+.glyph[data-pop='true'] > svg {
+  animation: pa-check-pop var(--pa-dur-enter) var(--pa-ease-pop) both;
+}
+@keyframes pa-check-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.word {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.word[data-word='waiting'] {
+  color: var(--warning-ink);
+}
+/* Paused or asleep: it continues on its own, so it reads quieter than work in progress. */
+.word[data-word='waitingAuto'] {
+  color: var(--ink-faint);
+}
+.word[data-word='failed'] {
+  color: var(--accent-ink);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.metaPart {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── task row (Varin dispatch row with the in-place status ↔ action swap) ──────────────── */
+
+.taskRow {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  border-radius: 10px;
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+/* Compact (the inspector's 进行中) shares the day log's anatomy right below it: a 30 px tile, the same 46 px row
+   and the same text column, so 进行中 and 完成记录 read as one list in two states. */
+.taskRow[data-density='compact'] {
+  height: 46px;
+}
+.taskRow[data-density='regular'] {
+  height: 56px;
+}
+.taskRow:hover,
+.taskRow:focus-within {
+  background: var(--sub);
+}
+
+.taskRowMain {
+  justify-content: flex-start;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  padding: 0 0 0 8px;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 400;
+  text-align: start;
+  white-space: normal;
+}
+.taskRowMain > [data-slot='button-label'] {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 8px;
+  width: 100%;
+}
+.taskRowGlyph {
+  display: grid;
+  place-items: center;
+}
+.taskRow[data-density='compact'] .taskRowMain > [data-slot='button-label'] {
+  grid-template-columns: 30px minmax(0, 1fr);
+  column-gap: 10px;
+}
+.taskRow[data-density='compact'] .taskRowGlyph {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--sub);
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+.taskRow[data-density='compact']:hover .taskRowGlyph,
+.taskRow[data-density='compact']:focus-within .taskRowGlyph {
+  background: var(--paper-deep);
+}
+.taskRowText {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+.taskRowGoal {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.taskRow[data-density='regular'] .taskRowGoal {
+  font-size: 13.5px;
+  line-height: 20px;
+}
+.taskRowCaption {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rowMeta {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.swap {
+  display: grid;
+  align-items: center;
+  justify-items: end;
+  padding: 0 8px 0 6px;
+}
+.swapNow,
+.swapGo {
+  display: inline-flex;
+  grid-area: 1 / 1;
+  align-items: center;
+  gap: 2px;
+  transition:
+    opacity var(--pa-dur-exit) var(--pa-ease),
+    transform var(--pa-dur-exit) var(--pa-ease);
+}
+.swapGo {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(5px);
+}
+.taskRow:hover .swapNow,
+.taskRow:focus-within .swapNow {
+  opacity: 0;
+  transform: translateX(-5px);
+}
+.taskRow:hover .swapGo,
+.taskRow:focus-within .swapGo {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+}
+
+/* ── warm cards: needs-you, approval, delivery ─────────────────────────────────────────── */
+
+.warmCard {
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--pa-needs-bg);
+  box-shadow: inset 0 0 0 1px var(--pa-needs-ring);
+  animation: pa-card-in var(--pa-dur-enter) var(--pa-ease) both;
+  transition: opacity var(--pa-dur-exit) var(--pa-ease);
+}
+.warmCard[data-answered='true'] {
+  opacity: 0.7;
+}
+/* In the transcript the needs-you card keeps the result card's measure, so the tail's cards read as one family. */
+.warmCard[data-capped='true'] {
+  max-width: 560px;
+}
+@keyframes pa-card-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+.needsTitle {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 18px;
+  color: var(--warning-ink);
+  overflow-wrap: anywhere;
+}
+.warmCard[data-tone='failed'] .needsTitle {
+  color: var(--accent-ink);
+}
+.needsGoal {
+  display: -webkit-box;
+  margin-top: 3px;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 19px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.warmCard[data-compact='true'] .needsGoal {
+  -webkit-line-clamp: 1;
+}
+.needsBody {
+  margin-top: 4px;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+  text-wrap: pretty;
+}
+.warmCard[data-compact='true'] .needsBody {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.warmCard[data-tone='failed'] .needsBody {
+  color: var(--accent-ink);
+}
+.needsMeta {
+  margin-top: 6px;
+}
+.needsFoot {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+.needsFoot > .needsMeta {
+  margin-top: 0;
+  line-height: 16px;
+}
+.needsExpiry {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-faint);
+}
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+.detailsLink {
+  margin-inline-start: 4px;
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+.detailsLink:hover {
+  color: var(--ink);
+}
+
+.cardFaint {
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+.quote {
+  display: -webkit-box;
+  margin: 8px 0 6px;
+  padding: 0 0 0 10px;
+  overflow: hidden;
+  border: 0 solid var(--line);
+  border-inline-start-width: 2px;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+  text-wrap: pretty;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.answered {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--ink-soft);
+}
+.deliveryPreview {
+  display: -webkit-box;
+  margin-top: 6px;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.cardError {
+  margin-top: 4px;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--accent-ink);
+  overflow-wrap: anywhere;
+}
+
+/* ── result card (Rakazo checklist, Cumora artifact card) ──────────────────────────────── */
+
+.resultCard {
+  container-type: inline-size;
+  max-width: 560px;
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  animation: pa-result-in var(--pa-dur-enter) var(--pa-ease) both;
+}
+@keyframes pa-result-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.resultHeader {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+.resultTile {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--sub);
+  color: var(--ink-soft);
+}
+.resultTitle {
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 19px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--success-ink);
+  font-size: 11.5px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+/* Narrow cards: the pill drops under the title instead of squeezing it. */
+@container (max-width: 440px) {
+  .resultHeader {
+    grid-template-columns: 32px minmax(0, 1fr);
+  }
+  .verified {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.checkItem {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr);
+  align-items: start;
+  gap: 7px;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+.checkMark {
+  margin-top: 3px;
+  color: var(--success-ink);
+}
+
+.files {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 10px -8px 0;
+}
+.fileRow {
+  justify-content: flex-start;
+  width: 100%;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 400;
+  text-align: start;
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+.fileRow:hover {
+  background: var(--sub);
+}
+.fileRow > [data-slot='button-label'] {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: 10px;
+  width: 100%;
+}
+.fileIcon {
+  color: var(--ink-soft);
+}
+.fileText {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+.fileName {
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.filePath {
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 14px;
+  color: var(--ink-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fileSize {
+  font-size: 12px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.fileHash {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+.moreFiles {
+  padding: 4px 8px 0 38px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-faint);
+}
+.resultFooter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 12px;
+}
+.resultMeta {
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  white-space: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── day log ───────────────────────────────────────────────────────────────────────────── */
+
+.dayLog {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dayLog[data-bleed='true'] {
+  margin-inline: -6px;
+}
+.dayLog[data-bleed='true'] .dayRow,
+.dayLog[data-bleed='true'] .disclosureTrigger {
+  padding-inline: 8px;
+}
+.dayRows {
+  display: flex;
+  flex-direction: column;
+  padding: 2px 0 6px;
+}
+.dayRow {
+  justify-content: flex-start;
+  width: 100%;
+  height: 46px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 400;
+  text-align: start;
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+.dayRow:hover {
+  background: var(--sub);
+}
+.dayRow > [data-slot='button-label'] {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 10px;
+  width: 100%;
+}
+.dayTile {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--sub);
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+.dayRow:hover .dayTile {
+  background: var(--paper-deep);
+}
+.dayText {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+.dayGoal,
+.daySummary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 500, one step under the 13/600 day header above it, so 今天 / 昨天 lead their rows instead of matching them. */
+.dayGoal {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--ink);
+}
+.daySummary {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-soft);
+}
+.dayFailed {
+  color: var(--accent-ink);
+}
+.dayTime {
+  font-size: 12px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── disclosure (grid-rows fold, rotating chevron) ─────────────────────────────────────── */
+
+.disclosure {
+  min-width: 0;
+}
+.disclosureTrigger {
+  justify-content: flex-start;
+  width: 100%;
+  height: 32px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  text-align: start;
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+.disclosureTrigger:hover {
+  background: var(--sub);
+}
+.disclosureTrigger > [data-slot='button-label'] {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+.disclosureLabel {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.disclosureCount {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.disclosureChevron {
+  margin-inline-start: auto;
+  color: var(--ink-faint);
+  transition: transform 150ms var(--pa-ease);
+}
+:global([dir='rtl']) .disclosureChevron {
+  transform: rotate(180deg);
+}
+.disclosure[data-open='true'] > .disclosureTrigger .disclosureChevron {
+  transform: rotate(90deg);
+}
+.disclosureBody {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows var(--pa-dur-exit) var(--pa-ease),
+    opacity var(--pa-dur-exit) var(--pa-ease);
+}
+.disclosure[data-open='true'] > .disclosureBody {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition-duration: var(--pa-dur-fold);
+  transition-timing-function: var(--pa-ease-fold);
+}
+.disclosureInner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── reduced motion: opacity only, ≤ 160 ms ────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .warmCard,
+  .resultCard {
+    animation: pa-fade-in 120ms linear both;
+  }
+  .glyph[data-pop='true'] > svg {
+    animation: none;
+  }
+  .swapNow,
+  .swapGo,
+  .taskRow:hover .swapNow,
+  .taskRow:focus-within .swapNow {
+    transform: none;
+    transition: opacity 120ms linear;
+  }
+  .disclosureChevron {
+    transition: none;
+  }
+  .disclosureBody,
+  .disclosure[data-open='true'] > .disclosureBody {
+    transition: opacity 120ms linear;
+  }
+}
+@keyframes pa-fade-in {
+  from {
+    opacity: 0;
+  }
+}

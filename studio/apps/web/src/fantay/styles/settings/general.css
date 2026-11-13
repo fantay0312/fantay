@@ -1,0 +1,642 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* ── 通用 ──────────────────────────────────────────────────────────────────────────────────── */
+:is([data-fantay-shell], [data-client-type='desktop']) .settings-page-shell {
+  --settings-general-select-w: 216px;
+  --settings-general-choice-w: 340px;
+
+  /* The page's clip would cut the first pet column's hover preview. */
+  & .settings-general-section {
+    overflow: visible;
+  }
+  & .settings-general-block,
+  & .settings-general-block > .settings-section {
+    gap: var(--settings-heading-gap);
+  }
+  & .settings-general-block-head {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  & .settings-general-block-head.has-action {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--settings-row-x);
+
+    & > div {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+  }
+  & .settings-general-block-head .hint {
+    text-wrap: pretty;
+  }
+
+  /* Row: the language picker, the sound choices and the test action share one shape. */
+  & .settings-general-field {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--settings-row-x);
+    min-height: var(--settings-row-h);
+    padding: 8px var(--settings-row-x);
+  }
+  & .settings-general-label {
+    color: var(--ink);
+    font-size: var(--settings-type-label);
+    font-weight: 500;
+    line-height: 1.45;
+  }
+  & .settings-general-select {
+    position: relative;
+    display: block;
+    flex: 0 0 var(--settings-general-select-w);
+    width: var(--settings-general-select-w);
+  }
+
+  /* One button for the page: the shared Button, at the foundation's control size. */
+  & .settings-general-action {
+    flex: none;
+    gap: 6px;
+    height: var(--settings-control-h);
+    padding: 0 12px;
+    border: var(--settings-hairline);
+    border-radius: var(--settings-control-radius);
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: none;
+    font-size: var(--settings-type-control);
+    font-weight: 500;
+    line-height: 1.4;
+
+    &:hover:not(:disabled) {
+      border-color: var(--ink-ghost);
+      background: var(--sub);
+      color: var(--ink);
+    }
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    &.is-danger {
+      color: var(--danger);
+    }
+    &.is-danger:hover:not(:disabled) {
+      border-color: color-mix(in srgb, var(--danger) 45%, var(--line));
+      background: color-mix(in srgb, var(--danger) 6%, var(--surface));
+      color: var(--danger);
+    }
+  }
+
+  /* 通知 */
+  & .settings-general-block .settings-subsection {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+  & .settings-general-block .settings-subsection + .settings-subsection,
+  & .settings-subsection > .settings-general-field {
+    border-top: var(--settings-hairline);
+  }
+  /* Equal segments, unless a longer language needs one to grow rather than clip. */
+  & .settings-general-field > .seg-control {
+    flex: 0 1 var(--settings-general-choice-w);
+    min-width: 0;
+    grid-template-columns: repeat(var(--seg-cols), minmax(max-content, 1fr));
+  }
+  & .settings-general-field > .seg-control .seg-btn {
+    padding-inline: 8px;
+    white-space: nowrap;
+  }
+  & .settings-notify-test-row > .hint {
+    flex: 1;
+    min-width: 0;
+  }
+  & .settings-notify-test-row > .settings-general-action {
+    margin-left: auto;
+  }
+
+  /* 宠物 */
+  & .pet-tabs {
+    margin: 0;
+  }
+  & .pet-tabs-top-row {
+    gap: var(--settings-heading-gap);
+  }
+  & .pet-wake-controls {
+    gap: var(--settings-heading-gap);
+    min-width: 0;
+  }
+  & .pet-action-status {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--ink-soft);
+    font-size: var(--settings-type-meta);
+  }
+  & .pet-current-summary {
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: var(--settings-heading-gap);
+    min-height: var(--settings-row-h);
+    margin: 0;
+    padding: 8px var(--settings-row-x);
+    border: var(--settings-hairline);
+    border-radius: var(--settings-radius);
+    background: var(--surface);
+  }
+  & .pet-current-summary__sprite {
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: var(--settings-control-radius);
+    background: var(--sub);
+  }
+  & .pet-current-summary__copy {
+    gap: 1px;
+  }
+  & .pet-current-summary__copy strong {
+    color: var(--ink);
+    font-size: var(--settings-type-label);
+    font-weight: 500;
+    line-height: 1.45;
+  }
+  & .pet-current-summary__copy span:last-child {
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+    line-height: 1.5;
+  }
+
+  & .pet-codex-grid {
+    grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+    gap: 8px;
+  }
+  & .pet-codex-card {
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: var(--settings-heading-gap);
+    padding: 8px;
+    border: var(--settings-hairline);
+    border-radius: var(--settings-radius);
+    background: var(--surface);
+    box-shadow: none;
+    transition: background-color 100ms var(--settings-ease), border-color 100ms var(--settings-ease);
+
+    &:hover {
+      border-color: var(--ink-ghost);
+      background: var(--sub);
+    }
+    &.active,
+    &.active:hover {
+      border-color: var(--line);
+      background: var(--settings-selected);
+      box-shadow: none;
+    }
+    &:hover .pet-codex-thumb,
+    &.active .pet-codex-thumb {
+      background-color: var(--surface);
+    }
+  }
+  /* One atlas cell is 192 x 208, so the box keeps that shape and the sprite is not squashed. */
+  & .pet-codex-thumb {
+    width: 48px;
+    height: 52px;
+    border: 0;
+    border-radius: 6px;
+    background-color: var(--sub);
+    transition: background-color 100ms var(--settings-ease);
+  }
+  /* Anchored to the thumbnail's left edge: centred, it would leave the page column. */
+  & .pet-codex-thumb-preview {
+    left: 0;
+    border: var(--settings-hairline);
+    border-radius: var(--settings-radius);
+    background-color: var(--sub);
+    box-shadow: var(--shadow-float);
+    transform: translateY(4px) scale(0.96);
+    transform-origin: 0 100%;
+    transition: opacity 140ms var(--settings-ease), transform 140ms var(--settings-ease);
+  }
+  & .pet-codex-card:hover .pet-codex-thumb-preview,
+  & .pet-codex-card:focus-within .pet-codex-thumb-preview {
+    transform: none;
+  }
+  /* Focus left behind by a mouse click must not pin the preview open once the pointer has gone. */
+  & .pet-codex-card:focus-within:not(:hover, :has(:focus-visible)) .pet-codex-thumb-preview {
+    opacity: 0;
+    animation: none;
+  }
+  & .pet-codex-meta {
+    padding-right: 0;
+  }
+  & .pet-codex-card.active .pet-codex-meta {
+    padding-right: 20px;
+  }
+  & .pet-codex-title-row {
+    display: flex;
+    gap: 6px;
+  }
+  & .pet-codex-meta strong {
+    color: var(--ink);
+    font-size: var(--settings-type-control);
+    font-weight: 500;
+    line-height: 1.45;
+  }
+  & .pet-codex-default-badge {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--ink-faint);
+    font-size: var(--settings-type-meta);
+    font-weight: 400;
+  }
+  & .pet-codex-adopt-btn,
+  & .pet-codex-adopt-btn:not(.active) {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: auto;
+    height: auto;
+    min-height: 0;
+    padding: 0 12px;
+    border: 0;
+    border-radius: inherit;
+    background: none;
+    color: var(--ink-soft);
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--info);
+      outline-offset: -2px;
+    }
+    &:disabled {
+      cursor: default;
+    }
+  }
+  & .pet-codex-adopt-btn.active {
+    color: var(--ink);
+  }
+
+  /* A tab's own heading sits one step below the section's. */
+  & :is(.pet-custom-head, .pet-codex-head, .pet-hatch-head) {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--settings-row-x);
+    margin: 0;
+
+    & > div:first-child {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    & h4 {
+      margin: 0;
+      color: var(--ink);
+      font-size: var(--settings-type-label);
+      font-weight: 500;
+      line-height: 1.45;
+    }
+    & .hint {
+      text-wrap: pretty;
+    }
+  }
+  & :is(.pet-custom, .pet-codex, .pet-hatch, .pet-image-controls) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--settings-heading-gap);
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+  /* A tab that opens on its own heading needs a little more air under the tabs than a grid does. */
+  & .pet-tabs + .pet-custom,
+  & .pet-tabs + div + .pet-custom,
+  & .pet-community {
+    margin: 4px 0 0;
+  }
+  & .pet-image-controls {
+    gap: 8px;
+  }
+  & .pet-image-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  & :is(.pet-custom-preview, .pet-custom-fields, .pet-image-frames, .pet-hatch-group, .pet-atlas-preview) {
+    margin: 0;
+    border: var(--settings-hairline);
+    border-radius: var(--settings-radius);
+    background: var(--surface);
+  }
+  & .pet-custom-preview {
+    display: flex;
+    align-items: center;
+    gap: var(--settings-heading-gap);
+    min-height: var(--settings-row-h);
+    padding: 8px var(--settings-row-x);
+  }
+  /* The one colour on the page that is the user's: this tile previews the accent they are choosing. */
+  & .pet-custom-sprite {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--settings-control-radius);
+    background: color-mix(in srgb, var(--pet-accent, var(--sub)) 14%, transparent);
+  }
+  & .pet-custom-bubble {
+    gap: 1px;
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+    line-height: 1.5;
+  }
+  & .pet-custom-bubble strong {
+    color: var(--ink);
+    font-size: var(--settings-type-label);
+    font-weight: 500;
+    line-height: 1.45;
+  }
+
+  /* Fields as rows, so the inputs share the language picker's width and right edge. */
+  & :is(.pet-custom-fields, .pet-image-frames, .pet-hatch-group) {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  & :is(.pet-custom-fields, .pet-image-frames, .pet-hatch-group) > .field {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--settings-general-select-w);
+    gap: 0 var(--settings-row-x);
+    align-items: center;
+    min-height: var(--settings-row-h);
+    padding: 8px var(--settings-row-x);
+
+    & + .field {
+      border-top: var(--settings-hairline);
+    }
+    & > .field-label {
+      grid-column: 1;
+      color: var(--ink);
+      font-size: var(--settings-type-label);
+      font-weight: 500;
+      line-height: 1.45;
+    }
+    & > .hint {
+      grid-column: 1;
+    }
+    & > :is(input, .pet-swatches) {
+      grid-row: 1;
+      grid-column: 2;
+      width: 100%;
+    }
+    /* With a hint under its label, the control centres on the pair. */
+    &:has(> .hint) > :is(input, .pet-swatches) {
+      grid-row: 1 / span 2;
+    }
+  }
+  & .pet-swatches {
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 0;
+  }
+  & .pet-swatch,
+  & .pet-swatch-picker {
+    flex: none;
+    width: 18px;
+    height: 18px;
+  }
+  & .pet-swatch {
+    border: 0;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 14%, transparent);
+
+    &.active {
+      box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--ink);
+    }
+    &:focus-visible {
+      outline: 2px solid var(--info);
+      outline-offset: 2px;
+    }
+  }
+  & .pet-swatch-picker {
+    overflow: hidden;
+    border: 0;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 14%, transparent);
+
+    &::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+    &::-webkit-color-swatch {
+      border: 0;
+      border-radius: 50%;
+    }
+  }
+
+  /* Atlas import */
+  & .pet-atlas-preview {
+    display: flex;
+    flex-direction: column;
+    gap: var(--settings-heading-gap);
+    padding: var(--settings-row-x);
+  }
+  & .pet-atlas-head strong {
+    color: var(--ink);
+    font-size: var(--settings-type-label);
+    font-weight: 500;
+    line-height: 1.45;
+  }
+  & .pet-atlas-thumb {
+    border: 0;
+    border-radius: var(--settings-control-radius);
+    background-color: var(--sub);
+  }
+  & .pet-atlas-rows {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  & .pet-atlas-row {
+    height: auto;
+    padding: 8px 12px;
+    border: var(--settings-hairline);
+    border-radius: var(--settings-control-radius);
+    background: none;
+    transition: background-color 100ms var(--settings-ease), border-color 100ms var(--settings-ease);
+
+    &:hover {
+      border-color: var(--ink-ghost);
+    }
+    &.active,
+    &.active:hover {
+      border-color: var(--line);
+      background: var(--settings-selected);
+    }
+  }
+  & .pet-atlas-row-name {
+    color: var(--ink);
+    font-size: var(--settings-type-control);
+    font-weight: 500;
+  }
+  & .pet-atlas-row-meta {
+    color: var(--ink-faint);
+    font-size: var(--settings-type-meta);
+  }
+
+  /* 社区 */
+  & .pet-community {
+    gap: var(--settings-section-gap);
+  }
+  & .pet-codex-head-actions {
+    flex: none;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  & .pet-codex-empty {
+    margin: 0;
+  }
+  & .pet-codex-sync-status {
+    margin: 0;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: var(--settings-control-radius);
+    background: var(--sub);
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+
+    &.error {
+      background: color-mix(in srgb, var(--danger) 6%, var(--surface));
+      color: var(--danger);
+    }
+  }
+  & .pet-hatch-group > .field {
+    grid-template-columns: minmax(0, 1fr) var(--settings-general-choice-w);
+  }
+  & .pet-hatch-prompt {
+    max-height: 168px;
+    padding: var(--settings-heading-gap) var(--settings-row-x);
+    border: 0;
+    border-block: var(--settings-hairline);
+    border-radius: 0;
+    background: var(--sub);
+    color: var(--ink-soft);
+    font-family: var(--font-mono);
+    font-size: var(--settings-type-meta);
+    line-height: 1.6;
+  }
+  & .pet-hatch-actions {
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--settings-row-x);
+    min-height: var(--settings-row-h);
+    padding: 8px var(--settings-row-x);
+  }
+
+  /* 项目位置 */
+  & .project-location-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: var(--settings-hairline);
+    border-radius: var(--settings-radius);
+    background: var(--surface);
+  }
+  & .project-location-row {
+    display: flex;
+    align-items: center;
+    gap: var(--settings-heading-gap);
+    min-height: var(--settings-row-h);
+    padding: 8px var(--settings-row-x);
+
+    & + .project-location-row {
+      border-top: var(--settings-hairline);
+    }
+  }
+  & .project-location-main {
+    flex: 1;
+    min-width: 0;
+
+    & strong {
+      display: block;
+      overflow: hidden;
+      color: var(--ink);
+      font-size: var(--settings-type-label);
+      font-weight: 500;
+      line-height: 1.45;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    & code {
+      display: block;
+      overflow: hidden;
+      padding: 0;
+      background: none;
+      color: var(--ink-faint);
+      font-family: var(--font-mono);
+      font-size: var(--settings-type-meta);
+      line-height: 1.45;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+  }
+  & .project-location-default-control {
+    position: relative;
+    flex: none;
+    cursor: pointer;
+
+    & input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    /* Not yet the default: a button. Already the default: a quiet note. */
+    & span {
+      display: inline-flex;
+      align-items: center;
+      height: var(--settings-control-h);
+      padding: 0 12px;
+      border: var(--settings-hairline);
+      border-radius: var(--settings-control-radius);
+      background: var(--surface);
+      color: var(--ink);
+      font-size: var(--settings-type-control);
+      font-weight: 500;
+      white-space: nowrap;
+      transition: background-color 100ms var(--settings-ease), border-color 100ms var(--settings-ease);
+    }
+    &:hover span {
+      border-color: var(--ink-ghost);
+      background: var(--sub);
+    }
+    & input:checked + span,
+    &:hover input:checked + span {
+      padding: 0;
+      border-color: transparent;
+      background: none;
+      color: var(--ink-faint);
+      font-size: var(--settings-type-meta);
+      font-weight: 400;
+    }
+    & input:focus-visible + span {
+      outline: 2px solid var(--info);
+      outline-offset: 2px;
+    }
+  }
+
+  /* 设计评审团: where the setting is saved is a footnote to what it does. */
+  & .critique-theater-toggle .toggle-row-hint + .toggle-row-hint {
+    margin-top: 2px;
+    color: var(--ink-faint);
+    font-size: var(--settings-type-meta) !important;
+  }
+}

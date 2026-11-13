@@ -1,0 +1,85 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Luminous two-button dot-matrix appearance switch (dark / light).
+   Root matches the exact TRACK aspect ratio (1184:612) while the decorative <canvas> extends
+   into the 1400:900 scene bleed so the concentric laser arc and shadow never clip. */
+
+.root {
+  --fx-dm-w: 112px;
+  --fx-dm-h: 58px;
+  --fx-dm-r: 18px;
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  flex: none;
+  width: var(--fx-dm-w);
+  height: var(--fx-dm-h);
+  border-radius: var(--fx-dm-r);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
+  isolation: isolate;
+}
+
+.root[data-size='sm'] {
+  --fx-dm-w: 92px;
+  --fx-dm-h: 48px;
+  --fx-dm-r: 15px;
+}
+
+.root[data-size='xs'] {
+  --fx-dm-w: 85px;
+  --fx-dm-h: 44px;
+  --fx-dm-r: 14px;
+}
+
+.fill {
+  margin-inline-start: auto;
+}
+
+/* Fallback surface shown only before/without 2D canvas context (e.g. SSR or headless jsdom). */
+.root:not([data-canvas-ready]) {
+  background: var(--sub);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.canvas {
+  position: absolute;
+  inset-inline-start: -9.1216%;
+  inset-block-start: -21.8954%;
+  width: 118.2432%;
+  height: 147.0588%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.slot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--fx-dm-r);
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.root[data-dragging] .slot {
+  cursor: grabbing;
+}
+
+.root:not([data-canvas-ready]) .slot[aria-checked='true'] {
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+}
+
+.slot:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: -2px;
+}

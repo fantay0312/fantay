@@ -1,0 +1,247 @@
+/* SPDX-License-Identifier: MIT
+ * Derived from infinite-canvas (https://github.com/basketikun/infinite-canvas),
+ * commit 9cd3deacbcc598361807afc16c059a80dd18b6f9, web/src/components/canvas/canvas-node.tsx
+ * (ImageContent, ExpandedImageCard, BatchFrame) and web/src/styles/globals.css:439-454 (batch child keyframes).
+ * Copyright (c) 2026 basketikun. Released under the MIT License; the full
+ * license text is reproduced in THIRD_PARTY_NOTICES.md.
+ * Modified for Fantay on 2026-10-29: Fantay tokens, the fan-out starts at scale .9 (never 0) with a
+ * 280 ms + 35 ms × index entrance and a 140 ms exit, overlays counter-scaled to the zoom, reduced motion.
+ */
+.root {
+  --gen-running: var(--info);
+  --gen-failed: var(--accent-ink);
+  --gen-done: var(--success);
+  --gen-muted: var(--ink-faint);
+  --gen-overlay-bg: color-mix(in oklab, var(--surface) 88%, transparent);
+  --fx-inv-zoom: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  font-family: var(--font-ui);
+}
+
+/* ── stacked ghost cards behind a multi-candidate node ─────────────────────────────────── */
+
+.ghosts {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.ghost {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-card);
+  background: linear-gradient(135deg, var(--surface), var(--paper-deep));
+  box-shadow: 0 0 0 1px var(--line), var(--shadow-float);
+  transition:
+    opacity var(--motion-exit) var(--ease-out-quint),
+    transform var(--motion-enter) var(--ease-out-quint);
+}
+
+.root[data-fan='open'] .ghost {
+  opacity: 0;
+}
+
+/* ── the primary picture ───────────────────────────────────────────────────────────────── */
+
+.frame {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--paper-deep);
+}
+
+.picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  color: var(--ink-faint);
+  font-size: var(--type-label);
+}
+
+/* ── overlays (counter-scaled so they keep their screen size) ─────────────────────────── */
+
+.overlay {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transform: scale(var(--fx-inv-zoom));
+}
+
+.overlayTopLeft {
+  top: 8px;
+  left: 8px;
+  transform-origin: top left;
+}
+
+.overlayTopRight {
+  top: 8px;
+  right: 8px;
+  transform-origin: top right;
+}
+
+.overlayBottomLeft {
+  bottom: 8px;
+  left: 8px;
+  transform-origin: bottom left;
+}
+
+.hoverOnly {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--motion-exit) var(--ease-out-quint);
+}
+
+.root:hover .hoverOnly,
+.root:focus-within .hoverOnly,
+.root[data-selected] .hoverOnly {
+  opacity: 1;
+  pointer-events: auto;
+  transition-duration: var(--motion-enter);
+}
+
+.root[data-lod='low'] .overlay {
+  display: none;
+}
+
+.countPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--radius-chip);
+  background: var(--gen-overlay-bg);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-float);
+  color: var(--ink);
+  font-size: var(--type-label);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.countChevron {
+  transition: transform var(--motion-enter) var(--ease-out-quint);
+}
+
+.root[data-fan='open'] .countChevron {
+  transform: rotate(90deg);
+}
+
+.badge {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-row);
+  background: var(--gen-overlay-bg);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-float);
+  color: var(--ink-soft);
+}
+
+.badgeWarning {
+  color: var(--warning-ink);
+}
+
+/* ── fan-out of the other candidates ──────────────────────────────────────────────────── */
+
+.fanCard {
+  position: absolute;
+  z-index: 2;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--paper-deep);
+  box-shadow: 0 0 0 1px var(--line), var(--shadow-float);
+}
+
+.fanCard[data-state='open'] {
+  animation: fxBatchChildIn 280ms var(--ease-out-quint) both;
+  animation-delay: calc(var(--fan-index, 0) * 35ms);
+}
+
+.fanCard[data-state='closed'] {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transform: translate(var(--from-x), var(--from-y)) rotate(var(--from-rotate)) scale(0.9);
+  transition:
+    opacity var(--motion-exit) var(--ease-out-quint),
+    transform var(--motion-exit) var(--ease-out-quint),
+    visibility 0s linear var(--motion-exit);
+}
+
+.fanActions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  left: 8px;
+  z-index: 2;
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  transform: scale(var(--fx-inv-zoom));
+  transform-origin: top right;
+  opacity: 0;
+  transition: opacity var(--motion-exit) var(--ease-out-quint);
+}
+
+.fanCard:hover .fanActions,
+.fanCard:focus-within .fanActions {
+  opacity: 1;
+  transition-duration: var(--motion-enter);
+}
+
+.fanCard[data-status='failed'] .fanActions,
+.fanCard[data-status='interrupted'] .fanActions,
+.fanCard[data-status='lost'] .fanActions {
+  opacity: 1;
+}
+
+@keyframes fxBatchChildIn {
+  from {
+    opacity: 0;
+    transform: translate(var(--from-x), var(--from-y)) rotate(var(--from-rotate)) scale(0.9);
+  }
+  72% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(-1deg) scale(1.015);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fanCard[data-state='open'] {
+    animation: none;
+  }
+  .fanCard[data-state='closed'],
+  .ghost,
+  .countChevron {
+    transition: none;
+  }
+}

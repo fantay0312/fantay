@@ -1,0 +1,1225 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* ── 记忆 ────────────────────────────────────────────────────────────────────────────────────
+   The legacy rules live in styles/viewer/{library,memory}.css and sit in a lower cascade layer, so everything here
+   wins without !important. MemoryHooksPanel and MemoryProfilePanel keep their own modules; they are reached through
+   their test ids because a module's class names are hashed. */
+:is([data-fantay-shell], [data-client-type='desktop']) .settings-page-shell {
+  /* ── Page ─────────────────────────────────────────────────────────────────────────────────── */
+  & :is(.memory-create-section, .memory-records-section) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--settings-section-gap);
+  }
+  & .memory-create-section {
+    /* The dialogs live in here. The entrance animation's held transform would make this box their containing block. */
+    animation-fill-mode: backwards;
+  }
+  /* A dialog has to paint over the settings close button, which sits a layer above this scroller. */
+  & .settings-content:has(.memory-action-modal-backdrop) {
+    z-index: 4;
+  }
+  & .memory-top-tabs {
+    flex: none;
+    align-self: flex-start;
+  }
+  & .memory-create-section > .memory-top-tabs {
+    margin-bottom: calc(var(--settings-tab-gap) - var(--settings-section-gap));
+  }
+  & :is(.memory-master, .memory-management-panel, .memory-how-intro) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--settings-heading-gap);
+  }
+
+  /* ── The one group and the one row ────────────────────────────────────────────────────────── */
+  & :is(
+    .memory-rows,
+    .memory-unified-list:has(> .library-card),
+    .memory-connector-list,
+    .memory-suggestion-list,
+    .memory-connector-diagnostics-list,
+    .memory-advanced-stack,
+    .memory-scan-history,
+    [data-testid^='memory-hooks'] > ul
+  ) {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: var(--settings-hairline);
+    border-radius: var(--settings-radius);
+    background: var(--surface);
+    box-shadow: none;
+  }
+  & .memory-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    height: auto;
+    min-height: var(--settings-row-h);
+    margin: 0;
+    padding: var(--settings-row-y) var(--settings-row-x);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--ink);
+    text-align: left;
+  }
+  & .memory-row--link {
+    cursor: pointer;
+    transition: background-color 100ms var(--settings-ease);
+
+    & > svg {
+      flex: none;
+      /* The chevron's drawing sits inset in its box. Pulled out so the drawing meets the edge the switches keep. */
+      margin-right: -5px;
+      color: var(--ink-faint);
+    }
+    &:hover:not(:disabled) {
+      background: var(--settings-hover);
+    }
+    &:focus-visible {
+      outline: 2px solid var(--focus-ring-color);
+      outline-offset: -2px;
+    }
+  }
+  & :is(.memory-row-copy, .memory-subsection-head > div:first-child) {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+  & .memory-row-label {
+    color: var(--ink);
+    font-size: var(--settings-type-label);
+    font-weight: 500;
+    line-height: 1.45;
+  }
+  & :is(
+    .memory-rows,
+    .memory-unified-list,
+    .memory-connector-list,
+    .memory-suggestion-list,
+    .memory-connector-diagnostics-list,
+    .memory-connector-run-history,
+    .memory-advanced-stack,
+    [data-testid^='memory-hooks'] > ul
+  ) > * + * {
+    border-top: var(--settings-hairline);
+  }
+
+  /* ── Notes under the master switch ────────────────────────────────────────────────────────── */
+  & :is(.memory-disabled-banner, .memory-noprovider-banner) {
+    margin: 0;
+    padding: 8px var(--settings-row-x);
+    border: 0;
+    border-radius: var(--settings-control-radius);
+    box-shadow: none;
+    font-size: var(--settings-type-hint);
+    line-height: 1.5;
+    text-wrap: pretty;
+
+    & strong {
+      font-weight: 500;
+    }
+  }
+  & .memory-disabled-banner {
+    background: var(--sub);
+    color: var(--ink-soft);
+
+    & strong {
+      color: var(--ink);
+    }
+  }
+  & .memory-noprovider-banner {
+    background: color-mix(in srgb, var(--warning) 7%, var(--surface));
+    color: var(--warning-ink);
+  }
+
+  /* ── Hooks ────────────────────────────────────────────────────────────────────────────────── */
+  & [data-testid^='memory-hooks'] {
+    gap: var(--settings-heading-gap);
+
+    & > div:first-child {
+      gap: 1px;
+    }
+    & > div:first-child > h4 {
+      font-size: var(--settings-type-section);
+      letter-spacing: -0.005em;
+      line-height: 1.4;
+    }
+    & > div:first-child > p {
+      color: var(--ink-soft);
+      font-size: var(--settings-type-hint);
+    }
+    & > ul > li {
+      min-height: var(--settings-row-h);
+      padding: var(--settings-row-y) var(--settings-row-x);
+    }
+    & > ul > li > span:first-child > span {
+      font-size: var(--settings-type-label);
+    }
+    & > ul > li > span:first-child > small {
+      color: var(--ink-soft);
+      font-size: var(--settings-type-hint);
+      line-height: 1.5;
+    }
+  }
+  & [data-testid^='memory-hooks'] .toggle-switch-sm input:disabled + .toggle-slider {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  /* ── How it works ─────────────────────────────────────────────────────────────────────────── */
+  & .memory-how-panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--settings-section-gap);
+    padding: 0;
+  }
+  & .memory-auto-flow {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    max-width: none;
+    min-height: var(--settings-row-h);
+    padding: 0 var(--settings-row-x);
+    border: var(--settings-hairline);
+    border-radius: var(--settings-radius);
+    background: var(--surface);
+    color: var(--ink-soft);
+    font-size: var(--settings-type-control);
+    font-weight: 400;
+    line-height: 1.4;
+
+    & svg {
+      flex: none;
+      color: var(--ink-ghost);
+    }
+    & strong {
+      color: var(--ink);
+      font-weight: 500;
+    }
+  }
+  & .memory-how-copy {
+    max-width: none;
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+
+  /* ── Saved memories ───────────────────────────────────────────────────────────────────────── */
+  & .memory-management-panel {
+    padding: 0;
+    border: 0;
+  }
+  & .memory-records-section .memory-subsection-head {
+    background: none;
+  }
+  & .memory-subsection-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  & .memory-subsection-side {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 12px;
+  }
+  & .memory-management-counts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 0 8px;
+
+    & .memory-source-badge + .memory-source-badge::before {
+      content: '·';
+      margin-right: 8px;
+    }
+  }
+  & .library-toolbar {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+  & .memory-records-section .library-toolbar.is-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  & .memory-records-section .library-filters {
+    gap: 2px;
+  }
+  & .memory-records-section .filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 100ms var(--settings-ease), color 100ms var(--settings-ease);
+
+    &:hover:not(:disabled, .active) {
+      background: var(--settings-hover);
+      color: var(--ink);
+    }
+  }
+  & :is(.memory-records-section, .memory-advanced-card) .filter-pill-count {
+    padding: 0;
+    background: none;
+    color: var(--ink-faint);
+    font-size: var(--settings-type-meta);
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+  }
+  & .memory-management-actions {
+    display: flex;
+    flex: none;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    /* Ghost buttons: their text, not their invisible padding, holds the column's right edge. */
+    margin-right: -8px;
+  }
+  & :is(.memory-clear-extractions, .memory-refresh-extractions) {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 28px;
+    min-height: 0;
+    padding: 0 8px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--ink-soft);
+    box-shadow: none;
+    font-size: var(--settings-type-control);
+    font-weight: 500;
+    line-height: 1.4;
+
+    &:hover:not(:disabled) {
+      background: var(--settings-hover);
+      color: var(--ink);
+    }
+  }
+  & .memory-unified-list {
+    gap: 0;
+    padding: 0;
+  }
+  & :is(.memory-unified-list, .memory-connector-run-history) > .library-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0 12px;
+    min-height: var(--settings-row-h);
+    /* The actions are ghost squares: a shorter inset lets their glyphs, not their boxes, meet the right edge. */
+    padding: var(--settings-row-y) 4px var(--settings-row-y) var(--settings-row-x);
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    transition: background-color 100ms var(--settings-ease);
+
+    &:first-child {
+      border-top: 0;
+    }
+    /* An open row keeps its plain surface so the inset preview still reads as a block. */
+    &:hover:not(:has(> .library-preview)) {
+      border-color: var(--line);
+      background: var(--settings-hover);
+    }
+    & .library-card-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      min-width: 0;
+    }
+    & .library-card-title-row {
+      gap: 8px;
+      min-width: 0;
+      margin: 0;
+    }
+    & .library-card-name {
+      overflow: hidden;
+      color: var(--ink);
+      font-size: var(--settings-type-label);
+      font-weight: 500;
+      line-height: 1.45;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    & .library-card-desc {
+      color: var(--ink-soft);
+      font-size: var(--settings-type-hint);
+      line-height: 1.5;
+      -webkit-line-clamp: 1;
+    }
+    & .library-preview {
+      grid-column: 1 / -1;
+      width: auto;
+      margin: 8px 12px 4px 0;
+      padding: 10px 12px;
+      border: 0;
+      border-radius: var(--settings-control-radius);
+      background: var(--sub);
+      color: var(--ink-soft);
+      font-size: var(--settings-type-hint);
+
+      & p {
+        margin: 0;
+      }
+    }
+    & .library-preview-body {
+      color: var(--ink-soft);
+      font-size: var(--settings-type-hint);
+      line-height: 1.6;
+      /* The legacy pre-wrap also keeps the whitespace between rendered Markdown blocks. */
+      white-space: normal;
+
+      & :is(p, ul, ol) {
+        margin: 0 0 6px;
+      }
+      & :is(ul, ol) {
+        padding-left: 18px;
+      }
+      & > :last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+  & :is(.memory-unified-list, .memory-connector-run-history, .memory-tree-advanced) :is(.library-card-expand, .library-card-action) {
+    display: inline-flex;
+    flex: 0 0 28px;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--ink-faint);
+    box-shadow: none;
+    transition: background-color 100ms var(--settings-ease), color 100ms var(--settings-ease), opacity 100ms var(--settings-ease);
+
+    &:hover:not(:disabled) {
+      background: var(--settings-selected);
+      color: var(--ink);
+    }
+  }
+  & .memory-card-actions {
+    gap: 2px;
+    opacity: 1;
+  }
+  /* Edit and delete repeat on every row, so they only appear on the row in use. Hover and keyboard focus both count. */
+  & .memory-unified-list > .library-card:not(.memory-extraction-card) .library-card-action {
+    opacity: 0;
+  }
+  & .memory-unified-list > .library-card:not(.memory-extraction-card):is(:hover, :focus-within) .library-card-action {
+    opacity: 1;
+  }
+
+  /* Extraction attempts share the row. Status is a word on the meta line; only success and failure carry colour. */
+  & .memory-extraction-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 8px;
+    min-width: 0;
+    color: var(--ink-faint);
+    font-size: var(--settings-type-meta);
+    line-height: 1.5;
+  }
+  & .memory-extraction-pill,
+  & .memory-extraction-pill:is(.is-running, .is-success, .is-skipped, .is-failed) {
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--ink-soft);
+    font-size: var(--settings-type-meta);
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+  & .memory-extraction-pill.is-success {
+    color: var(--success);
+  }
+  & .memory-extraction-pill.is-failed {
+    color: var(--danger);
+  }
+  & .memory-extraction-meta .library-card-badge {
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--ink-faint);
+    font-size: var(--settings-type-meta);
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  & .library-card .memory-extraction-meta .library-card-desc {
+    display: block;
+    color: var(--ink-faint);
+    font-size: var(--settings-type-meta);
+  }
+  & .memory-extraction-reason {
+    margin-top: 2px;
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+    font-style: normal;
+    line-height: 1.5;
+  }
+  & .memory-extraction-failure {
+    gap: 0;
+    margin-top: 4px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+    line-height: 1.5;
+
+    & strong {
+      color: var(--danger);
+      font-size: var(--settings-type-hint);
+      font-weight: 500;
+    }
+  }
+  & .memory-extraction-card .memory-extraction-counts {
+    margin-top: 4px;
+    color: var(--ink-faint);
+    font-size: var(--settings-type-meta);
+  }
+  & .memory-extraction-ids .filter-pill {
+    height: 24px;
+    padding: 0 8px;
+    background: var(--sub);
+    color: var(--ink-soft);
+    font-family: var(--font-mono);
+    font-size: var(--settings-type-meta);
+    font-weight: 400;
+  }
+
+  /* Empty */
+  & .memory-records-section .library-empty-hint {
+    & code {
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: var(--sub);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: var(--settings-type-meta);
+    }
+  }
+
+  /* ── Dialogs ──────────────────────────────────────────────────────────────────────────────── */
+  & .memory-action-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1700;
+    display: grid;
+    place-items: center;
+    padding: 32px;
+  }
+  /* The same width as the page column once its padding is taken off, so rows land exactly where they do on the page. */
+  & .memory-action-modal {
+    display: flex;
+    flex-direction: column;
+    width: min(calc(var(--settings-measure) + 48px), 100%);
+    height: min(640px, 100%);
+    max-height: min(640px, 100%);
+    overflow: hidden;
+    border: 0;
+    border-radius: 16px;
+    background: var(--paper);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent),
+      0 24px 64px -16px rgba(0, 0, 0, 0.28),
+      0 4px 16px rgba(0, 0, 0, 0.08);
+    animation: settings-overlay-in var(--motion-enter) var(--ease-out-quint);
+  }
+  & .memory-action-modal--advanced {
+    height: auto;
+  }
+  & .memory-action-modal-head {
+    display: flex;
+    flex: none;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 24px 0;
+    border: 0;
+
+    & h3 {
+      margin: 0;
+      color: var(--ink);
+      font-size: var(--settings-type-section);
+      font-weight: 600;
+      letter-spacing: -0.005em;
+      line-height: 24px;
+    }
+    & p {
+      margin: 0;
+      color: var(--ink-soft);
+      font-size: var(--settings-type-hint);
+      line-height: 1.5;
+    }
+  }
+  & .memory-action-modal-close {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: var(--settings-control-h);
+    height: var(--settings-control-h);
+    /* Matches the corner the settings dialog's own close button sits in. */
+    margin: -8px -12px 0 0;
+    padding: 0;
+    border: 0;
+    border-radius: var(--settings-control-radius);
+    background: transparent;
+    color: var(--ink-faint);
+    cursor: pointer;
+    transition: background-color 100ms var(--settings-ease), color 100ms var(--settings-ease);
+
+    &:hover,
+    &:focus-visible {
+      border: 0;
+      background: var(--sub);
+      color: var(--ink);
+    }
+  }
+  & .memory-action-modal-body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 0;
+    overflow: auto;
+    padding: 16px 24px 24px;
+  }
+  & .memory-action-modal-body.memory-source-layout {
+    flex-direction: column;
+    align-items: stretch;
+    overflow: hidden;
+    padding-bottom: 0;
+  }
+  & .memory-source-layout .memory-source-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    /* Keeps focus rings off the scroll edge without moving the fields off the column. */
+    margin-inline: -4px;
+    padding: 4px 4px 24px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+  & .memory-tab-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 0;
+  }
+
+  /* Work profile */
+  & [data-testid='memory-profile-panel'] {
+    gap: 16px;
+
+    & > div:first-child > span {
+      display: none;
+    }
+    & > div:first-child h4 {
+      display: none;
+    }
+    & > div:first-child p {
+      margin: 0;
+      color: var(--ink-soft);
+      font-size: var(--settings-type-hint);
+      line-height: 1.5;
+      text-wrap: pretty;
+    }
+    & > div:nth-child(2) {
+      gap: 16px 12px;
+    }
+    & > div:nth-child(2) > label {
+      grid-column: auto;
+      gap: 6px;
+      margin: 0;
+    }
+    & > div:nth-child(2) > label:has(textarea) {
+      grid-column: 1 / -1;
+    }
+    & > div:nth-child(2) > label > span {
+      color: var(--ink);
+      font-size: var(--settings-type-control);
+      font-weight: 500;
+      letter-spacing: 0;
+      line-height: 1.45;
+      text-transform: none;
+    }
+    & > div:last-child {
+      gap: 12px;
+    }
+    & [role='status'] {
+      color: var(--ink-soft);
+      font-size: var(--settings-type-meta);
+      font-weight: 400;
+    }
+  }
+
+  /* Manual */
+  & .memory-flash-pill {
+    align-self: flex-start;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--ink-soft);
+    font-size: var(--settings-type-meta);
+    font-weight: 400;
+  }
+  & .memory-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  & .memory-editor-starters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  & .memory-editor-pair {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 176px;
+    gap: 12px;
+  }
+  & .memory-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    margin: 0;
+
+    & > :is(input, textarea) {
+      width: 100%;
+    }
+  }
+  & .settings-content textarea.memory-editor-body {
+    font-family: var(--font-mono);
+    font-size: var(--settings-type-meta);
+    line-height: 1.6;
+  }
+  & :is(.memory-editor-foot, .memory-index-foot) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  & :is(.memory-editor-actions, .memory-index-actions) {
+    display: flex;
+    flex: none;
+    gap: 8px;
+  }
+  & .memory-editor-actions .ghost {
+    height: var(--settings-control-h);
+    min-height: 0;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--settings-control-radius);
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: none;
+    font-size: var(--settings-type-control);
+    font-weight: 500;
+
+    &:hover:not(:disabled) {
+      border-color: var(--ink-ghost);
+      background: var(--sub);
+    }
+  }
+
+  /* Connected apps */
+  & .memory-connector-workbench,
+  & .memory-suggestion-panel,
+  & .memory-connector-diagnostics {
+    display: flex;
+    flex-direction: column;
+    gap: var(--settings-heading-gap);
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+  }
+  & label.memory-connector-row,
+  & label.memory-suggestion-card {
+    display: grid;
+    align-items: center;
+    gap: 12px;
+    min-height: var(--settings-row-h);
+    margin: 0;
+    padding: var(--settings-row-y) var(--settings-row-x);
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--ink);
+    transition: background-color 100ms var(--settings-ease);
+
+    &:first-child {
+      border-top: 0;
+    }
+    /* The filled check carries selection. Suggestions all start selected, so a row wash would only grey the list. */
+    &.is-selected {
+      border-color: var(--line);
+      background: transparent;
+    }
+  }
+  & label.memory-connector-row {
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+
+    &.is-disabled {
+      background: transparent;
+      color: var(--ink);
+    }
+    &:not(.is-disabled):hover {
+      background: var(--settings-hover);
+    }
+    &:has(.memory-connector-input:focus-visible) {
+      outline: 2px solid var(--focus-ring-color);
+      outline-offset: -2px;
+    }
+  }
+  & .memory-connector-brand {
+    width: 32px;
+    height: 32px;
+
+    & .connector-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--settings-control-radius);
+    }
+  }
+  /* The row's own check says the same thing; a second one on the logo was noise. */
+  & .memory-connector-selected-mark {
+    display: none;
+  }
+  & .memory-connector-copy {
+    gap: 1px;
+
+    & strong {
+      color: var(--ink);
+      font-size: var(--settings-type-label);
+      font-weight: 500;
+      line-height: 1.45;
+    }
+    & small {
+      color: var(--ink-soft);
+      font-size: var(--settings-type-hint);
+      line-height: 1.5;
+    }
+  }
+  & .memory-connector-picker,
+  & .memory-connector-row:not(.is-disabled):hover .memory-connector-picker,
+  & .memory-connector-picker.is-selected {
+    gap: 8px;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--ink-soft);
+    font-size: var(--settings-type-control);
+    font-weight: 400;
+  }
+  & .memory-connector-picker.is-selected,
+  & .memory-connector-row:not(.is-disabled):hover .memory-connector-picker.is-selected {
+    color: var(--ink);
+  }
+  & :is(.memory-connector-picker-box, .memory-connector-check > span) {
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--ink-ghost);
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--on-brand);
+  }
+  & .memory-connector-picker.is-selected .memory-connector-picker-box,
+  & .memory-suggestion-card.is-selected .memory-connector-check > span {
+    border-color: var(--brand);
+    background: var(--brand);
+    color: var(--on-brand);
+  }
+  & .memory-connector-connect-button {
+    gap: 6px;
+    height: var(--settings-control-h);
+    min-height: 0;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--settings-control-radius);
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: none;
+    font-size: var(--settings-type-control);
+    font-weight: 500;
+
+    &:hover:not(:disabled) {
+      border-color: var(--ink-ghost);
+      background: var(--sub);
+      color: var(--ink);
+    }
+    &:disabled {
+      border-color: var(--line);
+      background: var(--surface);
+      color: var(--ink-soft);
+      opacity: 0.5;
+    }
+  }
+  & .memory-connector-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0;
+  }
+  & .memory-suggestion-panel > .memory-connector-actions {
+    flex-direction: row-reverse;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+  & .memory-connector-result {
+    padding: 8px var(--settings-row-x);
+    border: 0;
+    border-radius: var(--settings-control-radius);
+    font-size: var(--settings-type-hint);
+    line-height: 1.5;
+
+    &.is-success {
+      border: 0;
+      background: var(--sub);
+      color: var(--ink-soft);
+    }
+    &.is-error {
+      border: 0;
+      background: color-mix(in srgb, var(--danger) 6%, var(--surface));
+      color: var(--danger);
+    }
+  }
+
+  /* Suggestions */
+  & label.memory-suggestion-card {
+    grid-template-columns: 16px minmax(0, 1fr) auto;
+    align-items: flex-start;
+
+    &:hover {
+      background: var(--settings-hover);
+    }
+  }
+  & .memory-connector-check {
+    width: 16px;
+    height: 20px;
+  }
+  & .memory-suggestion-copy {
+    gap: 1px;
+
+    & small {
+      color: var(--ink-soft);
+      font-size: var(--settings-type-hint);
+      line-height: 1.5;
+    }
+  }
+  & .memory-suggestion-title strong {
+    color: var(--ink);
+    font-size: var(--settings-type-label);
+    font-weight: 500;
+    line-height: 1.45;
+  }
+  & .memory-suggestion-body {
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+    line-height: 1.5;
+  }
+  & :is(.memory-type-badge, .memory-connector-state, .memory-connector-state.is-connected) {
+    min-height: 0;
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--ink-faint);
+    font-size: var(--settings-type-meta);
+    font-weight: 400;
+    line-height: 20px;
+    text-transform: none;
+  }
+
+  /* Scan record */
+  & .memory-connector-diagnostics-head {
+    color: var(--ink);
+
+    & strong {
+      font-size: var(--settings-type-section);
+      font-weight: 600;
+    }
+    & span {
+      color: var(--ink-faint);
+      font-size: var(--settings-type-meta);
+      font-weight: 400;
+    }
+  }
+  & .memory-connector-diagnostic-row {
+    gap: 12px;
+    min-height: var(--settings-row-h);
+    padding: var(--settings-row-y) var(--settings-row-x);
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  & .memory-connector-diagnostic-dot {
+    width: 6px;
+    height: 6px;
+    margin-top: 7px;
+  }
+  & .memory-connector-diagnostic-copy {
+    gap: 1px;
+
+    & strong {
+      color: var(--ink);
+      font-size: var(--settings-type-label);
+      font-weight: 500;
+      line-height: 1.45;
+    }
+    & small {
+      color: var(--ink-soft);
+      font-size: var(--settings-type-hint);
+      line-height: 1.5;
+    }
+  }
+  & .memory-scan-history summary {
+    min-height: var(--settings-row-h);
+    padding: 0 var(--settings-row-x) 0 32px;
+    color: var(--ink);
+    font-size: var(--settings-type-label);
+    font-weight: 500;
+
+    &:hover {
+      background: var(--settings-hover);
+    }
+    &::before {
+      left: var(--settings-row-x);
+      color: var(--ink-faint);
+    }
+    & span:last-child {
+      min-height: 0;
+      padding: 0;
+      border-radius: 0;
+      background: none;
+      color: var(--ink-faint);
+      font-size: var(--settings-type-meta);
+      font-weight: 400;
+    }
+  }
+  & .memory-scan-history .memory-connector-run-history {
+    gap: 0;
+    padding: 0;
+    border-top: var(--settings-hairline);
+  }
+
+  /* Advanced */
+  & .memory-advanced-stack {
+    /* Scrolls with the dialog body instead of being squeezed by it. */
+    flex: none;
+  }
+  & .memory-path-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: var(--settings-row-h);
+    padding: 10px 8px 10px var(--settings-row-x);
+
+    & code {
+      flex: 1 1 auto;
+      min-width: 0;
+      padding: 0;
+      background: none;
+      color: var(--ink-soft);
+      font-family: var(--font-mono);
+      font-size: var(--settings-type-meta);
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+  }
+  & .memory-path-copied-badge {
+    flex: none;
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--ink-soft);
+    font-size: var(--settings-type-meta);
+    font-weight: 400;
+  }
+  & .memory-icon-action {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--ink-faint);
+    box-shadow: none;
+    transition: background-color 100ms var(--settings-ease), color 100ms var(--settings-ease);
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+      background: var(--settings-selected);
+      color: var(--ink);
+      box-shadow: none;
+    }
+  }
+  & .memory-advanced-card {
+    display: block;
+    margin: 0;
+    padding: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 0;
+    background: none;
+
+    &:first-child {
+      border-top: 0;
+    }
+  }
+  & .memory-details-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: var(--settings-row-h);
+    padding: 0 var(--settings-row-x);
+    color: var(--ink);
+    font-size: var(--settings-type-label);
+    font-weight: 500;
+    transition: background-color 100ms var(--settings-ease);
+
+    /* The legacy glyph marker gives way to a chevron on the right edge, as on every other disclosure row here. */
+    &::before {
+      content: none;
+    }
+    & > svg {
+      flex: none;
+      margin-right: -5px;
+      margin-left: auto;
+      color: var(--ink-faint);
+      transition: transform 200ms var(--settings-ease);
+    }
+    &:hover {
+      background: var(--settings-hover);
+    }
+    &:focus-visible {
+      border-radius: 0;
+      outline: 2px solid var(--focus-ring-color);
+      outline-offset: -2px;
+    }
+  }
+  & .memory-advanced-card[open] > .memory-details-summary > svg {
+    transform: rotate(90deg);
+  }
+  & .memory-advanced-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 4px var(--settings-row-x) var(--settings-row-x);
+
+    & textarea {
+      width: 100%;
+      font-family: var(--font-mono);
+      font-size: var(--settings-type-meta);
+    }
+  }
+  & .memory-index-foot .hint.is-dirty {
+    color: var(--warning-ink);
+  }
+  & .memory-tree-advanced {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin: 0;
+
+    & .library-card-name {
+      color: var(--ink);
+      font-size: var(--settings-type-control);
+      font-weight: 500;
+    }
+    & .library-card-badge {
+      padding: 0;
+      border-radius: 0;
+      background: none;
+      color: var(--ink-faint);
+      font-family: var(--font-mono);
+      font-size: var(--settings-type-meta);
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    & .library-card-desc {
+      display: block;
+      color: var(--ink-soft);
+      font-size: var(--settings-type-hint);
+      line-height: 1.5;
+    }
+  }
+  & .memory-tree-folder-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding-bottom: 4px;
+  }
+  & .memory-tree-folder-count {
+    margin-left: auto;
+    color: var(--ink-faint);
+    font-size: var(--settings-type-meta);
+  }
+  & .memory-tree-children {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  & .memory-tree-child-row {
+    gap: 8px;
+    min-height: 36px;
+    padding: 4px 0;
+    border-top: var(--settings-hairline);
+  }
+  & .memory-tree-child-copy {
+    min-width: 0;
+  }
+  & .memory-tree-child-row .memory-card-actions {
+    /* The pencil's drawing, not its ghost box, meets the folder count's right edge. */
+    margin-right: -7px;
+  }
+}

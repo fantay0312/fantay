@@ -1,0 +1,95 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* ── Narrow windows ────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 1040px) {
+  :is([data-fantay-shell], [data-client-type='desktop']) .settings-page-shell {
+    /* Stacked, the list no longer runs beside the form, so the form has nothing to stay level with. */
+    & .settings-providers {
+      grid-template-columns: minmax(0, 1fr);
+      row-gap: var(--settings-tab-gap);
+    }
+    & :is(.settings-section-byok, .media-provider-column) {
+      position: static;
+    }
+    & .protocol-chip-group-options {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 2px;
+    }
+    & .protocol-chips--providers .protocol-chip {
+      width: auto;
+      height: 28px;
+    }
+    & .protocol-chips--providers .protocol-chip > :is(.media-provider-chip-status, .protocol-chip-status) {
+      order: 0;
+    }
+  }
+}
+@media (max-width: 900px) {
+  :is([data-fantay-shell], [data-client-type='desktop']) .settings-page-shell {
+    --settings-content-y: 32px;
+    & :is(.modal-settings.settings-page-surface, .modal-body) {
+      grid-template-columns: 180px minmax(0, 1fr);
+    }
+    & .settings-content {
+      padding: var(--settings-content-y) 24px 40px;
+    }
+    & .settings-general-block .settings-subsection > .settings-field > .seg-control {
+      flex: 1 1 auto;
+      width: auto;
+    }
+  }
+}
+@media (max-width: 680px) {
+  :is([data-fantay-shell], [data-client-type='desktop']) .settings-page-shell {
+    --settings-content-y: 16px;
+    & :is(.modal-settings.settings-page-surface, .modal-body) {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+    & .settings-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 40px 14px 10px;
+      border-right: 0;
+      border-bottom: var(--settings-hairline);
+    }
+    & .settings-sidebar-title {
+      display: none;
+    }
+    & .settings-nav {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      gap: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    & .settings-nav-group {
+      display: contents;
+    }
+    & .settings-nav::-webkit-scrollbar {
+      display: none;
+    }
+    & .settings-nav-item {
+      display: inline-flex;
+      flex: 0 0 auto;
+      justify-content: flex-start;
+      gap: 6px;
+      width: auto;
+      min-width: 0;
+      padding: 4px 10px;
+    }
+    & .settings-content {
+      padding: var(--settings-content-y) 14px 32px;
+    }
+    & .agent-card-config {
+      grid-template-columns: minmax(0, 1fr);
+      padding-left: var(--settings-row-x);
+    }
+    & .settings-general-field,
+    & .settings-general-block .settings-subsection > .settings-field {
+      flex-wrap: wrap;
+    }
+  }
+}

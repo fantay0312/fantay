@@ -1,0 +1,157 @@
+/* The mark is a zero-sized anchor: its origin is the landing point, and everything hangs off that
+   point. Position, size, squash and the shadow's place are written by the rAF loop in
+   StudioColorMark.tsx; the perspective is set inline there. The idle life — a slow bob, a blink,
+   eyes that follow the pointer — is CSS, on separate properties so it never fights the loop. */
+.mark {
+  --mark-size: 68px;
+  --mark-eye: #141311;
+  --look-x: 0px;
+  --look-y: 0px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 4;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* The loop places this wrapper on the floor under the feet and shrinks it with the lift; the ellipse
+   inside breathes with the bob. A blurred ellipse rather than a gradient: the system bans gradients. */
+.shadowPos {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+}
+.shadow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--mark-size) * 0.78);
+  height: calc(var(--mark-size) * 0.14);
+  border-radius: 50%;
+  background-color: rgba(22, 16, 12, 0.36);
+  filter: blur(calc(var(--mark-size) * 0.05));
+  translate: -50% -50%;
+}
+
+.idle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-style: preserve-3d;
+}
+.mark[data-idle] .idle { animation: markBob 3.8s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+.mark[data-idle] .shadow { animation: markBreathe 3.8s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+@keyframes markBob {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -3px; }
+}
+@keyframes markBreathe {
+  0%, 100% { scale: 1; opacity: 1; }
+  50% { scale: 0.9; opacity: 0.82; }
+}
+
+.rotor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.cube {
+  position: absolute;
+  left: calc(var(--mark-size) * -0.5);
+  top: calc(var(--mark-size) * -0.72);
+  width: var(--mark-size);
+  height: var(--mark-size);
+  transform-style: preserve-3d;
+}
+.face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+}
+.front { transform: translateZ(calc(var(--mark-size) * 0.5)); }
+.back { transform: rotateY(180deg) translateZ(calc(var(--mark-size) * 0.5)); }
+.right { transform: rotateY(90deg) translateZ(calc(var(--mark-size) * 0.5)); }
+.left { transform: rotateY(-90deg) translateZ(calc(var(--mark-size) * 0.5)); }
+.top { transform: rotateX(90deg) translateZ(calc(var(--mark-size) * 0.5)); }
+.bottom { transform: rotateX(-90deg) translateZ(calc(var(--mark-size) * 0.5)); }
+
+.eye, .sideEye {
+  position: absolute;
+  top: 46%;
+  border-radius: 99px;
+  background-color: var(--mark-eye);
+  translate: var(--look-x) var(--look-y);
+  transition: translate 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.eye { width: 12%; height: 26%; }
+.eyeLeft { left: 30%; }
+.eyeRight { right: 30%; }
+.mark[data-idle] .eye, .mark[data-idle] .sideEye { animation: markBlink 5.4s linear infinite; }
+.mark[data-idle] .eyeRight, .mark[data-idle] .sideEyeRight { animation-delay: 40ms; }
+@keyframes markBlink {
+  0%, 92%, 100% { scale: 1 1; }
+  94% { scale: 1 0.12; }
+  96% { scale: 1 1; }
+}
+
+.pyramid {
+  position: absolute;
+  left: 0;
+  top: calc(var(--mark-size) * -0.5);
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+}
+.side {
+  position: absolute;
+  left: calc(var(--mark-size) * -0.5);
+  top: 0;
+  margin: 0;
+  width: var(--mark-size);
+  height: calc(var(--mark-size) * 0.926);
+  clip-path: polygon(50% 0, 0 100%, 100% 100%);
+  transform-origin: 50% 0;
+  backface-visibility: hidden;
+  opacity: 0;
+}
+.north { transform: rotateX(-32.7deg); }
+.east { transform: rotateY(90deg) rotateX(-32.7deg); }
+.south { transform: rotateY(180deg) rotateX(-32.7deg); }
+.west { transform: rotateY(270deg) rotateX(-32.7deg); }
+
+.sideEye { width: 9%; height: 18%; }
+.sideEyeLeft { left: 36%; }
+.sideEyeRight { left: 52%; }
+
+.baseWrap {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform: translateY(calc(var(--mark-size) * 0.78));
+  transform-style: preserve-3d;
+}
+.side.base {
+  left: calc(var(--mark-size) * -0.5);
+  top: calc(var(--mark-size) * -0.5);
+  width: var(--mark-size);
+  height: var(--mark-size);
+  clip-path: none;
+  transform: rotateX(-90deg);
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mark[data-idle] .idle, .mark[data-idle] .shadow, .mark[data-idle] .eye, .mark[data-idle] .sideEye { animation: none; }
+  .eye, .sideEye { transition: none; translate: none; }
+}

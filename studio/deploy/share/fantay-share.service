@@ -1,0 +1,29 @@
+[Unit]
+Description=Fantaydesign TokenToSea sharing
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=fantay-share
+Group=fantay-share
+WorkingDirectory=/opt/fantay-share/current
+EnvironmentFile=/etc/fantay-share.env
+ExecStart=/opt/fantay-runtime/node-v24.21.0-linux-x64/bin/node /opt/fantay-share/current/server.mjs
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=20
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+ReadWritePaths=/var/lib/fantay-share
+UMask=0077
+MemoryMax=512M
+TasksMax=128
+
+[Install]
+WantedBy=multi-user.target

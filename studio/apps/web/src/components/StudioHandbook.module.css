@@ -1,0 +1,220 @@
+.root { color: var(--ink); font-size: 14px; line-height: 1.65; }
+.root a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.root a:hover { text-decoration-color: currentColor; }
+/* Section-level actions hang from the top of the section body into the gap under the shell's
+   section header, right aligned, the same in every section and without a row of their own. */
+.sectionTools { position: relative; height: 0; }
+.sectionTools > div { position: absolute; right: 0; bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.smallButton { font-size: 12px; font-weight: 600; }
+.note { max-width: 68ch; margin: 8px 0 0; color: var(--ink-faint); font-size: 12px; line-height: 18px; }
+.empty { margin: 0; padding: 12px 0; color: var(--ink-soft); font-size: 13px; }
+.error { color: var(--accent-ink); font-size: 13px; }
+
+/* Blocks inside a section: one level below the shell's h2. */
+.block { margin-top: 40px; }
+.block:first-child { margin-top: 0; }
+.block h3, .columns h3, .typeBlock h3 { margin: 0; color: var(--ink); font-size: 14px; font-weight: 600; line-height: 20px; letter-spacing: 0; }
+.blockHead { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 28px; }
+
+/* Long-form text: a reading measure and a rhythm, not a wall. Markdown ## sits under the section h2. */
+.prose { max-width: 68ch; color: var(--ink-soft); font-size: 14px; line-height: 1.75; }
+.prose > :first-child { margin-top: 0; }
+.prose > :last-child { margin-bottom: 0; }
+.prose h1, .prose h2 { margin: 36px 0 8px; color: var(--ink); font-family: inherit; font-size: 16px; font-weight: 600; line-height: 24px; letter-spacing: -0.01em; }
+.prose h3 { margin: 28px 0 6px; color: var(--ink); font-family: inherit; font-size: 14px; font-weight: 600; line-height: 20px; }
+.block .prose h1, .block .prose h2 { margin-top: 28px; font-size: 14px; line-height: 20px; letter-spacing: 0; }
+.block .prose > :first-child { margin-top: 12px; }
+.prose h4 { margin: 20px 0 4px; color: var(--ink); font-size: 13px; font-weight: 600; line-height: 20px; }
+.prose p { margin: 0 0 12px; font-size: 14px; line-height: 1.75; }
+.prose ul, .prose ol { margin: 0 0 12px; padding-inline-start: 20px; list-style: revert; }
+.prose li { margin-bottom: 4px; }
+.prose strong { color: var(--ink); font-weight: 600; }
+.prose :global(.md-table-wrap) { margin: 4px 0 16px; overflow-x: auto; border: 0; border-radius: 0; background: none; scrollbar-width: thin; }
+.prose table { width: 100%; margin: 0; border: 0; border-collapse: collapse; font-size: 13px; line-height: 20px; }
+.prose th { padding: 8px 16px 8px 0; border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--ink-faint); font-size: 12px; font-weight: 500; text-align: left; }
+.prose td { padding: 10px 16px 10px 0; border: 0; border-bottom: 1px solid var(--line-soft); text-align: left; vertical-align: top; }
+.prose tr:last-child td { border-bottom: 0; }
+.prose :global(.md-inline-code) { padding: 1px 4px; border-radius: var(--radius-tag, 4px); background: var(--sub); color: var(--ink); font-family: var(--font-mono); font-size: 12px; }
+
+/* Rules: the instruction in ink, its reason one step quieter under it. */
+.rules { margin: 12px 0 0; padding: 0; list-style: none; }
+.rule { display: flex; align-items: flex-start; gap: 16px; padding-block: 12px; border-top: 1px solid var(--line-soft); }
+.rule:first-child { border-top-color: var(--line); }
+.rule > div:first-child { flex: 1 1 auto; min-width: 0; max-width: 68ch; }
+.ruleText { margin: 0; color: var(--ink); font-size: 14px; font-weight: 500; line-height: 22px; overflow-wrap: anywhere; }
+.ruleReason { margin: 2px 0 0; color: var(--ink-soft); font-size: 13px; line-height: 20px; overflow-wrap: anywhere; }
+.ruleTools { display: flex; flex: none; gap: 2px; }
+.reviewChecks { max-width: 68ch; margin: 12px 0 0; padding-inline-start: 24px; list-style: decimal; }
+.reviewChecks li { padding: 6px 0 6px 4px; color: var(--ink); font-size: 13px; line-height: 20px; overflow-wrap: anywhere; }
+.reviewChecks li::marker { color: var(--ink-faint); font-size: 12px; font-variant-numeric: tabular-nums; }
+
+/* Type styles: their own block under the type specimens, with air between the two. */
+.typeBlock { margin-top: 32px; }
+.typeBlock .blockHead + .note { margin-top: 4px; }
+.typeRows { margin-top: 12px; }
+.typeRow { min-width: 0; padding-block: 16px 20px; border-top: 1px solid var(--line-soft); }
+.typeRow:first-of-type { border-top-color: var(--line); }
+.typeHead { display: flex; align-items: center; gap: 8px; min-height: 24px; margin-bottom: 8px; }
+.typeHead strong { flex: none; color: var(--ink); font-size: 13px; font-weight: 600; line-height: 20px; }
+.typeHead small { flex: none; color: var(--ink-faint); font-size: 12px; font-weight: 500; line-height: 16px; }
+.typeHead code { flex: 1 1 auto; min-width: 0; overflow: hidden; color: var(--ink-faint); font-family: var(--font-mono); font-size: 11px; line-height: 16px; font-variant-numeric: tabular-nums; text-align: end; text-overflow: ellipsis; white-space: nowrap; }
+/* Slack in the block padding keeps ascenders and descenders clear of the ellipsis clip at tight leading. */
+.typeSpecimen { margin: 0; padding-block: 0.1em; overflow: hidden; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
+.typeNote { max-width: 68ch; margin: 8px 0 0; color: var(--ink-soft); font-size: 13px; line-height: 20px; }
+
+/* Contrast pairs */
+.contrastGroup { margin-top: 20px; }
+.contrastGroup h4 { margin: 0 0 8px; color: var(--ink-soft); font-size: 12px; font-weight: 500; line-height: 16px; }
+.contrastGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--st-gap, 12px); }
+.contrastTile { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--st-radius-small, 14px); }
+/* Everything in the sample is the real pair; the tile's border keeps a white ground off a white page. */
+.contrastSample { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; height: 104px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.contrastSample span { font-size: 40px; font-weight: 600; line-height: 44px; letter-spacing: -0.02em; }
+.contrastSample small { font-size: 13px; font-weight: 400; line-height: 20px; white-space: nowrap; }
+.contrastSample[data-undefined] { background: none; color: var(--ink-faint); }
+.contrastFacts { padding: 10px 14px 12px; }
+.contrastFacts > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.contrastFacts strong { color: var(--ink); font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.015em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.contrastFacts code { display: block; margin-top: 2px; overflow: hidden; color: var(--ink-faint); font-family: var(--font-mono); font-size: 11px; line-height: 16px; text-overflow: ellipsis; white-space: nowrap; }
+/* Filled, outlined, dashed, each with its own glyph: the verdict survives without colour. */
+.badge { display: inline-flex; align-items: center; gap: 3px; height: 20px; padding-inline: 6px; border-radius: var(--radius-tag, 4px); font-size: 11px; font-weight: 600; line-height: 16px; white-space: nowrap; }
+.badge[data-verdict="pass"] { background-color: var(--ink); color: var(--paper); }
+.badge[data-verdict="fail"] { box-shadow: inset 0 0 0 1px var(--accent-ink); color: var(--accent-ink); }
+.badge[data-verdict="manual"], .badge[data-verdict="undefined"] { outline: 1px dashed var(--ink-faint); outline-offset: -1px; color: var(--ink-soft); }
+
+/* Manual checklist */
+.progress { color: var(--ink-soft); font-size: 12px; font-weight: 500; line-height: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.progressBar { height: 2px; margin-top: 8px; overflow: hidden; border-radius: 1px; background: var(--line-soft); }
+.progressBar i { display: block; height: 100%; background-color: var(--ink); transform-origin: left; transition: transform 320ms var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)); }
+.checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; margin-top: 12px; }
+.check { position: relative; display: flex; align-items: center; gap: 10px; min-height: 44px; border-bottom: 1px solid var(--line-soft); color: var(--ink); font-size: 13px; line-height: 20px; cursor: pointer; }
+.check input { position: absolute; width: 16px; height: 16px; margin: 0; opacity: 0; cursor: inherit; }
+.check input:disabled ~ * { cursor: default; }
+.checkBox { display: grid; place-items: center; flex: none; width: 16px; height: 16px; border-radius: var(--radius-tag, 4px); box-shadow: inset 0 0 0 1.5px var(--ink-faint); color: var(--paper); transition: background-color var(--st-dur-micro, 120ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)); }
+.checkBox svg { opacity: 0; transform: scale(0.7); transition: opacity 120ms var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)), transform var(--st-dur-enter, 220ms) cubic-bezier(0.34, 1.56, 0.64, 1); }
+.check:hover input:not(:disabled) + .checkBox { box-shadow: inset 0 0 0 1.5px var(--ink); }
+.check input:checked + .checkBox { background-color: var(--ink); box-shadow: none; }
+.check input:checked + .checkBox svg { opacity: 1; transform: scale(1); }
+.check input:focus-visible + .checkBox { outline: 2px solid var(--info); outline-offset: 2px; }
+.check input:disabled:not(:checked) + .checkBox { box-shadow: inset 0 0 0 1.5px var(--line); }
+
+/* Source cards */
+.sources { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--st-gap, 12px); margin-bottom: 32px; }
+.root .source { display: flex; flex-direction: column; min-width: 0; padding: 14px 16px 16px; border-radius: var(--st-radius-card, 16px); box-shadow: inset 0 0 0 1px var(--line); color: var(--ink); text-decoration: none; transition: background-color var(--st-dur-micro, 120ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)); }
+.root a.source:hover { background-color: var(--sub); }
+.sourceTop { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; color: var(--ink-soft); }
+.sourceLabel { color: var(--ink-faint); font-size: 12px; font-weight: 500; line-height: 16px; }
+.sourceValue { margin-top: 2px; overflow: hidden; font-size: 14px; font-weight: 500; line-height: 20px; text-overflow: ellipsis; white-space: nowrap; }
+.sourceValue[data-empty] { color: var(--ink-faint); font-weight: 400; }
+
+/* Governance */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; border-block: 1px solid var(--line); }
+.stat { display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: 4px; min-width: 0; padding: 16px 16px 16px 0; }
+.stat + .stat { padding-inline-start: 16px; border-inline-start: 1px solid var(--line-soft); }
+.stat dt { color: var(--ink-faint); font-size: 12px; font-weight: 500; line-height: 16px; }
+.stat dd { margin: 0; color: var(--ink); font-size: 28px; font-weight: 600; line-height: 34px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.stat[data-kind="text"] dd { font-size: 14px; font-weight: 500; letter-spacing: 0; }
+.columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; margin-top: 40px; }
+.columns .prose { margin-top: 8px; font-size: 13px; line-height: 1.7; }
+.columns .prose p, .columns .prose li { font-size: 13px; line-height: 1.7; }
+
+.timeline { margin: 16px 0 0; padding: 0; list-style: none; }
+.timeline li { position: relative; padding: 0 0 24px 22px; }
+.timeline li::before { content: ''; position: absolute; top: 12px; bottom: -8px; left: 3px; width: 1px; background: var(--line); }
+.timeline li::after { content: ''; position: absolute; top: 6px; left: 0; width: 7px; height: 7px; border-radius: 50%; background: var(--paper); box-shadow: inset 0 0 0 1.5px var(--ink-faint); }
+.timeline li:first-child::after { background: var(--ink); box-shadow: none; }
+.timeline li:last-child { padding-bottom: 0; }
+.timeline li:last-child::before { display: none; }
+.timelineHead { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+.timelineHead strong { color: var(--ink); font-family: var(--font-mono); font-size: 13px; font-weight: 600; line-height: 20px; font-variant-numeric: tabular-nums; }
+.timelineHead time { color: var(--ink-faint); font-family: var(--font-mono); font-size: 11px; line-height: 16px; font-variant-numeric: tabular-nums; }
+.timeline .prose { font-size: 13px; line-height: 1.7; }
+.timeline .prose > :first-child { margin-top: 0; }
+.timeline .prose p { font-size: 13px; line-height: 1.7; }
+
+.history { display: flex; align-items: center; gap: 10px; width: calc(100% + 16px); min-height: 44px; height: auto; padding: 6px 8px; margin-inline: -8px; border: 0; border-radius: var(--radius-control); background: transparent; color: var(--ink-soft); cursor: pointer; font: inherit; font-size: 13px; font-weight: 500; line-height: 20px; text-align: left; white-space: normal; transition: background-color var(--st-dur-micro, 120ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)); }
+.history:first-of-type { margin-top: 8px; }
+.history:hover { background-color: var(--sub); }
+.history svg { flex: none; color: var(--ink-faint); }
+.history time { margin-inline-start: auto; color: var(--ink-faint); font-family: var(--font-mono); font-size: 11px; font-weight: 400; line-height: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.history time + span { color: var(--ink-faint); font-size: 12px; white-space: nowrap; }
+.historyMore { margin-top: 8px; }
+
+/* Dialog. Portaled to <body>, outside the shell root, so it brings its own motion values. */
+.dialog {
+  --st-ease-ui: cubic-bezier(0.23, 1, 0.32, 1);
+  --st-dur-enter: 220ms;
+  --st-dur-exit: 140ms;
+  --st-dur-micro: 120ms;
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  box-sizing: border-box;
+  width: min(720px, calc(100vw - 32px));
+  max-height: 90dvh;
+  margin: auto;
+  padding: 24px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--st-radius-card, 16px);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.6;
+  animation: dialogIn var(--st-dur-enter) var(--st-ease-ui);
+}
+.dialog[open] { display: flex; flex-direction: column; }
+.dialog > * { flex: none; }
+.dialog::backdrop { background: color-mix(in srgb, var(--paper) 60%, transparent); backdrop-filter: blur(50px) saturate(180%); -webkit-backdrop-filter: blur(50px) saturate(180%); animation: backdropIn var(--st-dur-enter) var(--st-ease-ui); }
+.dialog[data-closing] { animation: dialogOut var(--st-dur-exit) var(--st-ease-ui) forwards; }
+.dialog[data-closing]::backdrop { animation: backdropOut var(--st-dur-exit) var(--st-ease-ui) forwards; }
+.dialog > header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.dialog h3 { min-width: 0; margin: 0; overflow: hidden; color: var(--ink); font-size: 15px; font-weight: 600; line-height: 22px; letter-spacing: -0.01em; text-overflow: ellipsis; white-space: nowrap; }
+.dialog :focus-visible { outline: 2px solid var(--info); outline-offset: 2px; }
+@keyframes dialogIn { from { opacity: 0; transform: scale(0.97); } }
+@keyframes dialogOut { to { opacity: 0; transform: scale(0.98); } }
+@keyframes backdropIn { from { opacity: 0; } }
+@keyframes backdropOut { to { opacity: 0; } }
+
+.form { display: grid; gap: 16px; }
+.form > div { min-width: 0; }
+.field { display: flex; flex-direction: column; gap: 6px; color: var(--ink-soft); font-size: 12px; font-weight: 500; line-height: 16px; }
+.form input, .form textarea, .form :global(.od-select-trigger) { box-sizing: border-box; width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; font-weight: 400; line-height: 20px; }
+.form :global(.od-select-trigger) { display: grid; align-content: center; align-items: center; text-align: start; }
+.form textarea { min-height: 112px; resize: vertical; font-family: var(--font-mono); font-size: 12px; line-height: 1.65; }
+.form footer { display: flex; justify-content: flex-end; gap: 8px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
+.form h4 { margin: 0 0 8px; color: var(--ink); font-size: 12px; font-weight: 600; line-height: 16px; }
+.diff { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.diff pre { max-height: 350px; margin: 0; padding: 12px; overflow: auto; border-radius: var(--radius-control); background: var(--sub); color: var(--ink-soft); font-family: var(--font-mono); font-size: 11.5px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; scrollbar-width: thin; }
+
+@container (max-width: 860px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat:nth-child(odd) { padding-inline-start: 0; border-inline-start: 0; }
+  .stat:nth-child(n + 3) { border-top: 1px solid var(--line-soft); }
+}
+@container (max-width: 640px) {
+  /* Where the shell's header stacks, its hint can run under the hanging row, so the row drops back in. */
+  .sectionTools { height: auto; margin-bottom: 16px; }
+  .sectionTools > div { position: static; justify-content: flex-end; }
+  .contrastGrid, .sources { grid-template-columns: minmax(0, 1fr); }
+  .contrastSample { height: 88px; }
+  .checks, .columns { grid-template-columns: minmax(0, 1fr); }
+  .history { flex-wrap: wrap; }
+  .history time { margin-inline-start: 0; }
+  .typeHead { flex-wrap: wrap; }
+  .typeHead code { flex-basis: 100%; order: 3; text-align: start; }
+  .typeHead button { margin-inline-start: auto; }
+}
+@media (max-width: 600px) {
+  .diff { grid-template-columns: minmax(0, 1fr); }
+  .dialog { padding: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dialog, .dialog::backdrop, .dialog[data-closing], .dialog[data-closing]::backdrop { animation: none; }
+  .progressBar i, .checkBox, .checkBox svg, .root .source, .history { transition: none; }
+}
+/* Where a rule came from, when it was learnt from a correction rather than written by hand. */
+.ruleMeta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 6px 0 0; color: var(--ink-faint); font-size: 12px; line-height: 18px; }
+.ruleBadge { padding: 0 7px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink-soft); font-size: 11px; line-height: 18px; }

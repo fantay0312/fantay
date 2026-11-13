@@ -1,0 +1,41 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.lastChecked, .status {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+.lastChecked:empty { display: none; }
+
+.control {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  max-width: 230px;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  overflow-wrap: anywhere;
+}
+
+.status[role='alert'], .lastChecked[role='alert'] { color: var(--danger, #b42318); }
+
+@media (max-width: 1000px) {
+  .control { max-width: 160px; }
+  .lastChecked { flex-basis: 100%; text-align: end; }
+}

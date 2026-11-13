@@ -1,0 +1,614 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Thermal AI usage receipt modal: range/metric/stage controls on top, scenic stage + warm cream receipt paper in the
+   middle, and image/text export actions with accessible live confirmation at the foot. */
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: calc(100dvh - 32px);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-inline-end: 28px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.controlGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Preview Stage ─────────────────────────────────────────────────────────────────────────── */
+
+.stageFrame {
+  position: relative;
+  display: grid;
+  min-height: 0;
+  border-radius: var(--radius-card, 12px);
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.stageFrame:not([data-backdrop='paper']) {
+  background-color: var(--sub);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.stageFrame:not([data-backdrop='paper'])::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 50% 48%,
+    transparent 42%,
+    rgba(8, 12, 14, 0.16) 100%
+  );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.stageFrame[data-backdrop='mist'] {
+  background-image: url('/receipt-skins/mist-1x.jpg');
+  background-image: image-set(
+    url('/receipt-skins/mist-1x.webp') type('image/webp') 1x,
+    url('/receipt-skins/mist-2x.webp') type('image/webp') 2x,
+    url('/receipt-skins/mist-1x.jpg') type('image/jpeg') 1x,
+    url('/receipt-skins/mist-2x.jpg') type('image/jpeg') 2x
+  );
+}
+
+.stageFrame[data-backdrop='sea'] {
+  background-image: url('/receipt-skins/sea-1x.jpg');
+  background-image: image-set(
+    url('/receipt-skins/sea-1x.webp') type('image/webp') 1x,
+    url('/receipt-skins/sea-2x.webp') type('image/webp') 2x,
+    url('/receipt-skins/sea-1x.jpg') type('image/jpeg') 1x,
+    url('/receipt-skins/sea-2x.jpg') type('image/jpeg') 2x
+  );
+}
+
+.stageFrame[data-backdrop='stone'] {
+  background-image: url('/receipt-skins/stone-1x.jpg');
+  background-image: image-set(
+    url('/receipt-skins/stone-1x.webp') type('image/webp') 1x,
+    url('/receipt-skins/stone-2x.webp') type('image/webp') 2x,
+    url('/receipt-skins/stone-1x.jpg') type('image/jpeg') 1x,
+    url('/receipt-skins/stone-2x.jpg') type('image/jpeg') 2x
+  );
+}
+
+.stageFrame[data-backdrop='ink'] {
+  background-image: url('/receipt-skins/ink-1x.jpg');
+  background-image: image-set(
+    url('/receipt-skins/ink-1x.webp') type('image/webp') 1x,
+    url('/receipt-skins/ink-2x.webp') type('image/webp') 2x,
+    url('/receipt-skins/ink-1x.jpg') type('image/jpeg') 1x,
+    url('/receipt-skins/ink-2x.jpg') type('image/jpeg') 2x
+  );
+}
+
+.stageFrame[data-backdrop='paper'] {
+  background-color: var(--sub);
+  background-image: repeating-conic-gradient(
+    in oklab,
+    color-mix(in oklab, var(--ink) 4.5%, transparent) 0 25%,
+    transparent 0 50%
+  );
+  background-size: 16px 16px;
+}
+
+.stageScroll {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  max-height: min(63dvh, 650px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 36px 32px 42px;
+  overscroll-behavior: contain;
+}
+
+/* ── Thermal Paper Card ────────────────────────────────────────────────────────────────────── */
+
+.paperWrap {
+  display: flex;
+  flex-direction: column;
+  width: min(384px, 100%);
+  flex: none;
+  filter:
+    drop-shadow(0 22px 36px rgba(8, 12, 14, 0.28))
+    drop-shadow(0 6px 14px rgba(8, 12, 14, 0.16))
+    drop-shadow(0 1px 2px rgba(8, 12, 14, 0.12));
+  transition: transform 180ms var(--ease-out-quint);
+}
+
+/* Thermal paper stays warm cream with dark carbon ink regardless of surrounding app dark/light mode. */
+.paper {
+  --receipt-paper: #f5f3ee;
+  --receipt-ink: #1b1a17;
+  --receipt-ink-mid: #3a3833;
+  --receipt-ink-soft: #57544d;
+  --receipt-ink-faint: #78746c;
+  --receipt-rule: #c8c3b8;
+  display: flex;
+  flex-direction: column;
+  isolation: isolate;
+  padding: 32px 28px 24px;
+  border-radius: 2px 2px 0 0;
+  background:
+    linear-gradient(in oklab 180deg, rgba(255, 255, 255, 0.42) 0%, rgba(245, 243, 238, 0) 46%, rgba(220, 214, 202, 0.22) 100%),
+    var(--receipt-paper);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  color: var(--receipt-ink);
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  box-sizing: border-box;
+}
+
+.teeth {
+  display: block;
+  width: 100%;
+  height: 7px;
+  margin-top: -0.5px;
+  color: #ece8df;
+  fill: var(--receipt-paper, #f5f3ee);
+}
+
+.receiptHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 5px;
+  margin-bottom: 16px;
+}
+
+.receiptTitle {
+  margin: 0;
+  color: var(--receipt-ink);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.receiptSubtitle {
+  margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--receipt-ink-soft);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kvList {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+}
+
+.kvRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.kvRow dt {
+  flex: none;
+  color: var(--receipt-ink-soft);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.kvRow dd {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--receipt-ink);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.divider {
+  width: 100%;
+  height: 0;
+  margin: 14px 0;
+  border: 0;
+  border-top: 1px dashed var(--receipt-rule);
+}
+
+/* ── Hero Figure ───────────────────────────────────────────────────────────────────────────── */
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.heroEyebrow {
+  color: var(--receipt-ink-soft);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  line-height: 1.35;
+}
+
+.heroSingle {
+  color: var(--receipt-ink);
+  font-family: var(--font-mono);
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.heroDual {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  padding-top: 2px;
+}
+
+.heroDualItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.heroDualItem + .heroDualItem {
+  border-left: 1px dashed var(--receipt-rule);
+  padding-left: 12px;
+}
+
+.heroDualLabel {
+  color: var(--receipt-ink-faint);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.heroDualValue {
+  color: var(--receipt-ink);
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.heroSubnote {
+  margin: 0;
+  color: var(--receipt-ink-faint);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* ── Breakdown: AGENT / MODEL ──────────────────────────────────────────────────────────────── */
+
+.breakdownHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  color: var(--receipt-ink-faint);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.groupList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.groupRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.groupLead {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+/* Monochrome thermal-printer ink rendering for every bundled agent icon. */
+.agentMark {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  color: var(--receipt-ink);
+  filter: grayscale(1) contrast(1.45);
+  mix-blend-mode: multiply;
+}
+
+.groupName {
+  overflow: hidden;
+  color: var(--receipt-ink);
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.groupValue {
+  flex: none;
+  color: var(--receipt-ink);
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.modelList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0 0 0 15px;
+  list-style: none;
+}
+
+.modelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.modelLead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.modelMask {
+  display: inline-block;
+  flex: none;
+  width: 12px;
+  height: 12px;
+  background-color: var(--receipt-ink-mid);
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+}
+
+.modelDot {
+  display: inline-block;
+  flex: none;
+  width: 4.5px;
+  height: 4.5px;
+  margin-inline: 3.5px;
+  border-radius: 50%;
+  background-color: var(--receipt-ink-soft);
+}
+
+.modelName {
+  overflow: hidden;
+  color: var(--receipt-ink-mid);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modelValue {
+  flex: none;
+  color: var(--receipt-ink-mid);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.foldedRow .modelName,
+.foldedRow .modelValue {
+  color: var(--receipt-ink-faint);
+}
+
+.footnotes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 8px;
+}
+
+.footnote {
+  margin: 0;
+  color: var(--receipt-ink-faint);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.receiptFooter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+}
+
+.footerLine {
+  margin: 0;
+  color: var(--receipt-ink-soft);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-wrap: balance;
+}
+
+.footerLink {
+  color: var(--receipt-ink);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--receipt-ink-faint);
+  text-underline-offset: 2.5px;
+  border-radius: 2px;
+  transition:
+    color 140ms var(--ease-out-quint),
+    text-decoration-color 140ms var(--ease-out-quint);
+}
+
+.footerLink:hover {
+  color: var(--receipt-ink);
+  text-decoration-style: solid;
+  text-decoration-color: var(--receipt-ink);
+}
+
+.footerLink:focus-visible {
+  outline: 1.5px solid var(--receipt-ink);
+  outline-offset: 2px;
+}
+
+/* ── Empty / Loading inside Receipt Modal ──────────────────────────────────────────────────── */
+
+.emptyPaper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 220px;
+  text-align: center;
+}
+
+.emptyPaper strong {
+  color: var(--receipt-ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.emptyPaper p {
+  margin: 0;
+  color: var(--receipt-ink-faint);
+  font-size: 12px;
+  line-height: 1.5;
+  text-wrap: balance;
+}
+
+/* ── Footer Actions & Live Status Bubble ───────────────────────────────────────────────────── */
+
+.actionsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.liveStatus {
+  min-height: 20px;
+  color: var(--ink-soft);
+  font-size: var(--type-label, 12px);
+  font-weight: 500;
+  line-height: 20px;
+  opacity: 0;
+  transition: opacity 150ms var(--ease-out-quint);
+}
+
+.liveStatus[data-visible='true'] {
+  opacity: 1;
+}
+
+.liveStatus[data-failed='true'] {
+  color: var(--danger);
+}
+
+.actionButtons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-inline-start: auto;
+}
+
+@media (max-width: 560px) {
+  .stageScroll {
+    padding: 20px 12px 28px;
+  }
+
+  .paper {
+    padding: 26px 20px 20px;
+  }
+
+  .heroSingle {
+    font-size: 34px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paperWrap,
+  .footerLink,
+  .liveStatus {
+    transition: none;
+  }
+}

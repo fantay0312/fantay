@@ -1,0 +1,130 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Prompt library popover (spec 05 §7): search, categories, template cards, argument form, replace/append. */
+.content {
+  display: flex;
+  flex-direction: column;
+  height: min(520px, var(--radix-popover-content-available-height, 520px));
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 12px 8px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.categories {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.card {
+  align-items: flex-start;
+  height: auto;
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  text-align: start;
+}
+
+.card > [data-slot='button-label'] {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+}
+
+.cover {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--paper-deep);
+  color: var(--ink-faint);
+}
+
+.cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 10px 10px;
+  white-space: normal;
+}
+
+.cardTitle {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: var(--type-body);
+  font-weight: 600;
+  line-height: var(--type-body-lh);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardMeta {
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: var(--type-caption);
+  line-height: var(--type-caption-lh);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 200px;
+  color: var(--ink-faint);
+  font-size: var(--type-label);
+  text-align: center;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  overflow-y: auto;
+}
+
+.stepTitle {
+  color: var(--ink);
+  font-size: var(--type-copy);
+  font-weight: 600;
+}
+
+.stepActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}

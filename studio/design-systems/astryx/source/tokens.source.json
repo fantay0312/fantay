@@ -1,0 +1,382 @@
+{
+  "repository": "https://github.com/meta/astryx",
+  "commit": "df15de7fc3941b479d3bfb8d4576a3b3c27bca3d",
+  "theme": "Neutral",
+  "archived_on": "2026-11-06",
+  "bindings": [
+    {
+      "name": "--bg",
+      "value": "#f1f1f1",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--surface",
+      "value": "#ffffff",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--surface-warm",
+      "value": "#f1f1f1",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--fg",
+      "value": "#000000",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--fg-2",
+      "value": "#474747",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--muted",
+      "value": "#474747",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--meta",
+      "value": "var(--muted)",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--border",
+      "value": "#00000014",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--border-soft",
+      "value": "#d4d4d4",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--accent",
+      "value": "#1b1b1b",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--accent-on",
+      "value": "#ffffff",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--accent-hover",
+      "value": "#303030",
+      "provenance": "FantayDesign compatibility adaptation",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--accent-active",
+      "value": "#474747",
+      "provenance": "FantayDesign compatibility adaptation",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--success",
+      "value": "#198100",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--warn",
+      "value": "#ffce2f",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--danger",
+      "value": "#c9303a",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--font-display",
+      "value": "\"Figtree\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--font-body",
+      "value": "\"Figtree\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--font-mono",
+      "value": "ui-monospace, \"SF Mono\", Monaco, Consolas, \"Liberation Mono\", monospace",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--text-xs",
+      "value": "12px",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--text-sm",
+      "value": "12px",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--text-base",
+      "value": "14px",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--text-lg",
+      "value": "17px",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--text-xl",
+      "value": "20px",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--text-2xl",
+      "value": "24px",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--text-3xl",
+      "value": "29px",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--text-4xl",
+      "value": "42px",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--leading-body",
+      "value": "1.5",
+      "provenance": "FantayDesign compatibility adaptation",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/core/src/theme/tokens.stylex.ts"
+    },
+    {
+      "name": "--leading-tight",
+      "value": "1.2",
+      "provenance": "FantayDesign compatibility adaptation",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/core/src/theme/tokens.stylex.ts"
+    },
+    {
+      "name": "--tracking-display",
+      "value": "0",
+      "provenance": "FantayDesign compatibility adaptation",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/core/src/theme/tokens.stylex.ts"
+    },
+    {
+      "name": "--space-1",
+      "value": "4px",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/core/src/theme/tokens.stylex.ts"
+    },
+    {
+      "name": "--space-2",
+      "value": "8px",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/core/src/theme/tokens.stylex.ts"
+    },
+    {
+      "name": "--space-3",
+      "value": "12px",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/core/src/theme/tokens.stylex.ts"
+    },
+    {
+      "name": "--space-4",
+      "value": "16px",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/core/src/theme/tokens.stylex.ts"
+    },
+    {
+      "name": "--space-5",
+      "value": "20px",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/core/src/theme/tokens.stylex.ts"
+    },
+    {
+      "name": "--space-6",
+      "value": "24px",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/core/src/theme/tokens.stylex.ts"
+    },
+    {
+      "name": "--space-8",
+      "value": "32px",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/core/src/theme/tokens.stylex.ts"
+    },
+    {
+      "name": "--space-12",
+      "value": "48px",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/core/src/theme/tokens.stylex.ts"
+    },
+    {
+      "name": "--section-y-desktop",
+      "value": "64px",
+      "provenance": "FantayDesign compatibility adaptation",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/core/src/theme/tokens.stylex.ts"
+    },
+    {
+      "name": "--section-y-tablet",
+      "value": "48px",
+      "provenance": "FantayDesign compatibility adaptation",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/core/src/theme/tokens.stylex.ts"
+    },
+    {
+      "name": "--section-y-phone",
+      "value": "32px",
+      "provenance": "FantayDesign compatibility adaptation",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/core/src/theme/tokens.stylex.ts"
+    },
+    {
+      "name": "--radius-sm",
+      "value": "6px",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--radius-md",
+      "value": "10px",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--radius-lg",
+      "value": "12px",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--radius-pill",
+      "value": "9999px",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--elev-flat",
+      "value": "none",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--elev-ring",
+      "value": "0 0 0 1px var(--border)",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--elev-raised",
+      "value": "0 2px 4px rgb(0 0 0 / 5%), 0 4px 8px rgb(0 0 0 / 10%)",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--focus-ring",
+      "value": "0 0 0 3px rgb(0 116 226 / 45%)",
+      "provenance": "FantayDesign compatibility adaptation",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/core/src/theme/tokens.stylex.ts"
+    },
+    {
+      "name": "--motion-fast",
+      "value": "125ms",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--motion-base",
+      "value": "300ms",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/themes/neutral/src/neutralTheme.ts"
+    },
+    {
+      "name": "--ease-standard",
+      "value": "cubic-bezier(0.24, 1, 0.4, 1)",
+      "provenance": "normalized official Neutral theme or core spacing/type role",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/core/src/theme/tokens.stylex.ts"
+    },
+    {
+      "name": "--container-max",
+      "value": "1200px",
+      "provenance": "FantayDesign compatibility adaptation",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/core/src/theme/tokens.stylex.ts"
+    },
+    {
+      "name": "--container-gutter-desktop",
+      "value": "24px",
+      "provenance": "FantayDesign compatibility adaptation",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/core/src/theme/tokens.stylex.ts"
+    },
+    {
+      "name": "--container-gutter-tablet",
+      "value": "20px",
+      "provenance": "FantayDesign compatibility adaptation",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/core/src/theme/tokens.stylex.ts"
+    },
+    {
+      "name": "--container-gutter-phone",
+      "value": "16px",
+      "provenance": "FantayDesign compatibility adaptation",
+      "source": "https://github.com/meta/astryx/blob/df15de7fc3941b479d3bfb8d4576a3b3c27bca3d/packages/core/src/theme/tokens.stylex.ts"
+    }
+  ],
+  "originals": [
+    {
+      "path": "neutralTheme.ts",
+      "upstream": "packages/themes/neutral/src/neutralTheme.ts",
+      "sha256": "7daba8763889152e5fdd47c3a7c63fa0a950ff368f75654a6c9216d21811729b"
+    },
+    {
+      "path": "neutralPalettes.generated.ts",
+      "upstream": "packages/themes/neutral/src/neutralPalettes.generated.ts",
+      "sha256": "ec0bb6a557ebb7a988ea7ec47f8f69f19dc500c98ce1643310fbb74b3333652d"
+    },
+    {
+      "path": "tokens.stylex.ts",
+      "upstream": "packages/core/src/theme/tokens.stylex.ts",
+      "sha256": "a1b73d79c90b1c832e026064a78fe04c6271fa6c2c750edec0b441dbaa9e0818"
+    },
+    {
+      "path": "core-README.md",
+      "upstream": "packages/core/README.md",
+      "sha256": "7e13c4be4751df026b0bc7683424e3b5d7785bb744ab0c8174579d26d3c49287"
+    },
+    {
+      "path": "LICENSE",
+      "upstream": "LICENSE",
+      "sha256": "a6855be541fc8f446acd1bc4f2f8efce1ace6dce71dba32fcd8da553ee54b473"
+    }
+  ],
+  "font": {
+    "repository": "https://github.com/google/fonts/tree/main/ofl/figtree",
+    "file": "fonts/Figtree.ttf",
+    "license": "SIL OFL 1.1",
+    "sha256": "26ad3db9b31ff7dde67a91ff515d022d2f495cd506590699cf264f0bfe6fb714"
+  },
+  "limits": [
+    "HTML fixtures are authored adapters, not official React runtime tests.",
+    "Neutral only; seven official theme sources remain in the material archive.",
+    "Beta; lab unpublished and charts/vega canary only."
+  ]
+}

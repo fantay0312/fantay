@@ -1,0 +1,18 @@
+{
+  "repository": "https://github.com/Ppppan9/jianying-mcp",
+  "commit": "3016f4fdbd55d2df3f7e3b8bf4144df968cd10c4",
+  "source": "plugin/server/draft.js",
+  "upstreamSha256": "4828a9c2861ee6ab56562d6654f80be7f1e5b1d7c74870d885e15d7417578f4d",
+  "localSha256": "b5f4caa8f9673f6a0b2098f5e7dad80dceef80a88bd794d5c2425548da601189",
+  "changes": [
+    "Disable implicit local template discovery; the wrapper explicitly uses the pinned 11.6 fixture.",
+    "Preserve fractional fps instead of truncating it.",
+    "Prefer the pinned platform ffprobe passed by the FantayDesign daemon."
+  ],
+  "template": "docs/fixtures/jianying-11.6-template.json",
+  "license": "../licenses/jianying-mcp-MIT.txt",
+  "notice": "../licenses/jianying-mcp-NOTICE.md",
+  "integrationPatches": [
+    "src/build.js: avoid echoing invalid subtitle file content in errors."
+  ]
+}

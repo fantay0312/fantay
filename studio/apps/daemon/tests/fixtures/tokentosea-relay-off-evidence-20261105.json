@@ -1,0 +1,126 @@
+[
+  {
+    "model": "lingzhigongfang/cn-stable/deepseek-v4-flash-0731",
+    "path": "/v1/chat/completions",
+    "requested": "off",
+    "nativeDisabledThoughtCharacters": 176,
+    "compatibleNoneThoughtCharacters": 172,
+    "checkedAt": "2026-11-05"
+  },
+  {
+    "model": "lingzhigongfang/cn-stable/deepseek-v4-pro-0813",
+    "path": "/v1/chat/completions",
+    "requested": "off",
+    "nativeDisabledThoughtCharacters": 120,
+    "compatibleNoneThoughtCharacters": 168,
+    "checkedAt": "2026-11-05"
+  },
+  {
+    "model": "lingzhigongfang/cn-stable/deepseek-v4.1-flash",
+    "path": "/v1/chat/completions",
+    "requested": "off",
+    "nativeDisabledThoughtCharacters": 130,
+    "compatibleNoneThoughtCharacters": 796,
+    "checkedAt": "2026-11-05"
+  },
+  {
+    "model": "lingzhigongfang/cn-stable/deepseek-v4.1-flash-1017",
+    "path": "/v1/chat/completions",
+    "requested": "off",
+    "nativeDisabledThoughtCharacters": 170,
+    "compatibleNoneThoughtCharacters": 155,
+    "checkedAt": "2026-11-05"
+  },
+  {
+    "model": "suanlizhixuan/cn/deepseek-v4-flash-0731",
+    "path": "/v1/chat/completions",
+    "requested": "off",
+    "nativeDisabledThoughtCharacters": 120,
+    "compatibleNoneThoughtCharacters": 250,
+    "checkedAt": "2026-11-05"
+  },
+  {
+    "model": "suanlizhixuan/cn/deepseek-v4-pro-0813",
+    "path": "/v1/chat/completions",
+    "requested": "off",
+    "nativeDisabledThoughtCharacters": 475,
+    "compatibleNoneThoughtCharacters": 155,
+    "checkedAt": "2026-11-05"
+  },
+  {
+    "model": "lingzhigongfang/cn-stable/mimo-v2.5",
+    "path": "/v1/chat/completions",
+    "requested": "off",
+    "nativeDisabledThoughtCharacters": 120,
+    "compatibleNoneThoughtCharacters": 148,
+    "checkedAt": "2026-11-05"
+  },
+  {
+    "model": "lingzhigongfang/cn-stable/mimo-v2.5-pro",
+    "path": "/v1/chat/completions",
+    "requested": "off",
+    "nativeDisabledThoughtCharacters": 120,
+    "compatibleNoneThoughtCharacters": 171,
+    "checkedAt": "2026-11-05"
+  },
+  {
+    "model": "lingzhigongfang/cn-stable/mimo-v2.6-flash",
+    "path": "/v1/chat/completions",
+    "requested": "off",
+    "nativeDisabledThoughtCharacters": 155,
+    "compatibleNoneThoughtCharacters": 120,
+    "checkedAt": "2026-11-05"
+  },
+  {
+    "model": "lingzhigongfang/cn-stable/mimo-v2.6-pro",
+    "path": "/v1/chat/completions",
+    "requested": "off",
+    "nativeDisabledThoughtCharacters": 130,
+    "compatibleNoneThoughtCharacters": 155,
+    "checkedAt": "2026-11-05"
+  },
+  {
+    "model": "suanlizhixuan/cn/mimo-v2.6-flash",
+    "path": "/v1/chat/completions",
+    "requested": "off",
+    "nativeDisabledThoughtCharacters": 120,
+    "compatibleNoneThoughtCharacters": 156,
+    "checkedAt": "2026-11-05"
+  },
+  {
+    "model": "yuansuanpu/c1/mimo-v2.5-pro",
+    "path": "/v1/chat/completions",
+    "requested": "off",
+    "nativeDisabledThoughtCharacters": 173,
+    "compatibleNoneThoughtCharacters": 442,
+    "checkedAt": "2026-11-05"
+  },
+  {
+    "model": "yuansuanpu/c1/mimo-v2.6-pro",
+    "path": "/v1/chat/completions",
+    "requested": "off",
+    "nativeDisabledThoughtCharacters": 74,
+    "compatibleNoneThoughtCharacters": 120,
+    "checkedAt": "2026-11-05"
+  },
+  {
+    "model": "lingzhigongfang/cn-stable/glm-5.2",
+    "path": "/v1/chat/completions",
+    "requested": "off",
+    "nativeDisabledThoughtCharacters": 153,
+    "compatibleNoneThoughtCharacters": 158,
+    "checkedAt": "2026-11-05"
+  },
+  {
+    "model": "suanlizhixuan/gpt/gpt-5.6-terra",
+    "path": "/v1/chat/completions",
+    "requested": "off",
+    "wireControl": {
+      "reasoning_effort": "none"
+    },
+    "compatibleNoneThoughtCharacters": 435,
+    "reasoningTokens": 25,
+    "checkedAt": "2026-11-05",
+    "evidence": "remaining-r1 live run; streamed public reasoning despite native none"
+  }
+]

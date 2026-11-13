@@ -1,0 +1,233 @@
+/* The studio's navigation bar and its section menu. The bar sits on the canvas, sticky above the
+   chapter's white sheet; its left edge lines up with the sheet. Learned from Claude Design's
+   "Overview · 1 of 9" picker: a quiet filled button, a white popover with search. */
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  background: var(--st-canvas, var(--paper));
+}
+.bar::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--line-soft);
+  opacity: 0;
+  pointer-events: none;
+}
+/* The rule only exists once content has passed under the bar. */
+@supports (animation-timeline: scroll()) {
+  .bar::after {
+    animation: barRule linear both;
+    animation-timeline: scroll(nearest block);
+    animation-range: 0 24px;
+  }
+}
+@keyframes barRule { to { opacity: 1; } }
+.barInner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: calc(100% - 2 * var(--st-gutter));
+  max-width: 1120px;
+  min-height: 60px;
+  margin-inline: auto;
+}
+.barTools {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+  margin-inline-start: auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.barTools::-webkit-scrollbar { display: none; }
+.barTools > * { flex-shrink: 0; }
+
+.glyph {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.35;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.glyph circle[r='.7'], .glyph circle[r='.9'] { fill: currentColor; stroke: none; }
+
+.menu { position: relative; flex: none; }
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  max-width: min(360px, 56cqw);
+  padding: 0 10px 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ink) 6%, var(--paper));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 10%, transparent);
+  color: var(--ink);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background-color var(--st-dur-micro, 120ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)),
+    box-shadow var(--st-dur-micro, 120ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1));
+}
+.trigger:hover, .trigger[data-open] {
+  background: color-mix(in srgb, var(--ink) 9%, var(--paper));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 16%, transparent);
+}
+.trigger:active { transform: none; }
+.triggerLabel { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.position {
+  flex: none;
+  color: var(--ink-faint);
+  font-size: 12.5px;
+  font-weight: 450;
+  font-variant-numeric: tabular-nums;
+}
+.caret {
+  flex: none;
+  margin-inline-start: -2px;
+  fill: none;
+  stroke: var(--ink-faint);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform var(--st-dur-enter, 220ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1));
+}
+.trigger[data-open] .caret { transform: rotate(180deg); }
+
+.popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  width: 260px;
+  max-height: min(640px, calc(100dvh - 120px));
+  padding: 10px;
+  border-radius: 14px;
+  background: var(--paper);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--ink) 9%, transparent),
+    0 12px 32px -8px color-mix(in srgb, var(--ink) 22%, transparent),
+    0 2px 6px color-mix(in srgb, var(--ink) 6%, transparent);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px) scale(0.98);
+  transform-origin: 24px 0;
+  transition:
+    opacity var(--st-dur-exit, 140ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)),
+    transform var(--st-dur-exit, 140ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)),
+    visibility 0s linear var(--st-dur-exit, 140ms);
+}
+.popover[data-open] {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition:
+    opacity var(--st-dur-enter, 220ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)),
+    transform var(--st-dur-enter, 220ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)),
+    visibility 0s;
+}
+
+.search {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  margin-bottom: 8px;
+  padding: 0 10px;
+  border-radius: 9px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent);
+  color: var(--ink-faint);
+  cursor: text;
+  transition: box-shadow var(--st-dur-micro, 120ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1));
+}
+.search:focus-within { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 28%, transparent); }
+.search input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 14px;
+}
+.search input::placeholder { color: var(--ink-faint); }
+/* The field's own ring says where focus is; the studio's global ring would draw a second box inside it. */
+.search input:focus-visible { outline: none; }
+
+.list {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.group { display: grid; gap: 1px; }
+.group[data-rule] {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line-soft);
+}
+.option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+  text-align: left;
+  white-space: nowrap;
+}
+.option .glyph { color: var(--ink-soft); }
+.option[aria-selected='true'] { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.option[aria-current='location'] { font-weight: 550; }
+.option[aria-current='location'] .glyph { color: var(--ink); }
+.option:active { transform: none; }
+.optionLabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* A section the system leaves undefined keeps its place in the list, one step quieter. */
+.option[data-empty] .optionLabel,
+.option[data-empty] .glyph { color: var(--ink-faint); }
+.count { flex: none; color: var(--ink-faint); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.empty { margin: 8px 10px 10px; color: var(--ink-faint); font-size: 13px; line-height: 1.5; }
+
+/* A narrow pane keeps the menu on its own line and lets the switches scroll beside it. */
+@container (max-width: 520px) {
+  .barInner { gap: 8px; }
+  .trigger { max-width: 52cqw; }
+  .position { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popover, .popover[data-open], .caret, .trigger, .search { transition: none; }
+}

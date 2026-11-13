@@ -1,0 +1,61 @@
+<!--
+  SPDX-License-Identifier: MIT
+  SPDX-FileCopyrightText: 2026 Danila Poyarkov and OpenPencil contributors
+  Source: https://github.com/open-pencil/open-pencil/blob/v0.16.0/src/components/ColorPicker/ColorInput.vue
+  Modified by Fantay: no
+-->
+<script setup lang="ts">
+import { useAttrs } from 'vue'
+
+import type { Color } from '@open-pencil/scene-graph/primitives'
+import { ColorInputRoot, inputValue } from '@open-pencil/vue'
+import type { OkHCLControls } from '@open-pencil/vue'
+
+import ColorPicker from '@/components/ColorPicker/ColorPicker.vue'
+
+defineOptions({ inheritAttrs: false })
+
+const attrs = useAttrs()
+
+const {
+  editable = false,
+  color,
+  okhcl = null
+} = defineProps<{
+  color: Color
+  editable?: boolean
+  okhcl?: OkHCLControls | null
+}>()
+const emit = defineEmits<{ update: [color: Color]; openChange: [open: boolean] }>()
+</script>
+
+<template>
+  <ColorInputRoot
+    :color="color"
+    :editable="editable"
+    :okhcl="okhcl"
+    @update="emit('update', $event)"
+  >
+    <template #default="{ editable: isEditable, hex, actions, okhcl: okhclControls }">
+      <div v-bind="attrs" class="flex items-center gap-1.5">
+        <ColorPicker
+          :color="color"
+          :okhcl="okhclControls"
+          @update="actions.updateColor($event)"
+          @open-change="emit('openChange', $event)"
+        />
+        <input
+          v-if="isEditable"
+          data-test-id="color-hex-input"
+          class="min-w-0 flex-1 border-none bg-transparent font-mono text-xs text-surface outline-none"
+          :value="hex"
+          maxlength="6"
+          @change="actions.updateFromHex(inputValue($event))"
+        />
+        <span v-else class="min-w-0 flex-1 truncate font-mono text-xs text-muted">
+          {{ hex }}
+        </span>
+      </div>
+    </template>
+  </ColorInputRoot>
+</template>

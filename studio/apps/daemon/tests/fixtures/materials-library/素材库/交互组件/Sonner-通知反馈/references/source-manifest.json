@@ -1,0 +1,5 @@
+{
+  "upstream": "https://example.com/sonner",
+  "commit": "0000000000000000000000000000000000000000",
+  "files": ["upstream/src/index.tsx", "upstream/src/state.ts", "upstream/package.json"]
+}

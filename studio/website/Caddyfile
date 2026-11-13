@@ -1,0 +1,20 @@
+design.tokentosea.com {
+    encode zstd gzip
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+    @website path / /downloads /downloads/* /privacy /privacy/* /feedback /feedback/* /credits /credits/* /plugins /plugins/* /assets/* /favicon.ico
+    handle @website {
+        root * /var/www/fantay-design/current
+        header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://static.tokentosea.com https://github.com https://objects.githubusercontent.com https://release-assets.githubusercontent.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+        header Cache-Control "no-cache"
+        try_files {path} {path}/index.html
+        file_server
+    }
+    handle {
+        reverse_proxy 127.0.0.1:47800
+    }
+}

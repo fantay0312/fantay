@@ -1,0 +1,60 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* ── 指令与规则 ────────────────────────────────────────────────────────────────────────────── */
+/* A page to write on: the sheet takes the height the page leaves, and the textarea inside it gives up its own frame. */
+:is([data-fantay-shell], [data-client-type='desktop']) .settings-page-shell {
+  & .instructions-rules-section,
+  & .instructions-rules-card {
+    display: flex;
+    flex: 1 0 auto;
+    flex-direction: column;
+    gap: var(--settings-heading-gap);
+  }
+  & .instructions-rules-card .memory-block-head > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  & .instructions-rules-card .hint {
+    text-wrap: pretty;
+  }
+  & .instructions-rules-sheet {
+    display: flex;
+    flex: 1 0 auto;
+    flex-direction: column;
+    min-height: 280px;
+    border: var(--settings-hairline);
+    border-radius: var(--settings-radius);
+    background: var(--surface);
+    transition: border-color 100ms var(--settings-ease);
+
+    &:focus-within {
+      border-color: var(--ink-faint);
+    }
+  }
+  & .settings-content textarea.instructions-rules-input,
+  & .settings-content textarea.instructions-rules-input:focus,
+  & .settings-content textarea.instructions-rules-input:hover:not(:disabled, :focus) {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    max-height: none;
+    margin: 0;
+    padding: var(--settings-row-x);
+    border: 0;
+    border-radius: var(--settings-radius);
+    background: none;
+    box-shadow: none;
+    font-family: var(--font-ui);
+    font-size: var(--settings-type-label);
+    line-height: 1.7;
+    resize: none;
+  }
+  & .instructions-rules-count {
+    align-self: flex-end;
+    padding: 0 var(--settings-row-x) var(--settings-heading-gap);
+    color: var(--ink-faint);
+    font-size: var(--settings-type-meta);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.45;
+  }
+}

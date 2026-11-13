@@ -1,0 +1,538 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* 连接 page (spec §13): a settings page — a heading, then hairline group blocks.
+   Section heading 15/600, 12 px to its group, 32 px between sections; rows 52 px, 16 px inset,
+   a --line-soft hairline between rows; row label 13.5/500 over a 12.5 px --ink-soft hint. */
+
+.page {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  container-type: inline-size;
+  background: var(--paper);
+}
+
+.inner {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  max-width: 744px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
+  text-wrap: pretty;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 32px;
+}
+
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 32px;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+/* ── needs-you callout: the one warm surface on the page ──────────────────────────────── */
+
+.head + .needs {
+  margin-top: -16px;
+}
+
+.needs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 10px 8px 14px;
+  border-color: var(--pa-needs-ring);
+  border-radius: 12px;
+  background: var(--pa-needs-bg);
+}
+
+.needsDot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--warning);
+}
+
+.needsText {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.needsGo {
+  flex: none;
+  gap: 2px;
+  padding-inline: 6px;
+  color: var(--warning-ink);
+}
+
+/* ── sections and groups ──────────────────────────────────────────────────────────────── */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 24px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.sectionHead > [data-variant='link'] {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.sectionHead > [data-variant='link']:hover {
+  color: var(--ink);
+}
+
+.group {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.group > * + * {
+  border-top: 1px solid var(--line-soft);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 10px 16px;
+}
+
+.rowText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.rowLabel {
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.rowLabelMuted {
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
+.rowHint {
+  margin-top: 2px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+.rowNote {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.rowControl {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+
+/* A status dot that reads in both themes (the primitive's muted dot is the hairline colour). */
+.status [data-slot='dot'][data-tone='muted'] {
+  background: var(--ink-faint);
+}
+
+.status[data-status='error'] [data-slot='dot'] {
+  background: var(--accent-ink);
+}
+
+.statusLabel {
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.statusLabel [data-slot='dot'] {
+  width: 7px;
+  height: 7px;
+}
+
+/* ── channel rows: the whole 60 px row opens the channel modal ────────────────────────── */
+
+.channelRow {
+  display: flex;
+  justify-content: stretch;
+  width: 100%;
+  height: auto;
+  min-height: 60px;
+  padding: 10px 12px 10px 16px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 400;
+  text-align: start;
+  white-space: normal;
+  transition: background-color 120ms var(--ease-out-quint);
+}
+
+.channelRow:hover {
+  background: var(--sub);
+  color: var(--ink);
+}
+
+.channelRow:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: calc(var(--focus-ring-width) * -1);
+}
+
+.channelRow > [data-slot='button-label'] {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.tile {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--sub);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink-soft);
+}
+
+.channelRow:hover .tile {
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+.channelText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.channelName,
+.channelCaption,
+.channelError {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.channelName {
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.channelCaption {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.channelError {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--accent-ink);
+}
+
+.channelTrail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rowChevron {
+  flex: none;
+  margin-inline-start: 2px;
+  color: var(--ink-faint);
+  transition: transform 120ms var(--ease-out-quint), color 120ms var(--ease-out-quint);
+}
+
+.channelRow:hover .rowChevron {
+  color: var(--ink-soft);
+  transform: translateX(2px);
+}
+
+:global([dir='rtl']) .rowChevron {
+  transform: scaleX(-1);
+}
+
+.needsChip {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--warning-ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── models ───────────────────────────────────────────────────────────────────────────── */
+
+/* The dot rides the label line (centred on its 19 px line box); the detail is indented to the label. */
+.modelDot {
+  flex: none;
+  align-self: center;
+  margin-inline-end: 4px;
+}
+
+.modelDot[data-tone='muted'] {
+  background: var(--ink-faint);
+  opacity: 0.6;
+}
+
+.modelLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  min-width: 0;
+}
+
+.modelLine > .modelDot {
+  align-self: auto;
+  transform: translateY(-1px);
+}
+
+.modelDetail {
+  padding-inline-start: 20px;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+
+.under {
+  margin: 0;
+  padding-inline: 2px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+/* ── recent channel events (also inside the channel modal) ────────────────────────────── */
+
+/* The trigger reads as a heading: the page's 15/600 section title, or the modal's 13/600 one. The
+   disclosure's own 4 px inset is pulled back so its text lines up with the headings above. */
+.historyDisclosure > button {
+  width: calc(100% + 8px);
+  margin-inline: -4px;
+}
+
+.historyDisclosurePage > button {
+  width: calc(100% + 16px);
+  height: 32px;
+  margin-inline: -8px;
+  padding-inline: 8px;
+}
+
+.historyTrigger {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.historyDisclosurePage .historyTrigger {
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.historyCount {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* One grid for the whole log: every day and every row is a subgrid, so the time, channel, state and
+   preview columns line up across days. Rows are single lines (the preview ellipsizes, full text on hover). */
+.historyGroup {
+  display: grid;
+  grid-template-columns: max-content max-content minmax(0, 1fr) auto;
+  column-gap: 12px;
+  overflow: hidden;
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.historyWithChannel {
+  grid-template-columns: max-content fit-content(144px) max-content minmax(0, 1fr) auto;
+}
+
+.historyGroupEmpty {
+  display: block;
+}
+
+.historyDisclosurePage .historyGroup {
+  margin-top: 12px;
+}
+
+.historyDay {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  padding: 2px 0 6px;
+}
+
+.historyDay + .historyDay {
+  border-top: 1px solid var(--line-soft);
+}
+
+.historyDayLabel {
+  grid-column: 1 / -1;
+  padding: 10px 16px 4px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
+.historyRow {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px 0 16px;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.historyTime {
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.historyChannel,
+.historyText,
+.historyError {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.historyChannel {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.historyState {
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.historyState[data-state='failed'] {
+  color: var(--accent-ink);
+}
+
+/* Warm only for what needs the owner: a project approval. A pending row is merely queued. */
+.historyState[data-state='approval'] {
+  color: var(--warning-ink);
+}
+
+.historyState[data-state='pending'] {
+  color: var(--ink-soft);
+}
+
+.historyText {
+  color: var(--ink-soft);
+}
+
+.historyError {
+  color: var(--accent-ink);
+}
+
+.historyEnd {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.historyLink {
+  height: 24px;
+  padding-inline: 4px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.historyLink:hover {
+  color: var(--ink);
+}
+
+.historyEmpty {
+  margin: 0;
+  padding: 14px 16px;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+@container (max-width: 560px) {
+  .inner {
+    padding: 24px 16px 40px;
+  }
+}

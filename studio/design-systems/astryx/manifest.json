@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "od-design-system-project/v1",
+  "id": "astryx",
+  "name": "Astryx",
+  "category": "Developer Tools",
+  "description": "Meta's open-source design system: neutral surfaces, Figtree typography, semantic light and dark themes, accessible product controls, and a shared language for people and agents. Beta; normalized from the official Neutral theme.",
+  "source": {
+    "type": "bundled",
+    "origin": "FantayDesign curated integration of https://github.com/meta/astryx at df15de7fc3941b479d3bfb8d4576a3b3c27bca3d (MIT); official Neutral theme, normalized semantic bindings"
+  },
+  "files": {"design": "DESIGN.md", "tokens": "tokens.css", "components": "components.html"},
+  "usage": "USAGE.md",
+  "componentsManifest": "components.manifest.json",
+  "importMode": "normalized",
+  "craft": {"applies": [], "suggested": ["color", "accessibility-baseline"], "exemptions": []},
+  "fonts": [{"family": "Figtree", "file": "fonts/Figtree.ttf", "weight": "300 900", "style": "normal"}],
+  "preview": {
+    "dir": "preview",
+    "pages": [
+      {"path": "preview/colors.html", "role": "colors", "title": "Colors"},
+      {"path": "preview/typography.html", "role": "typography", "title": "Typography"},
+      {"path": "preview/spacing.html", "role": "spacing", "title": "Spacing"}
+    ]
+  },
+  "sourceFiles": {"evidence": "source/evidence.md", "tokens": "source/tokens.source.json"}
+}

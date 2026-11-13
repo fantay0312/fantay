@@ -1,0 +1,74 @@
+[
+  {
+    "month": "2025-11",
+    "orders": 1180,
+    "revenue": 49420,
+    "repeat_rate": 0.31
+  },
+  {
+    "month": "2025-12",
+    "orders": 1215,
+    "revenue": 53110,
+    "repeat_rate": 0.33
+  },
+  {
+    "month": "2026-01",
+    "orders": 1090,
+    "revenue": 45210,
+    "repeat_rate": 0.29
+  },
+  {
+    "month": "2026-02",
+    "orders": 1264,
+    "revenue": 52740,
+    "repeat_rate": 0.3
+  },
+  {
+    "month": "2026-03",
+    "orders": 1330,
+    "revenue": 56100,
+    "repeat_rate": 0.32
+  },
+  {
+    "month": "2026-04",
+    "orders": 1402,
+    "revenue": 59480,
+    "repeat_rate": 0.34
+  },
+  {
+    "month": "2026-05",
+    "orders": 1388,
+    "revenue": 58230,
+    "repeat_rate": 0.33
+  },
+  {
+    "month": "2026-06",
+    "orders": 1475,
+    "revenue": 63120,
+    "repeat_rate": 0.35
+  },
+  {
+    "month": "2026-07",
+    "orders": 1540,
+    "revenue": 66050,
+    "repeat_rate": 0.36
+  },
+  {
+    "month": "2026-08",
+    "orders": 1512,
+    "revenue": 64310,
+    "repeat_rate": 0.35
+  },
+  {
+    "month": "2026-09",
+    "orders": 1598,
+    "revenue": 69280,
+    "repeat_rate": 0.37
+  },
+  {
+    "month": "2026-10",
+    "orders": 1671,
+    "revenue": 72040,
+    "repeat_rate": 0.38
+  }
+]

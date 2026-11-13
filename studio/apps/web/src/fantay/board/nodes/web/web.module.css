@@ -1,0 +1,86 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Web face (spec 03 §4.2): rounded browser-like card with a 28 px header over the page. Header controls stay
+   clickable over a live page (z-index above the shield). */
+
+.web {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow:
+    0 0 0 calc(1px * var(--inv-zoom, 1)) var(--board-frame-border),
+    0 calc(2px * var(--inv-zoom, 1)) calc(10px * var(--inv-zoom, 1)) rgb(0 0 0 / 0.08);
+}
+
+.header {
+  position: relative;
+  flex: 0 0 28px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 4px 0 10px;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--surface);
+}
+
+.dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+}
+
+.dotLive {
+  background: var(--success);
+}
+
+.url {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-soft);
+  font: 400 11px / 16px var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actions {
+  position: relative;
+  z-index: 3;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+.body {
+  position: relative;
+  flex: 1 1 auto;
+  overflow: hidden;
+  background: var(--board-frame-bg);
+}
+
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 32px);
+  padding: 10px 14px;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+  color: var(--ink-soft);
+  font: 500 var(--type-body) / var(--type-body-lh) var(--font-ui);
+  text-align: center;
+  transform: translateX(-50%);
+}

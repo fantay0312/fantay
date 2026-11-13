@@ -1,0 +1,23 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Group face (spec 03 §4.8): faint fill, dashed hairline, 14 px radius; variants rows dash in brand; a drop
+   target shows an accent ring and fill (infinite-canvas canvas-node.tsx drop-target look). */
+
+.group {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ink) 2.5%, transparent);
+  border: calc(1.5px * var(--inv-zoom, 1)) dashed var(--line);
+  box-sizing: border-box;
+  transition: box-shadow var(--motion-exit) var(--ease-out-quint), background-color var(--motion-exit) var(--ease-out-quint);
+}
+
+.group[data-role="variants"] {
+  border-color: color-mix(in srgb, var(--brand) 35%, transparent);
+}
+
+.group[data-drop-target] {
+  box-shadow: 0 0 0 calc(2px * var(--inv-zoom, 1)) var(--info);
+  background: color-mix(in srgb, var(--info) 6%, transparent);
+  transition-duration: var(--motion-enter);
+}

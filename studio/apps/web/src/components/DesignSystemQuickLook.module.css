@@ -1,0 +1,52 @@
+/* The picker's hover pane: the studio cover on top, the list's name and category under it, then the
+   two ways on (open the full studio, or use the system). */
+.look { display: flex; flex-direction: column; gap: 12px; min-height: 100%; }
+.coverFrame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ink) 4%, var(--paper));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+/* The cover draws its own bottom rule for the sheet it normally sits on; the frame already edges it. */
+.coverFrame figure { border-bottom: 0; }
+.coverSkeleton { width: 100%; aspect-ratio: 960 / 288; border-radius: 0; }
+.bands { display: flex; width: 100%; aspect-ratio: 960 / 288; }
+.bands > span { flex: 1 1 0; min-width: 0; }
+.monogram { display: grid; place-items: center; color: var(--ink-faint); font-size: 28px; font-weight: 600; }
+.meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 0 2px; }
+.titleRow { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.title { min-width: 0; overflow: hidden; color: var(--ink); font-size: 15px; font-weight: 600; line-height: 22px; text-overflow: ellipsis; white-space: nowrap; }
+.badge { flex: none; padding: 1px 7px; border-radius: 999px; background: var(--sub); color: var(--ink-soft); font-size: 11px; font-weight: 600; line-height: 16px; }
+.subtitle { overflow: hidden; color: var(--ink-faint); font-size: 12px; line-height: 18px; text-overflow: ellipsis; white-space: nowrap; }
+.summary {
+  display: -webkit-box;
+  margin: 6px 0 0;
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 20px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.swatches { display: flex; gap: 4px; margin-top: 10px; }
+.swatches > span { width: 18px; height: 18px; border-radius: 5px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 10%, transparent); }
+.actions { display: flex; gap: 8px; margin-top: auto; padding-top: 4px; }
+
+/* The dialog: the studio fills it edge to edge, the way it fills the 设计体系 page's detail pane. */
+.dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(1240px, calc(100vw - 48px));
+  max-width: none;
+  height: min(880px, calc(100dvh - 48px));
+  padding: 0;
+  overflow: hidden;
+}
+.dialog > [data-studio-ready], .dialog > div:not(.loading) { flex: 1 1 auto; min-height: 0; }
+.inUse { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 999px; background: var(--sub); color: var(--ink-soft); font-size: 12px; font-weight: 600; }
+.loading { display: flex; flex-direction: column; gap: 14px; padding: 72px clamp(20px, 5vw, 64px); }
+.loadingCover { width: 100%; aspect-ratio: 960 / 288; border-radius: 16px; }
+.loadingLine { width: 60%; height: 16px; border-radius: 6px; }
+.loadingLineShort { width: 36%; height: 16px; border-radius: 6px; }
+.srOnly { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

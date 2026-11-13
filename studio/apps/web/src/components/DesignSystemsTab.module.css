@@ -1,0 +1,1678 @@
+/* Master-detail Design systems layout, adapted from the Brand Kit presentation:
+   a compact list of systems on the left (scoped to Your systems / Official
+   presets / Enterprise) and a live preview of the selected system on the right.
+   The page uses a single scroll context (the entry scroll container); the left
+   sidebar stays pinned via `position: sticky`. */
+
+.root {
+  /* The tab row's hairline is the top edge of both panes; they run to the window's foot and scroll
+     on their own. 83px = 32 title row + 12 gap + 39 tab row, under the shell's band and page inset. */
+  --ds-pane-h: calc(100dvh - var(--page-band, 0px) - var(--page-top, 28px) - 83px);
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+}
+
+.rootSingle {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 32px;
+  margin-bottom: 12px;
+}
+
+.pageTitleBlock {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  min-width: 0;
+}
+
+.headerTools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* ── List pane ────────────────────────────────────────────────────── */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: var(--ds-pane-h);
+  min-height: 420px;
+  gap: 10px;
+  padding: 12px 12px 12px 0;
+  border: 0;
+  border-inline-end: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.sidebar[hidden] {
+  display: none;
+}
+
+/* Search: always present at the end of the tab row. */
+.searchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.headerSearch {
+  flex: 0 1 216px;
+  align-self: center;
+  width: 216px;
+  margin-inline-start: auto;
+}
+
+.searchIcon {
+  position: absolute;
+  inset-inline-start: 10px;
+  color: var(--ink-faint);
+  pointer-events: none;
+}
+
+.search {
+  appearance: none;
+  width: 100%;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 10px 0 31px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: var(--sub);
+  box-shadow: none;
+  color: var(--ink);
+  font-size: 13px;
+  transition: background-color 140ms var(--ease-out), border-color 140ms var(--ease-out);
+}
+
+.search::placeholder {
+  color: var(--ink-faint);
+}
+
+/* Chromium's own clear glyph is blue; on this page colour belongs to the design systems. */
+.search::-webkit-search-cancel-button {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--ink-faint);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6 6 18'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6 6 18'/%3E%3C/svg%3E") center / contain no-repeat;
+  cursor: pointer;
+}
+
+.search:focus,
+.search:focus-visible {
+  outline: none;
+  border-color: var(--line);
+  background: var(--surface);
+  box-shadow: none;
+}
+
+/* Official-presets filters — surface pills + category select */
+.presetFilters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.surfaceRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.surfacePill {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: var(--radius-row);
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 140ms var(--ease-out), color 140ms var(--ease-out);
+}
+
+.surfacePill:hover {
+  background: var(--sub);
+  color: var(--ink);
+}
+
+.surfacePillActive,
+.surfacePillActive:hover {
+  background: var(--paper-deep);
+  color: var(--ink);
+}
+
+.surfacePill:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 1px;
+}
+
+.surfaceCount {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-faint);
+}
+
+.surfacePillActive .surfaceCount {
+  color: var(--ink-soft);
+}
+
+.categoryMenuWrap {
+  position: relative;
+  width: 100%;
+}
+
+.categorySelect {
+  appearance: none;
+  width: 100%;
+  height: 30px;
+  min-height: 30px;
+  padding: 0 28px 0 10px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out);
+}
+
+.categorySelect:hover {
+  border-color: var(--line);
+  background-color: var(--sub);
+}
+
+.categorySelect:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 1px;
+}
+
+.categoryChevron {
+  flex: 0 0 auto;
+  color: var(--text-muted);
+  transition: transform var(--dur-quick) var(--ease-out);
+}
+
+.categorySelect[aria-expanded='true'] .categoryChevron {
+  transform: rotate(180deg);
+}
+
+.categoryMenu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  max-height: min(360px, calc(100dvh - 252px));
+  padding: var(--spacing-6) var(--spacing-8);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-md, 0 12px 30px rgba(0, 0, 0, 0.12));
+}
+
+.categoryMenu::-webkit-scrollbar {
+  width: 8px;
+}
+
+.categoryMenu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.categoryMenu::-webkit-scrollbar-thumb {
+  border: 2px solid var(--bg-panel);
+  border-radius: var(--radius-pill);
+  background: var(--border-strong);
+}
+
+.categoryOption {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 32px;
+  padding: 0 var(--spacing-10);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.categoryOption:hover,
+.categoryOption:focus-visible {
+  outline: none;
+  background: var(--bg-subtle);
+  color: var(--text-strong);
+}
+
+.categoryOptionActive,
+.categoryOptionActive:hover,
+.categoryOptionActive:focus-visible {
+  background: var(--bg-subtle);
+  color: var(--text-strong);
+  font-weight: 600;
+}
+
+/* List */
+.listLabel {
+  margin: 2px 4px 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.list {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  background: transparent;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.skeletonBlock {
+  display: block;
+  border-radius: var(--radius-sm);
+}
+
+.skeletonCreateButton {
+  width: 72px;
+  height: 32px;
+  border-radius: var(--radius-control);
+}
+
+.skeletonSearchField {
+  width: 100%;
+  height: 32px;
+  border-radius: var(--radius-control);
+  pointer-events: none;
+}
+
+.skeletonScopeChip {
+  width: 72px;
+}
+
+.skeletonScopeChipWide {
+  width: 88px;
+}
+
+.skeletonScopeTab {
+  align-self: center;
+  height: 14px;
+}
+
+.list > .skeletonRow,
+.list > .skeletonRowActive {
+  flex: 0 0 auto;
+  padding: 6px 8px;
+  pointer-events: none;
+  cursor: default;
+}
+
+.list > .skeletonRowActive {
+  background: var(--sub);
+  border-radius: var(--radius-row);
+}
+
+.skeletonRow .itemMeta,
+.skeletonRowActive .itemMeta {
+  gap: 8px;
+}
+
+.skeletonThumb {
+  width: 100%;
+  height: 100%;
+  border-radius: calc(var(--radius-sm) - 2px);
+}
+
+.skeletonLine {
+  height: 10px;
+}
+
+.skeletonLineTitle {
+  width: 68%;
+  height: 12px;
+}
+
+.skeletonLineMedium {
+  width: 86%;
+}
+
+.skeletonLineShort {
+  width: 58%;
+}
+
+.skeletonStatusDot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+}
+
+.item {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: calc(var(--radius) - 1px);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background-color var(--dur-quick) var(--ease-out),
+    border-color var(--dur-quick) var(--ease-out);
+}
+
+.item:hover,
+.item:active,
+.item:focus,
+.item:focus-visible,
+.itemActive,
+.itemActive:hover,
+.itemActive:active,
+.itemActive:focus,
+.itemActive:focus-visible {
+  border: 0;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.item:focus-visible {
+  outline: none;
+}
+
+.itemThumb {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+/* The ring sits above the image, so a white logo still has an edge. */
+.itemThumb::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 9%, transparent);
+  pointer-events: none;
+}
+
+.itemSwatches {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.itemSwatches > span {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.itemMonogram {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: var(--paper-deep);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.itemLogo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 6px;
+  background: var(--surface);
+  opacity: 0;
+  transition: opacity 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.itemLogo[data-loaded] { opacity: 1; }
+/* A logo that arrives quickly never shows the fallback; a slow or hung one hands the slot to it. */
+.itemLogoWait {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  animation: itemLogoWait 200ms cubic-bezier(0.23, 1, 0.32, 1) 600ms backwards;
+}
+@keyframes itemLogoWait { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .itemLogo { transition: none; }
+  .itemLogoWait { animation: none; }
+}
+
+.itemMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.itemNameRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.itemName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.itemSub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+/* Small inline "Default" badge shown on the list row + detail header. */
+.badgeDefault {
+  flex: 0 0 auto;
+  padding: 0 5px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+/* Row wrapper holds the main button + the hover-revealed 私有/共享 toggle. */
+.itemRow {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--radius-row);
+  transition: background-color 140ms var(--ease-out);
+}
+
+.itemRow:hover {
+  background: var(--sub);
+}
+
+/* Selection reads the same as the app sidebar's active row. The row paints it itself only until
+   the list's one sliding mark has measured it; after that the mark sits under the row. */
+.itemRowActive,
+.itemRowActive:hover {
+  background: var(--paper-deep);
+}
+
+.listMark {
+  position: absolute;
+  top: 0;
+  inset-inline: 0;
+  border-radius: var(--radius-row);
+  background: var(--paper-deep);
+  pointer-events: none;
+  transition:
+    transform 320ms cubic-bezier(0.23, 1, 0.32, 1),
+    height 320ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Out of layout as well as out of sight: left at an old row, it would keep a short list scrollable. */
+.listMark:not([data-placed]) {
+  display: none;
+}
+
+.listMark[data-placed] ~ .itemRowActive,
+.listMark[data-placed] ~ .itemRowActive:hover {
+  background: transparent;
+}
+
+.itemRow:focus-within:has(:focus-visible) {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: -2px;
+}
+
+.itemRow:hover > .item,
+.itemRowActive > .item,
+.itemRowActive:hover > .item {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.itemSubRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+/* 私有/共享 capsule — small rounded pill mirroring the project-card角标. */
+.visibilityBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: 0 0 auto;
+  height: 17px;
+  padding: 0 6px 0 5px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.visibilityBadgeShared {
+  border-color: color-mix(in srgb, var(--accent) 34%, transparent);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
+.visibilityBadgePrivate {
+  border-color: var(--border);
+  background: var(--bg-subtle);
+  color: var(--text-faint);
+}
+
+/* Hover-revealed inline toggle under the row (共享给团队 / 设为私有). */
+.visibilityToggle {
+  appearance: none;
+  display: none;
+  align-items: center;
+  gap: 6px;
+  margin: 1px 6px 5px 57px;
+  padding: 4px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-panel);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color var(--dur-quick) var(--ease-out),
+    color var(--dur-quick) var(--ease-out),
+    background-color var(--dur-quick) var(--ease-out);
+}
+
+.itemRow:hover .visibilityToggle,
+.itemRow:focus-within .visibilityToggle {
+  display: inline-flex;
+}
+
+.visibilityToggle:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
+.visibilityToggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.statusDot {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+}
+
+.statusDotDraft {
+  background: var(--amber);
+}
+
+.statusDotPublished {
+  background: var(--green);
+}
+
+/* Sidebar empty state: it stands where the first row would, so the column still reads as a list. */
+.sidebarEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px;
+}
+
+.sidebarEmptyText {
+  margin: 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--ink-faint);
+}
+
+.sidebarEmptyAction {
+  height: 28px;
+  min-height: 28px;
+  margin-inline-start: -8px;
+  padding: 0 8px;
+  border-radius: var(--radius-control);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ── Right preview pane ───────────────────────────────────────────── */
+.preview {
+  position: relative;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* Pane wrappers take no part in layout. The leaving page stays on show but takes no clicks: they
+   would act on a system that is no longer selected. */
+.pane { display: contents; }
+.pane[data-pane-leaving] { pointer-events: none; }
+/* The next system lays out at full size, out of sight, so it is ready to be shown as it is. Its
+   transition names are withheld: two studios with one name would make the browser refuse the swap. */
+.panePending {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+.panePending * { view-transition-name: none !important; }
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  padding: 0;
+  height: var(--ds-pane-h);
+  min-height: 420px;
+  animation: detailIn 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* A view transition is already moving this pane; the keyframe would run inside its snapshot. Zero
+   duration, not `animation: none`: when the attribute goes away the name would change back and the
+   keyframe would start then, after the transition. */
+:global(html[data-studio-vt]) .detail:not(.detailSkeleton) {
+  animation-duration: 0s;
+}
+
+/* The first-run page has no pane edge above it, only the tab hairline. */
+.rootSingle .detail {
+  box-sizing: border-box;
+  padding-top: 20px;
+}
+
+/* Second half of the top-align: the DesignKitView root (.previewInner, shared
+   with the preview modal) carries its own 28px top padding. Zero it out only
+   inside this tab's detail so the title reaches the grid top, without touching
+   the modal's spacing. */
+.detail :global([data-testid^='design-kit-view-']) {
+  max-width: none;
+  margin-right: 0;
+  margin-left: 0;
+  flex: 1;
+  padding: 0;
+}
+
+.detail :global([data-testid^='design-kit-view-'] > section) {
+  border: 0;
+  gap: var(--spacing-8);
+  padding: var(--spacing-12);
+}
+
+.collabDemo {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at 12% 6%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 30%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-panel) 94%, var(--accent)), var(--bg-panel));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #000 5%, transparent),
+    0 18px 42px color-mix(in srgb, #000 8%, transparent);
+}
+
+.collabDemoHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.collabDemoKicker {
+  margin: 0 0 4px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.collabDemoTitle {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+
+.collabLivePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, var(--green) 28%, transparent);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--green) 8%, transparent);
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.collabLivePill > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 13%, transparent);
+}
+
+.collabDemoGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.92fr);
+  gap: 14px;
+}
+
+.collabRealtimeCard,
+.collabQueueCard {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--bg-panel) 96%, var(--ink));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #000 4%, transparent);
+}
+
+.collabCardHeader {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+}
+
+.collabCardHeader h4 {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+
+.collabCardHeader p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.collabIconWrap {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  border-radius: 11px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.collabCanvas {
+  position: relative;
+  min-height: 190px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, var(--accent));
+  border-radius: 18px;
+  background:
+    linear-gradient(color-mix(in srgb, var(--border) 34%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--border) 34%, transparent) 1px, transparent 1px),
+    radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 34%),
+    var(--bg-subtle);
+  background-size: 26px 26px, 26px 26px, auto, auto;
+}
+
+.collabCanvasNodePrimary,
+.collabCanvasNodeSecondary {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--text-strong) 11%, var(--border));
+  border-radius: 16px;
+  color: var(--text-strong);
+  background: var(--bg-panel);
+  box-shadow: 0 10px 26px color-mix(in srgb, #000 8%, transparent);
+  font-weight: 700;
+}
+
+.collabCanvasNodePrimary {
+  left: 15%;
+  top: 24%;
+  width: 112px;
+  height: 74px;
+}
+
+.collabCanvasNodeSecondary {
+  right: 12%;
+  bottom: 20%;
+  width: 152px;
+  height: 58px;
+  color: var(--accent);
+}
+
+.collabSelectionBox {
+  position: absolute;
+  right: 9%;
+  bottom: 16%;
+  width: 168px;
+  height: 74px;
+  border: 1.5px solid var(--danger);
+  border-radius: 18px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 10%, transparent);
+}
+
+.collabCursor {
+  --collab-color: var(--accent);
+  position: absolute;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--collab-color);
+  font-size: 12px;
+  font-weight: 700;
+  transform: translate(-2px, -2px);
+  transition:
+    transform 200ms cubic-bezier(0.23, 1, 0.32, 1),
+    filter 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.collabCursorActive {
+  transform: translate(-2px, -2px) scale(1.06);
+  filter: drop-shadow(0 8px 14px color-mix(in srgb, var(--collab-color) 26%, transparent));
+}
+
+.collabCursorPointer {
+  width: 0;
+  height: 0;
+  border-top: 13px solid currentColor;
+  border-right: 9px solid transparent;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.18));
+}
+
+.collabCursorName {
+  padding: 3px 7px;
+  border-radius: var(--radius-pill);
+  background: currentColor;
+  color: var(--accent-contrast);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--collab-color) 24%, transparent);
+}
+
+.collabMemberRow,
+.collabTriggerRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.collabMemberChip,
+.collabTriggerRow button,
+.collabOperationBar button,
+.collabQueueComplete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--bg-panel);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    color 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    background 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.collabMemberChip {
+  padding: 5px 10px 5px 5px;
+}
+
+.collabMemberChip:hover,
+.collabTriggerRow button:hover,
+.collabOperationBar button:hover,
+.collabQueueComplete:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+  color: var(--text-strong);
+}
+
+.collabMemberChip > span {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.collabMemberChipActive {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  color: var(--text-strong);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-panel));
+}
+
+.collabOperationBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.collabOperationBar button,
+.collabQueueComplete {
+  padding: 8px 12px;
+}
+
+.collabOperationBar p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.collabLogList,
+.collabQueueList {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.collabLogList li {
+  padding: 8px 10px;
+  border: 1px dashed color-mix(in srgb, var(--accent) 18%, var(--border));
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--accent) 4%, transparent);
+  font-size: 12px;
+}
+
+.collabQueueSummary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px;
+  gap: 10px;
+}
+
+.collabQueueSummary > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-subtle);
+}
+
+.collabQueueSummary span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.collabQueueSummary strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-strong);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collabTriggerRow button {
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.collabQueueItemRunning,
+.collabQueueItemPending,
+.collabQueueItemDone {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+}
+
+.collabQueueItemRunning {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+  background: color-mix(in srgb, var(--accent) 7%, var(--bg-panel));
+}
+
+.collabQueueItemDone {
+  opacity: 0.72;
+}
+
+.collabQueueIndex {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.collabQueueItemRunning .collabQueueIndex {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.collabQueueBody {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.collabQueueBody strong,
+.collabQueueBody small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collabQueueBody strong {
+  color: var(--text-strong);
+  font-size: 13px;
+}
+
+.collabQueueBody small {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.collabQueueStatus {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.collabQueueItemRunning .collabQueueStatus {
+  color: var(--accent);
+}
+
+.collabQueueComplete {
+  justify-self: start;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.collabQueueComplete:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+@media (max-width: 980px) {
+  .collabDemoGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@keyframes detailIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mirrors the studio's anatomy so the swap is a fill-in, not a layout change. Held back 120ms: a fast
+   load never shows it at all. */
+.detailSkeleton {
+  gap: 0;
+  overflow: hidden;
+  container-type: inline-size;
+  animation: detailSkeletonIn 180ms cubic-bezier(0.23, 1, 0.32, 1) 120ms both;
+}
+
+@keyframes detailSkeletonIn {
+  from {
+    opacity: 0;
+  }
+}
+
+.skeletonIdentity {
+  display: flex;
+  flex: 0 0 52px;
+  align-items: center;
+  gap: 6px;
+  padding-inline: clamp(16px, 4cqw, 40px);
+}
+
+.skeletonIdentityName {
+  width: 180px;
+  height: 14px;
+  margin-inline-end: auto;
+}
+
+.skeletonIdentityAction {
+  width: 96px;
+  height: 28px;
+  border-radius: var(--radius-control);
+}
+
+.skeletonIdentityIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-control);
+}
+
+.skeletonChapters {
+  display: flex;
+  flex: 0 0 40px;
+  align-items: center;
+  gap: 22px;
+  padding-inline: clamp(16px, 4cqw, 40px);
+  box-shadow: inset 0 -1px 0 var(--line-soft);
+}
+
+.skeletonChapter {
+  width: 28px;
+  height: 12px;
+}
+
+.skeletonPage {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  max-width: 1120px;
+  margin-inline: auto;
+  padding: 40px clamp(16px, 4cqw, 40px) 0;
+}
+
+.skeletonPoster {
+  aspect-ratio: 7 / 4;
+  max-height: 420px;
+  border-radius: 16px;
+}
+
+.skeletonTiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.skeletonTile {
+  height: 168px;
+  border-radius: 16px;
+}
+
+/* Live showcase cover */
+.cover {
+  position: relative;
+  overflow: hidden;
+  height: 320px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(120% 140% at 50% -10%, var(--bg-subtle) 0%, var(--bg) 70%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #000 4%, transparent);
+}
+
+.coverFrame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: #fff;
+}
+
+.coverSwatches {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.coverSwatches > span {
+  flex: 1 1 0;
+}
+
+.coverFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--text-faint);
+  font-size: 13px;
+}
+
+/* Header — title + badges */
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.headText {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-strong);
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.metaDot {
+  color: var(--text-faint);
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-subtle);
+}
+
+.statusBadgePublished {
+  border-color: color-mix(in srgb, var(--green) 30%, transparent);
+  color: var(--green);
+  background: color-mix(in srgb, var(--green) 8%, transparent);
+}
+
+/* Summary text */
+.summary {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+/* Swatch strip */
+.swatchStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.swatchChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 11px 5px 5px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-panel);
+}
+
+.swatchDot {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.swatchHex {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Action bar */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.actionsSpacer {
+  flex: 1 1 auto;
+}
+
+/* Toolbar actions share one height with the rest of the toolbar; primary and secondary actions are pills. */
+.actionButton {
+  height: 30px;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.teamActionButton {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-panel));
+  color: var(--accent);
+}
+
+.teamActionButton:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 44%, var(--border-strong));
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-panel));
+  color: var(--accent);
+}
+
+.actionButton[aria-busy='true'] svg,
+.statusToggle[aria-busy='true'] svg {
+  animation: designSystemsActionSpin 0.8s linear infinite;
+}
+
+/* De-emphasized "Default for new chats" - a calm, low-priority text action
+   beside the louder agent-edit button, not a primary CTA. */
+.defaultButton {
+  min-height: 34px;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.defaultButton:hover:not(:disabled) {
+  color: var(--text);
+}
+
+/* Neutral icon button (download / reset) - same footprint as the danger
+   button but a quiet muted glyph that warms on hover. */
+.downloadBtn {
+  width: 34px;
+  min-height: 34px;
+  color: var(--text-muted);
+}
+
+.downloadBtn:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.statusToggle {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 140ms var(--ease-out), background-color 140ms var(--ease-out);
+}
+
+.statusToggle:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--sub);
+  color: var(--ink);
+}
+
+.statusToggle:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.statusToggleSpinner {
+  flex: none;
+}
+
+.statusToggleTrack {
+  position: relative;
+  width: 24px;
+  height: 14px;
+  border-radius: var(--radius-pill);
+  background: var(--border-strong, var(--border));
+  transition: background-color var(--dur-quick) var(--ease-out);
+}
+
+.statusToggleTrack::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform var(--dur-quick) var(--ease-out);
+}
+
+.statusToggleOn {
+  color: var(--ink);
+}
+
+.statusToggleOn .statusToggleTrack {
+  background: var(--ink);
+}
+
+.statusToggleOn .statusToggleTrack::after {
+  background: var(--paper);
+  transform: translateX(10px);
+}
+
+.dangerBtn {
+  width: 34px;
+  min-height: 34px;
+  color: var(--red);
+}
+
+.dangerBtn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--red) 38%, var(--border));
+  background: color-mix(in srgb, var(--red) 8%, transparent);
+}
+
+@keyframes designSystemsActionSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Coming-soon / empty preview pane */
+.previewEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  height: var(--ds-pane-h);
+  min-height: 420px;
+  padding: 40px;
+  text-align: center;
+}
+
+.previewEmptyMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--sub);
+  color: var(--ink-faint);
+}
+
+.previewEmptyTitle {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.previewEmptyText {
+  margin: 0;
+  max-width: 42ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-faint);
+}
+
+.comingSoonBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 11px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detail,
+  .detailSkeleton {
+    animation: none;
+  }
+  .listMark {
+    transition: none;
+  }
+}
+
+/* ── Responsive: stack panes on narrow viewports ──────────────────── */
+@media (max-width: 900px) {
+  .root {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sidebar {
+    height: auto;
+    min-height: 0;
+    padding-inline-end: 0;
+    border-inline-end: 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .list {
+    max-height: 280px;
+  }
+  .cover {
+    height: 240px;
+  }
+}

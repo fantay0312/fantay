@@ -1,0 +1,50 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/* Edit receipt (spec 07 §6.3): a quiet disclosure under the stage bar. Tokens only. */
+.receipt {
+  min-width: 0;
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+  line-height: var(--type-label-lh);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 180px;
+  overflow: auto;
+}
+
+.change {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-wrap: anywhere;
+}
+
+.field {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.values {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.before {
+  color: var(--ink-soft);
+  text-decoration: line-through;
+}
+
+.after {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.note {
+  margin-top: 8px;
+  color: var(--ink-soft);
+}

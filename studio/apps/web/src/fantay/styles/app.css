@@ -1,0 +1,49 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * Fantay global CSS entry — the ONLY global stylesheet imported by apps/web/app/layout.tsx.
+ * Imports only. Spec: 01-ui-foundation §2. Keep the import order.
+ */
+@layer legacy, legacy-fixes, theme, base, components, utilities;
+
+/* 1 · Upstream global CSS, byte-for-byte, demoted below every Fantay layer (previous layout.tsx order). */
+@import '../../../node_modules/@excalidraw/excalidraw/dist/prod/index.css' layer(legacy);
+@import '../../index.css' layer(legacy);
+@import '../../styles/home/index.css' layer(legacy);
+
+/* 2 · Fantay selector-level fixes for upstream literal colours (dark theme). */
+@import './legacy-fixes.css' layer(legacy-fixes);
+@import './legacy-buttons.css' layer(legacy-fixes);
+
+/* 3 · Fonts (unlayered @font-face), semantic tokens, legacy token aliases. */
+@import '@fontsource-variable/inter/wght.css';
+@import '@fantay/tokens/tokens.css' layer(theme);
+@import './legacy-aliases.css' layer(theme);
+@import './desktop-workspace.css';
+@import './dropdown.css';
+@import './settings.css';
+@import './settings/execution.css';
+@import './settings/media.css';
+@import './settings/general.css';
+@import './settings/instructions.css';
+@import './settings/memory.css';
+@import './settings/account.css';
+@import './settings/usage.css';
+@import './settings/privacy-about.css';
+@import './settings/responsive.css';
+@import './composer.css';
+@import './resource-pages.css';
+@import './pa.css';
+@import './workbench.css';
+@import './projects-page.css';
+@import './new-project.css';
+
+/* 4 · Scoped preflight + keyframes. */
+@import './preflight.css' layer(base);
+@import './motion.css' layer(base);
+
+/* 5 · Tailwind: utilities only. No tailwindcss/theme.css, no preflight, no default palette. */
+@import 'tailwindcss/utilities.css' layer(utilities) source(none);
+@import './theme.css';
+
+/* Scan only Fantay sources (relative to this file → apps/web/src/fantay). */
+@source '..';

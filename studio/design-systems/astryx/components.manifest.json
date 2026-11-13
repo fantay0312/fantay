@@ -1,0 +1,428 @@
+{
+  "schemaVersion": 1,
+  "brandId": "astryx",
+  "source": {
+    "componentsHtml": "components.html",
+    "tokensCss": "tokens.css"
+  },
+  "fixture": {
+    "title": "Astryx · 组件参考",
+    "styleBlockCount": 2,
+    "selectorCount": 58,
+    "classCount": 15,
+    "elementCount": 33
+  },
+  "tokens": {
+    "declared": [
+      "--accent",
+      "--accent-active",
+      "--accent-hover",
+      "--accent-on",
+      "--bg",
+      "--border",
+      "--border-soft",
+      "--container-gutter-desktop",
+      "--container-gutter-phone",
+      "--container-gutter-tablet",
+      "--container-max",
+      "--danger",
+      "--ease-standard",
+      "--elev-flat",
+      "--elev-raised",
+      "--elev-ring",
+      "--fg",
+      "--fg-2",
+      "--focus-ring",
+      "--font-body",
+      "--font-display",
+      "--font-mono",
+      "--leading-body",
+      "--leading-tight",
+      "--meta",
+      "--motion-base",
+      "--motion-fast",
+      "--muted",
+      "--radius-lg",
+      "--radius-md",
+      "--radius-pill",
+      "--radius-sm",
+      "--section-y-desktop",
+      "--section-y-phone",
+      "--section-y-tablet",
+      "--space-1",
+      "--space-12",
+      "--space-2",
+      "--space-3",
+      "--space-4",
+      "--space-5",
+      "--space-6",
+      "--space-8",
+      "--success",
+      "--surface",
+      "--surface-warm",
+      "--text-2xl",
+      "--text-3xl",
+      "--text-4xl",
+      "--text-base",
+      "--text-lg",
+      "--text-sm",
+      "--text-xl",
+      "--text-xs",
+      "--tracking-display",
+      "--warn"
+    ],
+    "referenced": [
+      "--accent",
+      "--accent-active",
+      "--accent-hover",
+      "--accent-on",
+      "--bg",
+      "--border",
+      "--border-soft",
+      "--container-gutter-desktop",
+      "--container-gutter-phone",
+      "--danger",
+      "--ease-standard",
+      "--elev-raised",
+      "--elev-ring",
+      "--fg",
+      "--focus-ring",
+      "--font-body",
+      "--font-mono",
+      "--leading-body",
+      "--leading-tight",
+      "--motion-fast",
+      "--muted",
+      "--radius-lg",
+      "--radius-md",
+      "--radius-pill",
+      "--success",
+      "--surface",
+      "--surface-warm",
+      "--text-4xl",
+      "--text-base",
+      "--text-lg",
+      "--text-sm",
+      "--text-xl",
+      "--text-xs",
+      "--tracking-display",
+      "--warn"
+    ],
+    "unusedDeclared": [
+      "--container-gutter-tablet",
+      "--container-max",
+      "--elev-flat",
+      "--fg-2",
+      "--font-display",
+      "--meta",
+      "--motion-base",
+      "--radius-sm",
+      "--section-y-desktop",
+      "--section-y-phone",
+      "--section-y-tablet",
+      "--space-1",
+      "--space-12",
+      "--space-2",
+      "--space-3",
+      "--space-4",
+      "--space-5",
+      "--space-6",
+      "--space-8",
+      "--text-2xl",
+      "--text-3xl"
+    ],
+    "undeclaredReferenced": []
+  },
+  "selectors": [
+    "::selection",
+    ".alert",
+    ".badge",
+    ".badge.success",
+    ".badge.warning",
+    ".error",
+    ".field",
+    ".intro",
+    ".muted",
+    ".panel",
+    ".row",
+    ".samples",
+    ".section",
+    ".space",
+    ".space code",
+    ".space i",
+    ".stack",
+    ".swatch",
+    ".swatches",
+    "[data-theme=\"dark\"]",
+    "*",
+    "#theme",
+    "a",
+    "a:focus-visible",
+    "body",
+    "button",
+    "button:disabled",
+    "button:focus-visible",
+    "button:hover:not(:disabled)",
+    "button.danger",
+    "button.primary",
+    "button.primary:active",
+    "button.primary:hover:not(:disabled)",
+    "code",
+    "details p",
+    "h1",
+    "h2",
+    "h3",
+    "header",
+    "input",
+    "input::placeholder",
+    "input:focus-visible",
+    "input:not([type=checkbox])",
+    "input[aria-invalid=true]",
+    "input[type=checkbox]",
+    "label.check",
+    "main",
+    "p",
+    "select",
+    "select:focus-visible",
+    "summary",
+    "summary:focus-visible",
+    "table",
+    "td",
+    "textarea",
+    "textarea::placeholder",
+    "textarea:focus-visible",
+    "th"
+  ],
+  "classes": [
+    "alert",
+    "badge",
+    "check",
+    "danger",
+    "error",
+    "field",
+    "intro",
+    "muted",
+    "panel",
+    "primary",
+    "row",
+    "section",
+    "stack",
+    "success",
+    "warning"
+  ],
+  "elements": [
+    "a",
+    "article",
+    "body",
+    "button",
+    "caption",
+    "details",
+    "div",
+    "form",
+    "h1",
+    "h2",
+    "h3",
+    "head",
+    "header",
+    "html",
+    "input",
+    "label",
+    "main",
+    "meta",
+    "option",
+    "p",
+    "script",
+    "section",
+    "select",
+    "span",
+    "style",
+    "summary",
+    "table",
+    "tbody",
+    "td",
+    "th",
+    "thead",
+    "title",
+    "tr"
+  ],
+  "groups": [
+    {
+      "id": "buttons",
+      "label": "Buttons and calls to action",
+      "present": true,
+      "selectors": [
+        "button",
+        "button:disabled",
+        "button:focus-visible",
+        "button:hover:not(:disabled)",
+        "button.danger",
+        "button.primary",
+        "button.primary:active",
+        "button.primary:hover:not(:disabled)"
+      ],
+      "classes": [],
+      "elements": [
+        "button"
+      ],
+      "tokenReferences": [
+        "--accent-hover",
+        "--fg",
+        "--focus-ring",
+        "--muted",
+        "--surface-warm"
+      ]
+    },
+    {
+      "id": "inputs",
+      "label": "Form fields and controls",
+      "present": true,
+      "selectors": [
+        ".field",
+        "input",
+        "input::placeholder",
+        "input:focus-visible",
+        "input:not([type=checkbox])",
+        "input[aria-invalid=true]",
+        "input[type=checkbox]",
+        "label.check",
+        "select",
+        "select:focus-visible",
+        "textarea",
+        "textarea::placeholder",
+        "textarea:focus-visible"
+      ],
+      "classes": [
+        "field"
+      ],
+      "elements": [
+        "form",
+        "input",
+        "label",
+        "select"
+      ],
+      "tokenReferences": [
+        "--border-soft",
+        "--danger",
+        "--fg",
+        "--focus-ring",
+        "--radius-md",
+        "--surface"
+      ]
+    },
+    {
+      "id": "cards",
+      "label": "Cards and panels",
+      "present": true,
+      "selectors": [
+        ".panel"
+      ],
+      "classes": [
+        "panel"
+      ],
+      "elements": [],
+      "tokenReferences": []
+    },
+    {
+      "id": "badges",
+      "label": "Badges, chips, and status labels",
+      "present": true,
+      "selectors": [
+        ".badge",
+        ".badge.success",
+        ".badge.warning"
+      ],
+      "classes": [
+        "badge"
+      ],
+      "elements": [],
+      "tokenReferences": [
+        "--border-soft",
+        "--radius-pill",
+        "--surface",
+        "--text-sm",
+        "--warn"
+      ]
+    },
+    {
+      "id": "links",
+      "label": "Links and inline actions",
+      "present": true,
+      "selectors": [
+        "a",
+        "a:focus-visible"
+      ],
+      "classes": [],
+      "elements": [
+        "a"
+      ],
+      "tokenReferences": [
+        "--fg",
+        "--focus-ring"
+      ]
+    },
+    {
+      "id": "keyboard",
+      "label": "Keyboard hints",
+      "present": false,
+      "selectors": [],
+      "classes": [],
+      "elements": [],
+      "tokenReferences": []
+    },
+    {
+      "id": "icons",
+      "label": "Icon slots",
+      "present": false,
+      "selectors": [],
+      "classes": [],
+      "elements": [],
+      "tokenReferences": []
+    },
+    {
+      "id": "typography",
+      "label": "Typography scale and text utilities",
+      "present": true,
+      "selectors": [
+        "h1",
+        "h2",
+        "h3"
+      ],
+      "classes": [],
+      "elements": [
+        "h1",
+        "h2",
+        "h3",
+        "p"
+      ],
+      "tokenReferences": [
+        "--leading-tight",
+        "--text-4xl",
+        "--text-lg",
+        "--tracking-display"
+      ]
+    },
+    {
+      "id": "layout",
+      "label": "Layout primitives",
+      "present": true,
+      "selectors": [
+        ".section",
+        "main"
+      ],
+      "classes": [],
+      "elements": [
+        "header",
+        "main",
+        "section"
+      ],
+      "tokenReferences": [
+        "--container-gutter-phone"
+      ]
+    }
+  ],
+  "literals": {
+    "colorExpressions": 19,
+    "pixelValues": 69,
+    "hardcodedFontFamilies": 1
+  }
+}

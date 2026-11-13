@@ -1,0 +1,1077 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fantay — reference components</title>
+    <meta
+      name="description"
+      content="Reference fixture for design-systems/fantay: Fantay's product UI primitives (buttons, fields, select, segmented control, tabs, trays and cards, dialog, menu, tooltip, tags, toasts, switch, chat bubble, nav rail) rendered from tokens.css. Paste the root token block, then reuse these selectors."
+    />
+
+    <style>
+      /* Root token paste — verbatim from design-systems/fantay/tokens.css.
+         Keep it in sync; the guard compares the two after normalization. */
+      :root {
+        --bg: #fff;
+        --surface: #fafafa;
+        --surface-warm: #ededed;
+
+        --fg: #202020;
+        --fg-2: #494949;
+        --muted: #5c5c5c;
+        --meta: #848484;
+
+        --border: #dbdbdb;
+        --border-soft: #ededed;
+
+        --accent: #353535;
+        --accent-on: #fafafa;
+        --accent-hover: #202020;
+        --accent-active: #121212;
+
+        --success: #00aa54;
+        --warn: #ff7528;
+        --danger: #f04142;
+
+        --font-display: "Albert Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+        --font-body: "Albert Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+        --font-mono: "JiduMono Pro", ui-monospace, "SFMono-Regular", "SF Mono", "JetBrains Mono", Menlo, Monaco, Consolas, monospace;
+
+        --text-xs: 12px;
+        --text-sm: 13px;
+        --text-base: 14px;
+        --text-lg: 16px;
+        --text-xl: 20px;
+        --text-2xl: 24px;
+        --text-3xl: 32px;
+        --text-4xl: 48px;
+
+        --leading-body: 1.7;
+        --leading-tight: 1.25;
+        --tracking-display: -0.02em;
+
+        --space-1: 4px;
+        --space-2: 8px;
+        --space-3: 12px;
+        --space-4: 16px;
+        --space-5: 20px;
+        --space-6: 24px;
+        --space-8: 32px;
+        --space-12: 48px;
+
+        --section-y-desktop: 48px;
+        --section-y-tablet: 32px;
+        --section-y-phone: 24px;
+
+        --radius-sm: 4px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+        --radius-pill: 999px;
+
+        --elev-flat: none;
+        --elev-ring: 0 0 0 1px var(--border);
+        --elev-raised: 0 6px 24px rgba(28, 27, 26, 0.07), 0 2px 6px rgba(28, 27, 26, 0.04);
+
+        --focus-ring: 0 0 0 2px var(--bg), 0 0 0 3px #1a74ff;
+
+        --motion-fast: 140ms;
+        --motion-base: 200ms;
+        --ease-standard: cubic-bezier(0.23, 1, 0.32, 1);
+
+        --container-max: 1648px;
+        --container-gutter-desktop: 24px;
+        --container-gutter-tablet: 16px;
+        --container-gutter-phone: 16px;
+      }
+
+      /* Dark — derived from the product's unrendered dark block (see DESIGN.md). */
+      [data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #202020;
+        --surface: #353535;
+        --surface-warm: #494949;
+        --fg: #fafafa;
+        --fg-2: #ededed;
+        --muted: #bdbdbd;
+        --meta: #848484;
+        --border: #5c5c5c;
+        --border-soft: #494949;
+        --accent: #ededed;
+        --accent-on: #202020;
+        --accent-hover: #fafafa;
+        --accent-active: var(--accent-hover);
+        --success: #3bbf7d;
+        --warn: #ffc740;
+        --danger: #ff5e5e;
+        --elev-raised: 0 6px 24px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.25);
+        --focus-ring: 0 0 0 2px var(--bg), 0 0 0 3px #3aa5f0;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        :root {
+          --motion-fast: 0.01ms;
+          --motion-base: 0.01ms;
+        }
+      }
+
+      /* Local preview only: the package's bundled Albert Sans (SIL OFL 1.1).
+         Artifacts reference the family by name and fall back to PingFang SC. */
+      @font-face {
+        font-family: "Albert Sans";
+        src: url("fonts/AlbertSans-VariableFont_wght.ttf") format("truetype");
+        font-weight: 100 900;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Albert Sans";
+        src: url("fonts/AlbertSans-Italic-VariableFont_wght.ttf") format("truetype");
+        font-weight: 100 900;
+        font-style: italic;
+        font-display: swap;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg-2);
+        font: 600 var(--text-base)/var(--leading-tight) var(--font-body);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      svg { display: block; flex: none; }
+      .icon { width: 16px; height: 16px; }
+
+      /* ─── Layout ──────────────────────────────────────────────────── */
+      .container {
+        max-width: var(--container-max);
+        margin: 0 auto;
+        padding: var(--space-12) var(--container-gutter-desktop) var(--section-y-desktop);
+        display: grid;
+        gap: var(--space-8);
+      }
+      .page-head { display: grid; gap: var(--space-2); max-width: 72ch; }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr));
+        gap: var(--space-6);
+        align-items: start;
+      }
+      .group { display: grid; gap: var(--space-3); align-content: start; }
+      /* A themed subtree must restate inherited ink: body's colour was
+         computed with the light tokens. */
+      .group[data-theme="dark"] { color: var(--fg-2); background: var(--bg); padding: var(--space-5); border-radius: 16px; }
+      .stage {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-5);
+        border-radius: 16px;
+        background: var(--surface);
+      }
+      .stage-col { flex-direction: column; align-items: stretch; }
+      .stage-white { background: var(--bg); box-shadow: var(--elev-ring); }
+      .row-start { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+      .row-between { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+
+      /* ─── Typography ──────────────────────────────────────────────── */
+      h1, h2, h3, p { margin: 0; }
+      h1 { color: var(--fg); font-family: var(--font-display); font-size: var(--text-2xl); font-weight: 600; line-height: var(--leading-tight); }
+      h2 { color: var(--fg); font-size: var(--text-lg); font-weight: 600; line-height: var(--leading-tight); }
+      h3 { color: var(--fg); font-size: var(--text-base); font-weight: 600; line-height: var(--leading-tight); }
+      .lead { color: var(--muted); font-size: var(--text-base); font-weight: 500; line-height: var(--leading-body); }
+      .caption { color: var(--meta); font-size: var(--text-xs); font-weight: 500; line-height: 1.4; }
+      .hero-title {
+        font-family: Georgia, "Songti SC", STSong, SimSun, serif;
+        font-size: var(--text-3xl);
+        font-weight: 600;
+        line-height: 1.24;
+        letter-spacing: var(--tracking-display);
+        color: var(--accent-active);
+        text-align: center;
+      }
+      .hero-sub { color: var(--muted); font-size: var(--text-base); font-weight: 500; text-align: center; }
+      code, kbd { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+      code { padding: 0 3px; border-radius: 2px; background: var(--surface-warm); font-size: 0.92em; }
+      kbd {
+        display: inline-flex;
+        align-items: center;
+        height: 20px;
+        padding: 0 5px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--surface-warm);
+        color: var(--fg-2);
+        font-size: var(--text-xs);
+      }
+
+      /* ─── Buttons ─────────────────────────────────────────────────── */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        height: 36px;
+        padding: 0 var(--space-4);
+        font: inherit;
+        font-size: var(--text-base);
+        font-weight: 600;
+        white-space: nowrap;
+        color: var(--fg-2);
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition:
+          background-color 50ms var(--ease-standard),
+          border-color 50ms var(--ease-standard),
+          color 50ms var(--ease-standard),
+          transform 100ms var(--ease-standard),
+          box-shadow 50ms var(--ease-standard);
+      }
+      .btn:hover:not(:disabled), .btn.is-hover { background: var(--surface-warm); border-color: #bdbdbd; }
+      .btn:active:not(:disabled), .btn.is-active { transform: translateY(1px); }
+      .btn:focus-visible, .btn.is-focus { outline: none; box-shadow: var(--focus-ring); }
+      .btn:disabled { background: var(--surface-warm); border-color: transparent; color: #bdbdbd; cursor: not-allowed; transform: none; }
+
+      .btn-primary, .btn-subtle, .btn-ghost, .btn-danger { border: 0; }
+      .btn-primary { background: var(--fg); color: var(--bg); border-radius: var(--radius-pill); }
+      .btn-primary:hover:not(:disabled), .btn-primary.is-hover { background: var(--accent); }
+      .btn-primary:active:not(:disabled), .btn-primary.is-active { background: var(--fg-2); }
+      .btn-secondary { background: var(--bg); border-color: var(--border); border-radius: var(--radius-pill); color: var(--fg-2); }
+      .btn-secondary:hover:not(:disabled), .btn-secondary.is-hover { background: var(--bg); border-color: #bdbdbd; color: var(--fg); }
+      .btn-subtle { background: var(--surface-warm); color: var(--fg); }
+      .btn-subtle:hover:not(:disabled), .btn-subtle.is-hover { background: var(--border); }
+      .btn-subtle:active:not(:disabled), .btn-subtle.is-active { background: #bdbdbd; }
+      .btn-ghost { background: transparent; color: var(--fg-2); }
+      .btn-ghost:hover:not(:disabled), .btn-ghost.is-hover { background: var(--surface-warm); }
+      .btn-ghost:active:not(:disabled), .btn-ghost.is-active { background: var(--border); }
+      .btn-danger { background: var(--danger); color: #fff; border-radius: var(--radius-pill); }
+      .btn-danger:hover:not(:disabled), .btn-danger.is-hover { background: var(--danger); filter: brightness(0.95); }
+
+      .btn-sm {
+        height: auto;
+        padding: 4px 11px;
+        gap: 6px;
+        font-size: var(--text-xs);
+        border-radius: var(--radius-pill);
+      }
+      .btn-sm svg { width: 11px; height: 11px; }
+      .btn-icon { justify-content: center; width: 36px; min-width: 36px; padding: 0; border-radius: var(--radius-sm); }
+      .btn-send {
+        justify-content: center;
+        width: 28px;
+        min-width: 28px;
+        height: 28px;
+        padding: 0;
+        border: 0;
+        border-radius: var(--radius-pill);
+        background: var(--fg);
+        color: #00ff08;
+        transition:
+          background-color var(--motion-fast) var(--ease-standard),
+          transform var(--motion-fast) var(--ease-standard);
+      }
+      .btn-send:hover:not(:disabled), .btn-send.is-hover { background: var(--fg-2); border-color: transparent; }
+      .btn-send svg { width: 16px; height: 16px; }
+
+      /* ─── Inputs ──────────────────────────────────────────────────── */
+      .field { display: grid; gap: 6px; min-width: 0; flex: 1 1 200px; }
+      .field-label { color: var(--fg-2); font-size: var(--text-sm); font-weight: 600; }
+      .field-help { color: var(--muted); font-size: var(--text-xs); font-weight: 500; }
+      .field-error { display: flex; align-items: center; gap: 6px; color: var(--fg-2); font-size: var(--text-xs); font-weight: 500; }
+      .field-error svg { width: 14px; height: 14px; color: var(--danger); }
+      .input, .textarea {
+        width: 100%;
+        font: inherit;
+        color: var(--fg-2);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 8px 10px;
+        transition: border-color 100ms var(--ease-standard);
+      }
+      .input::placeholder, .textarea::placeholder { color: #bdbdbd; }
+      .input:focus, .textarea:focus, .input.is-focus { outline: none; border-color: var(--accent); }
+      .input[aria-invalid="true"] { border-color: var(--danger); }
+      .textarea { min-height: 76px; resize: vertical; line-height: var(--leading-body); font-weight: 500; }
+
+      /* Select: trigger + glass listbox */
+      .select { position: relative; width: 240px; }
+      .select-trigger {
+        width: 100%;
+        min-height: 36px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: var(--space-2);
+        padding: 7px 10px;
+        font: inherit;
+        color: var(--fg-2);
+        text-align: left;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition:
+          border-color 100ms var(--ease-standard),
+          box-shadow 100ms var(--ease-standard),
+          background-color 100ms var(--ease-standard);
+      }
+      .select-trigger svg { width: 14px; height: 14px; color: var(--muted); transition: transform 100ms var(--ease-standard); }
+      .select-trigger:hover, .select-trigger[aria-expanded="true"] { border-color: #bdbdbd; background: var(--surface-warm); }
+      .select-trigger:focus-visible, .select-trigger[aria-expanded="true"] {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
+      }
+      .select-trigger[aria-expanded="true"] svg { transform: rotate(180deg); }
+      .select-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        z-index: 9000;
+        display: grid;
+        padding: 4px;
+        margin: 0;
+        list-style: none;
+        background: rgba(250, 250, 250, 0.66);
+        -webkit-backdrop-filter: blur(28px) saturate(1.8);
+        backdrop-filter: blur(28px) saturate(1.8);
+        border: 1px solid rgba(73, 73, 73, 0.18);
+        border-radius: var(--radius-sm);
+        box-shadow: 0 24px 60px rgba(28, 27, 26, 0.16), 0 8px 16px rgba(28, 27, 26, 0.07);
+        animation: popover-in var(--motion-fast) var(--ease-standard) both;
+      }
+      .select-option {
+        min-height: 30px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 16px;
+        align-items: center;
+        gap: var(--space-2);
+        padding: 6px 8px;
+        color: var(--fg-2);
+        border-radius: var(--radius-sm);
+        font-size: var(--text-sm);
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .select-option svg { width: 14px; height: 14px; color: var(--accent); opacity: 0; }
+      .select-option:hover, .select-option.is-hover { background: rgba(73, 73, 73, 0.14); }
+      .select-option[aria-selected="true"] {
+        background: color-mix(in srgb, var(--accent) 9%, var(--surface-warm));
+        font-weight: 600;
+      }
+      .select-option[aria-selected="true"] svg { opacity: 1; }
+
+      /* Segmented control */
+      .segmented {
+        display: inline-flex;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--surface-warm);
+        overflow: hidden;
+      }
+      .segmented button {
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        color: var(--muted);
+        padding: 8px 14px;
+        font: inherit;
+        cursor: pointer;
+        transition: background-color var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard);
+      }
+      .segmented button[aria-pressed="true"] { background: var(--surface); color: var(--fg-2); }
+      .segmented button:focus-visible { outline: none; box-shadow: inset 0 0 0 1px #1a74ff; }
+
+      /* Switch */
+      .switch-row { display: flex; align-items: center; gap: var(--space-3); color: var(--fg-2); }
+      .switch {
+        position: relative;
+        flex: none;
+        width: 36px;
+        height: 20px;
+        padding: 0;
+        border: 0;
+        border-radius: var(--radius-pill);
+        background: #bdbdbd;
+        cursor: pointer;
+        transition: background-color var(--motion-base) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard);
+      }
+      .switch:hover:not([aria-disabled="true"]) { background: color-mix(in srgb, var(--muted) 42%, #bdbdbd); }
+      .switch:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, #87ea5c 45%, transparent); }
+      .switch[aria-checked="true"] { background: #87ea5c; }
+      .switch[aria-checked="true"]:hover:not([aria-disabled="true"]) { background: color-mix(in srgb, var(--fg-2) 14%, #87ea5c); }
+      .switch[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
+      .switch-knob {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        transition: transform var(--motion-base) var(--ease-standard);
+      }
+      .switch[aria-checked="true"] .switch-knob { transform: translateX(16px); }
+
+      /* ─── Tabs ────────────────────────────────────────────────────── */
+      .tabs { display: grid; overflow: hidden; border-radius: var(--radius-md); box-shadow: var(--elev-ring); }
+      .tabs-chrome {
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        height: 44px;
+        padding: 0 10px 0 8px;
+        background: var(--bg);
+      }
+      .tab {
+        position: relative;
+        height: 34px;
+        width: 96px;
+        min-width: 56px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 22px;
+        align-items: center;
+        padding: 0 0 0 10px;
+        margin-bottom: -1px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-md) 9px 0 0;
+        background: transparent;
+        color: var(--muted);
+        font: inherit;
+        font-size: var(--text-sm);
+        cursor: default;
+        transition: background-color 100ms var(--ease-standard), color 100ms var(--ease-standard);
+      }
+      .tab span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+      .tab svg { width: 12px; height: 12px; justify-self: center; opacity: 0.7; }
+      .tab:hover, .tab.is-hover { background: color-mix(in srgb, var(--fg-2) 5%, transparent); color: var(--fg-2); }
+      .tab[aria-selected="true"] {
+        background: var(--surface);
+        border-color: color-mix(in srgb, var(--border) 72%, transparent);
+        border-bottom-color: var(--surface);
+        color: var(--fg);
+        box-shadow: 0 -1px 0 color-mix(in srgb, #fff 68%, transparent) inset;
+      }
+      .tab-home { width: 52px; min-width: 52px; grid-template-columns: 1fr; justify-items: center; padding: 0; }
+      .tabs-panel {
+        min-height: 88px;
+        padding: var(--space-4);
+        background: var(--surface);
+        border-top: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+      }
+
+      /* ─── Cards and trays ─────────────────────────────────────────── */
+      .tray {
+        width: 100%;
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 4px 4px 8px;
+        border-radius: 20px;
+        background: var(--surface-warm);
+      }
+      .card {
+        display: grid;
+        gap: var(--space-2);
+        padding: 15px;
+        border: 1px solid transparent;
+        border-radius: 16px;
+        background: var(--bg);
+      }
+      .card-composer { min-height: 104px; align-content: space-between; }
+      .card-composer:focus-within { border-color: var(--border); }
+      .card-placeholder { color: #bdbdbd; font-weight: 500; }
+      .tray-foot { display: flex; align-items: center; gap: 6px; padding: 8px 10px 0; color: var(--muted); font-size: var(--text-xs); }
+      .tray-foot svg { width: 14px; height: 14px; }
+      .card-glass {
+        display: grid;
+        gap: var(--space-2);
+        padding: var(--space-5);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.85);
+        -webkit-backdrop-filter: blur(16px) saturate(1.6);
+        backdrop-filter: blur(16px) saturate(1.6);
+        box-shadow:
+          0 1px 2px rgba(28, 27, 26, 0.05),
+          0 1px 3px rgba(28, 27, 26, 0.04),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+      }
+      .panel {
+        display: grid;
+        gap: var(--space-2);
+        padding: var(--space-4);
+        border-radius: 16px;
+        background: var(--surface);
+      }
+      .tile { display: grid; gap: var(--space-2); }
+      .tile-media {
+        aspect-ratio: 16 / 10;
+        border-radius: 16px;
+        background: var(--surface-warm);
+        transition: box-shadow var(--motion-fast) var(--ease-standard);
+      }
+      .tile.is-selected .tile-media { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
+      .tile-title { color: var(--fg); font-size: var(--text-sm); }
+      .tile-meta { color: var(--meta); font-size: var(--text-xs); font-weight: 500; }
+
+      /* ─── Dialog ──────────────────────────────────────────────────── */
+      .dialog-stage { height: 300px; overflow: hidden; padding: 0; }
+      .dialog-behind { position: absolute; inset: 0; display: grid; gap: var(--space-3); padding: var(--space-5); align-content: start; }
+      .dialog-behind-bar { height: 14px; border-radius: var(--radius-sm); background: var(--surface-warm); }
+      .dialog-scrim {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: rgba(255, 255, 255, 0.6);
+        -webkit-backdrop-filter: blur(50px);
+        backdrop-filter: blur(50px);
+        animation: fade-in 150ms var(--ease-standard) both;
+      }
+      .dialog {
+        width: 520px;
+        max-width: calc(100% - 32px);
+        display: grid;
+        gap: var(--space-3);
+        padding: 22px;
+        border-radius: var(--radius-lg);
+        background: var(--surface);
+        box-shadow: 0 24px 60px rgba(28, 27, 26, 0.16), 0 8px 16px rgba(28, 27, 26, 0.07);
+        animation: dialog-pop 250ms cubic-bezier(0, 0, 0, 1) both;
+      }
+      .dialog-title { color: var(--fg-2); font-size: var(--text-xl); font-weight: 600; }
+      .dialog-desc { color: var(--muted); font-size: var(--text-sm); font-weight: 500; line-height: var(--leading-tight); }
+      .dialog-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-1); }
+
+      /* ─── Menus, popovers, tooltip ────────────────────────────────── */
+      .menu {
+        width: 160px;
+        display: grid;
+        gap: 2px;
+        padding: 6px;
+        margin: 0;
+        list-style: none;
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-md);
+        background: var(--bg);
+        box-shadow: var(--elev-raised);
+        animation: popover-in var(--motion-fast) var(--ease-standard) both;
+      }
+      .menu-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        width: 100%;
+        padding: 8px 10px;
+        border: 0;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--fg-2);
+        font: inherit;
+        font-size: var(--text-sm);
+        text-align: left;
+        cursor: pointer;
+      }
+      .menu-item:hover, .menu-item.is-hover { background: var(--surface-warm); }
+      .menu-item.is-danger { color: var(--danger); }
+      .menu-item.is-danger:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); }
+      .menu-sep { height: 1px; margin: 4px 2px; background: var(--border-soft); }
+      .tooltip-anchor { position: relative; display: inline-flex; }
+      .tooltip {
+        position: absolute;
+        left: calc(100% + 8px);
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 4000;
+        width: max-content;
+        max-width: min(260px, calc(100vw - 16px));
+        padding: 5px 9px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--surface);
+        box-shadow: var(--elev-raised);
+        color: var(--fg);
+        font-size: var(--text-xs);
+        font-weight: 500;
+        line-height: 1.4;
+        pointer-events: none;
+        transition: opacity 100ms cubic-bezier(0, 0, 0, 1);
+      }
+
+      /* ─── Tags, badges, status ────────────────────────────────────── */
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 1px 7px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-pill);
+        background: var(--surface-warm);
+        color: var(--muted);
+        font-size: var(--text-xs);
+        font-weight: 600;
+        line-height: 1.5;
+        letter-spacing: 0.01em;
+      }
+      .chip-assist {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px;
+        border: 0;
+        border-radius: var(--radius-pill);
+        background: var(--bg);
+        color: var(--fg-2);
+        box-shadow: inset 0 0 0 1px var(--border);
+        font: inherit;
+        font-size: var(--text-sm);
+        cursor: pointer;
+      }
+      .chip-assist svg { width: 14px; height: 14px; }
+      .chip-assist[aria-pressed="true"] {
+        background: #f2fff2;
+        color: #007106;
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, #007106 22%, transparent);
+      }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 2px 8px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-pill);
+        background: var(--surface);
+        color: var(--fg-2);
+        font-size: var(--text-xs);
+      }
+      .status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--meta); }
+      .status-success { background: #f5ffee; border-color: #adf788; }
+      .status-success::before { background: var(--success); }
+      .status-warn { background: color-mix(in srgb, #ffba12 18%, var(--surface)); border-color: color-mix(in srgb, #ffba12 34%, var(--border)); }
+      .status-warn::before { background: var(--warn); }
+      .status-danger { background: color-mix(in srgb, var(--danger) 10%, var(--surface)); border-color: color-mix(in srgb, var(--danger) 24%, var(--border)); }
+      .status-danger::before { background: var(--danger); }
+      .status-info { background: color-mix(in srgb, #1a74ff 10%, var(--surface)); border-color: color-mix(in srgb, #1a74ff 24%, var(--border)); }
+      .status-info::before { background: #1a74ff; }
+      .badge-anchor { position: relative; }
+      .badge {
+        position: absolute;
+        top: 3px;
+        right: 3px;
+        min-width: 15px;
+        height: 15px;
+        padding: 0 4px;
+        border-radius: var(--radius-pill);
+        background: var(--danger);
+        color: #fff;
+        font-size: 9px;
+        font-weight: 700;
+        line-height: 15px;
+        text-align: center;
+        box-shadow: 0 0 0 2px var(--bg);
+      }
+      .tick { width: 18px; height: 18px; }
+
+      /* ─── Toasts ──────────────────────────────────────────────────── */
+      .toast {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        width: max-content;
+        max-width: min(560px, calc(100vw - 32px));
+        padding: 10px 16px;
+        border-radius: var(--radius-pill);
+        background: var(--fg);
+        color: var(--bg);
+        font-size: var(--text-xs);
+        line-height: 18px;
+        box-shadow: var(--elev-raised);
+        animation: toast-in var(--motion-base) var(--ease-standard) both;
+      }
+      .toast.is-leaving { animation: toast-out var(--motion-fast) var(--ease-standard) both; }
+      .toast-inline {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 10px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--fg);
+        color: var(--bg);
+        font-size: var(--text-xs);
+        box-shadow: 0 24px 60px rgba(28, 27, 26, 0.16), 0 8px 16px rgba(28, 27, 26, 0.07);
+      }
+      .toast-inline .link-action { color: var(--bg); text-decoration: underline; text-underline-offset: 2px; }
+
+      /* ─── Chat ────────────────────────────────────────────────────── */
+      .chat { display: grid; gap: var(--space-4); }
+      .bubble-user {
+        justify-self: end;
+        max-width: 78%;
+        padding: 9px 13px;
+        border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-lg);
+        background: var(--accent-active);
+        color: var(--bg);
+        font-size: var(--text-sm);
+        font-weight: 500;
+        line-height: var(--leading-body);
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      .prose { color: var(--fg-2); font-size: var(--text-sm); font-weight: 500; line-height: var(--leading-body); max-width: 72ch; }
+      .prose h3 { margin-bottom: 2px; }
+      .prose a { color: var(--fg); text-decoration: underline; text-decoration-color: #bdbdbd; text-underline-offset: 2px; }
+      .prose a:hover { text-decoration-color: currentColor; }
+
+      /* ─── Navigation rail ─────────────────────────────────────────── */
+      .rail { width: 236px; display: grid; gap: 2px; }
+      .rail-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 10px 10px 10px 16px;
+        border: 0;
+        border-radius: var(--radius-lg);
+        background: transparent;
+        color: var(--muted);
+        font: inherit;
+        font-size: var(--text-sm);
+        text-align: left;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background-color 100ms var(--ease-standard), color 100ms var(--ease-standard);
+      }
+      .rail-row svg { width: 18px; height: 18px; }
+      .rail-row:hover, .rail-row.is-hover { background: color-mix(in srgb, var(--fg) 10%, transparent); color: var(--fg); }
+      .rail-row[aria-current="page"] { background: color-mix(in srgb, var(--fg) 10%, transparent); color: var(--accent-active); }
+      .rail-row:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+      /* ─── Motion ──────────────────────────────────────────────────── */
+      @keyframes popover-in { from { opacity: 0; transform: scale(0.93) translateY(-3px); } to { opacity: 1; transform: none; } }
+      @keyframes dialog-pop { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: none; } }
+      @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes toast-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+      @keyframes toast-out { from { opacity: 1; } to { opacity: 0; transform: translateY(-6px); } }
+
+      @media (prefers-reduced-transparency: reduce) {
+        .select-menu, .card-glass { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
+        .dialog-scrim { background: rgba(255, 255, 255, 0.85); -webkit-backdrop-filter: none; backdrop-filter: none; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .select-menu, .menu, .dialog, .dialog-scrim, .toast { animation: none; }
+      }
+      @media (max-width: 900px) {
+        .container { padding-left: var(--container-gutter-tablet); padding-right: var(--container-gutter-tablet); gap: var(--section-y-tablet); }
+      }
+      @media (max-width: 640px) {
+        .container { padding-left: var(--container-gutter-phone); padding-right: var(--container-gutter-phone); gap: var(--section-y-phone); }
+        .rail { width: 100%; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <header class="page-head">
+        <div class="row-start"><span class="tag">Starter</span><span class="tag">Light · product theme</span></div>
+        <h1>Fantay</h1>
+        <p class="lead">Fantay's product UI, formalized. Monochrome ink on white, one rationed green signal, black pill actions, tone-grouped surfaces and quick ease-out motion. Every value below comes from <code>tokens.css</code>.</p>
+      </header>
+
+      <section class="group" aria-labelledby="g-hero">
+        <h2 id="g-hero">Hero and composer</h2>
+        <p class="caption">The only serif in the system, then the tray-and-card composer. The send disc is the user's darkest mass.</p>
+        <div class="stage stage-white stage-col" style="padding: var(--space-8) var(--space-5);">
+          <p class="hero-title">What should we prototype today?</p>
+          <p class="hero-sub">Describe it, attach a file, or start from a template.</p>
+          <div class="tray">
+            <div class="card card-composer">
+              <span class="card-placeholder">Ask for a landing page, a deck, a flow…</span>
+              <div class="row-between">
+                <div class="row-start">
+                  <button class="chip-assist" type="button" aria-pressed="true">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="3" width="11" height="10" rx="2" /><path d="M5 6.5h6M5 9.5h4" /></svg>
+                    Prototype
+                  </button>
+                  <button class="chip-assist" type="button" aria-pressed="false">Slides</button>
+                  <button class="btn btn-ghost btn-icon" type="button" aria-label="Attach file">
+                    <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 3v10M3 8h10" /></svg>
+                  </button>
+                </div>
+                <button class="btn-send" type="button" aria-label="Send">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" /></svg>
+                </button>
+              </div>
+            </div>
+            <div class="tray-foot">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2.5 4.5h4l1.5 1.5h5.5v6.5h-11z" /></svg>
+              ~/Projects/fantay-design
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="grid">
+        <section class="group" aria-labelledby="g-buttons">
+          <h2 id="g-buttons">Buttons</h2>
+          <p class="caption">One black pill per view. Hover lightens the pill; press nudges 1px. Focus is the 1px info-blue ring held 2px off.</p>
+          <div class="stage">
+            <button class="btn btn-primary" type="button">Create project</button>
+            <button class="btn btn-secondary" type="button">Share</button>
+            <button class="btn" type="button">Default</button>
+            <button class="btn btn-subtle" type="button">Subtle</button>
+            <button class="btn btn-ghost" type="button">Ghost</button>
+            <button class="btn" type="button" disabled>Disabled</button>
+          </div>
+          <div class="stage">
+            <button class="btn btn-primary is-hover" type="button">Hover</button>
+            <button class="btn btn-primary is-active" type="button">Active</button>
+            <button class="btn btn-secondary is-focus" type="button">Focus visible</button>
+            <button class="btn btn-primary btn-sm" type="button">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 3v10M3 8h10" /></svg>
+              Small
+            </button>
+            <button class="btn btn-secondary btn-sm" type="button">Small secondary</button>
+            <span class="badge-anchor">
+              <button class="btn btn-icon" type="button" aria-label="Notifications, 3 unread">
+                <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 11V7a4 4 0 0 1 8 0v4l1 1.5H3zM6.5 14h3" /></svg>
+              </button>
+              <span class="badge" aria-hidden="true">3</span>
+            </span>
+            <button class="btn-send" type="button" aria-label="Send message">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" /></svg>
+            </button>
+            <button class="btn btn-danger" type="button">Delete</button>
+          </div>
+        </section>
+
+        <section class="group" aria-labelledby="g-inputs">
+          <h2 id="g-inputs">Fields, select and segmented control</h2>
+          <p class="caption">Panel-filled fields with 4px corners. Focus turns the edge to accent ink; no glow.</p>
+          <div class="stage" style="align-items: flex-start;">
+            <label class="field">
+              <span class="field-label">Project name</span>
+              <input class="input" type="text" value="Fantay landing" />
+              <span class="field-help">Shown on the project card.</span>
+            </label>
+            <label class="field">
+              <span class="field-label">Focused</span>
+              <input class="input is-focus" type="text" placeholder="Search templates" />
+              <span class="field-error">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="8" cy="8" r="6" /><path d="M8 5v3.5M8 11h.01" /></svg>
+                A name is required.
+              </span>
+            </label>
+            <label class="field" style="flex-basis: 100%;">
+              <span class="field-label">Brief</span>
+              <textarea class="textarea" placeholder="What are we making, and for whom?"></textarea>
+            </label>
+          </div>
+          <div class="stage" style="align-items: flex-start; min-height: 228px;">
+            <div class="select">
+              <button class="select-trigger" type="button" aria-haspopup="listbox" aria-expanded="true">
+                <span>Fantay</span>
+                <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 5 6 8 9 5" /></svg>
+              </button>
+              <ul class="select-menu" role="listbox" aria-label="Design system">
+                <li class="select-option" role="option" aria-selected="true"><span>Fantay</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m3.5 8.5 3 3 6-7" /></svg></li>
+                <li class="select-option is-hover" role="option" aria-selected="false"><span>Neutral Modern</span><svg viewBox="0 0 16 16" aria-hidden="true"></svg></li>
+                <li class="select-option" role="option" aria-selected="false"><span>kami</span><svg viewBox="0 0 16 16" aria-hidden="true"></svg></li>
+              </ul>
+            </div>
+            <div class="segmented" role="group" aria-label="View">
+              <button type="button" aria-pressed="true">Preview</button>
+              <button type="button" aria-pressed="false">Code</button>
+              <button type="button" aria-pressed="false">Tokens</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="group" aria-labelledby="g-tabs">
+          <h2 id="g-tabs">Workspace tabs</h2>
+          <p class="caption">34px tabs on a 44px white chrome; the active tab merges into the panel below.</p>
+          <div class="tabs">
+            <div class="tabs-chrome" role="tablist" aria-label="Open projects">
+              <button class="tab tab-home" type="button" role="tab" aria-selected="false" aria-label="Home">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 16px; height: 16px; opacity: 1;" aria-hidden="true"><path d="M2.5 7.5 8 3l5.5 4.5V13h-11z" /></svg>
+              </button>
+              <button class="tab" type="button" role="tab" aria-selected="true"><span>Landing</span><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9" /></svg></button>
+              <button class="tab is-hover" type="button" role="tab" aria-selected="false"><span>Pitch deck</span><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9" /></svg></button>
+              <button class="tab" type="button" role="tab" aria-selected="false"><span>Onboarding</span><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9" /></svg></button>
+            </div>
+            <div class="tabs-panel" role="tabpanel">
+              <p class="prose">The active tab carries <code>--surface</code> and strong ink. Shortcuts: <kbd>⌘</kbd> <kbd>T</kbd> opens a tab.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="group" aria-labelledby="g-cards">
+          <h2 id="g-cards">Cards, trays and tiles</h2>
+          <p class="caption">Tone groups before borders. 16px cards; tiles have no surface, the radius only shapes media and the selection ring.</p>
+          <div class="stage stage-white" style="align-items: stretch;">
+            <article class="card-glass" style="flex: 1 1 200px;">
+              <h3>Glass content card</h3>
+              <p class="caption">rgba white 85% with a thin blur and a whisper shadow.</p>
+            </article>
+            <article class="panel" style="flex: 1 1 200px;">
+              <h3>Panel card</h3>
+              <p class="caption">Panel tone, 16px radius, no border.</p>
+            </article>
+            <article class="tile is-selected" style="flex: 1 1 140px;">
+              <div class="tile-media"></div>
+              <div><p class="tile-title">Spring launch</p><p class="tile-meta">Edited 2h ago</p></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="group" aria-labelledby="g-dialog">
+          <h2 id="g-dialog">Dialog</h2>
+          <p class="caption">A frosted white scrim, never a dark veil. The panel pops from scale 0.97.</p>
+          <div class="stage dialog-stage stage-white">
+            <div class="dialog-behind" aria-hidden="true">
+              <div class="dialog-behind-bar" style="width: 40%;"></div>
+              <div class="dialog-behind-bar" style="width: 70%;"></div>
+              <div class="row-start"><span class="tag">Prototype</span><span class="tag">Draft</span></div>
+              <div class="dialog-behind-bar" style="width: 55%;"></div>
+            </div>
+            <div class="dialog-scrim">
+              <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-title" aria-describedby="dlg-desc">
+                <h3 class="dialog-title" id="dlg-title">Delete “Spring launch”?</h3>
+                <p class="dialog-desc" id="dlg-desc">The project and its files move to the trash. You can restore it for 30 days.</p>
+                <div class="dialog-actions">
+                  <button class="btn btn-secondary" type="button">Cancel</button>
+                  <button class="btn btn-danger" type="button">Delete</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="group" aria-labelledby="g-menu">
+          <h2 id="g-menu">Menu and tooltip</h2>
+          <p class="caption">Opaque menu anchored to chrome; the tooltip stays solid so it reads over any content.</p>
+          <div class="stage" style="align-items: flex-start; gap: var(--space-8);">
+            <ul class="menu" role="menu" aria-label="Project actions">
+              <li role="none"><button class="menu-item" type="button" role="menuitem">Rename</button></li>
+              <li role="none"><button class="menu-item is-hover" type="button" role="menuitem">Duplicate</button></li>
+              <li role="none"><button class="menu-item" type="button" role="menuitem">Export as HTML</button></li>
+              <li role="none" class="menu-sep"></li>
+              <li role="none">
+                <button class="menu-item is-danger" type="button" role="menuitem">
+                  <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 4.5h10M6 4.5V3h4v1.5M4.5 4.5l.5 9h6l.5-9" /></svg>
+                  Delete
+                </button>
+              </li>
+            </ul>
+            <span class="tooltip-anchor">
+              <button class="btn btn-icon" type="button" aria-label="Copy link" aria-describedby="tip-copy">
+                <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" /><path d="M10.5 3.5v-1h-8v8h1" /></svg>
+              </button>
+              <span class="tooltip" role="tooltip" id="tip-copy">Copy share link</span>
+            </span>
+          </div>
+        </section>
+
+        <section class="group" aria-labelledby="g-tags">
+          <h2 id="g-tags">Tags, status and badges</h2>
+          <p class="caption">Semantic hue lives in the dot; the label stays ink. Green marks what was chosen.</p>
+          <div class="stage">
+            <span class="tag">Prototype</span>
+            <span class="tag">Design system</span>
+            <button class="chip-assist" type="button" aria-pressed="true">Selected template</button>
+            <span class="status status-success">Published</span>
+            <span class="status status-warn">Needs review</span>
+            <span class="status status-danger">Build failed</span>
+            <span class="status status-info">Syncing</span>
+            <span class="status">Draft</span>
+            <svg class="tick" viewBox="0 0 24 24" role="img" aria-label="Done"><circle cx="12" cy="12" r="9" fill="#202020" /><path d="m7.5 12.2 3 3 6-6.4" fill="none" stroke="#00ff08" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            <span class="caption">Press <kbd>Esc</kbd> to close · <code>--accent</code></span>
+          </div>
+        </section>
+
+        <section class="group" aria-labelledby="g-toasts">
+          <h2 id="g-toasts">Toasts and switch</h2>
+          <p class="caption">Toasts are ink pills; state goes in the icon. The switch is the brand-green "on".</p>
+          <div class="stage stage-col" style="align-items: flex-start;">
+            <div class="toast" role="status">
+              <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="#00ff08" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3.5 8.5 3 3 6-7" /></svg>
+              Link copied to clipboard
+            </div>
+            <div class="toast-inline" role="status">Exported 3 files <a class="link-action" href="#g-toasts">Show</a></div>
+            <div class="switch-row">
+              <button class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="sw-1"><span class="switch-knob"></span></button>
+              <span id="sw-1">Design harness (on)</span>
+            </div>
+            <div class="switch-row">
+              <button class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="sw-2"><span class="switch-knob"></span></button>
+              <span id="sw-2">Auto-publish (off)</span>
+            </div>
+            <div class="switch-row">
+              <button class="switch" type="button" role="switch" aria-checked="false" aria-disabled="true" aria-labelledby="sw-3"><span class="switch-knob"></span></button>
+              <span id="sw-3" style="color: var(--meta);">Team sync (unavailable)</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="group" aria-labelledby="g-chat">
+          <h2 id="g-chat">Chat</h2>
+          <p class="caption">The user's bubble is the darkest mass; the assistant answers in unboxed prose.</p>
+          <div class="stage stage-white chat">
+            <p class="bubble-user">Make the hero calmer and keep one primary action.</p>
+            <div class="prose">
+              <h3>Updated the hero</h3>
+              <p>I removed the second call to action, moved the subtitle to <code>--muted</code>, and kept the black pill. The <a href="#g-chat">diff</a> touches two files.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="group" aria-labelledby="g-nav">
+          <h2 id="g-nav">Navigation rail</h2>
+          <p class="caption">No surface of its own. Hover and selection share a 10% ink fill; the selected label goes to #121212.</p>
+          <div class="stage stage-white" style="align-items: flex-start;">
+            <nav class="rail" aria-label="Main">
+              <a class="rail-row" href="#g-nav" aria-current="page">
+                <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 8.5 9 3.5l6 5V15H3z" /></svg>
+                Home
+              </a>
+              <a class="rail-row is-hover" href="#g-nav">
+                <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="5" height="5" rx="1" /><rect x="10" y="3" width="5" height="5" rx="1" /><rect x="3" y="10" width="5" height="5" rx="1" /><rect x="10" y="10" width="5" height="5" rx="1" /></svg>
+                Projects
+              </a>
+              <a class="rail-row" href="#g-nav">
+                <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="9" cy="9" r="5.5" /><path d="M9 3.5v11M3.5 9h11" /></svg>
+                Design systems
+              </a>
+              <a class="rail-row" href="#g-nav">
+                <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 3.5h4l.5 2 1.8 1-1 1.8.2 2.2-2 1-1 1.5H7l-1-1.5-2-1 .2-2.2-1-1.8L5 5.5z" /><circle cx="9" cy="9" r="1.8" /></svg>
+                Settings
+              </a>
+            </nav>
+          </div>
+        </section>
+
+        <section class="group" data-theme="dark" aria-labelledby="g-dark">
+          <h2 id="g-dark">Dark (derived, unvalidated)</h2>
+          <p class="caption">From the product's own dark token block, which the product never renders. Opt in with data-theme="dark".</p>
+          <div class="stage">
+            <button class="btn btn-primary" type="button">Create project</button>
+            <button class="btn btn-secondary" type="button">Share</button>
+            <button class="btn btn-subtle" type="button">Subtle</button>
+            <span class="tag">Prototype</span>
+            <span class="status status-danger">Build failed</span>
+            <input class="input" type="text" value="Dark field" style="width: 160px;" aria-label="Dark field" />
+            <p class="bubble-user">User bubble</p>
+          </div>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

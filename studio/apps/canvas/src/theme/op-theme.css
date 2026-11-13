@@ -1,0 +1,171 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * SPDX-FileCopyrightText: 2026 Danila Poyarkov and OpenPencil contributors
+ * SPDX-FileCopyrightText: 2026 Fantay contributors
+ * Source: https://github.com/open-pencil/open-pencil/blob/v0.16.0/src/theme/tokens.css
+ * Modified by Fantay: theme values replaced — OpenPencil's theme variables are mapped onto the
+ * Fantay tokens (@fantay/tokens, both themes keyed on <html data-theme>); the custom variants
+ * and scrollbar utilities (upstream lines 5-47) are kept verbatim.
+ */
+@custom-variant motion-safe {
+  @media (prefers-reduced-motion: no-preference) {
+    &:where(:root:not([data-motion='off']), :root:not([data-motion='off']) *) {
+      @slot;
+    }
+  }
+}
+
+@custom-variant motion-reduce {
+  @media (prefers-reduced-motion: reduce) {
+    @slot;
+  }
+  &:where([data-motion='off'], [data-motion='off'] *) {
+    @slot;
+  }
+}
+
+@utility scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--color-muted);
+  }
+}
+
+/* Inter for the editor chrome, served next to the editor (copied from @open-pencil/core/assets). */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/canvas-editor/Inter-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/canvas-editor/Inter-Medium.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/canvas-editor/Inter-SemiBold.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/canvas-editor/Inter-Bold.ttf') format('truetype');
+}
+
+/*
+ * `static`: every variable is emitted, because the canvas reads some from JS (host/theme.ts) and
+ * vendored arbitrary values such as var(--color-border) need them. Values resolve per theme at
+ * <html>. Radii, spacing and the type scale stay at Tailwind's defaults, as upstream.
+ */
+@theme static {
+  --color-*: initial;
+  --font-sans: 'Inter', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, monospace;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-canvas: var(--paper);
+  --color-panel: var(--surface);
+  --color-panel-secondary: var(--sub);
+  --color-panel-field: var(--paper-deep);
+  --color-panel-field-hover: color-mix(in srgb, var(--paper-deep) 90%, var(--ink));
+  --color-panel-focus: var(--focus-ring-color); /* A1: focus rings and focused field borders use brand-ink */
+  --color-panel-selected: var(--brand);
+  --color-panel-selected-muted: var(--brand-soft);
+  --color-border: var(--line);
+  --color-hover: var(--sub);
+  --color-accent: var(--brand);
+  --color-on-accent: #ffffff;
+  --color-primary: var(--brand-ink);
+  --color-on-primary: var(--paper);
+  --color-surface: var(--ink);
+  --color-muted: var(--ink-soft);
+  --color-input: var(--paper);
+  --color-inverted: var(--paper);
+  --color-component: var(--fx-op-component);
+  --color-slot: var(--fx-op-slot);
+  --color-warning: var(--warning-ink);
+  --color-warning-bg: color-mix(in srgb, var(--warning) 12%, transparent);
+  --color-warning-border: color-mix(in srgb, var(--warning) 32%, transparent);
+  --color-warning-action: var(--warning-ink);
+  --color-success: var(--success-ink);
+  --color-success-fill: var(--success);
+  --color-error: var(--accent-ink);
+  --color-error-bg: color-mix(in srgb, var(--accent-ink) 10%, transparent);
+  --color-error-border: color-mix(in srgb, var(--accent-ink) 35%, transparent);
+  --color-error-fill: var(--danger);
+  --color-checkerboard: var(--line);
+  --color-checkerboard-muted: var(--line-soft);
+  --color-ruler-bg: var(--surface);
+  --color-ruler-tick: var(--ink-faint);
+  --color-ruler-text: var(--ink-soft);
+}
+
+/* Component and slot layers keep their own hues (Radix plum and pink), distinct from the violet brand. */
+:root[data-theme='dark'] {
+  --fx-op-component: #e796f3;
+  --fx-op-slot: #ff8dcc;
+}
+:root[data-theme='light'] {
+  --fx-op-component: #953ea3;
+  --fx-op-slot: #c2298a;
+}
+
+/*
+ * A1 (P7): focus rings use the shared focus-ring colour and 2px width. Vendored rings draw the
+ * accent at 50 % / 25 % with 1px width; they take the focus-ring colour and width here, so the
+ * vendored files stay unpatched. Unlayered, so it wins over the utility that sets the ring colour.
+ */
+.focus-visible\:ring-accent\/50:focus-visible {
+  --tw-ring-color: var(--focus-ring-color);
+}
+
+.focus\:ring-accent\/25:focus {
+  --tw-ring-color: var(--focus-ring-color);
+}
+
+.focus-visible\:ring-1:focus-visible,
+.focus\:ring-1:focus {
+  --tw-ring-color: var(--focus-ring-color);
+  --tw-ring-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+}
+
+/*
+ * D1: CJK labels never below 12px (the OpenPencil chrome uses 9–11px Latin). Unlayered, so it wins
+ * over utilities. Numeric fields (tabular figures, paint fields, inputs) keep their size: they
+ * hold digits and hex values, and their fixed widths are cut for 11px.
+ */
+:root:lang(zh) :is(.text-\[11px\], .text-\[10px\], .text-\[9px\]):not(:where(input, .tabular-nums, .tabular-nums *, [data-slot='paint-field'], [data-slot='paint-field'] *)),
+:root:lang(ja) :is(.text-\[11px\], .text-\[10px\], .text-\[9px\]):not(:where(input, .tabular-nums, .tabular-nums *, [data-slot='paint-field'], [data-slot='paint-field'] *)),
+:root:lang(ko) :is(.text-\[11px\], .text-\[10px\], .text-\[9px\]):not(:where(input, .tabular-nums, .tabular-nums *, [data-slot='paint-field'], [data-slot='paint-field'] *)) {
+  font-size: 12px;
+  line-height: 16px;
+}

@@ -1,0 +1,274 @@
+/* Search field + kind segmented control for the material surfaces. */
+
+.searchField {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 200px;
+  min-width: 0;
+  max-width: 460px;
+}
+
+.searchIcon {
+  position: absolute;
+  inset-inline-start: 10px;
+  display: inline-flex;
+  color: var(--ink-faint);
+  pointer-events: none;
+}
+
+/* Two classes so the padding beats the primitive's single-class `.control`
+   regardless of stylesheet order. */
+.searchField .searchInput {
+  width: 100%;
+  height: 32px;
+  min-height: 32px;
+  padding-inline-start: 31px;
+  padding-inline-end: 30px;
+  border-color: transparent;
+  border-radius: var(--radius-control, 8px);
+  background: var(--sub);
+  font-size: var(--font-size-13, 13px);
+}
+
+.searchField .searchInput:focus {
+  border-color: var(--line);
+  background: var(--surface);
+  box-shadow: none;
+}
+
+.searchField .searchInput::placeholder {
+  color: var(--ink-faint);
+}
+
+/* Native clear button, redrawn as a neutral × (the browser default is blue). */
+.searchField .searchInput::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--text-soft);
+  cursor: pointer;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 6 12 12M6 18 18 6'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 6 12 12M6 18 18 6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.searchField .searchInput::-webkit-search-cancel-button:hover {
+  background: var(--text-strong);
+}
+
+.shortcut {
+  position: absolute;
+  inset-inline-end: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--ink-faint);
+  font-family: var(--mono);
+  font-size: var(--font-size-12, 12px);
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Segmented control: the design-system flow's grey track, pill-shaped like
+   the app's chips. Scrolls sideways instead of wrapping on narrow screens. */
+.segmented {
+  display: inline-flex;
+  flex: 0 1 auto;
+  gap: 2px;
+  max-width: 100%;
+  padding: 3px;
+  overflow-x: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--bg-subtle);
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.segmented::-webkit-scrollbar {
+  display: none;
+}
+
+.segment {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-pill, 999px);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--font-size-13, 13px);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 140ms cubic-bezier(0.23, 1, 0.32, 1),
+    color 140ms cubic-bezier(0.23, 1, 0.32, 1),
+    box-shadow 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.segment:hover:not([aria-pressed='true']) {
+  background: var(--bg-fill-secondary, rgba(0, 0, 0, 0.06));
+  color: var(--text-strong);
+}
+
+.segment[aria-pressed='true'] {
+  background: var(--bg);
+  color: var(--text-strong);
+  box-shadow: var(--shadow-xs), 0 0 0 1px var(--border-soft);
+}
+
+.segment:focus-visible {
+  outline: 1px solid var(--blue);
+  outline-offset: 1px;
+}
+
+.segmentCount {
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-size: var(--font-size-12, 12px);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segment {
+    transition: none;
+  }
+}
+
+/* Level 1 Category Hairline Tabs (Height: 38px, Paper & Ink #202020) */
+.categoryTabs {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 20px;
+  min-width: 0;
+  height: var(--page-tab-h, 38px);
+  min-height: var(--page-tab-h, 38px);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: inset 0 -1px 0 var(--line-soft);
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  -webkit-mask-image: linear-gradient(to right, var(--brand, #000) calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to right, var(--brand, #000) calc(100% - 28px), transparent);
+}
+
+.categoryTabs::-webkit-scrollbar {
+  display: none;
+}
+
+.categoryTab {
+  appearance: none;
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  height: var(--page-tab-h, 38px);
+  min-height: var(--page-tab-h, 38px);
+  margin: 0;
+  padding: 0 2px;
+  border: 0;
+  border-bottom: 1.5px solid transparent;
+  background: transparent;
+  color: var(--ink-faint);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 140ms var(--page-ease, cubic-bezier(0.23, 1, 0.32, 1)), border-color 140ms var(--page-ease, cubic-bezier(0.23, 1, 0.32, 1));
+}
+
+.categoryTab:hover:not(.activeTab) {
+  border-bottom-color: transparent;
+  color: var(--ink);
+}
+
+.categoryTab.activeTab,
+.categoryTab[aria-selected='true'] {
+  border-bottom-color: var(--ink, #202020);
+  color: var(--ink, #202020);
+  font-weight: 600;
+}
+
+.categoryTab:focus-visible {
+  outline: 2px solid var(--focus-ring-color, #202020);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+
+.tabCount {
+  color: var(--ink-faint);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Level 2 Section Micro-Capsules (Height: 26px, Radius: 7px) */
+.sectionCapsules {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 4px 0;
+}
+
+.capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  min-height: 26px;
+  margin: 0;
+  padding: 0 9px;
+  border: 0;
+  border-radius: var(--radius-row, 7px);
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 140ms var(--page-ease, cubic-bezier(0.23, 1, 0.32, 1)), color 140ms var(--page-ease, cubic-bezier(0.23, 1, 0.32, 1));
+}
+
+.capsule:hover {
+  background: var(--sub);
+  color: var(--ink);
+}
+
+.capsule.activeCapsule,
+.capsule[aria-pressed='true'] {
+  background: var(--paper-deep, #e8e6e3);
+  color: var(--ink, #202020);
+  font-weight: 600;
+}
+
+.capsuleCount {
+  color: var(--ink-faint);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+

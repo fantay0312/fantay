@@ -1,0 +1,432 @@
+/* Layout and timing follow the brand colours reference board. Fallbacks keep the timing correct
+   if the board is ever rendered outside the Studio root that defines the --st-* tokens. */
+.board {
+  --board-layout: var(--st-dur-layout, 640ms) var(--st-ease, cubic-bezier(0.22, 0.9, 0.24, 1));
+  --board-recolour: 320ms var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1));
+  --board-gap: var(--st-gap, 12px);
+  --board-edge: color-mix(in srgb, var(--ink, #121211) 16%, transparent);
+  --board-spine: 44px;
+  position: relative;
+  /* Keeps the mark's z-index inside the board, under the page's sticky navigation. */
+  isolation: isolate;
+}
+
+.mast { margin-bottom: 12px; }
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  margin: 0;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.legendParts { color: var(--ink-faint); }
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--board-gap);
+}
+.row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--board-gap);
+}
+
+.card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: var(--st-radius-card, 16px);
+  transition:
+    flex-grow var(--board-layout),
+    background-color var(--board-recolour),
+    color var(--board-recolour);
+}
+/* An overlay, not a shadow on the card: the tint strip would paint over an inset shadow. */
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--board-edge);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--board-recolour);
+}
+.edge::after { opacity: 1; }
+.card:has(.hit:focus-visible) {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+/* Later rules win ties, so the open sizes must stay below the closed ones. */
+.foundation .card { flex-grow: 1.35; }
+.foundation .card:nth-child(3) { flex-grow: 0.72; }
+.card.open { flex-grow: 1.95; }
+.foundation .card.open { flex-grow: 2.25; }
+.card.small { border-radius: var(--st-radius-small, 14px); }
+.card.small.open { flex-grow: 2.2; }
+/* A tint taking the stage needs a little more room than the card did. */
+.card.open.stepping { flex-grow: 2.5; }
+.foundation .card.open.stepping { flex-grow: 2.4; }
+.card.small.open.stepping { flex-grow: 2.9; }
+
+/* Spans the whole card so the tint strip, layered above it, is never nested in a button. */
+.card .hit {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.card .hit:hover, .card .hit:active { background: transparent; transform: none; }
+.card .hit:focus-visible { outline: none; }
+
+/* Basis 0 and an explicit grow, so folding into the spine interpolates instead of jumping. */
+.copy {
+  container: palette-card / inline-size;
+  flex: 1 1 0px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 210px;
+  padding: 16px 16px 14px;
+  overflow: hidden;
+  pointer-events: none;
+  transition: flex-grow var(--board-layout), flex-basis var(--board-layout);
+}
+.small .copy {
+  min-height: 168px;
+  padding: 12px;
+}
+.copyInner {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  transition: opacity 220ms var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)) 160ms;
+}
+/* Folding away: the details keep the width they had, so they leave without rewrapping, and fade at once. */
+.stepping .copy { flex-grow: 0; flex-basis: var(--board-spine); }
+.stepping .copyInner { flex: none; width: 220px; opacity: 0; transition-duration: 120ms; transition-delay: 0ms; }
+.small.stepping .copyInner { width: 150px; }
+
+.spine {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: var(--board-spine);
+  padding: 16px 0 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1));
+}
+.spine svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: 0.8; }
+.spineLabel {
+  max-height: 100%;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  writing-mode: vertical-rl;
+}
+.stepping .spine { opacity: 1; transition-duration: 220ms; transition-delay: 240ms; }
+@media (hover: hover) {
+  .stepping:has(.hit:hover) .spine svg { opacity: 1; transform: translateX(-2px); transition: transform 160ms var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)); }
+}
+
+.lead { min-width: 0; }
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.name {
+  margin: 0;
+  min-width: 0;
+  color: inherit;
+  font-size: 22px;
+  font-weight: 560;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+  /* Three lines always fit, so opening a neighbour can never change the height of the row. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+.small .name {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+.number {
+  flex-shrink: 0;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.small .number {
+  font-size: 12px;
+  line-height: 1.25;
+}
+.note {
+  margin: 8px 0 12px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.foot, .raw {
+  margin: auto 0 0;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 17px;
+}
+/* The label sits over the row's left edge instead of taking flex room, so hiding it never moves
+   the value, and a value that does not fit ends in an ellipsis rather than losing a digit. */
+.footRow {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.footLabel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0.72;
+  transition: opacity var(--st-dur-micro, 120ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1));
+}
+.footValue {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+}
+/* Token names run long; they stop short of the label instead of sliding under it. */
+.footToken { padding-left: 44px; }
+.alpha {
+  margin-left: 6px;
+  opacity: 0.72;
+}
+.raw {
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+}
+/* Below this a label and the widest CMYK value no longer fit side by side; the values identify
+   themselves by format, so the labels fade and the values take the whole row. */
+@container palette-card (max-width: 110px) {
+  .footLabel { opacity: 0; }
+  .footToken { padding-left: 0; }
+}
+@container palette-card (max-width: 70px) {
+  .foot { font-size: 10px; }
+}
+
+/* ── The tint strip ── */
+.steps {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 0px;
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+  transition: flex-basis var(--board-layout), flex-grow var(--board-layout);
+}
+.open .steps { flex-basis: 116px; }
+.small.open .steps { flex-basis: 84px; }
+.stepping .steps { flex-grow: 1; }
+/* The palest tint would melt into a white page, so the strip keeps its own outer edge. */
+.steps::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: 0 var(--st-radius-card, 16px) var(--st-radius-card, 16px) 0;
+  box-shadow:
+    inset 0 1px 0 var(--board-edge),
+    inset 0 -1px 0 var(--board-edge),
+    inset -1px 0 0 var(--board-edge);
+  pointer-events: none;
+}
+.small .steps::after { border-radius: 0 var(--st-radius-small, 14px) var(--st-radius-small, 14px) 0; }
+.edge .steps::after { box-shadow: none; }
+@media (hover: hover) {
+  /* A sliver of the tints, the same glimpse the reference gives mid-click: this card opens. */
+  .card:not(.open):has(.hit:hover) .steps {
+    flex-basis: 10px;
+    /* A hover hint answers at once; only the real open and close take the long layout move. */
+    transition-duration: var(--st-dur-enter, 220ms);
+  }
+}
+
+.steps .step {
+  position: relative;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  height: auto;
+  padding: 12px 0 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    flex-grow var(--board-layout),
+    background-color var(--board-recolour),
+    color var(--board-recolour);
+}
+.steps .step + .step { box-shadow: inset 1px 0 0 rgba(18, 18, 17, 0.08); }
+.steps .step:active { transform: none; }
+.steps .step:focus-visible {
+  z-index: 1;
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
+}
+.stepping .step[data-active] { flex-grow: 4.6; cursor: copy; }
+@media (hover: hover) {
+  .stepping .step:not([data-active]):hover { flex-grow: 1.4; transition-duration: var(--st-dur-enter, 220ms); }
+}
+
+.stepTop {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 1px;
+  min-width: 0;
+  white-space: nowrap;
+}
+/* Labels leave at once and return late: mid-fold the columns are too thin to hold them. */
+.stepValue {
+  opacity: 0;
+  transition:
+    opacity 120ms var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)),
+    font-size 220ms var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1));
+}
+.open .stepValue {
+  opacity: 0.78;
+  transition-duration: 220ms;
+  transition-delay: 200ms;
+}
+.stepUnit { display: none; font-size: 12px; font-weight: 500; opacity: 0.72; }
+.step[data-active] .stepTop { justify-content: flex-start; padding: 2px 16px 0; }
+.small .step[data-active] .stepTop { padding-inline: 12px; }
+.step[data-active] .stepValue { opacity: 1; font-size: 22px; font-weight: 560; letter-spacing: -0.02em; }
+.small .step[data-active] .stepValue { font-size: 15px; font-weight: 600; letter-spacing: 0; }
+.step[data-active] .stepUnit { display: inline; }
+
+.stepCheck {
+  position: absolute;
+  top: -2px;
+  left: calc(50% - 6px);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  transform: scale(0.9);
+  transition:
+    opacity 120ms var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)),
+    transform 120ms var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1));
+}
+.step[data-active] .stepCheck { top: 8px; left: auto; right: 16px; }
+.step[data-copied] .stepCheck { opacity: 1; transform: scale(1); }
+.open .step[data-copied]:not([data-active]) .stepValue { opacity: 0; transition-delay: 0ms; }
+
+.stepHex {
+  position: absolute;
+  bottom: 12px;
+  left: calc(50% - 0.5em);
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  writing-mode: vertical-rl;
+  opacity: 0;
+  transition: opacity 120ms var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1));
+}
+.step:not([data-active]):hover .stepHex, .step:not([data-active]):focus-visible .stepHex { opacity: 0.78; }
+.open .step:not([data-active]):hover .stepValue { opacity: 1; transition-delay: 0ms; }
+.step[data-active] .stepHex { display: none; }
+
+/* An open tint prints its own values, ruled off like a card's foot. Absolute, so the folded columns
+   never wrap them into a taller row. */
+.stepDetail {
+  position: absolute;
+  right: 16px;
+  bottom: 14px;
+  left: 16px;
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 17px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 120ms var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)), visibility 0s linear 120ms;
+}
+.small .stepDetail { right: 12px; bottom: 12px; left: 12px; }
+.step[data-active] .stepDetail {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 240ms var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)) 280ms, visibility 0s;
+}
+.stepHint { margin-top: 6px; font-size: 10.5px; opacity: 0.62; }
+
+/* The first frame paints the default card already open. */
+.board[data-motion='off'] .card,
+.board[data-motion='off'] .copy,
+.board[data-motion='off'] .copyInner,
+.board[data-motion='off'] .spine,
+.board[data-motion='off'] .steps,
+.board[data-motion='off'] .step,
+.board[data-motion='off'] .stepValue,
+.board[data-motion='off'] .stepDetail { transition: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .card, .card::after, .copy, .copyInner, .spine, .steps, .steps .step, .stepValue, .stepCheck, .stepHex, .stepDetail, .footLabel { transition: none; }
+}

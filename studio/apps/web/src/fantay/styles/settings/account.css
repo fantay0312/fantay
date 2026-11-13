@@ -1,0 +1,169 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* ── 账户 ──────────────────────────────────────────────────────────────────────────────────── */
+/* The signed-out / authorising TokenToSeaAccount card is an upstream component that also renders outside Settings, so
+   its look on this page is set here, keyed on its CSS-module class names (`Component_local__hash`). The signed-in
+   overview (fantay/account/AccountSettingsSection) and the catalog (TokenToSeaServices) own their look in their CSS
+   modules; nothing here may reach into them. */
+:is([data-fantay-shell], [data-client-type='desktop']) .settings-page-shell [data-testid='settings-account'] {
+  /* The account card's controls only. */
+  & [data-testid='tokentosea-account'] :is([data-slot='button'], [class*='_inlineActionLink__']) {
+    gap: 6px;
+    height: var(--settings-control-h);
+    padding: 0 12px;
+    border: var(--settings-hairline);
+    border-radius: var(--settings-control-radius);
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: none;
+    font-size: var(--settings-type-control);
+    font-weight: 500;
+    line-height: 1.4;
+    transition: background-color 100ms var(--settings-ease), border-color 100ms var(--settings-ease);
+
+    &:hover:not(:disabled) {
+      border-color: var(--ink-ghost);
+      background: var(--sub);
+      color: var(--ink);
+      box-shadow: none;
+    }
+    &:disabled {
+      opacity: 0.5;
+    }
+    &[data-variant='primary'] {
+      border-color: transparent;
+      background: var(--brand);
+      color: var(--on-brand);
+
+      &:hover:not(:disabled) {
+        border-color: transparent;
+        background: var(--brand-hover);
+        color: var(--on-brand);
+      }
+    }
+    & [data-slot='button-label'] > svg {
+      display: none;
+    }
+  }
+
+  /* ── Identity: the account, its connection settings and any error are rows of one group ── */
+  & [data-testid='tokentosea-account'][data-variant='inline'] {
+    gap: 0;
+    border: var(--settings-hairline);
+    border-radius: var(--settings-radius);
+    background: var(--surface);
+  }
+  & [class*='_inlineCard__'] {
+    flex-wrap: nowrap;
+    gap: 16px;
+    min-height: var(--settings-row-h);
+    padding: var(--settings-row-y) var(--settings-row-x);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+  & [class*='_inlineIdentity__'] {
+    flex: 1 1 0;
+    gap: 12px;
+  }
+  /* Only a real person gets an avatar: the signed-out glyphs were decoration. */
+  & [class*='_inlineAvatar__'] {
+    width: var(--settings-control-h);
+    height: var(--settings-control-h);
+    border-radius: 50%;
+    background: var(--sub);
+    color: var(--ink);
+    box-shadow: none;
+    font-size: var(--settings-type-control);
+    font-weight: 600;
+
+    &:not([data-tone='connected']) {
+      display: none;
+    }
+  }
+  & [class*='_inlineCopy__'] {
+    gap: 1px;
+  }
+  & [class*='_inlineTitleRow__'] {
+    flex-wrap: nowrap;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+  }
+  & [class*='_inlineTitle__'] {
+    flex: none;
+    color: var(--ink);
+    font-size: var(--settings-type-label);
+    font-weight: 500;
+    line-height: 1.45;
+  }
+  /* The subtitle already says what the row is waiting for; only the signed-in state adds something. */
+  & [class*='_inlineBadge__'] {
+    overflow: hidden;
+    min-height: 0;
+    padding: 0;
+    background: none;
+    color: var(--ink-faint);
+    box-shadow: none;
+    font-size: var(--settings-type-meta);
+    font-weight: 400;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &::before,
+    &:not([data-tone='connected']) {
+      display: none;
+    }
+  }
+  & [class*='_inlineSubtitle__'] {
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+    line-height: 1.5;
+  }
+  & [class*='_inlineActions__'] {
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  & [class*='_configCard__'] {
+    gap: 8px;
+    padding: var(--settings-row-y) var(--settings-row-x);
+    border-top: var(--settings-hairline);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+  & [class*='_configHeader__'] {
+    gap: 1px;
+  }
+  & [class*='_configTitle__'] {
+    color: var(--ink);
+    font-size: var(--settings-type-label);
+    font-weight: 500;
+    line-height: 1.45;
+  }
+  & [class*='_configHint__'] {
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+
+    & code {
+      margin-left: 0;
+      padding: 0;
+      background: none;
+      box-shadow: none;
+      color: var(--ink-soft);
+      font-size: var(--settings-type-meta);
+    }
+  }
+  & [class*='_configFormRow__'] {
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  & [class*='_errorBanner__'] {
+    padding: var(--settings-row-y) var(--settings-row-x);
+    border-top: var(--settings-hairline);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: var(--danger);
+    font-size: var(--settings-type-hint);
+  }
+}

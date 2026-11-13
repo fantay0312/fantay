@@ -1,0 +1,68 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Item covers. Fallback tints are mixed from the theme tokens so both themes stay in key. */
+
+.cover {
+  position: relative;
+  display: block;
+  flex: none;
+  overflow: hidden;
+  background: var(--sub);
+  container-type: inline-size;
+}
+
+.cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fallback {
+  display: grid;
+  place-items: center;
+  --tint: var(--info);
+  background:
+    radial-gradient(90% 90% at 85% 10%, color-mix(in srgb, var(--tint) 26%, transparent), transparent 72%),
+    color-mix(in srgb, var(--tint) 14%, var(--surface));
+}
+
+.fallback[data-tone='1'] {
+  --tint: var(--warning);
+}
+
+.fallback[data-tone='2'] {
+  --tint: var(--success);
+}
+
+.fallback[data-tone='3'] {
+  --tint: var(--accent-ink);
+}
+
+.fallback[data-tone='4'] {
+  --tint: var(--ink-faint);
+}
+
+.fallback[data-tone='5'] {
+  --tint: color-mix(in srgb, var(--info) 55%, var(--accent-ink));
+}
+
+.glyph {
+  font-size: 52cqw;
+  font-weight: 500;
+  line-height: 1;
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+}
+
+.words {
+  position: absolute;
+  inset: auto 7cqw 6cqw;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  font-size: max(12px, 8.6cqw);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--ink);
+  text-align: start;
+}

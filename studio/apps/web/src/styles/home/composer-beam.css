@@ -1,0 +1,46 @@
+/* ============================================================
+   Home composer — focus border & tactile micro-highlight.
+
+   Replaces the legacy rotating neon cyan-green radial beam
+   with a calm static 1px border and inset micro-highlight,
+   strictly conforming to Fantay master craftsmanship and
+   the Anti-AI-Taste design principles.
+   ============================================================ */
+
+.home-hero__composer-beam[data-beam='composer'] {
+  position: absolute;
+  inset: calc(-1 * var(--stroke-thin));
+  --beam-radius: var(--composer-card-radius, 16px);
+  --beam-border-width: var(--stroke-thin);
+
+  border-radius: var(--beam-radius);
+  border: var(--beam-border-width) solid var(--border-soft, var(--line));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface) 65%, transparent);
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--duration-faster, 100ms) var(--curve-easy-ease, ease);
+}
+
+.home-hero__composer-beam[data-beam='composer'][data-active] {
+  animation: beam-fade-in-composer 0.2s ease forwards;
+}
+
+.home-hero__composer-beam[data-beam='composer'][data-fading] {
+  animation: beam-fade-out-composer 0.2s ease forwards;
+}
+
+/* Travelling bloom element is deactivated in favor of calm static border */
+.home-hero__composer-beam[data-beam='composer'] [data-beam-bloom] {
+  display: none;
+}
+
+@keyframes beam-fade-in-composer {
+  from { opacity: 0; }
+  to { opacity: var(--beam-strength, 1); }
+}
+
+@keyframes beam-fade-out-composer {
+  from { opacity: var(--beam-strength, 1); }
+  to { opacity: 0; }
+}

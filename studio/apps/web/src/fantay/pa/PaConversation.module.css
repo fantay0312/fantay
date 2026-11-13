@@ -1,0 +1,1384 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/*
+ * Fantay conversation (spec §6): header, transcript, messages, turn tails, empty states.
+ * Motion reads the --pa-* grammar from fantay/styles/pa.css (B1: never --chat-*): quint ease-out, enter 240,
+ * exit 160; nothing grows from scale(0). Colour is ink; warm (--warning) only means "needs you", --accent-ink
+ * only means "failed".
+ */
+
+/* ── Frame ─────────────────────────────────────────────────────────────────────────────────── */
+
+.view {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  background: var(--paper);
+}
+
+/* 52 px, solid paper, no rule: the transcript's 16 px top fade is the separation (not a floating pill). */
+.header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  height: 52px;
+  padding: 0 16px;
+  background: var(--paper);
+}
+
+.headerMain {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+}
+
+/* Interactive subject pill: clicking the agent/group avatar, title or subline opens/toggles its right inspector. */
+.headerIdentity {
+  height: auto;
+  max-width: 100%;
+  min-width: 0;
+  justify-content: flex-start;
+  margin-inline-start: -6px;
+  padding: 4px 10px 4px 6px;
+  border-radius: var(--radius-chip);
+  background: transparent;
+  color: var(--ink);
+  font-weight: 400;
+  text-align: start;
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+.headerIdentity:hover {
+  background: var(--sub);
+  --pa-avatar-collar: var(--sub);
+}
+.headerIdentity:active {
+  background: var(--paper-deep);
+  --pa-avatar-collar: var(--paper-deep);
+}
+.headerIdentity > [data-slot='button-label'] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.headerDirectGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.headerIdentityDirect {
+  padding: 2px 8px 0 6px;
+}
+
+.headerIdentityDirect > [data-slot='button-label'] {
+  align-items: flex-start;
+}
+
+.headerIdentityDirect .headerAvatar {
+  margin-top: 5px;
+  margin-bottom: -13px;
+}
+
+.headerModelSlot {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  padding-inline-start: 38px;
+}
+
+.headerAvatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+}
+/* A member cluster uses the roster rows' 32 px, so three faces stay legible. */
+.headerAvatar[data-cluster] {
+  width: 32px;
+  height: 32px;
+}
+
+/* The text column takes the row's free width, so the title is limited by the header, not by whichever
+   of title and subline happens to be wider. */
+.headerText {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.headerTitle {
+  overflow: hidden;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headerSub {
+  overflow: hidden;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headerWarn {
+  color: var(--accent-ink);
+}
+
+.headerActions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+.menuLabel {
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.menuText {
+  overflow: hidden;
+  flex: 1 1 auto;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Callouts under the header sit in the message column. */
+.calloutColumn {
+  box-sizing: border-box;
+  flex: none;
+  width: 100%;
+  max-width: 784px;
+  margin: 0 auto;
+  padding: 2px 32px 8px;
+}
+.calloutColumn[data-narrow] {
+  padding-inline: 24px;
+}
+
+.stale {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.staleText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.channelCallout {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.channelCalloutIcon {
+  flex: none;
+  margin-top: 2px;
+  color: var(--ink-faint);
+}
+
+/* ── Transcript (the only scroller in the conversation) ───────────────────────────────────── */
+
+.transcriptWrap {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.transcript {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable both-edges;
+  /* 16 px fade under the header (spec §4.2) and a softer 10 px one above the composer, so text scrolling out at
+     either edge dissolves instead of being sliced. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 10px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 10px), transparent 100%);
+}
+
+/* The message column: 720 px of text, centred, 32 px sides (24 below a 900 px host). */
+.column {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 784px;
+  margin: 0 auto;
+  padding: 16px 32px 24px;
+}
+.column[data-narrow] {
+  padding-inline: 24px;
+}
+/* Conversation switch: the new transcript fades in, no slide, no exit. */
+.column[data-switch] {
+  animation: pa-fade-in 200ms var(--pa-ease) both;
+}
+
+/* Following the end scrolls this anchor into view; its scroll margin keeps the column's bottom padding visible,
+   so the last line never sits flush on the composer. */
+.endAnchor {
+  height: 1px;
+  margin-top: -1px;
+  scroll-margin-block-end: 24px;
+}
+
+.loading {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 784px;
+  margin: 0 auto;
+  padding: 28px 32px;
+}
+.loading[data-narrow] {
+  padding-inline: 24px;
+}
+.loadingLine:nth-child(1) {
+  width: 62%;
+}
+.loadingLine:nth-child(2) {
+  width: 86%;
+}
+.loadingLine:nth-child(3) {
+  width: 44%;
+}
+
+/* ── Turns and separators ─────────────────────────────────────────────────────────────────── */
+
+.separator {
+  margin: 16px 0 14px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+.separator:first-child {
+  margin-top: 4px;
+}
+
+.turn {
+  position: relative;
+  border-radius: 12px;
+}
+.turn + .turn {
+  margin-top: 24px;
+}
+
+.turn[data-flash],
+.agentMessage[data-flash] {
+  animation: pa-flash 600ms var(--pa-ease);
+}
+.agentMessage[data-flash] {
+  border-radius: 10px;
+}
+
+/* ── Messages ─────────────────────────────────────────────────────────────────────────────── */
+
+.ownerMessage,
+.agentMessage {
+  position: relative;
+  margin-top: 6px;
+}
+.ownerMessage[data-cluster-start],
+.agentMessage[data-cluster-start] {
+  margin-top: 14px;
+}
+.ownerMessage:first-child,
+.agentMessage:first-child {
+  margin-top: 0;
+}
+/* An agent reply already ends in its 20 px footer row, so the next cluster needs less air above its header. */
+.agentMessage + .agentMessage[data-cluster-start] {
+  margin-top: 6px;
+}
+.ownerMessage[data-enter],
+.agentMessage[data-enter] {
+  animation: pa-rise var(--pa-dur-enter) var(--pa-ease) both;
+}
+
+/* Owner: an ink bubble on the right, plain text, tail at the bottom right. */
+.ownerMessage {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.ownerLine {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.bubble {
+  --pa-bubble-ink: var(--on-brand);
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: min(80%, 520px);
+  padding: 9px 13px;
+  border-radius: 12px 12px 4px 12px;
+  background: var(--brand);
+  color: var(--pa-bubble-ink);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+:global([data-theme='dark']) .bubble {
+  --pa-bubble-ink: var(--ink);
+  background: var(--brand-soft);
+}
+
+.bubbleText {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.bubbleText[data-clamped] {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+}
+
+/* The reply quote inside the top of the bubble: a 2 px rule in 40 % on-brand, the text at 80 %. */
+.quote {
+  justify-content: flex-start;
+  width: 100%;
+  height: auto;
+  margin: 1px 0 6px;
+  padding: 0 0 0 8px;
+  border: 0;
+  border-inline-start: 2px solid color-mix(in srgb, var(--pa-bubble-ink) 40%, transparent);
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: start;
+  opacity: 0.8;
+  transition: opacity var(--pa-dur-quick) var(--pa-ease);
+}
+.quote:hover {
+  background: transparent;
+  color: inherit;
+  opacity: 1;
+}
+.quote [data-slot='button-label'] {
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expandLink {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.toCaption {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-faint);
+  text-align: end;
+}
+
+/* Agent: prose on the page; in groups a 20 px header row opens each cluster and the prose sits under the name. */
+.clusterHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 20px;
+  margin-bottom: 4px;
+}
+
+.clusterAgent {
+  height: 24px;
+  min-width: 0;
+  margin-inline-start: -4px;
+  padding: 0 6px 0 4px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+.clusterAgent:hover {
+  background: var(--sub);
+  --pa-avatar-collar: var(--sub);
+}
+.clusterAgent > [data-slot='button-label'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.clusterName {
+  overflow: hidden;
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roleBadge {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  height: 16px;
+  padding: 0 5px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--ink-soft);
+}
+
+.clusterModel {
+  overflow: hidden;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--ink-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.indent {
+  padding-inline-start: 26px;
+}
+
+.prose {
+  position: relative;
+  min-width: 0;
+}
+/* Very long replies: 24 lines behind a 48 px fade to paper. */
+.prose[data-clamped] {
+  overflow: hidden;
+  max-height: calc(13px * 1.7 * 24);
+}
+.prose[data-clamped]::after {
+  position: absolute;
+  inset: auto 0 0;
+  height: 48px;
+  background: linear-gradient(to bottom, transparent, var(--paper));
+  content: '';
+  pointer-events: none;
+}
+
+/* Markdown (PaMarkdown): the upstream code block, quietened for the PA column — a sub-tinted well, a small mono
+   language tag and copy action, and code lines that do not inherit the global inline `code` chip. */
+.markdown:global(.prose-block) :global(.md-code-block) {
+  margin: 12px 0;
+  border: 0;
+  border-radius: 10px;
+  background: var(--sub);
+}
+.markdown:global(.prose-block) :global(.md-code-header) {
+  padding: 5px 6px 0 12px;
+  border-bottom: 0;
+  background: transparent;
+}
+.markdown:global(.prose-block) :global(.md-code-lang) {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0;
+  color: var(--ink-faint);
+}
+.markdown:global(.prose-block) :global(.md-code-action) {
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+.markdown:global(.prose-block) :global(.md-code-action-icon) {
+  width: 22px;
+  padding: 0;
+  justify-content: center;
+}
+.markdown:global(.prose-block) :global(.md-code-action:hover) {
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+  color: var(--ink);
+}
+.markdown:global(.prose-block) :global(.md-code) {
+  padding: 4px 12px 12px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.markdown:global(.prose-block) :global(.md-code) :global(code) {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: inherit;
+  color: inherit;
+}
+.markdown:global(.prose-block) :global(.md-code-block[data-collapsed='true'] .md-code-body::after) {
+  background: linear-gradient(to bottom, transparent, var(--sub));
+}
+.markdown:global(.prose-block) > :first-child {
+  margin-top: 0;
+}
+.markdown:global(.prose-block) > :last-child {
+  margin-bottom: 0;
+}
+
+/* A fence without a language would be labelled "text"; the label says nothing then, so the header row goes and
+   only the copy action stays, floated into the well's top corner, with the code starting at the top. */
+.markdown:global(.prose-block) :global(.md-code-block) {
+  position: relative;
+}
+.markdown:global(.prose-block)
+  :global(.md-code-block:has(> .md-code-body > pre.md-code > code:not([data-lang]), > .md-code-body > pre.md-code > code[data-lang='']))
+  :global(.md-code-header) {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
+  padding: 0;
+}
+.markdown:global(.prose-block)
+  :global(.md-code-block:has(> .md-code-body > pre.md-code > code:not([data-lang]), > .md-code-body > pre.md-code > code[data-lang='']))
+  :global(.md-code-lang) {
+  display: none;
+}
+.markdown:global(.prose-block)
+  :global(.md-code-block:has(> .md-code-body > pre.md-code > code:not([data-lang]), > .md-code-body > pre.md-code > code[data-lang='']))
+  :global(.md-code) {
+  padding-top: 12px;
+}
+
+/* An image never loads; it is a quiet tag (picture glyph + host) that opens in the browser, not an underlined run
+   of text that looks like a broken image. */
+.markdown:global(.prose-block) :global(.md-image-link) {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--sub);
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  line-height: 24px;
+  vertical-align: middle;
+  transition:
+    background-color var(--pa-dur-quick) var(--pa-ease),
+    color var(--pa-dur-quick) var(--pa-ease);
+}
+.markdown:global(.prose-block) :global(.md-image-link:hover) {
+  background: color-mix(in srgb, var(--ink) 8%, var(--sub));
+  color: var(--ink);
+}
+.imageLink {
+  display: inline-flex;
+  overflow: hidden;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.imageLink svg {
+  flex: none;
+  color: var(--ink-faint);
+}
+
+.verdict {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 18px;
+}
+.verdict svg {
+  flex: none;
+}
+.verdict[data-tone='passed'] {
+  color: var(--success-ink);
+}
+.verdict[data-tone='changes'] {
+  color: var(--warning-ink);
+}
+
+.issues {
+  margin-top: 12px;
+}
+
+.issuesHead {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 18px;
+  color: var(--ink);
+}
+
+.issueList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.issue {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.issueDot {
+  margin-top: 7px;
+  color: var(--warning-ink);
+}
+
+/* Memory evidence: a quiet citation line right under the prose. */
+.evidence {
+  display: flex;
+  margin-top: 6px;
+}
+
+/* One row under the prose: the turn's receipt (on its last reply), then the hover actions. Earlier turns reserve
+   this single row, never a second one for the receipt. */
+/* The row is 20 px; its 24 px buttons overhang it by 2 px each way, so a group transcript's speakers do not drift
+   apart by a full button height of empty space under every reply. */
+.agentFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 4px;
+  min-height: 20px;
+  margin-top: 4px;
+}
+.agentFoot > .hoverRow {
+  margin-block: -2px;
+}
+.agentFoot > .receipt {
+  min-height: 20px;
+}
+
+.memoryLink {
+  gap: 4px;
+  height: 22px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+.memoryLink svg {
+  color: var(--ink-faint);
+  transition: color var(--pa-dur-quick) var(--pa-ease);
+}
+.memoryLink:hover,
+.memoryLink[data-state='open'] {
+  color: var(--ink);
+}
+.memoryLink:hover svg,
+.memoryLink[data-state='open'] svg {
+  color: var(--ink-soft);
+}
+
+.memoryPopover {
+  padding: 6px;
+}
+
+.memoryList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.memoryItem {
+  justify-content: flex-start;
+  width: 100%;
+  height: auto;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--ink);
+  text-align: start;
+  white-space: normal;
+}
+.memoryItem:hover {
+  background: var(--sub);
+  color: var(--ink);
+}
+.memoryItem [data-slot='button-label'] {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+}
+
+.memoryScope {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
+.memoryText {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--ink);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.memoryMissing {
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+/* Hover row: always in the DOM, faded in on hover or keyboard focus within the message. */
+.hoverRow {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--pa-dur-quick) var(--pa-ease);
+}
+.agentFoot > .hoverRow:first-child {
+  margin-inline-start: -5px;
+}
+.ownerMessage:hover .hoverRow,
+.ownerMessage:focus-within .hoverRow,
+.agentMessage:hover .hoverRow,
+.agentMessage:focus-within .hoverRow {
+  opacity: 1;
+}
+
+.time {
+  padding-inline: 4px 2px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: default;
+}
+
+/* ── Turn tail ────────────────────────────────────────────────────────────────────────────── */
+
+.tail:empty {
+  display: none;
+}
+.tail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+.turn > .tail:first-child {
+  margin-top: 0;
+}
+
+.tailLink {
+  padding-inline: 4px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+/* Working line: a 28 px row; glyph, the shimmering label, the elapsed clock, then the actions. */
+.workBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.workBlock[data-enter] {
+  animation: pa-work-in 200ms var(--pa-ease) both;
+}
+.workBlock[data-state='closed'] {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--pa-dur-exit) var(--pa-ease);
+}
+
+/* When the label and the actions do not fit one row (English, narrow frames), the actions drop to a second row
+   instead of cutting the label's "next: …" part. */
+.workLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 2px;
+  min-width: 0;
+  min-height: 28px;
+}
+
+.workGlyph {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+}
+
+.workSwap {
+  overflow: hidden;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.workLabel {
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The PA shimmer: faint ink with an ink band passing through, clipped to the glyphs. */
+.workLabel[data-shimmer] {
+  background: linear-gradient(
+    90deg,
+    var(--ink-faint) 0%,
+    var(--ink-faint) 38%,
+    var(--ink) 50%,
+    var(--ink-faint) 62%,
+    var(--ink-faint) 100%
+  );
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: pa-shimmer var(--pa-loop-shimmer) linear infinite;
+}
+
+.helpGlyph {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  color: var(--ink-faint);
+  cursor: help;
+}
+.helpGlyph:hover {
+  color: var(--ink-soft);
+}
+.helpGlyph:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 1px;
+}
+
+.elapsed {
+  flex: none;
+  min-width: 4ch;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.workActions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: auto;
+}
+
+/* The tail's own actions: a 24 px ring button in soft ink, quieter than the line it serves. */
+.workAction {
+  height: 24px;
+  padding-inline: 9px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+.workAction:hover {
+  color: var(--ink);
+}
+
+.amendCaption {
+  margin: 0;
+  padding-inline-start: 32px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-faint);
+}
+
+.mutedLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--ink-soft);
+}
+
+/* The error keeps at least ~16 characters of room; when the actions would squeeze it below that (a narrow column,
+   a long English label), they drop to a second row at the end instead. */
+.failLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  column-gap: 8px;
+  row-gap: 0;
+  min-height: 28px;
+  color: var(--accent-ink);
+}
+
+.failIcon {
+  flex: none;
+  margin-top: 7px;
+}
+
+.failText {
+  display: -webkit-box;
+  overflow: hidden;
+  flex: 1 1 220px;
+  min-width: 0;
+  margin: 0;
+  padding-block: 5px;
+  font-size: 12.5px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.cancelLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+/* Receipt: always on the latest turn; earlier turns show it on hover or focus. */
+.receipt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 24px;
+  font-size: 12px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  transition: opacity var(--pa-dur-quick) var(--pa-ease);
+}
+.receipt:not([data-latest]) {
+  opacity: 0;
+}
+.turn:hover .receipt,
+.turn:focus-within .receipt {
+  opacity: 1;
+}
+
+.receiptGlyph {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+}
+
+.receiptCheck {
+  flex: none;
+  color: var(--success-ink);
+}
+
+.receiptText {
+  flex: none;
+}
+
+/* The flex gap is wider than a space; pull the last dot in so it matches the text's own " · ". */
+.receiptDot {
+  margin-inline: -2px;
+}
+
+/* No side padding: the dot before it must sit as close to "详情" as to the text on its other side. */
+.receiptLink {
+  padding-inline: 0;
+  color: inherit;
+}
+.receiptLink:hover {
+  color: var(--ink);
+}
+
+.mutedLine[data-enter],
+.failLine[data-enter],
+.cancelLine[data-enter],
+.receipt[data-enter] {
+  animation: pa-work-in 200ms var(--pa-ease) both;
+}
+
+.channelLine {
+  margin: 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--ink-faint);
+}
+
+.channelWarn {
+  align-self: flex-start;
+  color: var(--warning-ink);
+}
+
+/* ── Jump to latest ───────────────────────────────────────────────────────────────────────── */
+
+.jump {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  z-index: 2;
+  transform: translateX(-50%);
+  animation: pa-jump-in 200ms var(--pa-ease) both;
+}
+.jump[data-state='closed'] {
+  pointer-events: none;
+  animation: pa-jump-out 150ms var(--pa-ease) forwards;
+}
+
+.jumpButton {
+  gap: 6px;
+  padding-inline: 12px;
+  border-radius: 999px;
+  box-shadow: var(--shadow-pop);
+}
+
+/* ── Empty states ─────────────────────────────────────────────────────────────────────────── */
+
+.empty {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 520px;
+  margin: 16vh auto 0;
+  padding-bottom: 24px;
+  text-align: center;
+}
+
+.emptyHeroRow {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.emptyMascot {
+  display: block;
+  flex: none;
+  margin-block: -8px;
+  margin-inline: -6px -8px;
+  transform: translateY(-2px);
+}
+
+.emptyAvatarTrigger {
+  height: auto;
+  padding: 4px;
+  border-radius: 999px;
+  background: transparent;
+  transition: transform var(--pa-dur-quick) var(--pa-ease);
+}
+.emptyAvatarTrigger:hover {
+  background: transparent;
+  transform: translateY(-1px);
+}
+
+.emptyHeading {
+  margin: 14px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.emptyFantayHeading {
+  margin: 0;
+  font-family: "Fantay Hero", "Songti SC", STSong, Georgia, serif;
+  font-size: clamp(24px, 3.8cqi, 32px);
+  font-weight: 400;
+  font-synthesis: none;
+  line-height: 1.2;
+  letter-spacing: 0.03em;
+  text-align: start;
+}
+.emptyMascot + .emptyHeading {
+  margin-top: 0;
+}
+.empty > .emptyHeading:first-child {
+  margin-top: 0;
+}
+
+.emptyBody {
+  max-width: 480px;
+  margin: 8px 0 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  text-wrap: balance;
+}
+
+/* Four starters as a 2 × 2 grid of equal cells (an odd last one spans the row), so a narrow column never leaves
+   one chip orphaned on its own line. */
+.starters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  /* A little wider than the text measure, centred over it, so English starters keep their full label. */
+  width: calc(100% + 24px);
+  max-width: 544px;
+  margin-top: 22px;
+}
+/* The suggestion chip rests at 60 % (a filter-row convention); as the greeting's own invitations that reads as
+   disabled, so the starters rest fully on, in soft ink at a book weight, and darken under the pointer. */
+.starter {
+  justify-content: flex-start;
+  min-width: 0;
+  max-width: 100%;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+.starters .starter:not([data-on]) {
+  opacity: 1;
+}
+.starters .starter:hover,
+.starters .starter:focus-visible {
+  color: var(--ink);
+}
+.starterText {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+.starters > .starter:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+/* The greeting arrives in a short cascade under the mascot's own entrance (quint, 240 ms, 50 ms apart). */
+.empty[data-greet] > :not(.emptyMascot) {
+  animation: pa-rise var(--pa-dur-enter) var(--pa-ease) both;
+}
+.empty[data-greet] > :nth-child(2) {
+  animation-delay: 60ms;
+}
+.empty[data-greet] > :nth-child(3) {
+  animation-delay: 110ms;
+}
+.empty[data-greet] > :nth-child(4) {
+  animation-delay: 160ms;
+}
+
+.emptyCopy {
+  max-width: 420px;
+  margin: 14px 0 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.emptyCaption {
+  max-width: 420px;
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+.emptyRole {
+  text-wrap: balance;
+  display: -webkit-box;
+  overflow: hidden;
+  max-width: 420px;
+  margin: 8px 0 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.emptyTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.emptyAction {
+  margin-top: 16px;
+}
+
+/* ── Motion ───────────────────────────────────────────────────────────────────────────────── */
+
+@keyframes pa-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pa-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pa-work-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pa-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+@keyframes pa-flash {
+  from {
+    background-color: var(--info-soft);
+    box-shadow: 0 0 0 6px var(--info-soft);
+  }
+  to {
+    background-color: transparent;
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+/* The bubble keeps its ink; the flash rings it instead. */
+.ownerMessage[data-flash] .bubble {
+  animation: pa-flash-ring 600ms var(--pa-ease);
+}
+@keyframes pa-flash-ring {
+  from {
+    box-shadow: 0 0 0 4px var(--info-soft);
+  }
+  to {
+    box-shadow: 0 0 0 4px transparent;
+  }
+}
+
+@keyframes pa-jump-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes pa-jump-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+}
+
+/* Reduced motion: only short opacity changes remain; no shimmer, no rise, no glide. */
+@media (prefers-reduced-motion: reduce) {
+  .column[data-switch],
+  .ownerMessage[data-enter],
+  .agentMessage[data-enter],
+  .workBlock[data-enter],
+  .mutedLine[data-enter],
+  .failLine[data-enter],
+  .cancelLine[data-enter],
+  .receipt[data-enter],
+  .empty[data-greet] > :not(.emptyMascot) {
+    animation: pa-fade-in 120ms linear both;
+    animation-delay: 0ms;
+  }
+  .workLabel[data-shimmer] {
+    background: none;
+    color: var(--ink-soft);
+    animation: none;
+  }
+  .jump,
+  .jump[data-state='closed'] {
+    animation: none;
+  }
+  .headerTitleButton svg {
+    transition: none;
+  }
+}

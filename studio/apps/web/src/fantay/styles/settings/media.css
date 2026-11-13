@@ -1,0 +1,239 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* ── 媒体生成提供商: what only this page has. The list, field stack and action row are shared in execution.css. ── */
+:is([data-fantay-shell], [data-client-type='desktop']) .settings-page-shell {
+  & .settings-section:has(> .settings-providers) {
+    gap: var(--provider-field-gap);
+  }
+  & .media-provider-page-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  & .media-provider-column {
+    gap: var(--settings-tab-gap);
+  }
+  & .media-provider-detail {
+    display: flex;
+    flex-direction: column;
+    gap: var(--provider-field-gap);
+  }
+  & .media-provider-detail-head {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  & .media-provider-name-row {
+    display: flex;
+    align-items: center;
+    align-self: stretch;
+    gap: 8px;
+    min-width: 0;
+    min-height: var(--settings-control-h);
+  }
+  & .media-provider-detail-head h3 {
+    margin: 0;
+    color: var(--ink);
+    font-size: var(--settings-type-section);
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    line-height: 1.4;
+  }
+  & .media-provider-detail-head p {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+    line-height: 1.5;
+  }
+  & .media-provider-badges {
+    display: inline-flex;
+    flex: none;
+    gap: 8px;
+    margin-left: auto;
+  }
+  & :is(.media-provider-badge, .media-provider-badge.integrated, .media-provider-badge.on) {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--ink-faint);
+    box-shadow: none;
+    font-size: var(--settings-type-meta);
+    font-weight: 400;
+  }
+  & .media-provider-detail-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--provider-field-gap);
+  }
+  & .media-provider-detail-field input,
+  & .media-provider-detail-field textarea,
+  & .media-provider-secret-field {
+    width: 100%;
+  }
+  & .media-provider-detail-field textarea {
+    min-height: 160px;
+    padding: 10px;
+    resize: vertical;
+    font-family: var(--font-mono);
+    font-size: var(--settings-type-hint);
+    line-height: 1.5;
+  }
+  /* Needing no key is a fact about the provider, not a success to celebrate. */
+  & .media-provider-no-key {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--ink-faint);
+
+    & svg {
+      flex: none;
+      margin-top: 2px;
+    }
+    & div {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    & strong {
+      color: var(--ink);
+      font-size: var(--settings-type-control);
+      font-weight: 500;
+    }
+    & span {
+      color: var(--ink-soft);
+      font-size: var(--settings-type-hint);
+    }
+  }
+  /* xAI sign-in: one more group on the page, status on the left and its action on the right edge. */
+  & .media-provider-detail :is(.mcp-oauth-control, .mcp-oauth-control.connected) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px var(--settings-row-y);
+    align-items: center;
+    padding: var(--settings-row-y) var(--settings-row-x);
+    border: var(--settings-hairline);
+    border-radius: var(--settings-radius);
+    background: var(--surface);
+
+    & > * {
+      grid-column: 1 / -1;
+    }
+    & > .mcp-oauth-status {
+      grid-row: 1;
+      grid-column: 1;
+      align-items: flex-start;
+      min-width: 0;
+      color: var(--ink-soft);
+      font-size: var(--settings-type-hint);
+      line-height: 1.5;
+    }
+    & > .mcp-oauth-actions {
+      grid-row: 1;
+      grid-column: 2;
+    }
+    & strong {
+      color: var(--ink);
+      font-weight: 500;
+    }
+    & .mcp-oauth-dot {
+      width: 6px;
+      height: 6px;
+      margin-top: 7px;
+      box-shadow: none;
+    }
+    & .mcp-oauth-actions button {
+      height: var(--settings-control-h);
+      min-height: 0;
+      padding: 0 12px;
+      font-size: var(--settings-type-control);
+    }
+    & :is(.xai-oauth-warning, .mcp-oauth-fallback, .mcp-oauth-scope, .xai-oauth-paste .hint) {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--ink-soft);
+      font-size: var(--settings-type-hint);
+      line-height: 1.5;
+    }
+    & .xai-oauth-warning em {
+      color: inherit;
+    }
+    & .mcp-oauth-error {
+      padding: 0;
+      background: none;
+      color: var(--danger);
+      font-size: var(--settings-type-hint);
+      line-height: 1.5;
+    }
+  }
+  & .media-provider-reload-btn.is-success-flash {
+    color: var(--ink);
+  }
+  & .media-provider-coming-soon {
+    width: 100%;
+    max-width: none;
+  }
+  & .media-provider-coming-soon > .hint {
+    margin: 0;
+    padding: 0 var(--settings-row-x) var(--settings-row-y);
+  }
+  & .media-provider-coming-soon:not([open]) > :not(summary) {
+    display: none;
+  }
+  & .media-provider-coming-soon .memory-details-title {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+  & .media-provider-coming-soon .filter-pill-count {
+    color: var(--ink-faint);
+    font-size: var(--settings-type-control);
+    font-weight: 400;
+  }
+  & .media-provider-coming-soon-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  & .media-provider-coming-soon-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--settings-row-y);
+    min-height: var(--settings-row-h);
+    padding: var(--settings-row-y) var(--settings-row-x);
+    border: 0;
+    border-top: var(--settings-hairline);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+  & .media-provider-coming-soon-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+  & .media-provider-coming-soon-meta .media-provider-name {
+    color: var(--ink);
+    font-size: var(--settings-type-label);
+    font-weight: 500;
+    line-height: 1.45;
+  }
+  & .media-provider-coming-soon-meta .media-provider-hint {
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+    line-height: 1.5;
+  }
+}

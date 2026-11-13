@@ -1,0 +1,339 @@
+{
+  "schema_version": 1,
+  "base_path": "/stale-base",
+  "assets": [
+    {
+      "id": "sonner",
+      "title": "Sonner · 通知反馈",
+      "kind": "component",
+      "category": "交互组件",
+      "collection": "Emil Kowalski",
+      "section": "反馈",
+      "description": "React Toast 通知：堆叠、滑动关闭、操作按钮。",
+      "tags": [
+        "react",
+        "toast"
+      ],
+      "path": "素材库/交互组件/Sonner-通知反馈/upstream/src/index.tsx",
+      "document": "素材库/交互组件/Sonner-通知反馈/README.md",
+      "source_manifest": "素材库/交互组件/Sonner-通知反馈/references/source-manifest.json",
+      "license": "MIT · Emil Kowalski",
+      "license_document": "素材库/交互组件/Sonner-通知反馈/THIRD_PARTY_NOTICES.md",
+      "source": "https://sonner.emilkowal.ski/",
+      "status": "源码已固定",
+      "capabilities": {
+        "material": "source_file",
+        "preview_entry": false,
+        "design_tokens": false,
+        "source_manifest": true,
+        "license_document": true
+      },
+      "thumbnail": "素材库/交互组件/Sonner-通知反馈/references/preview.png",
+      "preview_kind": "interactive",
+      "preview_note": "本地交互示例"
+    },
+    {
+      "id": "sonner-toast",
+      "title": "Toast",
+      "kind": "component",
+      "category": "交互组件",
+      "collection": "Emil Kowalski",
+      "description": "Sonner 的单条提示示例。",
+      "tags": [
+        "example"
+      ],
+      "path": "素材库/交互组件/Sonner-通知反馈/examples/toast.md",
+      "license": "MIT · Emil Kowalski",
+      "capabilities": {
+        "material": "local_reference",
+        "preview_entry": false,
+        "design_tokens": false,
+        "source_manifest": false,
+        "license_document": false
+      },
+      "parent_id": "sonner"
+    },
+    {
+      "id": "vaul",
+      "title": "Vaul · 抽屉",
+      "kind": "component",
+      "category": "交互组件",
+      "collection": "Emil Kowalski",
+      "section": "浮层",
+      "description": "React drawer component for mobile sheets.",
+      "tags": [
+        "react",
+        "mobile"
+      ],
+      "path": "素材库/交互组件/Vaul-抽屉/upstream/src/index.tsx",
+      "document": "素材库/交互组件/Vaul-抽屉/README.md",
+      "license": "MIT",
+      "source": "https://vaul.emilkowal.ski/",
+      "capabilities": {
+        "material": "source_file",
+        "preview_entry": false,
+        "design_tokens": false,
+        "source_manifest": false,
+        "license_document": false
+      },
+      "thumbnail": "素材库/交互组件/Vaul-抽屉/references/preview.svg"
+    },
+    {
+      "id": "icon-bell",
+      "title": "Bell",
+      "kind": "svg",
+      "category": "svg",
+      "collection": "demo-icons",
+      "description": "可缩放的 SVG 图标。",
+      "tags": [
+        "notification",
+        "icon"
+      ],
+      "subcategories": [
+        "界面"
+      ],
+      "path": "素材库/svg/demo-icons/icons/bell.svg",
+      "license": "MIT（仓库代码）",
+      "license_document": "素材库/svg/demo-icons/LICENSE",
+      "source": "https://example.com/demo-icons",
+      "capabilities": {
+        "material": "source_file",
+        "preview_entry": false,
+        "design_tokens": false,
+        "source_manifest": false,
+        "license_document": true
+      },
+      "thumbnail": "素材库/svg/demo-icons/icons/bell.svg"
+    },
+    {
+      "id": "icon-drawer",
+      "title": "Drawer",
+      "kind": "svg",
+      "category": "svg",
+      "collection": "demo-icons",
+      "description": "可缩放的 SVG 图标。",
+      "tags": [
+        "icon"
+      ],
+      "path": "素材库/svg/demo-icons/icons/drawer.svg",
+      "license": "MIT（仓库代码）",
+      "license_document": "素材库/svg/demo-icons/LICENSE",
+      "source": "https://example.com/demo-icons",
+      "capabilities": {
+        "material": "source_file",
+        "preview_entry": false,
+        "design_tokens": false,
+        "source_manifest": false,
+        "license_document": true
+      },
+      "thumbnail": "素材库/svg/demo-icons/icons/drawer.svg"
+    },
+    {
+      "id": "glass-terse",
+      "title": "玻璃 · Terse",
+      "kind": "style",
+      "category": "风格参考",
+      "collection": "风格参考",
+      "description": "Frosted glass dashboard style.",
+      "tags": [
+        "dashboard"
+      ],
+      "path": "素材库/风格参考/Glass-玻璃/README.md",
+      "tokens": "素材库/风格参考/Glass-玻璃/tokens.json",
+      "license": "仅作参考",
+      "status": "截图与令牌",
+      "notes": "Glass panels over warm paper.",
+      "palette": [
+        {
+          "name": "surface.base",
+          "value": "#f4f1ea"
+        },
+        {
+          "name": "accent",
+          "value": "#b23a26"
+        }
+      ],
+      "capabilities": {
+        "material": "local_reference",
+        "preview_entry": false,
+        "design_tokens": true,
+        "source_manifest": false,
+        "license_document": false
+      },
+      "thumbnail": "素材库/风格参考/Glass-玻璃/preview.png"
+    },
+    {
+      "id": "website-0123456789abcdef",
+      "title": "Emil Kowalski",
+      "kind": "website",
+      "category": "收藏网站",
+      "collection": "收藏网站",
+      "section": "设计工程",
+      "description": "Design engineering notes on toast and drawer motion.",
+      "tags": [
+        "blog"
+      ],
+      "path": "素材库/收藏网站/website-0123456789abcdef/README.md",
+      "document": "素材库/收藏网站/website-0123456789abcdef/README.md",
+      "license": "网站自有条款",
+      "source": "https://emilkowal.ski/",
+      "use_status": "未读",
+      "notes": "motion craft",
+      "capabilities": {
+        "material": "website_record",
+        "preview_entry": false,
+        "design_tokens": false,
+        "source_manifest": false,
+        "license_document": false
+      }
+    },
+    {
+      "id": "hand-checklist",
+      "title": "手绘清单",
+      "kind": "markdown",
+      "category": "文档",
+      "collection": "散页",
+      "description": "Single-file checklist in the library root.",
+      "tags": [
+        "sketch"
+      ],
+      "path": "素材库/手绘清单.md",
+      "document": "素材库/手绘清单.md",
+      "license": "CC0",
+      "capabilities": {
+        "material": "local_reference",
+        "preview_entry": false,
+        "design_tokens": false,
+        "source_manifest": false,
+        "license_document": false
+      }
+    },
+    {
+      "id": "missing-notes",
+      "title": "Missing notes",
+      "kind": "markdown",
+      "category": "测试",
+      "collection": "测试",
+      "description": "Indexed files that are not on disk.",
+      "path": "素材库/杂项/missing/README.md",
+      "document": "素材库/杂项/missing/NOTES.md",
+      "license": "CC0",
+      "capabilities": {
+        "material": "local_reference",
+        "preview_entry": false,
+        "design_tokens": false,
+        "source_manifest": false,
+        "license_document": false
+      }
+    },
+    {
+      "id": "notes-md-thumb",
+      "title": "Notes with a markdown thumbnail",
+      "kind": "markdown",
+      "category": "测试",
+      "collection": "测试",
+      "description": "Thumbnail points at a non-image file.",
+      "path": "素材库/杂项/notes/README.md",
+      "license": "CC0",
+      "capabilities": {
+        "material": "local_reference",
+        "preview_entry": false,
+        "design_tokens": false,
+        "source_manifest": false,
+        "license_document": false
+      },
+      "thumbnail": "素材库/杂项/notes/README.md"
+    },
+    {
+      "id": "symlink-escape",
+      "title": "Symlink escape",
+      "kind": "file",
+      "category": "测试",
+      "collection": "测试",
+      "description": "Entry and thumbnail are symlinks created by the test.",
+      "path": "素材库/杂项/escape/leak.md",
+      "license": "CC0",
+      "capabilities": {
+        "material": "local_reference",
+        "preview_entry": false,
+        "design_tokens": false,
+        "source_manifest": false,
+        "license_document": false
+      },
+      "thumbnail": "素材库/杂项/escape/leak.png"
+    },
+    {
+      "id": "unsafe-dotdot",
+      "title": "Unsafe parent path",
+      "kind": "file",
+      "category": "测试",
+      "collection": "测试",
+      "description": "Indexed path climbs out of the library.",
+      "path": "素材库/../outside.md",
+      "license": "CC0",
+      "capabilities": {
+        "material": "local_reference",
+        "preview_entry": false,
+        "design_tokens": false,
+        "source_manifest": false,
+        "license_document": false
+      }
+    },
+    {
+      "id": "unsafe-absolute",
+      "title": "Unsafe absolute path",
+      "kind": "file",
+      "category": "测试",
+      "collection": "测试",
+      "description": "Indexed path is absolute.",
+      "path": "/etc/hosts",
+      "license": "CC0",
+      "capabilities": {
+        "material": "local_reference",
+        "preview_entry": false,
+        "design_tokens": false,
+        "source_manifest": false,
+        "license_document": false
+      }
+    }
+  ],
+  "search_aliases": {
+    "通知": [
+      "toast",
+      "sonner",
+      "notification"
+    ],
+    "抽屉": [
+      "drawer",
+      "vaul"
+    ],
+    "聊天": [
+      "chat",
+      "thread",
+      "assistant"
+    ],
+    "动效": [
+      "motion",
+      "animation",
+      "动画"
+    ],
+    "玻璃": [
+      "glass",
+      "terse"
+    ],
+    "手绘": [
+      "sketch",
+      "hand-drawn"
+    ],
+    "图标": [
+      "icon",
+      "svg"
+    ],
+    "作品集": [
+      "portfolio"
+    ],
+    "拟物": [
+      "skeuomorphic"
+    ]
+  }
+}

@@ -1,0 +1,214 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Library dialogs: space form, tag management, tag editor, resurface batch. */
+
+/* ── space ── */
+.spaceForm {
+  margin-top: 18px;
+}
+.spacePreview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 16px;
+}
+.swatch {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--sub);
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast) var(--ease-out-quint),
+    box-shadow var(--motion-fast) var(--ease-out-quint);
+}
+.swatch:hover {
+  background: var(--paper-deep);
+}
+.swatch[aria-checked='true'] {
+  background: var(--surface);
+  box-shadow: 0 0 0 1.5px var(--ink);
+}
+.swatch:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+.swatchCheck {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* ── tag management ── */
+.tagsSearch {
+  margin-top: 16px;
+}
+.tagRows {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: min(46vh, 420px);
+  margin: 10px -6px 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.tagRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 0 6px 0 10px;
+  border-radius: var(--radius-control);
+  transition: background-color var(--motion-micro) linear;
+}
+.tagRow:hover,
+.tagRow[data-checked] {
+  background: var(--sub);
+}
+.tagName {
+  flex: 1;
+  justify-content: flex-start;
+  min-width: 0;
+  height: 28px;
+  padding: 0 6px;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: var(--type-copy);
+  font-weight: 450;
+}
+.tagName > [data-slot='button-label'] {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tagName:hover {
+  background: var(--paper-deep);
+  color: var(--ink);
+}
+.tagRename {
+  flex: 1;
+}
+.tagCount {
+  flex: none;
+  min-width: 24px;
+  color: var(--ink-faint);
+  font-size: var(--type-label);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.tagRowActions {
+  display: flex;
+  flex: none;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--ease-out-quint);
+}
+.tagRow:hover .tagRowActions,
+.tagRow:focus-within .tagRowActions {
+  opacity: 1;
+}
+.tagEmpty {
+  padding: 18px 10px;
+  color: var(--ink-faint);
+  text-align: center;
+}
+.mergeRow {
+  align-items: center;
+  flex-wrap: nowrap;
+}
+.mergeLabel {
+  flex: none;
+  color: var(--ink-soft);
+  font-size: var(--type-body);
+  white-space: nowrap;
+}
+.mergeInput {
+  flex: 1;
+  min-width: 80px;
+}
+
+/* ── tag editor ── */
+.tagEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tagDialogBody {
+  margin-top: 16px;
+}
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tagChip {
+  font-weight: 500;
+}
+.tagChipCount {
+  color: var(--ink-faint);
+  font-size: 10px;
+  font-weight: 450;
+  font-variant-numeric: tabular-nums;
+}
+.tagInputRow {
+  display: flex;
+}
+.tagSuggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* ── resurface ── */
+.resurfaceGrid {
+  columns: 3 220px;
+  column-gap: 14px;
+  margin-top: 18px;
+}
+.resurfaceCell {
+  margin-bottom: 14px;
+  break-inside: avoid;
+  cursor: pointer;
+  animation: dialogs-rise 520ms var(--ease-out-quint) both;
+}
+.resurfaceCell:nth-child(2) { animation-delay: 40ms; }
+.resurfaceCell:nth-child(3) { animation-delay: 80ms; }
+.resurfaceCell:nth-child(4) { animation-delay: 120ms; }
+.resurfaceCell:nth-child(5) { animation-delay: 160ms; }
+.resurfaceCell:nth-child(6) { animation-delay: 200ms; }
+@keyframes dialogs-rise {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+}
+.resurfaceWhen {
+  margin: 6px 4px 0;
+  color: var(--ink-faint);
+  font-size: var(--type-caption);
+}
+.resurfaceEmpty {
+  margin: 24px 0 8px;
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resurfaceCell {
+    animation: none;
+  }
+}

@@ -1,0 +1,58 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Film cover: letterboxed on black (the only literal colour: the video letterbox). */
+.cover {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #000;
+  container-type: size;
+}
+
+.strip,
+.image,
+.poster {
+  width: min(100cqw, calc(100cqh * var(--motion-cover-aspect, 1.7778)));
+  height: min(100cqh, calc(100cqw / var(--motion-cover-aspect, 1.7778)));
+}
+
+.strip {
+  background-repeat: no-repeat;
+}
+
+.image {
+  display: block;
+  object-fit: contain;
+  user-select: none;
+}
+
+.poster {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4cqh;
+  padding: 8cqh 8cqw;
+  overflow: hidden;
+  font-family: var(--font-ui);
+}
+
+.posterAccent {
+  width: 18%;
+  height: 1.4cqh;
+  min-height: 2px;
+  border-radius: var(--radius-chip);
+}
+
+.posterTitle {
+  margin: 0;
+  font-size: max(12px, 9cqh);
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: pre-line;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}

@@ -1,0 +1,47 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Space tints — the one deliberate hard-coded palette of the 灵感 page (WORKBENCH_SPACE_COLORS),
+   tuned per theme so a folder reads equally on white and on near-black. */
+
+.tint[data-color='blue'] { --tint: #4a8be0; }
+.tint[data-color='olive'] { --tint: #a49a3a; }
+.tint[data-color='pink'] { --tint: #d86aa6; }
+.tint[data-color='violet'] { --tint: #8b6bdc; }
+.tint[data-color='green'] { --tint: #3c9f68; }
+.tint[data-color='orange'] { --tint: #e08a35; }
+.tint[data-color='red'] { --tint: #d9534b; }
+.tint[data-color='gray'] { --tint: #8d8d8d; }
+
+:global([data-theme='dark']) .tint[data-color='blue'] { --tint: #5e9cf0; }
+:global([data-theme='dark']) .tint[data-color='olive'] { --tint: #beb35a; }
+:global([data-theme='dark']) .tint[data-color='pink'] { --tint: #e787bd; }
+:global([data-theme='dark']) .tint[data-color='violet'] { --tint: #a58df0; }
+:global([data-theme='dark']) .tint[data-color='green'] { --tint: #58c088; }
+:global([data-theme='dark']) .tint[data-color='orange'] { --tint: #f0a156; }
+:global([data-theme='dark']) .tint[data-color='red'] { --tint: #ee6d65; }
+:global([data-theme='dark']) .tint[data-color='gray'] { --tint: #a0a0a0; }
+
+.glyph {
+  flex: none;
+  overflow: visible;
+}
+.back {
+  fill: color-mix(in srgb, var(--tint) 62%, var(--paper));
+}
+.front {
+  fill: var(--tint);
+}
+.shine {
+  fill: none;
+  stroke: color-mix(in srgb, #fff 32%, transparent);
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
+.dot {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+  background: var(--tint);
+}

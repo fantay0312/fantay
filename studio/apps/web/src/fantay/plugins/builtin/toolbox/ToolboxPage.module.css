@@ -1,0 +1,255 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* 工具台 page. The frame is the library pages' (fantay/styles/resource-pages.css): the title starts at
+   --page-top, 22/600 on a 32px line, with 34px gutters (14px below 680px). Under it, the tools as tabs: a
+   tray of rows beside the open tool when the column is wide (tone grouping with concentric corners, the
+   chosen row raised like a segmented chip), one full-width row of equal segments above it when narrow
+   (the Segmented recipe). The open tool fades in on the system ease-out; nothing animates out. */
+
+.page {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+.inner {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: calc(1600px + 68px);
+  margin: 0 auto;
+  padding: var(--page-top, 28px) 34px 72px;
+}
+
+/* ── title ──────────────────────────────────────────────────────────────────────────────── */
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.title {
+  margin: 0;
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 32px;
+  letter-spacing: -0.02em;
+}
+
+.hint {
+  max-width: 640px;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+/* ── tools: the Tabs root lays the list and the open tool out (row when vertical) ─────────── */
+
+.body {
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.body[data-layout='row'] {
+  gap: 16px;
+  align-items: stretch;
+}
+
+/* The tray: 4px around 8px rows makes its 12px corner. */
+.picker {
+  position: sticky;
+  top: 12px;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  box-sizing: border-box;
+  width: 232px;
+  padding: 4px;
+  border-radius: var(--radius-card);
+  background: var(--sub);
+}
+
+/* The row: equal segments that share the full width and wrap onto another line rather than hide a tool. */
+.body[data-layout='row'] .picker {
+  position: static;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  width: 100%;
+  padding: 3px;
+  border-radius: calc(var(--radius-row) + 3px);
+}
+
+.pick {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: start;
+  justify-content: stretch;
+  gap: 0 10px;
+  box-sizing: border-box;
+  width: 100%;
+  height: auto;
+  min-height: 36px;
+  padding: 9px 10px;
+  border-radius: var(--radius-control);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  text-align: start;
+  white-space: normal;
+  transition:
+    background-color var(--motion-micro) var(--ease-out-quint),
+    box-shadow var(--motion-micro) var(--ease-out-quint),
+    color var(--motion-micro) var(--ease-out-quint);
+}
+
+.pick:hover {
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  color: var(--ink);
+}
+
+/* The chosen row stands proud of the tray: a hairline shadow on white, tone on dark. */
+.pick[data-state='active'] {
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+  color: var(--ink);
+}
+
+:global([data-theme='dark']) .pick[data-state='active'] {
+  background: color-mix(in srgb, var(--ink) 12%, var(--sub));
+  box-shadow: none;
+}
+
+.pick:focus-visible {
+  outline-offset: calc(var(--focus-ring-width) * -1);
+}
+
+.pickIcon {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 18px;
+}
+
+.pickText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pickLabel {
+  overflow-wrap: anywhere;
+}
+
+.pickHint {
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 17px;
+  overflow-wrap: anywhere;
+}
+
+.pick[data-state='active'] .pickHint {
+  color: var(--ink-soft);
+}
+
+.body[data-layout='row'] .pick {
+  grid-template-columns: auto auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0 6px;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: var(--radius-row);
+  text-align: center;
+}
+
+.body[data-layout='row'] .pickIcon {
+  width: 14px;
+  height: 14px;
+}
+
+/* The open tool's own heading carries the description in this layout. */
+.body[data-layout='row'] .pickHint {
+  display: none;
+}
+
+/* ── the open tool ──────────────────────────────────────────────────────────────────────── */
+
+.panels {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.panel {
+  min-width: 0;
+  animation: toolbox-panel-in var(--motion-enter) var(--ease-out-quint) both;
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+.panel:focus-visible {
+  outline-offset: 6px;
+  border-radius: var(--radius-card);
+}
+
+.panelHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 12px;
+}
+
+.panelTitle {
+  margin: 0;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.panelHint {
+  max-width: 640px;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+@keyframes toolbox-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@media (max-width: 680px) {
+  .inner {
+    padding: var(--page-top, 28px) 14px 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+
+  .pick {
+    transition: none;
+  }
+}

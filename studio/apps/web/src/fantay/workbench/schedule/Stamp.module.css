@@ -1,0 +1,160 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* 灵感邮票: the perforation is a mask (a grid of round holes around an inset rectangle).
+   Derived from dsh-media-desk client/styles.css (https://github.com/woniuniuniu/dsh-media-desk),
+   MIT, Copyright (c) 2026 woniuniuniu. */
+
+.stamp {
+  --s: 4px;
+  --hole: 1px;
+  position: relative;
+  display: block;
+  flex: none;
+  width: 24px;
+  height: 30px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: var(--surface);
+  cursor: pointer;
+  -webkit-mask:
+    radial-gradient(circle var(--hole), transparent 97%, #000) calc(var(--s) / -2) calc(var(--s) / -2) / var(--s) var(--s),
+    linear-gradient(#000 0 0) center / calc(100% - var(--s)) calc(100% - var(--s)) no-repeat;
+  mask:
+    radial-gradient(circle var(--hole), transparent 97%, #000) calc(var(--s) / -2) calc(var(--s) / -2) / var(--s) var(--s),
+    linear-gradient(#000 0 0) center / calc(100% - var(--s)) calc(100% - var(--s)) no-repeat;
+  filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--ink) 14%, transparent));
+  transition: transform var(--motion-slow) var(--ease-out-quint);
+}
+
+.stamp:hover {
+  transform: scale(1.08) rotate(-2deg);
+}
+
+.stamp:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 1px;
+  -webkit-mask: none;
+  mask: none;
+}
+
+.face {
+  width: 100%;
+  height: 100%;
+}
+
+.count {
+  position: absolute;
+  top: 3px;
+  inset-inline-end: 3px;
+  min-width: 12px;
+  padding: 0 3px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: color-mix(in srgb, #000 62%, transparent);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 12px;
+  color: #fff;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.blank {
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  color: var(--paper);
+  filter: none;
+  animation: breathe 2.6s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  50% {
+    opacity: 0.66;
+  }
+}
+
+/* ── the day's ideas ────────────────────────────────────────────────────────────────────── */
+
+.pop {
+  padding: 6px;
+}
+
+.popTitle {
+  margin: 4px 8px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.popList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 280px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.popRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 5px 6px;
+  border: 0;
+  border-radius: var(--radius-row);
+  background: transparent;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color var(--motion-micro) var(--ease-out-quint);
+}
+
+.popRow:hover,
+.popRow:focus-visible {
+  background: var(--sub);
+  outline: none;
+}
+
+.popThumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+}
+
+.popText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.popText strong {
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.popText small {
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blank {
+    animation: none;
+  }
+
+  .stamp:hover {
+    transform: none;
+  }
+}

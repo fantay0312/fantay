@@ -1,0 +1,142 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Body of board video nodes (spec 05 §6.2): poster with a play overlay when not live, the <video>
+   when the board's live budget grants a slot, a candidate strip for multi-candidate nodes. */
+.root {
+  --gen-overlay-bg: color-mix(in oklab, var(--surface) 88%, transparent);
+  --fx-inv-zoom: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-ui);
+}
+
+.frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--ink);
+}
+
+.video,
+.poster {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: var(--ink);
+}
+
+.poster {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* B21b: only the bottom native control bar strip is a data-board-interactive region; wheel/pinch over the
+   video body pans/zooms the board while clicks on the bottom control bar still reach the native controls. */
+.controlBar {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 36px;
+  pointer-events: none;
+}
+
+.posterFallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: var(--paper-deep);
+  color: var(--ink-faint);
+}
+
+.play {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.play > * {
+  pointer-events: auto;
+  transform: scale(var(--fx-inv-zoom));
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  background: var(--paper-deep);
+  color: var(--ink-faint);
+  font-size: var(--type-label);
+}
+
+.strip {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  left: 8px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: var(--radius-control);
+  background: var(--gen-overlay-bg);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-float);
+  transform: scale(var(--fx-inv-zoom));
+  transform-origin: bottom left;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--motion-exit) var(--ease-out-quint);
+}
+
+.root:hover .strip,
+.root:focus-within .strip,
+.root[data-selected] .strip {
+  opacity: 1;
+  pointer-events: auto;
+  transition-duration: var(--motion-enter);
+}
+
+.root[data-lod='low'] .strip,
+.root[data-lod='low'] .play {
+  display: none;
+}
+
+.thumb {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--radius-row);
+  background: var(--paper-deep);
+}
+
+.thumb[data-primary] {
+  box-shadow: 0 0 0 2px var(--info);
+}
+
+.thumbImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.more {
+  color: var(--ink-soft);
+  font-size: var(--type-caption);
+  font-variant-numeric: tabular-nums;
+}

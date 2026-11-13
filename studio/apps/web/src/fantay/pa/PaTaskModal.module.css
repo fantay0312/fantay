@@ -1,0 +1,980 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Task modal (spec §10): fixed header and footer around one scrolling body; the output view swaps
+   the body and the footer. Motion and timing come from the PA tokens in fantay/styles/pa.css. */
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  max-height: min(720px, calc(100dvh - 48px));
+}
+
+/* ── header ─────────────────────────────────────────────────────────────────────────────── */
+
+.header {
+  flex: none;
+  min-width: 0;
+  padding: 18px 22px 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.goal {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.goalOpen {
+  display: block;
+  -webkit-line-clamp: unset;
+  max-height: 40vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.criteriaList {
+  margin: 0;
+  padding-inline-start: 1.25em;
+  list-style: disc;
+  color: var(--ink-soft);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.expand {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  margin-top: 8px;
+}
+
+.status {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--ink);
+}
+
+.meta {
+  flex: 1 1 auto;
+}
+
+.metaPart {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metaFixed {
+  flex: none;
+  white-space: nowrap;
+}
+
+.openInChat {
+  flex: none;
+  margin-inline-start: auto;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ── body ───────────────────────────────────────────────────────────────────────────────── */
+
+.body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 22px;
+  min-height: 0;
+  padding: 16px 22px 22px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.swapIn {
+  animation: paSwapIn 200ms var(--pa-ease) both;
+}
+
+@keyframes paSwapIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes paFadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--ink);
+}
+
+.sectionCount {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.quiet {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+/* an empty section keeps the hairline block, so the body never drops to a loose sentence */
+.quietRow {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 14px;
+}
+
+/* Hairline group: one bordered block, hairlines between its rows. */
+.group {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.group > * + * {
+  border-top: 1px solid var(--line-soft);
+}
+
+/* status note (failed / waiting on its own / stop unconfirmed); the needs-you card renders itself and this
+   matches its box: radius 12, padding 12px 14px, an inset ring, the title in the tone colour */
+.note {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: start;
+  column-gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.note[data-tone='failed'] {
+  background: color-mix(in srgb, var(--accent-ink) 5%, var(--surface));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-ink) 20%, transparent);
+}
+
+.note[data-tone='warn'] {
+  background: var(--pa-needs-bg);
+  box-shadow: inset 0 0 0 1px var(--pa-needs-ring);
+}
+
+.noteIcon {
+  margin-top: 1px;
+  color: var(--ink-faint);
+}
+
+.note[data-tone='failed'] .noteIcon {
+  color: var(--accent-ink);
+}
+
+.note[data-tone='warn'] .noteIcon {
+  color: var(--warning-ink);
+}
+
+.noteBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.noteTitle {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 18px;
+  color: var(--ink-soft);
+}
+
+.note[data-tone='failed'] .noteTitle {
+  color: var(--accent-ink);
+}
+
+.note[data-tone='warn'] .noteTitle {
+  color: var(--warning-ink);
+}
+
+.noteText {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  margin: 0;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.noteHint {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--ink-soft);
+}
+
+/* budget: the rows share one label column (subgrid), so both meters start on the same line */
+.budget {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+}
+
+.budgetRow {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+  column-gap: 20px;
+  min-height: 40px;
+  padding: 0 14px;
+}
+
+.budgetLabel {
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.meterWarn {
+  background: var(--warning);
+}
+
+/* status glyphs */
+.glyphDone {
+  color: var(--success-ink);
+}
+
+.glyphFail {
+  color: var(--accent-ink);
+}
+
+.glyphWarn {
+  color: var(--warning-ink);
+}
+
+.glyphIdle {
+  color: var(--ink-faint);
+}
+
+.glyphRun {
+  margin: 2px;
+  color: var(--ink);
+}
+
+/* progress */
+.stepRow {
+  display: grid;
+  grid-template-columns: 16px 20px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 10px;
+  min-height: 40px;
+  padding: 0 14px;
+}
+
+.stepName {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.stepAgent {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stepPhase {
+  flex: none;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.stepState {
+  font-size: 12px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.stepRow[data-state='current'] .stepState {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.stepRow[data-state='done'] .stepState {
+  color: var(--ink-soft);
+}
+
+/* amendments */
+.amendRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+}
+
+.amendText {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  margin: 0;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.amendPending {
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+/* attempts */
+.attemptRow {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 10px;
+  padding: 11px 10px 11px 14px;
+}
+
+.attemptGlyph {
+  display: grid;
+  place-items: center;
+  height: 20px;
+}
+
+.attemptMain {
+  min-width: 0;
+}
+
+.attemptHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  line-height: 20px;
+}
+
+.attemptName {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attemptPhase {
+  flex: none;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.interrupted {
+  flex: none;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--warning-ink);
+}
+
+.attemptMeta {
+  flex-wrap: wrap;
+  row-gap: 2px;
+  margin-top: 2px;
+}
+
+.mono {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attemptError {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  margin: 6px 0 0;
+  overflow: hidden;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--accent-ink);
+  overflow-wrap: anywhere;
+}
+
+.attemptAction {
+  flex: none;
+  gap: 2px;
+  margin-top: -4px;
+  padding-inline: 8px 4px;
+  font-weight: 500;
+}
+
+.attemptChevron {
+  color: var(--ink-faint);
+  transition: transform var(--pa-dur-quick) var(--pa-ease);
+}
+
+.attemptAction:hover .attemptChevron {
+  color: var(--ink-soft);
+  transform: translateX(2px);
+}
+
+/* evidence: one hairline group, a row per check (glyph column lines up with the progress and attempt rows) */
+.checklist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checkItem {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: start;
+  column-gap: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.checkItem > svg {
+  margin: 3px 0 0 1px;
+}
+
+.checkIcon {
+  flex: none;
+  color: var(--success-ink);
+}
+
+.checkBullet {
+  width: 5px;
+  height: 5px;
+  margin: 8px 0 0 5px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+}
+
+/* files: rows on a padded block, no inner hairlines (§12.4 row anatomy) */
+.fileList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+
+.fileRow {
+  width: 100%;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 8px;
+  justify-content: stretch;
+  font-weight: 400;
+  color: var(--ink);
+  text-align: start;
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+
+.fileRow:hover:not([data-disabled]) {
+  background: var(--sub);
+  color: var(--ink);
+}
+
+.fileRow > [data-slot='button-label'] {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: 10px;
+  width: 100%;
+}
+
+.fileIcon {
+  color: var(--ink-soft);
+}
+
+.fileText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.fileName {
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filePath {
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileSize {
+  font-size: 12px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.fileHash {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+
+/* channel delivery */
+.deliveryStack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.deliveryLine {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+  min-height: 40px;
+  margin: 0;
+  padding: 0 14px;
+}
+
+.deliveryLine > svg {
+  justify-self: center;
+}
+
+.deliveryMeta {
+  font-size: 12px;
+}
+
+/* authorization: one hairline row split in two cells, plus a warm line when it was revoked */
+.authCells {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.authCell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 12.5px;
+  line-height: 18px;
+}
+
+.authCell + .authCell {
+  border-inline-start: 1px solid var(--line-soft);
+}
+
+.authKey {
+  min-width: 0;
+  color: var(--ink-soft);
+}
+
+.authValue {
+  flex: none;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.authCell[data-allowed='false'] .authValue {
+  color: var(--ink-faint);
+}
+
+.revoked {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  margin: 0;
+  padding: 0 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--warning-ink);
+  background: var(--pa-needs-bg);
+}
+
+/* event log */
+.events {
+  margin-inline: -4px;
+}
+
+.eventsError {
+  margin: 0;
+  padding: 4px;
+  font-size: 12.5px;
+  color: var(--accent-ink);
+}
+
+.timeline {
+  margin: 0;
+  padding: 6px 4px 2px;
+  list-style: none;
+}
+
+.event {
+  display: grid;
+  grid-template-columns: 38px 15px minmax(0, 1fr);
+  align-items: start;
+  column-gap: 8px;
+}
+
+.eventTime {
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--ink-faint);
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.eventRail {
+  position: relative;
+  align-self: stretch;
+  min-height: 28px;
+}
+
+.eventRail::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  inset-inline-start: 7px;
+  width: 1px;
+  background: var(--line);
+}
+
+.event:first-child .eventRail::before {
+  top: 10px;
+}
+
+.event:last-child .eventRail::before {
+  bottom: auto;
+  height: 10px;
+}
+
+.event:only-child .eventRail::before {
+  display: none;
+}
+
+.eventDot {
+  position: absolute;
+  top: 7px;
+  inset-inline-start: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.event[data-tone='done'] .eventDot {
+  background: var(--success);
+}
+
+.event[data-tone='failed'] .eventDot {
+  background: var(--accent-ink);
+}
+
+.event[data-tone='warn'] .eventDot {
+  background: var(--warning);
+}
+
+.eventText {
+  min-width: 0;
+  padding-bottom: 8px;
+  font-size: 12.5px;
+  line-height: 20px;
+  color: var(--ink);
+}
+
+.eventDetail {
+  display: block;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--ink-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skeletons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 4px;
+}
+
+.skeletonShort {
+  width: 60%;
+}
+
+/* ── footer ─────────────────────────────────────────────────────────────────────────────── */
+
+.footerWrap {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+}
+
+.footerError {
+  margin: 10px 22px 0;
+  overflow-wrap: anywhere;
+}
+
+.footer {
+  flex: none;
+  align-items: center;
+  margin-top: 0;
+  padding: 12px 22px 16px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.footerError + .footer {
+  margin-top: 10px;
+}
+
+.stop {
+  color: var(--accent-ink);
+}
+
+.stop:hover:not([data-disabled]) {
+  color: var(--accent-ink);
+  background: color-mix(in srgb, var(--accent-ink) 8%, transparent);
+}
+
+/* ── output view ────────────────────────────────────────────────────────────────────────── */
+
+.outputBody {
+  gap: 12px;
+}
+
+.outputTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.outputAttempt {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.outputSearch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.searchField {
+  flex: 1 1 auto;
+}
+
+.noMatches {
+  margin: 0;
+  padding: 2px 0;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--ink-faint);
+}
+
+.matches {
+  margin-inline: -4px;
+}
+
+/* matches: one hairline group of quiet rows */
+.matchList {
+  display: flex;
+  flex-direction: column;
+  margin: 4px 4px 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.match {
+  width: 100%;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 0;
+  justify-content: flex-start;
+  font-weight: 400;
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+
+.match + .match {
+  border-top: 1px solid var(--line-soft);
+}
+
+.match:hover:not([data-disabled]) {
+  background: var(--sub);
+}
+
+.match[data-current='true'] {
+  background: var(--sub);
+}
+
+.match[data-current='true'] .matchOffset {
+  color: var(--ink);
+}
+
+/* "show all": the list's last row, its label on the excerpt column */
+.matchMore {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.matchMore > [data-slot='button-label'] {
+  padding-inline-start: 64px;
+}
+
+.match > [data-slot='button-label'] {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.matchOffset {
+  flex: none;
+  min-width: 52px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.matchExcerpt {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pre {
+  margin: 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--sub);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  transition: opacity var(--pa-dur-quick) var(--pa-ease);
+}
+
+.pre[aria-busy='true'] {
+  opacity: 0.55;
+}
+
+/* --info-soft alone disappears on the --sub reading surface, so the query tint is the info hue at a
+   readable strength; the matched text itself is full ink. */
+.pre mark,
+.matchExcerpt mark {
+  border-radius: 3px;
+  padding: 0 1px;
+  background: color-mix(in srgb, var(--info) 22%, transparent);
+  color: var(--ink);
+}
+
+/* the picked match: a deeper tint plus a ring, so it stands out from the other occurrences on the page */
+.pre mark[data-current='true'] {
+  background: color-mix(in srgb, var(--info) 34%, transparent);
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--info) 70%, transparent);
+}
+
+.range {
+  font-size: 12px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swapIn {
+    animation: paFadeIn 140ms linear both;
+  }
+
+  .fileRow,
+  .pre {
+    transition: none;
+  }
+}

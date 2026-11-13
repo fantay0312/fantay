@@ -1,0 +1,170 @@
+/* SPDX-License-Identifier: MIT
+ * Derived from infinite-canvas (https://github.com/basketikun/infinite-canvas),
+ * commit 9cd3deacbcc598361807afc16c059a80dd18b6f9, web/src/components/canvas/canvas-node-prompt-panel.tsx
+ * (panel layout).
+ * Copyright (c) 2026 basketikun. Released under the MIT License; the full
+ * license text is reproduced in THIRD_PARTY_NOTICES.md.
+ * Modified for Fantay on 2026-10-29: spec 05 §5.2 rows, Fantay tokens.
+ * Modified for Fantay on 2026-10-31: one floating composer; the panel scrolls itself inside the slot's height cap.
+ * Modified for Fantay on 2026-11-02: built on the composer variables, so it is the chat composer's card and toolbar.
+ */
+.root {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  max-width: 560px;
+  min-height: 0;
+  padding: var(--composer-card-pad);
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--composer-radius);
+  background: var(--surface);
+  /* The chat card lies on its page and has no shadow. This one floats over the board, so it needs one. */
+  box-shadow: var(--float-shadow);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--type-body);
+  line-height: var(--type-body-lh);
+  transition: border-color 140ms var(--composer-ease);
+}
+
+.root:focus-within {
+  border-color: var(--ink-ghost);
+}
+
+/* Whatever is staged above the toolbar starts on the text's left edge, as it does in the chat card. */
+.staged {
+  display: contents;
+}
+
+.staged > * {
+  margin-inline: var(--composer-input-inset);
+}
+
+/* RunStatus keeps an empty live region mounted so that its changes are announced. Out of flow, the
+   empty region takes no gap and the toolbar sits as close to the text as it does in the chat card. */
+.staged > :empty {
+  position: absolute;
+}
+
+.warnings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.templateChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.toolbar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: var(--composer-control);
+  background: var(--surface);
+}
+
+/* Every control in the row is the composer's ghost family: one height, one radius, one label, one hover. */
+.toolbar [data-slot='button'],
+.toolbar [data-slot='icon-button'][data-variant='quiet'],
+.toolbar [data-slot='segmented-item'] {
+  height: var(--composer-control);
+  border: 0;
+  border-radius: var(--composer-control-radius);
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: none;
+  transition: background-color 140ms var(--composer-ease), color 140ms var(--composer-ease);
+}
+
+.toolbar [data-slot='button']:hover:not([data-disabled]),
+.toolbar [data-slot='button'][data-state='open'],
+.toolbar [data-slot='icon-button'][data-variant='quiet']:hover:not([data-disabled]),
+.toolbar [data-slot='icon-button'][data-variant='quiet'][data-state='open'] {
+  background: var(--sub);
+  color: var(--ink);
+}
+
+.toolbar [data-slot='button'] svg {
+  width: 14px;
+  height: 14px;
+  color: var(--ink-faint);
+}
+
+/* The image/video switch drops its track: two ghost squares, the chosen one held on the hover tone.
+   An unchosen one only darkens on hover, so that exactly one square ever carries the tone. */
+.surface {
+  gap: 4px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.surface [data-slot='segmented-item'] {
+  width: var(--composer-control);
+  padding: 0;
+}
+
+.surface [data-slot='segmented-item'] svg {
+  width: 16px;
+  height: 16px;
+}
+
+.surface [data-slot='segmented-item'][data-state='on'] {
+  background: var(--sub);
+  color: var(--ink);
+  box-shadow: none;
+}
+
+.spacer {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The disc of `.composer-send`, in every state. The row's 4 plus this 2 is the chat row's 6 before send. */
+.run {
+  margin-inline-start: 2px;
+  transition:
+    background-color 140ms var(--composer-ease),
+    color 140ms var(--composer-ease),
+    transform 140ms var(--composer-ease);
+}
+
+.run:active:not([data-disabled]) {
+  background: var(--brand-hover);
+  transform: scale(0.94);
+}
+
+/* aria-disabled, not `disabled`: the reason must stay reachable, so the attribute carries this state. */
+.run[aria-disabled='true'] {
+  background: var(--sub);
+  color: var(--ink-ghost);
+  opacity: 1;
+  cursor: default;
+}
+
+/* Preparing cannot be stopped yet, and reads as the chat's pending disc: full tone, with a ring. */
+.run[data-state='preparing'] {
+  opacity: 1;
+}
+
+/* A solid square reads heavier than the arrow it replaces, so it is drawn a little smaller, as in chat. */
+.stopGlyph.stopGlyph {
+  width: 15px;
+  height: 15px;
+}
+
+.stopGlyph rect {
+  rx: 6px;
+}

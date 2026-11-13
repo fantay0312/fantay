@@ -1,0 +1,631 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/* Review player, feedback notes and the storyboard grid (spec 07 §6.2, §6.3).
+   Player: the video absorbs the free height (no max-height / aspect-ratio), so the transport, the
+   timeline and the chapters can never be pushed below the fold (audit: clipped Play at 1440×900).
+   Tokens only; literal colours are the black letterbox and white text over pictures. */
+
+/* ── player ─────────────────────────────────────────────────────────────────────────── */
+
+.player {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  min-width: 0;
+  border-radius: var(--radius-panel);
+}
+
+.player:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* The film takes whatever height is left; below 120px the pane scrolls instead of clipping the transport. */
+.video {
+  flex: 1 1 auto;
+  min-height: 120px;
+  width: 100%;
+  object-fit: contain;
+  background: #000;
+  border-radius: var(--radius-panel);
+}
+
+/* clock | play controls (centred) | feedback + mute */
+.transport {
+  display: grid;
+  flex: none;
+  grid-template-columns: minmax(0, 1fr) auto minmax(max-content, 1fr);
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  min-width: 0;
+}
+
+.clock {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clockTotal {
+  color: var(--ink-soft);
+}
+
+.playButtons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.transportEnd {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+}
+
+.timeline {
+  position: relative;
+  flex: none;
+  height: 72px;
+  min-width: 0;
+}
+
+.track {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+  border-radius: var(--radius-tag);
+}
+
+.track:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.ticks {
+  display: flex;
+  flex: none;
+  justify-content: space-between;
+  height: 16px;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.filmstrip {
+  display: grid;
+  flex: none;
+  place-items: center;
+  height: 32px;
+  overflow: hidden;
+  border-radius: var(--radius-tag);
+  background-color: var(--paper-deep);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+.filmstripNote {
+  color: var(--ink-soft);
+  font-size: var(--type-caption);
+}
+
+.waveform {
+  display: block;
+  flex: none;
+  width: 100%;
+  height: 24px;
+  fill: none;
+  stroke: var(--ink-faint);
+  stroke-width: 1;
+}
+
+.selection {
+  position: absolute;
+  top: 16px;
+  bottom: 0;
+  border: 1px solid var(--info);
+  background: var(--info-soft);
+  pointer-events: none;
+}
+
+.playhead {
+  position: absolute;
+  top: 14px;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--info);
+  pointer-events: none;
+}
+
+.playhead::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-tag);
+  background: inherit;
+}
+
+/* A feedback marker: an 8px dot whose ::before draws the 24px hit area (07 §6.1 rule 5). */
+.marker {
+  position: absolute;
+  top: 18px;
+  z-index: 1;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  padding: 0;
+  border: 1px solid var(--surface);
+  border-radius: 50%;
+  background: var(--ink);
+  cursor: pointer;
+}
+
+.marker::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
+
+.marker[data-resolved] {
+  background: var(--success);
+}
+
+.marker:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.timelineHint {
+  display: flex;
+  flex: none;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ink-soft);
+  font-size: var(--type-caption);
+}
+
+.retry {
+  flex: none;
+  align-self: flex-start;
+}
+
+.chapters {
+  display: flex;
+  flex: none;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px;
+}
+
+.chapter {
+  max-width: 200px;
+}
+
+.chapterNumber {
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+}
+
+.chapterTitle {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* A narrow pane keeps every control: the feedback label becomes the button's accessible name only.
+   (Unnamed on purpose: the nearest container is the editor pane, and CSS-module scoping would rename a
+   container name declared in another module.) */
+@container (max-width: 419px) {
+  .annotateLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .annotateKey {
+    display: none;
+  }
+}
+
+/* The timeline's last tick already shows the length; a narrow transport keeps the current time only. */
+@container (max-width: 479px) {
+  .clockTotal {
+    display: none;
+  }
+}
+
+/* ── feedback notes ─────────────────────────────────────────────────────────────────── */
+
+.notePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.panelTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+  font-size: var(--type-copy);
+  font-weight: 600;
+}
+
+.countBadge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-chip);
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+  font-weight: 400;
+}
+
+.version {
+  flex: none;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+}
+
+.noteComposer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  transition: border-color var(--motion-micro) var(--ease-out-quint);
+}
+
+.noteComposer:focus-within {
+  border-color: var(--brand);
+}
+
+.scopes {
+  align-self: flex-start;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.targetLabel {
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+}
+
+.rangeFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.noteInput {
+  min-height: 92px;
+}
+
+.composerFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hint {
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+}
+
+.notesHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+}
+
+.allVersions {
+  font-size: var(--type-label);
+}
+
+.notesList {
+  display: flex;
+  flex-direction: column;
+}
+
+.noteRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.noteMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.noteCheck {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.noteLocate {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.noteMeta .version {
+  margin-left: auto;
+}
+
+.noteBody {
+  color: var(--ink);
+  font-size: var(--type-copy);
+  line-height: var(--type-copy-lh);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.noteResolution {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pendingText {
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+}
+
+.resolvedText {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--success-ink);
+  font-size: var(--type-label);
+}
+
+.emptyNotes,
+.caption {
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+  line-height: 1.7;
+}
+
+.materials {
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.materialList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.materialRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  min-width: 0;
+  border-radius: var(--radius-row);
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+  text-decoration: none;
+}
+
+.materialRow:hover {
+  color: var(--ink);
+}
+
+.materialName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.addMaterial {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+/* ── storyboard ─────────────────────────────────────────────────────────────────────── */
+
+.storyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.storyBrief {
+  max-width: 70ch;
+  color: var(--ink);
+  font-size: var(--type-lead);
+  font-weight: 600;
+  line-height: var(--type-lead-lh);
+}
+
+.storyHint {
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+}
+
+.storyGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px 14px;
+  margin-top: 6px;
+}
+
+.storyList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 6px;
+}
+
+.storyCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.storyList .storyCard {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  column-gap: 16px;
+  row-gap: 4px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.storyList .shotVisual {
+  grid-row: 1 / span 4;
+  align-self: start;
+}
+
+.shotVisual {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: #000;
+  box-shadow: var(--shadow-ring);
+  transition: box-shadow var(--motion-micro) var(--ease-out-quint);
+}
+
+.shotVisual:hover {
+  box-shadow: var(--shadow-ring-hover);
+}
+
+.storyCard[data-selected] .shotVisual {
+  box-shadow: 0 0 0 2px var(--info);
+}
+
+.shotImage {
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--movie-ratio);
+  object-fit: contain;
+}
+
+.shotNumber {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: var(--radius-chip);
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+  pointer-events: none;
+}
+
+/* The full-cover feedback target over the preview (a sibling of the iframe). */
+.shotHit {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border-radius: inherit;
+  background: transparent;
+}
+
+.shotHit:hover {
+  background: transparent;
+}
+
+.shotHit:focus-visible {
+  outline-offset: calc(var(--focus-ring-width) * -1);
+}
+
+.shotMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+}
+
+.shotActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  font-family: var(--font-ui);
+}
+
+.noteBadge {
+  min-width: 44px;
+}
+
+.shotName {
+  color: var(--ink);
+  font-size: var(--type-copy);
+  font-weight: 600;
+  line-height: var(--type-copy-lh);
+}
+
+.shotDirection {
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+  line-height: 1.6;
+}

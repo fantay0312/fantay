@@ -1,0 +1,600 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Fantay roster (spec §3.3): Fantay card, places, search, sections and rows; plus the 64 px rail. Literal sizes
+   are the spec's; colours are Fantay tokens; motion reads the PA tokens in fantay/styles/pa.css. */
+
+.roster {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+.top {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  padding: 10px 8px 6px;
+}
+
+/* ── Fantay card ── */
+
+.card {
+  position: relative;
+  border-radius: var(--radius-panel);
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+.card:hover,
+.card[data-state='open'] {
+  background: var(--sub);
+}
+.card[data-selected] {
+  background: var(--paper-deep);
+  transition: none;
+}
+
+.cardButton,
+.cardStatic {
+  width: 100%;
+  height: 64px;
+  padding: 10px;
+  padding-inline-end: 40px;
+  border-radius: var(--radius-panel);
+  justify-content: flex-start;
+  color: var(--ink);
+  font-weight: 400;
+  text-align: start;
+  white-space: normal;
+}
+.cardButton:hover,
+.cardButton:active {
+  background: transparent;
+  color: var(--ink);
+}
+.cardButton:focus-visible {
+  outline-offset: -2px;
+}
+.cardButton > [data-slot='button-label'],
+.cardStatic {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+  width: 100%;
+}
+
+.cardDisc {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--sub);
+}
+/* The disc always steps one shade off the card's ground: --sub at rest and when selected (on --paper-deep), and
+   --paper-deep while an unselected card is hovered (on --sub). */
+.card:not([data-selected]):hover .cardDisc,
+.card:not([data-selected])[data-state='open'] .cardDisc {
+  background: var(--paper-deep);
+}
+
+.cardText {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cardName {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardStatus {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.cardStatusText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardAction {
+  position: absolute;
+  top: 50%;
+  inset-inline-end: 10px;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity var(--pa-dur-quick) var(--pa-ease);
+}
+.card:hover .cardAction,
+.card:focus-within .cardAction,
+.card[data-selected] .cardAction {
+  opacity: 1;
+}
+
+/* First-load placeholders: the card and the rows keep their real geometry, so nothing jumps when data lands. */
+.skCard,
+.skRow {
+  display: grid;
+  align-items: center;
+  column-gap: 10px;
+}
+.skCard {
+  height: 64px;
+  grid-template-columns: 44px minmax(0, 1fr);
+  padding: 10px;
+}
+.skRow {
+  height: 52px;
+  grid-template-columns: 32px minmax(0, 1fr);
+  padding: 8px;
+}
+.skDisc,
+.skAvatar {
+  border-radius: 999px;
+}
+.skDisc {
+  width: 44px;
+  height: 44px;
+}
+.skAvatar {
+  width: 32px;
+  height: 32px;
+}
+.skLines {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+.skTitle {
+  height: 9px;
+}
+.skPreview {
+  height: 8px;
+  opacity: 0.7;
+}
+.skHead {
+  width: 36px;
+  height: 8px;
+  margin: 10px 8px 10px;
+}
+
+/* ── places, hairline, search ── */
+
+.places {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 6px;
+}
+/* One hover grammar for the whole roster: --sub on hover, --paper-deep only for the active place or row. */
+.place:not([data-active]):hover {
+  background: var(--sub);
+}
+
+.hairline {
+  height: 1px;
+  margin: 8px 4px;
+  background: var(--line-soft);
+}
+
+.search {
+  height: 30px;
+  margin-bottom: 2px;
+}
+
+.needsPill {
+  display: inline-flex;
+  height: 18px;
+  align-items: center;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+  color: var(--warning-ink);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.dotWarning {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--warning);
+}
+
+/* The Dot primitive's muted tone is --line, which is the selected card's own --paper-deep in light mode (the dot
+   vanished for a paused or offline Fantay). A quiet ink reads on --paper, --sub and --paper-deep in both themes. */
+.dotMuted {
+  background: color-mix(in srgb, var(--ink-faint) 60%, transparent);
+}
+
+.dotWarnFill {
+  background: var(--warning);
+}
+
+/* ── scroll area and sections ── */
+
+.scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding: 0 8px 12px;
+}
+
+.section {
+  margin-top: 4px;
+}
+
+.sectionHead {
+  display: flex;
+  height: 28px;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: 8px 2px;
+}
+
+.sectionLabel {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--type-caption);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.noMatch {
+  margin: 0;
+  padding: 16px;
+  color: var(--ink-faint);
+  font-size: var(--type-caption);
+  text-align: center;
+}
+
+.skeletons {
+  display: flex;
+  flex-direction: column;
+  padding-top: 4px;
+}
+
+/* ── rows ── */
+
+/* --pa-avatar-collar follows the row's ground, so cluster faces and the running dot stay cut out of it. At rest it
+   inherits the column's ground (--paper in the grid, --surface in the Sheet). */
+.row {
+  position: relative;
+  border-radius: 10px;
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+/* Hovered, or holding an open ⋯ / right-click menu: the row stays lit while its menu is up. */
+.row:hover,
+.row[data-state='open'],
+.row:has([aria-expanded='true']) {
+  --pa-avatar-collar: var(--sub);
+  background: var(--sub);
+}
+.row[data-selected] {
+  --pa-avatar-collar: var(--paper-deep);
+  background: var(--paper-deep);
+  transition: none;
+}
+
+.rowButton {
+  width: 100%;
+  height: 52px;
+  padding: 8px;
+  border-radius: 10px;
+  justify-content: flex-start;
+  color: var(--ink);
+  font-weight: 400;
+  text-align: start;
+  white-space: normal;
+}
+.rowButton:hover,
+.rowButton:active {
+  background: transparent;
+  color: var(--ink);
+}
+.rowButton:focus-visible {
+  outline-offset: -2px;
+}
+.rowButton > [data-slot='button-label'] {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 10px;
+  width: 100%;
+}
+
+.avatar {
+  position: relative;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+}
+
+.avatarDot {
+  position: absolute;
+  inset-inline-end: -1px;
+  bottom: -1px;
+  border-radius: 999px;
+  background: var(--pa-avatar-collar);
+  box-shadow: 0 0 0 2px var(--pa-avatar-collar);
+}
+
+.text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.line1,
+.line2 {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.line2 {
+  gap: 6px;
+}
+
+.title {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row[data-unread] .title {
+  font-weight: 600;
+}
+.titleDisabled {
+  color: var(--ink-faint);
+}
+
+.suffix {
+  color: var(--ink-faint);
+  font-weight: 400;
+}
+
+.preview {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.previewWarning {
+  color: var(--warning-ink);
+}
+.previewFailed {
+  color: var(--accent-ink);
+}
+
+/* Spec §16 shimmer: a band of ink crossing the faint label, 1.8 s linear; still under reduced motion. */
+.shimmer {
+  background-image: linear-gradient(
+    90deg,
+    var(--ink-faint) 0%,
+    var(--ink-faint) 38%,
+    var(--ink) 50%,
+    var(--ink-faint) 62%,
+    var(--ink-faint) 100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: pa-roster-shimmer var(--pa-loop-shimmer) linear infinite;
+}
+
+@keyframes pa-roster-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0% 0;
+  }
+}
+
+/* The end column: time on line 1, the unread dot under it on line 2. */
+.meta {
+  display: flex;
+  align-self: stretch;
+  min-width: 24px;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-block: 1px 4px;
+}
+
+.unread {
+  flex: none;
+}
+
+.time {
+  display: inline-block;
+  color: var(--ink-faint);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  white-space: nowrap;
+  transition:
+    opacity var(--pa-dur-quick) var(--pa-ease),
+    transform var(--pa-dur-exit) var(--pa-ease);
+}
+
+/* Varin in-place swap: on hover or focus the time steps out (−5 px) and the ⋯ steps in (from +5 px). A flex box,
+   so no inline line box pushes the 24 px button down: its centre sits on line 1, where the time was. */
+.menu {
+  position: absolute;
+  top: 5px;
+  display: flex;
+  inset-inline-end: 5px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(5px);
+  transition:
+    opacity var(--pa-dur-quick) var(--pa-ease),
+    transform var(--pa-dur-exit) var(--pa-ease);
+}
+.row:hover .menu,
+.row:focus-within .menu,
+.row[data-state='open'] .menu,
+.row:has([aria-expanded='true']) .menu {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+}
+.row:hover .time,
+.row:focus-within .time,
+.row[data-state='open'] .time,
+.row:has([aria-expanded='true']) .time {
+  opacity: 0;
+  transform: translateY(-5px);
+}
+
+/* The right-click menu matches the ⋯ menu's width (DropdownMenu width="sm"). */
+.contextMenu {
+  width: min(160px, calc(100vw - 24px));
+  min-width: 0;
+}
+
+/* ── rail (64 px) ── */
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 64px;
+  height: 100%;
+  min-height: 0;
+  padding-top: 10px;
+}
+
+.railFantaySlot {
+  display: contents;
+}
+
+.railFantay {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--sub);
+}
+
+.railFace {
+  height: auto;
+  padding: 2px;
+  border-radius: 999px;
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+.railFace:hover {
+  --pa-avatar-collar: var(--sub);
+  background: var(--sub);
+}
+.railFace[data-selected] {
+  --pa-avatar-collar: var(--paper-deep);
+  background: var(--paper-deep);
+  transition: none;
+}
+.railFace:hover .railFantay,
+.railFace[data-selected] .railFantay {
+  background: transparent;
+}
+
+.railPlaces {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.railSlot {
+  position: relative;
+  display: inline-flex;
+}
+
+.railDot,
+.railUnread {
+  position: absolute;
+  top: 3px;
+  inset-inline-end: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 2px var(--paper);
+  pointer-events: none;
+}
+.railDot {
+  background: var(--warning);
+}
+.railUnread {
+  background: var(--ink);
+}
+
+/* First-load faces: a 32 px disc in the same 36 px slot as a real face (2 px padding), so nothing shifts. */
+.railSkeleton {
+  display: grid;
+  flex: none;
+  padding: 2px;
+}
+
+.railHairline {
+  width: 32px;
+  height: 1px;
+  flex: none;
+  background: var(--line-soft);
+}
+
+.railScroll {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 12px;
+  scrollbar-width: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer {
+    animation: none;
+    background-image: none;
+    color: var(--ink-soft);
+  }
+  .menu,
+  .time {
+    transform: none !important;
+  }
+}

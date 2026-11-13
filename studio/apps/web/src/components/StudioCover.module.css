@@ -1,0 +1,13 @@
+/* The cover is one picture: an SVG laid out at 960 wide that scales with the sheet. Its colours come
+   from the system on show as attributes, never from the app chrome. */
+.cover {
+  margin: 0;
+  overflow: hidden;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+}
+.art {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+}

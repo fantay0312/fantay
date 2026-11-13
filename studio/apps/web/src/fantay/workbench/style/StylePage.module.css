@@ -1,0 +1,429 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* 风格: hero (current style, format, content progress), my styles, then the preset library
+   filtered by creator type. Derived from dsh-media-desk client/styles.css
+   (https://github.com/woniuniuniu/dsh-media-desk), MIT, Copyright (c) 2026 woniuniuniu. */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hero {
+  align-items: stretch;
+}
+
+.heroSide {
+  display: flex;
+  flex: 0 1 380px;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 260px;
+}
+
+@container (max-width: 760px) {
+  .heroSide {
+    flex-basis: 100%;
+  }
+}
+
+.sideBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sideLabel {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--ink-faint);
+}
+
+.sideHint {
+  font-size: 11.5px;
+  line-height: 16px;
+  color: var(--ink-faint);
+}
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px 12px;
+  border: 0;
+  border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  box-shadow: var(--shadow-ring);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: box-shadow var(--motion-fast) var(--ease-out-quint);
+}
+
+.progress:hover {
+  box-shadow: var(--shadow-ring-hover);
+}
+
+.progress:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+.progressRow {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.progressCell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.progressCell b {
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 26px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.progressCell small {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  line-height: 15px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+/* ── sections ───────────────────────────────────────────────────────────────────────────── */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.sectionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+  color: var(--ink);
+}
+
+.sectionCount {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.sectionHint {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.boardFilter {
+  min-width: 0;
+}
+
+.segLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.boards {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.boardTitle {
+  margin: 0;
+  padding-inline-start: 2px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 18px;
+  color: var(--ink-soft);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 10px;
+}
+
+/* ── style card ─────────────────────────────────────────────────────────────────────────── */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 14px 14px 12px 16px;
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+  transition:
+    transform var(--motion-enter) var(--ease-out-quint),
+    box-shadow var(--motion-fast) var(--ease-out-quint);
+}
+
+.card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-ring-hover);
+}
+
+.card[data-active] {
+  box-shadow:
+    0 0 0 1.5px var(--ink),
+    var(--shadow-ring);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cardIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--sub);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.cardName {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cardName strong {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardName small {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  overflow: hidden;
+  font-size: 11.5px;
+  line-height: 15px;
+  color: var(--ink-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card[data-active] .cardName small {
+  color: var(--success-ink);
+}
+
+.cardMenu {
+  opacity: 0.6;
+  transition: opacity var(--motion-fast) var(--ease-out-quint);
+}
+
+.card:hover .cardMenu,
+.cardMenu:focus-visible,
+.cardMenu[data-state='open'] {
+  opacity: 1;
+}
+
+.cardSummary {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.cardSample {
+  margin: 10px 0 0;
+  padding-inline-start: 10px;
+  border-inline-start: 2px solid var(--line);
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ink);
+}
+
+.cardWords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.cardWords span {
+  padding: 0 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  font-size: 11.5px;
+  line-height: 20px;
+  color: var(--ink-soft);
+}
+
+.cardFoot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.addCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 180px;
+  padding: 16px;
+  border: 1.5px dashed var(--line);
+  border-radius: var(--radius-panel);
+  background: transparent;
+  font: inherit;
+  color: var(--ink-soft);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast) var(--ease-out-quint),
+    border-color var(--motion-fast) var(--ease-out-quint),
+    color var(--motion-fast) var(--ease-out-quint);
+}
+
+.addCard:hover {
+  border-color: color-mix(in srgb, var(--ink) 25%, transparent);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.addCard:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+.addIcon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: var(--sub);
+  color: var(--ink-soft);
+}
+
+.addCard strong {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.addCard small {
+  max-width: 240px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+/* ── dialogs ────────────────────────────────────────────────────────────────────────────── */
+
+.formRow {
+  display: flex;
+  gap: 10px;
+}
+
+.iconField {
+  flex: none;
+  width: 72px;
+}
+
+.iconInput {
+  text-align: center;
+  font-size: 16px;
+}
+
+.grow {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .fieldGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.inlineLink {
+  height: auto;
+  font-size: inherit;
+  line-height: inherit;
+  vertical-align: baseline;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.busyHint {
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.calloutTitle {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.failures {
+  margin: 0;
+  padding-inline-start: 16px;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card:hover {
+    transform: none;
+  }
+}

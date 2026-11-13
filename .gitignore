@@ -1,0 +1,29 @@
+# Local runtime data, dependencies, generated output, and credentials.
+.DS_Store
+node_modules/
+.tmp/
+.od/
+.od-e2e/
+.ocd/
+.playwright-mcp/
+.claude-sessions/
+.agents/
+.claude/
+.codex/
+.cursor/
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.log
+*.tsbuildinfo
+__pycache__/
+*.py[cod]
+
+# Local worktrees, reference libraries, experiments, and documentation.
+/studio-unify/
+/设计系统
+/素材库/
+/rust/
+/memory-connectors-test/
+/doc/

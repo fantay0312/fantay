@@ -1,0 +1,368 @@
+/*
+ * chat 主题接缝 —— 全部 chat 组件唯一允许消费的变量层。
+ *
+ * 规则(见 components/chat/AGENTS.md §2):
+ *   · 组件 CSS Module 只写 var(--chat-*),不直连全局 token,不写 [data-theme] 分支
+ *   · 每个变量在【亮】【暗】两个作用域都要有定义,即使暂时同值
+ *   · 暗色方案到位时只改本文件,组件零改动
+ *
+ * 来源:wangchenglong 交付稿(e954620f11)的变量分组。取色已换成全局色板
+ * (亮色取 Claude 桌面端、暗色取 ChatGPT 桌面端):这里一律映射到全局语义 token
+ * (--ink / --surface / --brand / --info / --success …),它们自己随主题翻转,
+ * 所以亮暗两个作用域写法相同。仅保留一处字面量:插画横幅垫底色(见下)。
+ */
+
+.vars,
+.root {
+
+  /* ── 文字 ── */
+  --chat-text: var(--text);
+  --chat-text-strong: var(--text-strong);
+  --chat-text-muted: var(--text-muted);
+  --chat-text-soft: var(--text-soft);
+  --chat-text-faint: var(--text-faint);
+
+  /* ── 底与面 ── */
+  --chat-bg: var(--bg);
+  --chat-bg-panel: var(--bg-panel);
+  --chat-bg-subtle: var(--bg-subtle);
+  --chat-bg-muted: var(--bg-muted);
+  --chat-bg-fill-secondary: var(--bg-fill-secondary);
+  --chat-bg-fill-tertiary: var(--bg-fill-tertiary);
+  /* 「需要你确认」那类卡的卡头底色。产品单独指定,与 --bg-panel 同值但独立成档 */
+  --chat-confirm-surface: var(--surface);
+  /* 消息轨道的悬浮预览必须完全遮住后面的会话内容,不能再用玻璃材质。
+     同一枚也给 composer 外壳和队列卡(K1 #8185);透明面板上的**内容**容器
+     (思考窗 / Confirmed / 终端块 / question-form)不读它 —— 它们直接落在面板上
+     (OPEND-3177 / 3178,设计定稿 2026-09-16)。 */
+  --chat-floating-card-bg: var(--surface);
+  --chat-floating-card-text: var(--ink);
+  /* 模态遮罩:全应用只有这一档 --scrim,不再拿文字色去掺(暗色下文字色是白,会变成白雾) */
+  --chat-scrim: var(--scrim);
+
+  /* ── 描边 ── */
+  --chat-border: var(--border);
+  --chat-border-strong: var(--border-strong);
+  --chat-border-soft: var(--border-soft);
+  --chat-stroke: var(--stroke-thin, 1px);
+
+  /* ── 语义色 ── */
+  --chat-red: var(--red);
+  --chat-red-bg: var(--red-bg);
+  --chat-red-border: var(--red-border);
+  --chat-blue: var(--blue);
+  --chat-green: var(--green);
+  --chat-amber: var(--amber);
+  --chat-amber-bg: var(--amber-bg);
+  /* 上游缺口:tokens.css 没有 --amber-border,按同一推导式补(24% 语义色混 --border) */
+  --chat-amber-border: color-mix(in srgb, var(--amber) 24%, var(--border));
+  --chat-brand: var(--brand);
+  /* 「这件事过了」的记号色:与 --tick-img 同一档(墨色圆盘 + 纸色勾),跟主要填充走 */
+  --chat-brand-weak: var(--brand);
+  --chat-brand-soft: var(--brand-soft);
+  /* 品牌色的文字档(落在页面底上的字),不是 --on-brand(那是品牌填充上的字) */
+  --chat-brand-text: var(--ink);
+  /*
+   * 全局 `--accent` 的接缝映射(现为 --ink,随主题翻转)。
+   *
+   * 上游 token 一直有这一枚,接缝里之前只是没人要过。「邀请卡」那一族的 CTA
+   * 悬浮阴影按它调色:兄弟弹窗 `AmrBalanceDialog.module.css` 的
+   * `.cta` 写的是 `color-mix(in srgb, var(--accent) 20%, transparent)`。
+   */
+  --chat-accent: var(--accent);
+  --chat-selected: var(--info);
+  --chat-selected-soft: var(--info-soft);
+
+  /* ── 图片垫底色(全局 token 里没有) ── */
+  /*
+   * 满幅插画横幅底下垫的那块底色。取自 `cloud-signin-aurora.jpg` 左上角那片深蓝,
+   * 作用是 JPEG 解码完成前别先闪一下白底。刻意不走 token:它属于图片,
+   * 被图片盖住,跟不跟主题翻都看不见,两个作用域同值。
+   */
+  --chat-banner-ground: #082f69;
+  /* 选项控件选中色、记忆图标 */
+  --chat-pick: var(--info);
+  /* 动效的统一墨色(上传流光、呼吸点)。文字扫光走下面「动」那一节的
+     `--chat-shimmer-base / -band`,步骤转圈走 `--chat-text-strong` + `--chat-border`,
+     三者同一套墨阶,只是各取一档。 */
+  --chat-anim-ink: var(--ink-soft);
+  /* Plan 卡「当前这一步」/ 收起药丸的字色。只在 Plan 这一族里用,所以单独立一枚,
+     不复用 `--chat-text-strong`。另一半「其余步骤」直接用 `--chat-text-soft`。
+     现在两者都是随主题翻转的 token,亮暗两个作用域写法相同。 */
+  --chat-plan-current-text: var(--ink);
+  /* 「设计系统工作区 · 自动创建」那张状态卡的四枚色号:主要填充(--brand)
+     + 填充上的字(--on-brand),图标底和说明字是这一对的混合。
+     与用户气泡同一对 token,但各自声明,不互相绑定。 */
+  --chat-status-card-surface: var(--brand);
+  --chat-status-card-ink: var(--on-brand);
+  --chat-status-card-icon-plate: color-mix(in srgb, var(--on-brand) 20%, var(--brand));
+  --chat-status-card-detail-ink: color-mix(in srgb, var(--on-brand) 70%, var(--brand));
+  /* 思考流的正文色 —— 比正文**正好**浅一档:静音那一档字(Fantay 墨阶里是 `--ink-soft`,
+     ink → ink-soft → ink-faint 的第二阶)。原来取的是 `--ink-faint`(#888),那是浅两档:
+     12px 的推理字在透明面板上读不清(对白底 3.5:1,不到 AA)。思考窗两态共用这一枚,
+     见 record.module.css 的 `.fold .thoughts > .body > *`。 */
+  --chat-stream-ink: var(--text-muted);
+  /* **独立**工具行 / 重连行那一整行的字色(次要信息档,随主题翻转)。
+     ⚠️ 只给「独立出现」的那一档用:坐在 `.fold.mod-flat` 里的工具行被
+     `.fold.mod-flat .tool { color: var(--text-strong) }` 提深,走的是
+     `--chat-progress-detail-ink`,不是这一枚。 */
+  --chat-tool-ink: var(--ink-faint);
+  /* 选中那一行的字色 */
+  --chat-select-ink: var(--select-ink);
+  /* 升级按钮的字和闪光 */
+  --chat-upgrade-ink: var(--on-brand);
+  /* 余额那串数字的暖橙(落在页面底上的字,所以取 warning 的文字档);
+     归零那一档换成 `--chat-red`(`.amt.is-out b`)。 */
+  --chat-upgrade-amount: var(--warning-ink);
+  /* (这里曾有 `--chat-orb-c1..c5 / -bg / -fill`:步骤「进行中」那颗蓝黑锥形渐变球的色板。
+     2026-11-08 那颗球换成单色转圈(record.module.css 的 `.mark.run`),色板没有消费者了,
+     一起撤掉。) */
+  /* 「过了」那枚勾:整图,墨色圆盘 + 纸色勾挖空(全局 `--tick-img`,
+     在 fantay/styles/legacy-aliases.css 里按主题各给一张),这里只转引。 */
+  --chat-tick-img: var(--tick-img);
+
+  /* ── 字体与字号(绑产品已有阶梯,不另立) ── */
+  --chat-font-sans: var(--sans);
+  --chat-font-mono: var(--mono);
+  --chat-t-cap: var(--font-size-12);   /* 角标、类名、耗时 */
+  --chat-t-mini: var(--font-size-12);  /* 状态标签、辅助行 */
+  --chat-t-body: var(--font-size-13);  /* 正文、气泡、按钮 */
+  --chat-t-lead: var(--font-size-14);  /* 组件名、卡片标题 */
+  --chat-t-head: var(--font-size-16);  /* 阶段标题 */
+  --chat-t-disp: var(--font-size-20);  /* 页面标题 */
+  /*
+   * ── 「邀请卡」那一族弹窗自己的两档 ──────────────────────────────────
+   *
+   * `AmrBalanceDialog` / `AmrArtifactUpgradeDialog` / `AmrOwnerTopUpDialog`
+   * 是同一族:满幅插画 + 居中标题 + 居中正文 + 胶囊 CTA。产品稿(2026-09-07
+   * `topup-reminder2.html`)在真 Chrome 里量出来是 **18 / 13.5**,和上面那条
+   * 聊天面板的阶梯(12 / 13 / 14 / 16 / 20)不是同一把尺 —— 前两个兄弟弹窗
+   * 早就各自写死了这两个数(`AmrArtifactUpgradeDialog.module.css` 还有
+   * 12.5 / 11.5 / 9.5)。
+   *
+   * 立成接缝变量而不是在组件里写字面值,是因为 §2 要求组件只认 `--chat-*`;
+   * 半像素那一档全局 token 里没有对应项(只有 12/13/14/16/18/20),所以按
+   * `--chat-confirm-surface` 的先例写字面量,并在亮暗两个作用域各写一遍。
+   */
+  --chat-t-dialog-title: var(--font-size-18);
+  --chat-t-dialog-body: 13.5px;
+  --chat-lh-tight: 1.35;
+  --chat-lh-body: 1.7;
+  --chat-lh-row: 1.5;
+  /*
+   * ── 聊天面板的排版基线 ────────────────────────────────────────────
+   *
+   * 三条一起,逐字对交付稿那张页面的 `body`
+   * (PR #7170 @ `8015870`,`docs/design/chat-panel/src/components.css`):
+   *
+   *     body { font-family: var(--sans); font-weight: 500;
+   *            font-size: var(--font-size-13); line-height: 1.5; … }
+   *
+   * 产品的全站 `body`(`styles/base.css`)是 **400 / 14px / 125%**,三条全不一样。
+   * 净效果:整个面板比稿子**轻一档、大一号、挤一行**。逐个组件量的时候每次都得出
+   * 「我们的 token 和稿子字节相同」,却仍然看着不一样 —— 真因就在这条基线上,
+   * 不在各个组件。
+   *
+   * 必须在这里显式写死,不能靠继承 app 的 `body`:凡是没自己设这三条的元素
+   * (壳头、状态行、各种标签、助手正文)全部吃错档 —— 行高差一档就是每行差
+   * 2~3px,一沓步骤摞下来就是「间隔怎么这么大」。
+   *
+   * 也不能反过来把这三条搬进全站 `body`:它管的是**全站**,而稿子只画了聊天面板,
+   * 侧栏 / 设置页 / 首页 / 工作区从来没按 13 / 500 设计过。
+   * `tests/components/chat/typography-baseline.test.ts` 有反向守卫钉住这一条。
+   *
+   * 需要别的档的地方由稿子对应的规则显式给:正文 / 抽屉 body 用 `--chat-lh-body`
+   * (对应稿子的 `.fold .body { line-height: var(--lh-body) }`),
+   * 组件名 / 卡片标题用 `--chat-t-lead`,阶段标题用 `--chat-t-head`。
+   *
+   * ⚠ 和这条绑死的还有一处:`styles/base.css` 里 `JiduMono Pro` 的 `@font-face`
+   * 描述符。那个字体只有一个静态字重文件(`JiduMonoPro-Regular.otf`),稿子把
+   * **同一份字节**的描述符写成 `500`。基线到 500 之后描述符也必须是 500,否则
+   * 耗时 / 文件路径 / Hex / 改动量这些走 mono 的位置就是「请求 500、可用面只有
+   * 400」,各浏览器的折算行为并不一致。两处只改一半就是坏的。
+   */
+  font-weight: 500;
+  font-size: var(--chat-t-body);
+  line-height: var(--chat-lh-row);
+
+  /* ── 形 ── */
+  --chat-radius-sm: var(--radius-sm);
+  --chat-radius: var(--radius);
+  --chat-radius-lg: var(--radius-lg);
+  --chat-radius-xl: var(--radius-xl);
+  /* 卡片外壳那一档(16px)。`RunErrorCard` / `UpgradeCard` / `SupportDialog`
+     三处都写成 `var(--chat-radius-2xl, var(--radius-2xl))` 等这条落地 ——
+     别名缺席时 `var()` 静静走 fallback,画面一模一样,所以缺了也没人红。 */
+  --chat-radius-2xl: var(--radius-2xl);
+  --chat-radius-pill: var(--radius-pill);
+  --chat-shadow-sm: var(--shadow-sm);
+  --chat-shadow-md: var(--shadow-md);
+  --chat-shadow-lg: var(--shadow-lg);
+  /* 单产物与设计稿的附件 / 音频内容道共用这一档上限。 */
+  --chat-artifact-single-max-width: 406px;
+  --chat-artifact-max-height: 240px;
+  /* 玻璃浮层(选区浮条、引用芯片的全文浮层):主要填充 88% 透明度 + 填充上的字 */
+  --chat-overlay-glass: color-mix(in srgb, var(--brand) 88%, transparent);
+  --chat-overlay-glass-text: var(--on-brand);
+  --chat-overlay-glass-edge: color-mix(in srgb, var(--on-brand) 16%, transparent);
+  --chat-glass-blur: var(--glass-regular-blur, 28px);
+
+  /*
+   * ── 动:整块 chat 只有这一套动效语法(Fantay 2026-11-08)──────────────────
+   *
+   * 产品原话:「他的动画啊,什么的,非常的垃圾和不协调」。病根是每个组件各挑各的
+   * 曲线和时长(100 / 150 / 200 / 1.5s+1s 停顿 / 6s 自转……),所以这里一次定死,
+   * 组件只引用、不再写字面量。曲线与时长逐条来自共享简报 §1。
+   *
+   * 三条曲线,各管一件事:
+   *   ease-out  按下、入场、换字、菜单 —— 和全局 `--ease-out` 同值,但**写成字面量**:
+   *             接缝不该因为全局 token 哪天被换掉而跟着漂
+   *   ease-fold 只给展开 / 收起(高度 + 箭头)
+   *   ease-pop  只给「这一步做完了」那一下勾的回弹 —— 别处不许借
+   * 循环一律 linear(扫光、转圈)或 ease-in-out(呼吸),**从不用 ease-in**;
+   * 缩放的起点:面 ≥ .97、图标 ≥ .6,从不从 0 长出来。
+   */
+  --chat-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --chat-ease-fold: cubic-bezier(0.32, 0.72, 0, 1);
+  --chat-ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --chat-dur-quick: 120ms;   /* 悬停 / 换色 */
+  --chat-dur-press: 150ms;   /* 按下反馈(scale .96) */
+  --chat-dur-enter: 240ms;   /* 行 / 块淡入上浮 */
+  --chat-dur-exit: 160ms;    /* 退场比入场快,只走透明度 */
+  --chat-dur-swap: 300ms;    /* 状态词的交叉虚化换字 */
+  --chat-dur-fold: 280ms;    /* 展开 / 收起的高度 */
+  --chat-dur-turn: 360ms;    /* 一轮消息 / 一张卡的入场 */
+  /* 循环的节拍 —— 「活着」只有这一套词汇 */
+  --chat-loop-shimmer: 1.8s; /* 扫光,linear,不停顿 */
+  --chat-loop-spin: 0.8s;    /* 步骤转圈,linear */
+  --chat-loop-pulse: 1.4s;   /* 呼吸,ease-in-out */
+  --chat-loop-wave: 1.2s;    /* 「思考中」后面那三个点,ease-in-out,逐个错开 150ms */
+  /*
+   * 状态词上那条扫光(思考中 / 进行中 / 正在重新连接共用一条):**单色**。
+   * 底是静音墨,带子是正文最深那一档 —— 和静止态同一套墨,不另引颜色。
+   * 这两枚替掉了原来的 `--chat-dia-1..5`(info / danger / warning / success 五色彩虹),
+   * 全仓只有 record.module.css 的 `.shimmer` 消费过它们。
+   */
+  --chat-shimmer-base: var(--text-muted);
+  --chat-shimmer-band: var(--text-strong);
+}
+
+/* 暗色作用域。全局 token 会自己翻,所以条目写法与亮色作用域相同;
+   接缝约定每个变量在两个作用域都要有定义。 */
+:global([data-theme='dark']) .vars,
+:global([data-theme='dark']) .root {
+  --chat-text: var(--text);
+  --chat-text-strong: var(--text-strong);
+  --chat-text-muted: var(--text-muted);
+  --chat-text-soft: var(--text-soft);
+  --chat-text-faint: var(--text-faint);
+
+  --chat-bg: var(--bg);
+  --chat-bg-panel: var(--bg-panel);
+  --chat-bg-subtle: var(--bg-subtle);
+  --chat-bg-muted: var(--bg-muted);
+  --chat-bg-fill-secondary: var(--bg-fill-secondary);
+  --chat-bg-fill-tertiary: var(--bg-fill-tertiary);
+  --chat-confirm-surface: var(--surface);
+  --chat-floating-card-bg: var(--surface);
+  --chat-floating-card-text: var(--ink);
+  --chat-scrim: var(--scrim);
+
+  --chat-border: var(--border);
+  --chat-border-strong: var(--border-strong);
+  --chat-border-soft: var(--border-soft);
+  --chat-stroke: var(--stroke-thin, 1px);
+
+  --chat-red: var(--red);
+  --chat-red-bg: var(--red-bg);
+  --chat-red-border: var(--red-border);
+  --chat-blue: var(--blue);
+  --chat-green: var(--green);
+  --chat-amber: var(--amber);
+  --chat-amber-bg: var(--amber-bg);
+  --chat-amber-border: color-mix(in srgb, var(--amber) 24%, var(--border));
+  --chat-brand: var(--brand);
+  --chat-brand-weak: var(--brand);
+  --chat-brand-soft: var(--brand-soft);
+  --chat-brand-text: var(--ink);
+  /* 映射到全局 token,暗色里 `--accent` 自己会翻 —— 写法不变。 */
+  --chat-accent: var(--accent);
+  --chat-selected: var(--info);
+  --chat-selected-soft: var(--info-soft);
+  /* 插画横幅的垫底色,和亮色作用域同值(被图片盖住)。 */
+  --chat-banner-ground: #082f69;
+
+  --chat-pick: var(--info);
+  --chat-anim-ink: var(--ink-soft);
+  --chat-plan-current-text: var(--ink);
+  /* 状态卡这四枚:brand / on-brand 自己会翻,整张卡一起翻(原委见亮色作用域) */
+  --chat-status-card-surface: var(--brand);
+  --chat-status-card-ink: var(--on-brand);
+  --chat-status-card-icon-plate: color-mix(in srgb, var(--on-brand) 20%, var(--brand));
+  --chat-status-card-detail-ink: color-mix(in srgb, var(--on-brand) 70%, var(--brand));
+  --chat-stream-ink: var(--text-muted);
+  --chat-tool-ink: var(--ink-faint);
+  --chat-select-ink: var(--select-ink);
+  --chat-upgrade-ink: var(--on-brand);
+  --chat-upgrade-amount: var(--warning-ink);
+  --chat-tick-img: var(--tick-img);
+
+  --chat-font-sans: var(--sans);
+  --chat-font-mono: var(--mono);
+  --chat-t-cap: var(--font-size-12);
+  --chat-t-mini: var(--font-size-12);
+  --chat-t-body: var(--font-size-13);
+  --chat-t-lead: var(--font-size-14);
+  --chat-t-head: var(--font-size-16);
+  --chat-t-disp: var(--font-size-20);
+  /* 邀请卡那一族的两档,和亮色作用域同值 —— 原委见上面那段长注释。 */
+  --chat-t-dialog-title: var(--font-size-18);
+  --chat-t-dialog-body: 13.5px;
+  --chat-lh-tight: 1.35;
+  --chat-lh-body: 1.7;
+  --chat-lh-row: 1.5;
+  /* 排版基线,和亮色作用域同值 —— 原委见上面那段长注释。
+     接缝的约定是每条声明在亮暗两个作用域都要写,即使暂时同值。 */
+  font-weight: 500;
+  font-size: var(--chat-t-body);
+  line-height: var(--chat-lh-row);
+
+  --chat-radius-sm: var(--radius-sm);
+  --chat-radius: var(--radius);
+  --chat-radius-lg: var(--radius-lg);
+  --chat-radius-xl: var(--radius-xl);
+  --chat-radius-2xl: var(--radius-2xl);
+  --chat-radius-pill: var(--radius-pill);
+  --chat-shadow-sm: var(--shadow-sm);
+  --chat-shadow-md: var(--shadow-md);
+  --chat-shadow-lg: var(--shadow-lg);
+  --chat-artifact-single-max-width: 406px;
+  --chat-artifact-max-height: 240px;
+  --chat-overlay-glass: color-mix(in srgb, var(--brand) 88%, transparent);
+  --chat-overlay-glass-text: var(--on-brand);
+  --chat-overlay-glass-edge: color-mix(in srgb, var(--on-brand) 16%, transparent);
+  --chat-glass-blur: var(--glass-regular-blur, 28px);
+
+  /* 动效语法和亮色作用域同值 —— 时长与曲线不分主题,原委见亮色作用域那段注释。 */
+  --chat-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --chat-ease-fold: cubic-bezier(0.32, 0.72, 0, 1);
+  --chat-ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --chat-dur-quick: 120ms;
+  --chat-dur-press: 150ms;
+  --chat-dur-enter: 240ms;
+  --chat-dur-exit: 160ms;
+  --chat-dur-swap: 300ms;
+  --chat-dur-fold: 280ms;
+  --chat-dur-turn: 360ms;
+  --chat-loop-shimmer: 1.8s;
+  --chat-loop-spin: 0.8s;
+  --chat-loop-pulse: 1.4s;
+  --chat-loop-wave: 1.2s;
+  --chat-shimmer-base: var(--text-muted);
+  --chat-shimmer-band: var(--text-strong);
+}
+
+/* 「包一层」那种用法专有:不引入布局盒。抹在已有元素上时不能有这一条。 */
+.root {
+  display: contents;
+}

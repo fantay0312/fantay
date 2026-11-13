@@ -1,0 +1,148 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Fantay 工作台 desk assistant: a column on the right of every page (WorkbenchView owns its width). */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: var(--paper);
+}
+
+.title {
+  margin: 0;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.grow {
+  flex: 1 1 auto;
+}
+
+/* model status: a dot and the model that will actually answer; opens the model picker */
+.model {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 150px;
+  height: 24px;
+  margin-inline-start: 4px;
+  padding: 0 9px 0 8px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--sub);
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 120ms cubic-bezier(0.23, 1, 0.32, 1), background-color 120ms cubic-bezier(0.23, 1, 0.32, 1);
+  justify-content: flex-start;
+  flex-shrink: 1;
+  font-weight: 400;
+}
+.model:hover {
+  color: var(--ink);
+  background: var(--paper-deep);
+}
+.model:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+.modelDot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-ghost);
+}
+.model[data-tone='live'] .modelDot {
+  background: var(--success);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 18%, transparent);
+}
+.model[data-tone='down'] .modelDot {
+  background: var(--warning);
+}
+
+.modelLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alert {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: none;
+}
+
+.alertTitle {
+  font-weight: 600;
+}
+
+.alertBody {
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.introTitle {
+  margin: 0;
+  color: var(--ink);
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 34px;
+  letter-spacing: -0.01em;
+}
+
+.introCopy {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 13px;
+  line-height: 21px;
+}
+
+.introNote {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: var(--radius-control);
+  background: var(--sub);
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  line-height: 18px;
+}
+
+.inlineLink {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  height: auto;
+  font-size: inherit;
+  line-height: inherit;
+}
+.inlineLink:disabled {
+  color: var(--ink-faint);
+  text-decoration: none;
+  cursor: default;
+}

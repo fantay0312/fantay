@@ -1,0 +1,365 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Fantay 工作台 导入账号 dialog. */
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+/* status: one block — the account line, then every platform with its estimate */
+.status {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-card);
+  background: var(--sub);
+}
+
+.statusHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.statusDot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink-ghost);
+}
+.status[data-tone='on'] .statusDot {
+  background: var(--success);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 18%, transparent);
+}
+.status[data-tone='warn'] .statusDot {
+  background: var(--warning);
+}
+
+.statusText {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 19px;
+}
+
+.statusError {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.platforms {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.platform {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  transition: box-shadow 140ms cubic-bezier(0.23, 1, 0.32, 1), color 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.platform span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.platform b {
+  flex: none;
+  color: var(--ink-faint);
+  font-size: 11.5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.platformOn {
+  color: var(--ink);
+  box-shadow: 0 0 0 1.5px var(--ink);
+}
+.platformOn b {
+  color: var(--ink);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.saved {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.savedLabel {
+  margin-inline-end: 2px;
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+.savedChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 400;
+}
+.savedChip:hover {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-ring-hover);
+}
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.steps li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-ghost);
+  font-size: 12.5px;
+  line-height: 18px;
+  transition: color 300ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.steps li[data-state='active'],
+.steps li[data-state='done'] {
+  color: var(--ink-soft);
+}
+.steps li[data-state='active'] {
+  color: var(--ink);
+}
+.steps i {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.steps li[data-state='active'] i {
+  box-shadow: inset 0 0 0 1.5px var(--ink-soft);
+  animation: import-breathe 1.4s ease-in-out infinite;
+}
+.steps li[data-state='done'] i {
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: none;
+}
+
+.progressNote {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.error svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.notes li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 18px;
+}
+.notes svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+/* result */
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 18px;
+  animation: import-rise 240ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.resultHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.resultBadge {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.resultWho {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.resultWho b {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.resultWho span {
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-card);
+  background: var(--sub);
+}
+.stats dt {
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 16px;
+}
+.stats dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 28px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.stats small {
+  margin-inline-start: 2px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.style {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+}
+.style b {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 21px;
+}
+
+.styleLabel,
+.styleHint {
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+@keyframes import-breathe {
+  50% {
+    opacity: 0.5;
+  }
+}
+@keyframes import-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (max-width: 520px) {
+  .platforms {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

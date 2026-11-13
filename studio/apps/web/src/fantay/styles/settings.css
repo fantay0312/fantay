@@ -1,0 +1,795 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Settings: the foundation every section builds on. Section-specific rules live in ./settings/<section>.css.
+
+   Claude's restraint, on the project's own palette (packages/fantay-tokens): white paper, ink, hairlines, and one
+   blue kept for switches and focus. A section restates none of what follows.
+
+     Type      page 22/600 · section 15/600 · row label 14/500 · hint 13/400 · control 13 · meta 12
+     Space     4 8 12 16 24 32: 32 between sections, 12 from a section heading to its group
+     Rows      52 tall, 16 in from the group's edge, hairline between
+     Controls  32 tall, radius 8, one border; every dropdown, field and button lines up
+     Group     hairline, radius 12, never nested; a border is never paired with a ring
+     Selection tone or ink, never colour */
+
+:is([data-fantay-shell], [data-client-type='desktop']) .settings-page-shell {
+  --settings-measure: 660px;
+  --settings-radius: 12px;
+  --settings-hairline: 1px solid var(--line);
+  --settings-control-h: 32px;
+  --settings-control-radius: 8px;
+  --settings-row-h: 52px;
+  --settings-row-x: 16px;
+  --settings-row-y: 12px;
+  --settings-section-gap: 32px;
+  --settings-heading-gap: 12px;
+  /* From a page's top tabs to what they switch, the same on every page that has them. */
+  --settings-tab-gap: 24px;
+  /* The dialog's corner band: 12 above and below a 32 control. The close button, the autosave note and the pinned tab
+     strip all sit in it. */
+  --settings-strip-pad: 12px;
+  --settings-type-page: 22px;
+  --settings-type-section: 15px;
+  --settings-type-label: 14px;
+  --settings-type-hint: 13px;
+  --settings-type-control: 13px;
+  --settings-type-meta: 12px;
+  --settings-hover: var(--sub);
+  --settings-selected: color-mix(in srgb, var(--ink) 7%, transparent);
+  --settings-focus: 0 0 0 3px color-mix(in srgb, var(--info) 18%, transparent);
+  --settings-ease: var(--ease-out-quint, cubic-bezier(0.23, 1, 0.32, 1));
+  /* A selected segment stands proud of its track: by a shadow on white, by tone on dark, where a shadow cannot show. */
+  --settings-seg-on: var(--surface);
+  --settings-seg-on-shadow: 0 0 0 0.5px rgba(24, 24, 27, 0.06), 0 1px 2px rgba(24, 24, 27, 0.08);
+  background: var(--paper);
+}
+[data-theme='dark'] .settings-page-shell {
+  --settings-seg-on: color-mix(in srgb, var(--ink) 12%, var(--sub));
+  --settings-seg-on-shadow: none;
+}
+
+/* ── Frame ─────────────────────────────────────────────────────────────────────────────────── */
+:is([data-fantay-shell], [data-client-type='desktop']) .settings-page-shell {
+  & :is(.modal-settings.settings-page-surface, .modal-body) {
+    grid-template-columns: 220px minmax(0, 1fr);
+    background: var(--paper);
+  }
+  & .settings-sidebar {
+    gap: 14px;
+    padding: 18px 12px;
+    background: var(--sidebar);
+    border-right: var(--settings-hairline);
+  }
+  & .settings-page-back {
+    position: relative;
+    z-index: 2;
+    -webkit-app-region: no-drag;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+    padding: 0 10px;
+    border-radius: var(--settings-control-radius);
+    color: var(--ink-soft);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  & .settings-page-back:hover:not(:disabled) {
+    background: var(--settings-hover);
+    color: var(--ink);
+  }
+  & .settings-sidebar-title {
+    padding: 4px 10px 8px;
+    color: var(--ink);
+    font-size: 15px !important;
+    font-weight: 600 !important;
+  }
+  & .settings-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  & .settings-nav-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  & .settings-nav-item {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: var(--settings-control-radius);
+    background: transparent;
+    color: var(--ink-soft);
+    box-shadow: none;
+    transition: background-color 100ms var(--settings-ease), color 100ms var(--settings-ease);
+  }
+  & .settings-nav-item:hover:not(:disabled) {
+    background: var(--settings-hover);
+    color: var(--ink);
+  }
+  & .settings-nav-item.active,
+  & .settings-nav-item.active:hover:not(:disabled) {
+    background: var(--settings-selected);
+    color: var(--ink);
+    box-shadow: none;
+  }
+  & .settings-content {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 40px 48px 56px;
+    gap: var(--settings-section-gap);
+    border: 0;
+    border-radius: 0;
+    background: var(--paper);
+    box-shadow: none;
+    /* The app's body is 500, which every hint and note here would inherit. Text is 400 until its tier says otherwise. */
+    font-weight: 400;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+  & .settings-content > * {
+    width: 100%;
+    max-width: var(--settings-measure);
+    margin-inline: auto;
+  }
+  & :is(.settings-section, .settings-general-section) {
+    gap: var(--settings-section-gap);
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+}
+
+html:not(.is-window-fullscreen) [data-fantay-shell][data-client-type='desktop'][data-host-platform='darwin'] .settings-page-shell:not(.settings-page-shell--overlay) .settings-sidebar {
+  padding-top: 48px;
+}
+
+/* ── Floating dialog: no title bar. The name heads the navigation and the close button floats in the corner, so the
+   whole height belongs to the two columns. ─────────────────────────────────────────────────────── */
+:is([data-fantay-shell], [data-client-type='desktop']) .settings-page-shell.settings-page-shell--overlay {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(1040px, 88vw);
+  height: min(760px, 88vh);
+  overflow: hidden;
+  -webkit-app-region: no-drag;
+  background: var(--paper);
+  border: 0;
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent),
+    0 24px 64px -16px rgba(0, 0, 0, 0.28),
+    0 4px 16px rgba(0, 0, 0, 0.08);
+  animation: settings-overlay-in var(--motion-enter) var(--ease-out-quint);
+
+  & .settings-overlay-head {
+    position: absolute;
+    z-index: 3;
+    inset: 0 0 auto 0;
+    height: 0;
+    padding: 0;
+    border: 0;
+  }
+  & .settings-overlay-head h2 {
+    position: absolute;
+    top: 18px;
+    left: 22px;
+    margin: 0;
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0;
+    line-height: 24px;
+  }
+  & .settings-overlay-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    color: var(--ink-faint);
+    background: transparent;
+    border: 0;
+    border-radius: var(--settings-control-radius);
+    cursor: pointer;
+    transition: background-color 100ms var(--settings-ease), color 100ms var(--settings-ease);
+  }
+  & .settings-overlay-close:hover {
+    color: var(--ink);
+    background: var(--sub);
+  }
+  & .modal-settings.settings-page-surface {
+    /* The dialog anchors the autosave note, so the surface must not. */
+    position: static;
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+    overflow: hidden;
+    animation: none;
+  }
+  /* One place on every page: in the close button's band, just left of it, where nothing else ever sits. Centred, the
+     note would land on a page's title or its pinned tabs. */
+  & .settings-autosave-layer {
+    position: absolute;
+    top: var(--settings-strip-pad);
+    right: calc(2 * var(--settings-strip-pad) + var(--settings-control-h));
+    left: auto;
+    height: var(--settings-control-h);
+    transform: none;
+  }
+  & .settings-sidebar {
+    padding-top: 56px;
+  }
+  & .settings-sidebar:not(:has(.settings-page-nav-head)) .settings-nav {
+    margin-top: 0;
+  }
+}
+[data-theme='dark'] .settings-page-shell--overlay .settings-sidebar {
+  background: var(--sidebar);
+}
+@keyframes settings-overlay-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+}
+
+:is([data-fantay-shell], [data-client-type='desktop']) .settings-nav-item > span {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  text-align: left;
+}
+:is([data-fantay-shell], [data-client-type='desktop']) .settings-nav-item strong {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  color: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+:is([data-fantay-shell], [data-client-type='desktop']) .settings-nav-item small {
+  display: none !important;
+}
+:is([data-fantay-shell], [data-client-type='desktop']) .settings-nav-item svg {
+  width: 16px;
+  height: 16px;
+  color: currentColor;
+}
+
+/* ── Type: page heading, section heading, row ──────────────────────────────────────────────── */
+:is([data-fantay-shell], [data-client-type='desktop']) .settings-page-shell {
+  & .settings-page-header-banner {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 0;
+    border: 0;
+  }
+  & .settings-page-header-banner::before {
+    content: attr(data-title);
+    margin: 0;
+    color: var(--ink);
+    font-size: var(--settings-type-page);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+  }
+  & .settings-page-header-banner[data-subtitle]::after,
+  & .media-provider-page-head p {
+    content: attr(data-subtitle);
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+    line-height: 1.5;
+  }
+  & .settings-main-header h2 {
+    font-size: var(--settings-type-page) !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+  }
+  & :is(
+    .settings-general-block-head h3,
+    .section-head h3,
+    .section-head h4,
+    .agent-group-head h4,
+    .memory-block-head h4,
+    .memory-subsection-head h4,
+    .mcp-page-head h3
+  ) {
+    margin: 0;
+    color: var(--ink);
+    font-size: var(--settings-type-section) !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.005em;
+    line-height: 1.4;
+  }
+  /* The weight is stated because a hint usually sits in a <button> or <label>, whose weight it would inherit. */
+  & :is(.hint, .toggle-row-hint, .settings-about-diagnostics-text .hint) {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint) !important;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+  & :is(.section-head, .memory-block-head, .memory-subsection-head) {
+    margin: 0;
+    padding: 0;
+  }
+  & .section-head > div {
+    gap: 2px;
+  }
+}
+
+/* ── The group: a hairline container of rows ───────────────────────────────────────────────── */
+:is([data-fantay-shell], [data-client-type='desktop']) .settings-page-shell {
+  & .agent-grid-installed,
+  & .settings-general-block:first-child,
+  & .settings-general-block .settings-section:has(> .settings-subsection),
+  & .settings-general-block:last-child .settings-section,
+  & .settings-privacy-toggles,
+  & .settings-section > .settings-privacy-id,
+  & .settings-about-list,
+  & .settings-about-group,
+  & .agent-install-collapse,
+  & .agent-cli-env,
+  & .media-provider-coming-soon,
+  & .project-location-card,
+  & .project-location-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    border: var(--settings-hairline);
+    border-radius: var(--settings-radius);
+    background: var(--surface);
+    box-shadow: none;
+  }
+
+  /* Former cards: now plain stacks on the page. */
+  & :is(
+    .settings-general-block,
+    .settings-section-card,
+    .instructions-rules-section,
+    .instructions-rules-card,
+    .memory-collapsible-card,
+    .memory-management-panel,
+    .memory-field-block,
+    .media-provider-detail,
+    .mcp-client-body,
+    .mcp-capabilities-card,
+    .mcp-setup-card,
+    .settings-section-byok,
+    .settings-notify-card
+  ) {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+  & .settings-general-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  & .settings-general-block:first-child {
+    gap: 0;
+  }
+}
+
+/* ── One control set ───────────────────────────────────────────────────────────────────────── */
+:is([data-fantay-shell], [data-client-type='desktop']) .settings-page-shell {
+  /* Button */
+  & :is(
+    .settings-rescan-btn,
+    .settings-test-btn,
+    .agent-card-test-btn,
+    .agent-card-link--ghost,
+    .media-provider-reload-btn,
+    .media-provider-docs-callout a,
+    .media-provider-detail-actions button,
+    .settings-about-release-link,
+    .settings-about-update-button,
+    .settings-about-diagnostics button,
+    .diagnostics-export-button,
+    .mcp-copy-btn,
+    .project-location-add,
+    .memory-source-action,
+    .settings-danger-btn,
+    .settings-base-url-customize,
+    .pet-wake-controls .seg-btn,
+    .pet-custom .seg-btn,
+    .field-label-link,
+    .ghost-link
+  ) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: none;
+    min-width: 0;
+    height: var(--settings-control-h);
+    min-height: 0;
+    margin: 0;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--settings-control-radius);
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: none;
+    font-size: var(--settings-type-control);
+    font-weight: 500;
+    line-height: 1.4;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 100ms var(--settings-ease), border-color 100ms var(--settings-ease);
+
+    &:hover:not(:disabled) {
+      border-color: var(--ink-ghost);
+      background: var(--sub);
+      color: var(--ink);
+    }
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+  & :is(.primary, .memory-source-action.primary) {
+    height: var(--settings-control-h);
+    min-height: 0;
+    padding: 0 12px;
+    border: 1px solid transparent;
+    border-radius: var(--settings-control-radius);
+    background: var(--ink);
+    color: var(--on-brand);
+    box-shadow: none;
+    font-size: var(--settings-type-control);
+    font-weight: 500;
+
+    &:hover:not(:disabled) {
+      border-color: transparent;
+      background: var(--brand-hover);
+      color: var(--on-brand);
+    }
+  }
+  & .settings-danger-btn {
+    color: var(--danger);
+
+    &:hover:not(:disabled) {
+      border-color: color-mix(in srgb, var(--danger) 45%, var(--line));
+      background: color-mix(in srgb, var(--danger) 6%, var(--surface));
+      color: var(--danger);
+    }
+  }
+
+  /* Field */
+  & .settings-content :where(
+    input[type='text'],
+    input[type='password'],
+    input[type='url'],
+    input[type='number'],
+    input[type='search'],
+    input:not([type]),
+    .od-select-trigger,
+    textarea,
+    .settings-model-select,
+    .ds-picker-trigger
+  ) {
+    min-height: var(--settings-control-h);
+    height: var(--settings-control-h);
+    padding: 0 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--settings-control-radius);
+    background-color: var(--surface);
+    color: var(--ink);
+    box-shadow: none;
+    font-size: var(--settings-type-control);
+    font-weight: 400;
+    line-height: 1.4;
+    transition: border-color 100ms var(--settings-ease), box-shadow 100ms var(--settings-ease);
+
+    /* Faint, not ghost: placeholders here carry format examples, which have to stay readable. */
+    &::placeholder {
+      color: var(--ink-faint);
+      font-style: normal;
+    }
+    &:hover:not(:disabled, :focus) {
+      border-color: var(--ink-ghost);
+    }
+    &:focus,
+    &:focus-visible {
+      border-color: var(--info);
+      outline: none;
+      box-shadow: var(--settings-focus);
+    }
+  }
+  & .settings-content .od-select-trigger {
+    padding-right: 28px;
+  }
+  & .settings-content textarea {
+    height: auto;
+    padding: 10px 12px;
+    line-height: 1.6;
+    resize: vertical;
+  }
+  & :is(.field-label, .media-provider-detail-field > span) {
+    color: var(--ink);
+    font-size: var(--settings-type-control);
+    font-weight: 500;
+    line-height: 1.45;
+  }
+
+  /* Segmented */
+  & :is(.seg-control, .subtab-pill, .memory-top-tabs) {
+    display: inline-grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 1px;
+    width: auto;
+    min-height: 0;
+    height: var(--settings-control-h);
+    padding: 2px;
+    border: 0;
+    border-radius: 9px;
+    background: var(--sub);
+    box-shadow: none;
+  }
+  & :is(.seg-btn:not(.small), .subtab-pill button, .memory-top-tab) {
+    min-width: 0;
+    height: 28px;
+    min-height: 0;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--ink-soft);
+    box-shadow: none;
+    font-size: var(--settings-type-control);
+    font-weight: 500;
+    line-height: 1.4;
+    transition: background-color 100ms var(--settings-ease), color 100ms var(--settings-ease);
+
+    &:hover:not(:disabled):not(.active) {
+      background: transparent;
+      color: var(--ink);
+    }
+    &.active,
+    &.active:hover:not(:disabled) {
+      background: var(--settings-seg-on);
+      color: var(--ink);
+      box-shadow: var(--settings-seg-on-shadow);
+    }
+  }
+  & .seg-btn .seg-title {
+    color: inherit;
+    font-size: var(--settings-type-control);
+    font-weight: 500;
+  }
+
+  /* Switch: one size and one fill, wherever it comes from. */
+  & :is(.toggle-switch, .toggle-switch-sm) {
+    width: 36px;
+    height: 20px;
+  }
+  & :is(.toggle-row-switch, .toggle-slider) {
+    border-radius: 999px;
+    background: var(--switch-off-track, color-mix(in srgb, var(--ink) 16%, transparent));
+    box-shadow: none;
+    transition: background-color 140ms var(--settings-ease);
+  }
+  & .toggle-row-switch {
+    flex: none;
+    width: 36px;
+    height: 20px;
+  }
+  /* A plain list on purpose: a pseudo-element inside :is() is invalid, and takes the whole rule down with it. */
+  & .toggle-row-switch::after,
+  & .toggle-slider::before {
+    top: 2px;
+    bottom: auto;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(24, 24, 27, 0.2);
+    transition: transform 140ms var(--settings-ease);
+  }
+  & :is(.toggle-row.on .toggle-row-switch, .toggle-switch input:checked + .toggle-slider) {
+    background: var(--info);
+  }
+  & .toggle-row.on .toggle-row-switch::after,
+  & .toggle-switch input:checked + .toggle-slider::before {
+    background: var(--on-info);
+    transform: translateX(16px);
+  }
+  & .toggle-row:not(.on) .toggle-row-switch::after {
+    transform: none;
+  }
+
+  /* Toggle row */
+  & .toggle-row,
+  & .toggle-row:hover,
+  & .toggle-row.on,
+  & .toggle-row.critique-theater-toggle,
+  & .toggle-row.critique-theater-toggle:hover,
+  & .toggle-row.critique-theater-toggle.on {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    max-width: none;
+    height: auto;
+    min-height: var(--settings-row-h);
+    margin: 0;
+    padding: var(--settings-row-y) var(--settings-row-x);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  & .toggle-row:focus-visible {
+    border-radius: var(--settings-radius);
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: -2px;
+  }
+  & .toggle-row-text {
+    gap: 1px;
+  }
+  & :is(.toggle-row-label, .critique-theater-toggle .toggle-row-label) {
+    color: var(--ink);
+    font-size: var(--settings-type-label);
+    font-weight: 500;
+    line-height: 1.45;
+  }
+
+  /* Tags and status notes stop competing with content. */
+  & :is(.memory-source-badge, .field-status-badge, .agent-model-source-badge, .agent-model-source-badge.live) {
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--ink-faint);
+    box-shadow: none;
+    font-size: var(--settings-type-meta);
+    font-weight: 400;
+    line-height: 1.45;
+  }
+  & :is(.filter-pill, .filter-pill.active) {
+    height: 28px;
+    min-height: 0;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 7px;
+    box-shadow: none;
+    font-size: var(--settings-type-control);
+    font-weight: 500;
+  }
+  & .filter-pill {
+    background: transparent;
+    color: var(--ink-soft);
+  }
+  & .filter-pill.active {
+    background: var(--settings-selected);
+    color: var(--ink);
+  }
+  & :is(.settings-test-status, .settings-rescan-status) {
+    margin: 0;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: var(--settings-control-radius);
+    background: var(--sub);
+    color: var(--ink-soft);
+    box-shadow: none;
+    font-size: var(--settings-type-hint);
+    line-height: 1.5;
+  }
+  & :is(.settings-test-status.warn) {
+    border-color: color-mix(in srgb, var(--warning) 28%, var(--line-soft));
+    background: color-mix(in srgb, var(--warning) 7%, var(--surface));
+    color: var(--warning-ink);
+  }
+  & :is(.settings-test-status.error, .settings-rescan-status.error) {
+    border-color: color-mix(in srgb, var(--danger) 26%, var(--line-soft));
+    background: color-mix(in srgb, var(--danger) 6%, var(--surface));
+    color: var(--danger);
+  }
+  & .settings-rescan-status-inline {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--ink-faint);
+    font-size: 12px;
+  }
+  & .library-empty-title {
+    margin: 0;
+    color: var(--ink);
+    font-size: var(--settings-type-label);
+    font-weight: 500;
+  }
+  & .library-empty-hint {
+    max-width: none;
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: var(--settings-type-hint);
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+  /* Nothing here yet is a group with one quiet row, not a box of its own: the same fill, inset and alignment as the
+     groups around it, so it never reads as a hole in the page. */
+  & :is(.empty-card, .library-empty) {
+    align-items: stretch;
+    gap: 1px;
+    min-height: var(--settings-row-h);
+    padding: var(--settings-row-y) var(--settings-row-x);
+    border: var(--settings-hairline);
+    border-radius: var(--settings-radius);
+    background: var(--surface);
+    color: var(--ink-soft);
+    box-shadow: none;
+    font-size: var(--settings-type-hint);
+    line-height: 1.5;
+    text-align: left;
+  }
+
+  /* Disclosure rows share one summary. */
+  & :is(.agent-install-collapse-summary, .agent-cli-env-summary, .media-provider-coming-soon > summary) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: var(--settings-row-h);
+    margin: 0;
+    padding: 0 var(--settings-row-x);
+    border: 0;
+    border-radius: var(--settings-radius);
+    background: none;
+    color: var(--ink);
+    font-size: var(--settings-type-label);
+    font-weight: 500;
+    cursor: pointer;
+    list-style: none;
+
+    &:hover {
+      background: var(--settings-hover);
+    }
+    &::-webkit-details-marker {
+      display: none;
+    }
+  }
+}
+
+/* The autosave note is a passing word, not a badge. */
+:is([data-fantay-shell], [data-client-type='desktop']) .settings-autosave {
+  &.is-pending,
+  &.is-saving,
+  &.is-saved {
+    border-color: var(--line-soft);
+    background: var(--surface);
+    color: var(--ink-soft);
+    box-shadow: 0 2px 8px -2px rgba(24, 24, 27, 0.1);
+    font-weight: 500;
+  }
+  &.is-error {
+    border-color: color-mix(in srgb, var(--danger) 26%, var(--line-soft));
+    background: var(--surface);
+    color: var(--danger);
+    font-weight: 500;
+  }
+}

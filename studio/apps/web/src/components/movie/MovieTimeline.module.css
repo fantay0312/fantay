@@ -1,0 +1,21 @@
+.timeline { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding-top: 16px; border-top: 1px solid var(--line-soft); }
+.toolbar, .sources { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.toolbar > :where(strong) { margin-right: auto; font-size: var(--type-label); }
+.sources { max-height: 110px; overflow: auto; }
+.hint { margin: 0; color: var(--ink-soft); font-size: var(--type-caption); line-height: 1.5; }
+.scroll { overflow-x: auto; padding: 0 2px 6px; }
+.tracks { position: relative; }
+.ruler { display: block; width: 100%; margin: 0 0 10px; accent-color: var(--ink); cursor: ew-resize; }
+.clips { display: flex; min-height: 72px; gap: 2px; }
+.clip { box-sizing: border-box; flex-shrink: 1; min-width: 8px; display: flex; flex-direction: column; gap: 5px; overflow: hidden; padding: 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--paper); color: var(--ink); text-align: left; cursor: grab; font: inherit; }
+.clip[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.clip :where(span), .clip :where(small) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.clip :where(span) { font-size: var(--type-label); }
+.clip :where(small) { color: var(--ink-soft); font-size: var(--type-caption); font-variant-numeric: tabular-nums; }
+.clip:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.captions { display: flex; height: 25px; margin-top: 4px; }
+.captions > :where(div) { position: relative; }
+.captions :where(span) { position: absolute; box-sizing: border-box; padding: 4px; height: 24px; background: var(--line-soft); color: var(--ink); border-radius: 3px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--type-caption); }
+.playhead { position: absolute; top: 22px; bottom: 0; width: 1px; background: var(--ink); pointer-events: none; }
+.ai { display: flex; gap: 8px; align-items: center; }
+.ai :where(input) { min-width: 0; flex: 1; }

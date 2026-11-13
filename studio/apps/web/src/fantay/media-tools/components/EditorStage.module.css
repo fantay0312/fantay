@@ -1,0 +1,240 @@
+/* SPDX-License-Identifier: MIT
+ * Derived from infinite-canvas (https://github.com/basketikun/infinite-canvas),
+ * commit 9cd3deacbcc598361807afc16c059a80dd18b6f9, web/src/components/canvas/canvas-node-crop-dialog.tsx,
+ * canvas-node-split-dialog.tsx and canvas-node-upscale-dialog.tsx (stage, crop box, cut lines).
+ * Copyright (c) 2026 basketikun. Released under the MIT License; the full
+ * license text is reproduced in THIRD_PARTY_NOTICES.md.
+ * Modified for Fantay on 2026-10-29: Fantay tokens, stage left + 300 px control column, the one focus ring.
+ */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+@media (max-width: 720px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.stageColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.viewport {
+  position: relative;
+  height: min(60vh, 560px);
+  min-height: 300px;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--paper-deep);
+}
+
+.viewport[data-scrollable] {
+  overflow: scroll;
+}
+
+.viewport[data-space] {
+  cursor: grab;
+}
+
+.viewport[data-panning] {
+  cursor: grabbing;
+}
+
+.content {
+  position: relative;
+}
+
+.stage {
+  position: absolute;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: var(--radius-row);
+  background: var(--ink);
+  user-select: none;
+  contain: layout paint;
+}
+
+.media {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  -webkit-user-drag: none;
+}
+
+.zoomRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-faint);
+  font-size: var(--type-label);
+}
+
+.zoomValue {
+  min-width: 52px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hint {
+  margin-inline-start: 8px;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.controlTitle {
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+  font-weight: 500;
+}
+
+.readout {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: var(--radius-control);
+  background: var(--sub);
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  color: var(--ink-faint);
+  font-size: var(--type-caption);
+}
+
+.warning {
+  color: var(--accent-ink);
+  font-size: var(--type-label);
+}
+
+/* crop */
+.mask {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+.cropBox {
+  position: absolute;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 0 28px rgba(0, 0, 0, 0.28);
+  cursor: move;
+  touch-action: none;
+}
+
+.cropBox:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.third {
+  position: absolute;
+  pointer-events: none;
+  border-color: rgba(255, 255, 255, 0.5);
+  border-style: solid;
+  border-width: 0;
+}
+
+.handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 1px solid #000;
+  border-radius: 50%;
+  background: #fff;
+  touch-action: none;
+}
+
+/* split */
+.cutLine {
+  position: absolute;
+  touch-action: none;
+}
+
+.cutLine[data-axis='vertical'] {
+  top: 0;
+  bottom: 0;
+  width: 16px;
+  margin-left: -8px;
+  cursor: ew-resize;
+}
+
+.cutLine[data-axis='horizontal'] {
+  left: 0;
+  right: 0;
+  height: 16px;
+  margin-top: -8px;
+  cursor: ns-resize;
+}
+
+.cutLine::after {
+  content: '';
+  position: absolute;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+.cutLine[data-axis='vertical']::after {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+}
+
+.cutLine[data-axis='horizontal']::after {
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+.cutLine[data-active]::after {
+  background: var(--warning);
+}
+
+.cutLine:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: calc(var(--focus-ring-width) * -1);
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.upscalePreview {
+  display: grid;
+  place-items: center;
+  height: min(52vh, 420px);
+  min-height: 260px;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--paper-deep);
+}
+
+.upscalePreview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}

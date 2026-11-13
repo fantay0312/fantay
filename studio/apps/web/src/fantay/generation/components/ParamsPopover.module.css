@@ -1,0 +1,79 @@
+/* SPDX-License-Identifier: MIT
+ * Derived from infinite-canvas (https://github.com/basketikun/infinite-canvas),
+ * commit 9cd3deacbcc598361807afc16c059a80dd18b6f9, web/src/components/image-settings-panel.tsx
+ * (aspect tiles, option rows) and web/src/components/video-settings-panel.tsx.
+ * Copyright (c) 2026 basketikun. Released under the MIT License; the full
+ * license text is reproduced in THIRD_PARTY_NOTICES.md.
+ * Modified for Fantay on 2026-10-29: Fantay tokens and primitives, only the supported parameters.
+ */
+/* Shrinks before the Run button does; the summary truncates. */
+.trigger.trigger {
+  flex: 0 1 auto;
+  gap: 6px;
+  min-width: 0;
+  max-width: 200px;
+  padding-inline: 8px;
+}
+
+.triggerLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title {
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+  font-weight: 600;
+}
+
+.note {
+  color: var(--ink-faint);
+  font-size: var(--type-caption);
+}
+
+.aspects {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.aspectTile {
+  height: 64px;
+  padding: 0;
+}
+
+.aspectTile > [data-slot='button-label'] {
+  flex-direction: column;
+  gap: 6px;
+}
+
+.aspectTile[aria-pressed='true'] {
+  box-shadow: 0 0 0 1.5px var(--ink);
+}
+
+.aspectShape {
+  display: block;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+}
+
+.segmented {
+  align-self: flex-start;
+  max-width: 100%;
+  overflow-x: auto;
+}

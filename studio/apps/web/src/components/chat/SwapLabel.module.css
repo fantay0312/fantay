@@ -1,0 +1,61 @@
+/*
+ * 换词的两层(`SwapLabel.tsx`)。数值是 chat 打磨简报 §1 的那一套,不在这里单独调:
+ *   出  opacity 1 → 0、translateY(0 → -4px)、blur(0 → 2px),--chat-dur-exit
+ *   进  opacity 0 → 1、translateY(4px → 0)、blur(2px → 0),--chat-dur-swap(300ms)
+ *   宽  旧宽 → 新宽,与「进」同一条时钟
+ * 曲线一律 --chat-ease-out;不用 ease-in,不从 scale(0) 起。
+ *
+ * `--chat-dur-swap` 由 ChatRoot 的接缝定义;回退值只在接缝缺席(单挂测试)时生效。
+ */
+.swap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+/* 只在换词那一个周期里挂过渡;平时宽度归内容,改字不滑 */
+.swap[data-gliding] {
+  transition: width var(--chat-dur-swap, 300ms) var(--chat-ease-out);
+}
+
+.current,
+.outgoing {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.current[data-entering] {
+  /* 宽度滑动期间盒子比新内容窄:新内容保持自己的宽度、被盒子裁出来(像被拉开),
+     而不是跟着收缩 —— 收缩会让里面那截小结每一帧换一个省略号位置。 */
+  flex-shrink: 0;
+  animation: chat-swap-in var(--chat-dur-swap, 300ms) var(--chat-ease-out) both;
+}
+
+/* 残影绝对定位:不占宽度(新词决定盒子宽),和新词左对齐、上下居中 */
+.outgoing {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  pointer-events: none;
+  animation: chat-swap-out var(--chat-dur-exit) var(--chat-ease-out) forwards;
+}
+
+@keyframes chat-swap-in {
+  from { opacity: 0; transform: translateY(4px); filter: blur(2px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+@keyframes chat-swap-out {
+  from { opacity: 1; transform: none; filter: none; }
+  to { opacity: 0; transform: translateY(-4px); filter: blur(2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swap[data-gliding] { transition: none; }
+  .current[data-entering] { animation: none; }
+  .outgoing { display: none; }
+}

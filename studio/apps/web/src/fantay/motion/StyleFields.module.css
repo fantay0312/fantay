@@ -1,0 +1,100 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.label {
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+  line-height: var(--type-label-lh);
+}
+
+.colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.swatch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.colorInput {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: none;
+  box-shadow: var(--shadow-ring);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.colorInput::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.colorInput::-webkit-color-swatch {
+  border: 0;
+  border-radius: var(--radius-control);
+}
+
+.colorInput:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.swatchLabel {
+  color: var(--ink);
+  font-size: var(--type-label);
+}
+
+.selects {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.layers {
+  padding-top: 4px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.layerList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.layerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 4px 0 8px;
+  border-radius: var(--radius-row);
+  color: var(--ink);
+  font-size: var(--type-label);
+}
+
+.layerRow:hover {
+  background: var(--paper-deep);
+}

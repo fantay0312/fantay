@@ -1,0 +1,24 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/*
+ * Fantay 工作台 host: like the PA workspace, the workbench fills the main column instead of sitting in the
+ * padded page measure, and owns its own scrolling regions. Component styles live in CSS modules under
+ * src/fantay/workbench/.
+ */
+[data-fantay-shell] .entry-main__inner--wide:has(> [data-testid='entry-view-workbench'][data-active='true']) {
+  height: 100%;
+  max-width: none;
+  padding: 0;
+}
+[data-fantay-shell] [data-testid='entry-view-workbench'][data-active='true'] {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+[data-fantay-shell] .entry-main--scroll:has([data-testid='entry-view-workbench'][data-active='true']) {
+  overflow: hidden;
+  scrollbar-gutter: auto;
+}
+[data-fantay-shell] .entry-main--scroll:has([data-testid='entry-view-workbench'][data-active='true'])::before {
+  display: none;
+}

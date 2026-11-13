@@ -1,0 +1,419 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* 任务 and 记忆 pages (spec §9, §11, §4.1 page measure): a heading, a full-width filter, then
+   hairline group blocks. The page body is the only scroll container. */
+
+.page {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  background: var(--paper);
+}
+
+.inner {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: calc(760px + 64px);
+  margin: 0 auto;
+  padding: 28px 32px 48px;
+}
+
+.narrow {
+  max-width: calc(680px + 64px);
+}
+
+/* ── header ─────────────────────────────────────────────────────────────────────────────── */
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.headText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 32px;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.summary {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.hint {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.pageAction {
+  flex: none;
+  gap: 6px;
+}
+
+/* ── filter ─────────────────────────────────────────────────────────────────────────────── */
+
+.filter {
+  margin-top: 16px;
+}
+
+.segLabel {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.segCount {
+  flex: none;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+/* ── content ────────────────────────────────────────────────────────────────────────────── */
+
+.content {
+  margin-top: 16px;
+  animation: paContentIn 200ms var(--pa-ease) both;
+}
+
+/* no filter row between the heading and the content (an empty 记忆 page) */
+.head + .content {
+  margin-top: 24px;
+}
+
+@keyframes paContentIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes paFadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+.skeletonStack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* needs-you groups: 13/600 heading, 12px to the cards, 24px between groups */
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.groupBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.groupTitle {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--ink);
+}
+
+.groupCount {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* a calm, top-aligned empty state: an outline glyph on a soft disc and one line */
+.quiet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 16px 24px;
+  text-align: center;
+}
+
+.quietTile {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--sub);
+  color: var(--ink-faint);
+}
+
+.quietText {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.empty {
+  width: 100%;
+}
+
+/* one hairline group of task rows */
+.rowGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+
+.more {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+/* 成果: one hairline block per project */
+.projects {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.project {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.projectHead {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 10px;
+  height: 44px;
+  padding: 0 8px 0 10px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.projectTile {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--sub);
+  color: var(--ink-soft);
+}
+
+.projectTitle {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.projectName {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projectMeta {
+  flex: none;
+  white-space: nowrap;
+}
+
+.projectFiles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+}
+
+.moreFiles {
+  align-self: flex-start;
+  height: 28px;
+  margin: 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+/* ── 记忆 rows ──────────────────────────────────────────────────────────────────────────── */
+
+.memList {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.memRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 12px;
+  padding: 14px 16px;
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+
+.memRow + .memRow {
+  border-top: 1px solid var(--line-soft);
+}
+
+.memRow:hover,
+.memRow:has(.memMenu[data-state='open']) {
+  background: var(--sub);
+}
+
+.memBody {
+  min-width: 0;
+}
+
+.memContent {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.memMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+  margin-top: 8px;
+}
+
+/* scope tag: a translucent ink wash, so it stays visible on --surface and on the --sub hover row */
+.memScope {
+  display: inline-block;
+  flex: none;
+  box-sizing: border-box;
+  max-width: 100%;
+  height: 20px;
+  padding: 0 7px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.memCaption {
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+
+.memSource {
+  min-width: 0;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.memFixed {
+  flex: none;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.memMenu {
+  margin-top: -2px;
+  margin-inline-end: -6px;
+  opacity: 0;
+  transition:
+    opacity var(--pa-dur-quick) var(--pa-ease),
+    background-color var(--pa-dur-quick) var(--pa-ease);
+}
+
+.memRow:hover .memMenu,
+.memRow:focus-within .memMenu,
+.memMenu[data-state='open'] {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .memMenu {
+    opacity: 1;
+  }
+}
+
+/* no match: the list's frame stays (dashed, as for an empty list), so filtering never collapses the page */
+.noMatch {
+  margin: 0;
+  padding: 28px 16px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-card);
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content {
+    animation: paFadeIn 140ms linear both;
+  }
+
+  .memRow,
+  .memMenu {
+    transition: opacity 120ms linear;
+  }
+}

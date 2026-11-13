@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Astryx · 组件参考</title><style>
+/* Astryx Neutral semantic adaptation for FantayDesign.
+ * Meta Platforms, Inc. and affiliates, MIT. Pinned upstream: df15de7fc3941b479d3bfb8d4576a3b3c27bca3d.
+ * See source/evidence.md for source values and compatibility-only layout bindings.
+ */
+:root {
+  --bg: #f1f1f1;
+  --surface: #ffffff;
+  --surface-warm: #f1f1f1;
+  --fg: #000000;
+  --fg-2: #474747;
+  --muted: #474747;
+  --meta: var(--muted);
+  --border: #00000014;
+  --border-soft: #d4d4d4;
+  --accent: #1b1b1b;
+  --accent-on: #ffffff;
+  --accent-hover: #303030;
+  --accent-active: #474747;
+  --success: #198100;
+  --warn: #ffce2f;
+  --danger: #c9303a;
+  --font-display: "Figtree", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-body: "Figtree", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  --text-xs: 12px;
+  --text-sm: 12px;
+  --text-base: 14px;
+  --text-lg: 17px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 29px;
+  --text-4xl: 42px;
+  --leading-body: 1.5;
+  --leading-tight: 1.2;
+  --tracking-display: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --section-y-desktop: 64px;
+  --section-y-tablet: 48px;
+  --section-y-phone: 32px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
+  --elev-flat: none;
+  --elev-ring: 0 0 0 1px var(--border);
+  --elev-raised: 0 2px 4px rgb(0 0 0 / 5%), 0 4px 8px rgb(0 0 0 / 10%);
+  --focus-ring: 0 0 0 3px rgb(0 116 226 / 45%);
+  --motion-fast: 125ms;
+  --motion-base: 300ms;
+  --ease-standard: cubic-bezier(0.24, 1, 0.4, 1);
+  --container-max: 1200px;
+  --container-gutter-desktop: 24px;
+  --container-gutter-tablet: 20px;
+  --container-gutter-phone: 16px;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1b1b1b;
+  --surface: #262626;
+  --surface-warm: #1b1b1b;
+  --fg: #ffffff;
+  --fg-2: #9e9e9e;
+  --muted: #9e9e9e;
+  --border: #ffffff1a;
+  --border-soft: #525252;
+  --accent: #f1f1f1;
+  --accent-on: #111111;
+  --accent-hover: #e2e2e2;
+  --accent-active: #d4d4d4;
+  --success: #64af4c;
+  --danger: #ff705d;
+  --elev-raised: 0 2px 4px rgb(0 0 0 / 25%), 0 4px 8px rgb(0 0 0 / 40%), inset 0 0 0 1px rgb(255 255 255 / 8%);
+  --focus-ring: 0 0 0 3px rgb(109 156 254 / 60%);
+}
+
+@font-face {
+  font-family: "Figtree";
+  src: url("fonts/Figtree.ttf") format("truetype");
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+</style><style>
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-body); }
+main { max-width:1040px; margin:auto; padding:48px var(--container-gutter-desktop); }
+header { display:flex; justify-content:space-between; align-items:start; gap:24px; padding-bottom:32px; border-bottom:1px solid var(--border-soft); }
+#theme { flex-shrink:0; white-space:nowrap; }
+h1 { font-size:var(--text-4xl); line-height:var(--leading-tight); margin:0 0 12px; letter-spacing:var(--tracking-display); font-weight:600; }
+h2 { font-size:var(--text-xl); line-height:var(--leading-tight); margin:0; font-weight:700; }
+h3 { margin:0 0 8px; font-size:var(--text-lg); }
+p { margin:8px 0 0; max-width:70ch; }
+.muted, .intro { color:var(--muted); }
+.section { display:grid; grid-template-columns:180px minmax(0,1fr); gap:32px; padding:32px 0; border-bottom:1px solid var(--border-soft); }
+.row { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+.stack { display:grid; gap:16px; }
+button, input, select, textarea { font:inherit; }
+button { cursor:pointer; min-height:36px; padding:8px 16px; border:1px solid var(--border-soft); border-radius:var(--radius-md); background:var(--surface); color:var(--fg); font-weight:600; transition:background-color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard); }
+button:hover:not(:disabled) { background:var(--surface-warm); border-color:var(--muted); }
+button.primary { background:var(--accent); color:var(--accent-on); border-color:var(--accent); }
+button.primary:hover:not(:disabled) { background:var(--accent-hover); }
+button.primary:active { background:var(--accent-active); }
+button:disabled { opacity:.45; cursor:not-allowed; }
+button.danger { color:var(--danger); }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible, summary:focus-visible { outline:2px solid var(--fg); outline-offset:3px; box-shadow:var(--focus-ring); }
+.field { display:grid; gap:6px; max-width:460px; }
+input:not([type=checkbox]), select, textarea { width:100%; min-height:38px; padding:8px 12px; border:1px solid var(--border-soft); background:var(--surface); color:var(--fg); border-radius:var(--radius-md); caret-color:var(--fg); }
+input::placeholder, textarea::placeholder { color:var(--muted); opacity:1; }
+input[aria-invalid=true] { border-color:var(--danger); }
+.error { color:var(--danger); font-size:var(--text-sm); }
+label.check { display:flex; gap:8px; align-items:center; }
+input[type=checkbox] { accent-color:var(--accent); width:16px; height:16px; }
+.badge { padding:4px 10px; border-radius:var(--radius-pill); background:var(--surface); border:1px solid var(--border-soft); font-size:var(--text-sm); font-weight:600; }
+.badge.success { border-color:var(--success); }
+.badge.warning { background:var(--warn); color:#111111; border-color:var(--warn); }
+.panel { padding:24px; background:var(--surface); border-radius:var(--radius-lg); box-shadow:var(--elev-ring), var(--elev-raised); }
+.alert { padding:16px; background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius-md); }
+table { width:100%; border-collapse:collapse; text-align:left; font-variant-numeric:tabular-nums; }
+th, td { padding:12px 8px; border-bottom:1px solid var(--border-soft); }
+th { font-size:var(--text-sm); color:var(--muted); font-weight:600; }
+a { color:var(--fg); text-underline-offset:3px; }
+summary { cursor:pointer; font-weight:600; }
+details p { color:var(--muted); }
+code { font-family:var(--font-mono); font-size:var(--text-xs); overflow-wrap:anywhere; }
+::selection { background:var(--accent); color:var(--accent-on); }
+* { scrollbar-color:var(--border-soft) var(--bg); scrollbar-width:thin; }
+.swatches { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:24px; margin-top:32px; }
+.swatch { height:100px; border:1px solid var(--border-soft); border-radius:var(--radius-lg); margin-bottom:8px; }
+.samples { margin-top:32px; display:grid; gap:24px; }
+.space { display:flex; gap:16px; align-items:center; }
+.space i { height:16px; background:var(--accent); display:block; border-radius:3px; }
+.space code { width:110px; }
+@media (max-width:640px) { main {padding:28px var(--container-gutter-phone);} header {gap:16px;} h1 {font-size:32px;} .section {grid-template-columns:1fr; gap:20px; padding:24px 0;} .panel {padding:18px;} th,td {padding:10px 4px;} }
+@media (pointer:coarse) and (max-width:1023px) { body, input, select, textarea {font-size:16px;} button {min-height:44px;} }
+@media (prefers-reduced-motion:reduce) { *, *::before, *::after {transition:none !important; animation:none !important; scroll-behavior:auto !important;} }
+</style></head>
+<body><main><header><div><h1>Astryx</h1><p class="intro">组件参考 · 官方 Neutral 主题的 FantayDesign 适配</p></div><button id="theme" type="button" aria-pressed="false">切换深色</button></header>
+<section class="section"><div><h2>操作</h2><p class="muted">中性色表达动作层级。</p></div><div class="row"><button class="primary" type="button">主要操作</button><button type="button">次要操作</button><button class="danger" type="button">删除</button><button type="button" disabled>不可用</button><button type="button" aria-busy="true" disabled>正在保存…</button></div></section>
+<section class="section"><div><h2>输入与选择</h2><p class="muted">保留标签、帮助与键盘行为。</p></div><form id="sample-form" class="stack"><label class="field" for="project-name">项目名称<input id="project-name" name="name" placeholder="例如：个人作品集" required aria-describedby="name-hint"></label><p id="name-hint" class="muted">此处演示原生表单状态，不创建实际项目。</p><label class="field">内容语言<select><option>简体中文</option><option>English</option></select></label><label class="check"><input type="checkbox" checked>接收项目更新</label><div class="row"><button class="primary" type="submit">预览保存状态</button></div><p id="save-status" role="status" aria-live="polite">尚未保存。</p></form></section>
+<section class="section"><div><h2>验证与反馈</h2><p class="muted">用文字补足颜色含义。</p></div><div class="stack"><label class="field" for="email">电子邮箱<input id="email" type="email" value="invalid-email" aria-invalid="true" aria-describedby="email-error"></label><p id="email-error" class="error">请输入完整的电子邮箱地址。</p><div class="alert" role="status">文件已准备就绪，可以继续编辑。</div><div class="row"><span class="badge success">已完成</span><span class="badge warning">待确认</span><span class="badge">草稿</span></div></div></section>
+<section class="section"><div><h2>内容表面</h2><p class="muted">10px 控件，12px 容器。</p></div><article class="panel"><h3>项目设计规范</h3><p class="muted">以语义颜色、Figtree 和清晰的信息层级组织产品界面。</p><p><a href="preview/colors.html">查看色彩</a> · <a href="preview/typography.html">查看字体</a> · <a href="preview/spacing.html">查看间距</a></p></article></section>
+<section class="section"><div><h2>数据与说明</h2><p class="muted">紧凑、可读的产品信息。</p></div><div class="stack"><table><caption class="muted">本地适配包内容</caption><thead><tr><th scope="col">文件</th><th scope="col">用途</th><th scope="col">状态</th></tr></thead><tbody><tr><td>tokens.css</td><td>浅深色令牌</td><td>可用</td></tr><tr><td>DESIGN.md</td><td>设计约定</td><td>可用</td></tr><tr><td>React 组件</td><td>官方交互</td><td>需单独构建</td></tr></tbody></table><details><summary>预览的来源与范围</summary><p>此页是按官方 Neutral 主题映射的 HTML 参考，不是全部官方 React 组件。原始源码与七套主题已归档，上游目前仍为 Beta。</p></details></div></section>
+</main><script>
+document.getElementById('theme').addEventListener('click', function () {
+  const dark = document.documentElement.dataset.theme !== 'dark';
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  this.setAttribute('aria-pressed', String(dark));
+  this.textContent = dark ? '切换浅色' : '切换深色';
+});
+const form = document.getElementById('sample-form');
+if (form) form.addEventListener('submit', function(event) {
+  event.preventDefault();
+  document.getElementById('save-status').textContent = '已在本页预览「' + document.getElementById('project-name').value + '」的保存状态。';
+});
+</script></body></html>

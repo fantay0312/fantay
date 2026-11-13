@@ -1,0 +1,747 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* 排期: the calendar fills the page beside a 272px rail (下一条 on top, the 待排期 tray below);
+   narrow pages stack them. Derived from dsh-media-desk client/styles.css
+   (https://github.com/woniuniuniu/dsh-media-desk), MIT, Copyright (c) 2026 woniuniuniu. */
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 720px;
+  padding-bottom: 20px;
+}
+
+/* one row as tall as the page: the calendar fills it, the tray scrolls inside it */
+.layout {
+  display: grid;
+  flex: 1 1 0;
+  grid-template-columns: minmax(0, 1fr) 272px;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 10px;
+  min-height: 0;
+}
+
+.skeletonCal {
+  min-height: 600px;
+}
+
+/* ── calendar ───────────────────────────────────────────────────────────────────────────── */
+
+.calendar {
+  padding: 14px 14px 14px;
+  box-sizing: border-box;
+}
+
+.calHead {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 20px;
+  padding: 2px 4px 12px;
+}
+
+.calMonth {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.calNum {
+  font-size: 56px;
+  font-weight: 200;
+  line-height: 48px;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.calName {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 1px;
+}
+
+.calName small {
+  font-size: 12px;
+  line-height: 15px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.calName em {
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 28px;
+  letter-spacing: -0.01em;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.calStats {
+  display: flex;
+  gap: 20px;
+  margin: 0;
+  padding-bottom: 2px;
+}
+
+.calStats div {
+  display: flex;
+  flex-direction: column;
+}
+
+.calStats dt {
+  font-size: 11.5px;
+  line-height: 15px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.calStats dd {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 300;
+  line-height: 28px;
+  color: var(--ink);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.calStats small {
+  margin-inline-start: 3px;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--ink-faint);
+}
+
+.calNav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 2px;
+}
+
+.calNav > [data-slot='segmented'] {
+  margin-inline-end: 6px;
+}
+
+.weekdays {
+  display: grid;
+  flex: none;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  padding-bottom: 6px;
+  font-size: 11.5px;
+  line-height: 16px;
+  color: var(--ink-faint);
+}
+
+.weekdays span {
+  padding-inline-start: 8px;
+}
+
+.calendar:has(.gridWeek) .weekdays {
+  display: none;
+}
+
+.grid {
+  --rows: 5;
+  display: grid;
+  flex: 1 1 0;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: repeat(var(--rows), minmax(84px, 1fr));
+  gap: 4px;
+  min-height: 0;
+  animation: gridIn var(--motion-enter) var(--ease-out-quint) both;
+}
+
+.gridWeek {
+  grid-template-rows: minmax(360px, 1fr);
+}
+
+@keyframes gridIn {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+
+.cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 5px 5px 6px;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ink) 2.5%, transparent);
+  transition:
+    background-color var(--motion-fast) var(--ease-out-quint),
+    box-shadow var(--motion-fast) var(--ease-out-quint),
+    transform var(--motion-enter) var(--ease-out-quint);
+}
+
+.cell[data-outside] {
+  background: transparent;
+  opacity: 0.42;
+}
+
+.cell[data-today] {
+  background: color-mix(in srgb, var(--info) 7%, transparent);
+}
+
+.cell[data-over] {
+  background: color-mix(in srgb, var(--info) 12%, transparent);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--info) 65%, transparent);
+  transform: scale(1.015);
+  opacity: 1;
+}
+
+.cellTop {
+  display: flex;
+  flex: none;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 4px;
+  min-height: 24px;
+}
+
+.date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dateWeekday {
+  padding-inline-start: 3px;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+
+.dateNum {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 22px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.cell[data-today] .dateNum {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.cell[data-past]:not([data-today]) .dateNum {
+  color: var(--ink-faint);
+}
+
+.stamp {
+  margin-top: 1px;
+}
+
+.posts {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 3px;
+  min-height: 0;
+  margin-top: 2px;
+}
+
+.gridWeek .posts {
+  justify-content: flex-start;
+  gap: 6px;
+  margin-top: 8px;
+  overflow-y: auto;
+}
+
+.chip {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  min-width: 0;
+  padding: 2px 5px 2px 2px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 7px;
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+  font: inherit;
+  text-align: start;
+  cursor: grab;
+  animation: chipIn var(--motion-enter) var(--ease-out-quint) both;
+  transition:
+    transform var(--motion-enter) var(--ease-out-quint),
+    box-shadow var(--motion-fast) var(--ease-out-quint);
+}
+
+.chip:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-ring-hover);
+}
+
+.chip:active {
+  cursor: grabbing;
+}
+
+.chip:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 1px;
+}
+
+.chip[data-status='published'] {
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.chip[data-status='published'] .chipTitle {
+  color: var(--ink-soft);
+}
+
+@keyframes chipIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(4px);
+  }
+}
+
+.chipThumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+}
+
+.chipText {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.chipText time {
+  overflow: hidden;
+  font-size: 10.5px;
+  line-height: 12px;
+  color: var(--ink-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.chipTitle {
+  overflow: hidden;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 15px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chipDone {
+  flex: none;
+  color: var(--success-ink);
+}
+
+.chipLarge {
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 8px 6px 6px;
+  border-radius: 9px;
+}
+
+.chipLarge .chipThumb {
+  width: 34px;
+  height: 34px;
+  border-radius: 7px;
+}
+
+.chipLarge .chipText time {
+  font-size: 11px;
+  line-height: 15px;
+}
+
+.chipLarge .chipTitle {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  font-size: 12.5px;
+  line-height: 17px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.more {
+  align-self: flex-start;
+  padding: 0 5px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--ink-faint);
+  cursor: pointer;
+}
+
+.more:hover {
+  background: var(--sub);
+  color: var(--ink);
+}
+
+/* ── rail ───────────────────────────────────────────────────────────────────────────────── */
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.next,
+.nextEmpty {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 100%;
+  padding: 13px 15px 14px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: var(--radius-panel);
+  font: inherit;
+  text-align: start;
+}
+
+.next {
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: var(--shadow-ring);
+  cursor: pointer;
+  transition: transform var(--motion-enter) var(--ease-out-quint);
+}
+
+:global([data-theme='dark']) .next {
+  background: color-mix(in srgb, var(--ink) 13%, var(--surface));
+  color: var(--ink);
+}
+
+.next:hover {
+  transform: translateY(-1px);
+}
+
+.next:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+.nextTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+  line-height: 16px;
+  opacity: 0.68;
+}
+
+.nextTime {
+  margin-top: 4px;
+  font-size: 30px;
+  font-weight: 300;
+  line-height: 36px;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.nextTitle {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 19px;
+}
+
+.nextFoot,
+.nextMore {
+  margin-top: 6px;
+  font-size: 11.5px;
+  line-height: 16px;
+  opacity: 0.68;
+}
+
+.nextMore {
+  margin-top: 2px;
+}
+
+.nextEmpty {
+  border: 1px dashed var(--line);
+  color: var(--ink);
+}
+
+.nextEmpty p {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 19px;
+  color: var(--ink-soft);
+}
+
+.tray {
+  flex: 1 1 auto;
+  transition: box-shadow var(--motion-fast) var(--ease-out-quint);
+}
+
+.tray[data-over] {
+  box-shadow:
+    inset 0 0 0 1.5px color-mix(in srgb, var(--info) 65%, transparent),
+    var(--shadow-ring);
+}
+
+.trayScroll {
+  flex: 1 1 0;
+  min-height: 0;
+  padding: 0 10px 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.trayGroup {
+  margin: 6px 4px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--ink-faint);
+}
+
+.trayGroup span {
+  margin-inline-start: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.trayGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.trayCardWrap {
+  position: relative;
+}
+
+.trayCard {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: start;
+  cursor: grab;
+  transition: transform var(--motion-enter) var(--ease-out-quint);
+}
+
+.trayCard:hover {
+  transform: translateY(-1px) rotate(-0.4deg);
+}
+
+.trayCard:focus-visible {
+  border-radius: 10px;
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+.trayCover {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  box-shadow: var(--shadow-ring);
+}
+
+.trayTitle {
+  display: block;
+  margin-top: 5px;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 17px;
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trayCardAction {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 6px;
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--ease-out-quint);
+}
+
+.trayCardWrap:hover .trayCardAction,
+.trayCardWrap:focus-within .trayCardAction {
+  opacity: 1;
+}
+
+.trayList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0 -2px;
+  padding: 0;
+  list-style: none;
+}
+
+.trayRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.trayItem {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 4px 30px 4px 4px;
+  border: 0;
+  border-radius: var(--radius-row);
+  background: transparent;
+  font: inherit;
+  text-align: start;
+  cursor: grab;
+  transition: background-color var(--motion-micro) var(--ease-out-quint);
+}
+
+.trayItem:hover {
+  background: var(--sub);
+}
+
+.trayItem:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: -2px;
+}
+
+.trayThumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+}
+
+.trayItemTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trayRowAction {
+  position: absolute;
+  inset-inline-end: 3px;
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--ease-out-quint);
+}
+
+.trayRow:hover .trayRowAction,
+.trayRow:focus-within .trayRowAction {
+  opacity: 1;
+}
+
+.trayRow:hover .trayItem > [data-status],
+.trayRow:focus-within .trayItem > [data-status] {
+  visibility: hidden;
+}
+
+.trayEmpty {
+  margin: 4px 4px 0;
+  font-size: 12.5px;
+  line-height: 19px;
+  color: var(--ink-faint);
+}
+
+@media (hover: none) {
+  .trayRowAction,
+  .trayCardAction {
+    opacity: 1;
+  }
+}
+
+/* narrow: stack the rail under the calendar; the page scrolls */
+@container (max-width: 860px) {
+  .inner {
+    height: auto;
+    min-height: 0;
+  }
+
+  .layout {
+    flex: none;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+  }
+
+  .grid {
+    flex: none;
+    grid-template-rows: repeat(var(--rows), minmax(84px, auto));
+  }
+
+  .gridWeek {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+  }
+
+  .gridWeek .cell {
+    min-height: 72px;
+  }
+
+  .calendar:has(.gridWeek) .weekdays {
+    display: none;
+  }
+
+  .tray {
+    flex: none;
+    height: 440px;
+  }
+}
+
+@container (max-width: 560px) {
+  .calStats {
+    display: none;
+  }
+
+  .chipThumb {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grid,
+  .chip {
+    animation: none;
+  }
+
+  .chip:hover,
+  .next:hover,
+  .trayCard:hover,
+  .cell[data-over] {
+    transform: none;
+  }
+}

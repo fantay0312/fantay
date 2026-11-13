@@ -1,0 +1,147 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * Fantay — derived from Doop (https://github.com/kgoedecke/doop)
+ *   source: src/styles.css (@theme L10-128, @utility L244-301) @ d261a85d3f9d87ac0653bb8512915f4e5bdff2b9
+ *   Copyright (c) the Doop contributors. Licensed under the GNU Affero General Public License v3.0
+ *   (see licenses/doop-AGPL-3.0.txt and THIRD_PARTY_NOTICES.md). "Doop" is a trademark of its
+ *   owner and is not used to brand Fantay.
+ * Modifications Copyright (c) 2026 Fantay contributors, AGPL-3.0-only: `inline reference` (no emitted
+ *   theme variables), Fantay token names, violet brand, namespaced fx-* animations, focus-ring utilities.
+ */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme inline reference {
+  --*: initial;
+  --spacing: 0.25rem;
+
+  --breakpoint-xs: 30rem;
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 56.25rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem;
+
+  --color-paper: var(--paper);
+  --color-paper-deep: var(--paper-deep);
+  --color-surface: var(--surface);
+  --color-sub: var(--sub);
+  --color-sidebar: var(--sidebar);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-ink-ghost: var(--ink-ghost);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-dot: var(--dot);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-on-brand: var(--on-brand);
+  --color-info: var(--info);
+  --color-info-ink: var(--info-ink);
+  --color-info-soft: var(--info-soft);
+  --color-on-info: var(--on-info);
+  --color-accent-ink: var(--accent-ink);
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-on-danger: var(--on-danger);
+  --color-success: var(--success);
+  --color-success-ink: var(--success-ink);
+  --color-success-on-ink: var(--success-on-ink);
+  --color-warning: var(--warning);
+  --color-warning-ink: var(--warning-ink);
+  --color-code: var(--code);
+  --color-code-ink: var(--code-ink);
+  --color-glaze-ring: var(--glaze-ring);
+  --color-scrim: var(--scrim);
+  --color-focus-ring: var(--focus-ring-color);
+
+  --font-ui: var(--font-ui);
+  --font-mono: var(--font-mono);
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  --text-micro: var(--type-micro);
+  --text-micro--line-height: var(--type-micro-lh);
+  --text-caption: var(--type-caption);
+  --text-caption--line-height: var(--type-caption-lh);
+  --text-label: var(--type-label);
+  --text-label--line-height: var(--type-label-lh);
+  --text-body: var(--type-body);
+  --text-body--line-height: var(--type-body-lh);
+  --text-copy: var(--type-copy);
+  --text-copy--line-height: var(--type-copy-lh);
+  --text-lead: var(--type-lead);
+  --text-lead--line-height: var(--type-lead-lh);
+  --text-heading: var(--type-heading);
+  --text-heading--line-height: var(--type-heading-lh);
+  --text-title: var(--type-title);
+  --text-title--line-height: var(--type-title-lh);
+  --text-display: var(--type-display);
+  --text-display--line-height: var(--type-display-lh);
+
+  --leading-none: 1;
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+
+  --radius-tag: var(--radius-tag);
+  --radius-row: var(--radius-row);
+  --radius-control: var(--radius-control);
+  --radius-sm: var(--radius-sm);
+  --radius-pill: var(--radius-pill);
+  --radius-card: var(--radius-card);
+  --radius-panel: var(--radius-panel);
+  --radius-modal: var(--radius-modal);
+
+  --shadow-ring: var(--shadow-ring);
+  --shadow-ring-hover: var(--shadow-ring-hover);
+  --shadow-float: var(--shadow-float);
+  --shadow-pop: var(--shadow-pop);
+  --shadow-modal: var(--shadow-modal);
+  --shadow-card: var(--shadow-card);
+  --shadow-elevation-1: var(--shadow-elevation-1);
+  --shadow-elevation-1-hover: var(--shadow-elevation-1-hover);
+  --shadow-elevation-1-focus: var(--shadow-elevation-1-focus);
+  --shadow-elevation-2: var(--shadow-elevation-2);
+
+  --ease-out-quint: var(--ease-out-quint);
+  --ease-out-cubic: var(--ease-out-cubic);
+  --ease-out-quad: var(--ease-out-quad);
+  --ease-in-out-cubic: var(--ease-in-out-cubic);
+  --default-transition-duration: var(--motion-fast);
+  --default-transition-timing-function: var(--ease-out-quint);
+
+  --animate-fx-spin: fx-spin 0.8s linear infinite;
+  --animate-fx-skeleton: fx-skeleton-pulse 1.4s ease-in-out infinite;
+  --animate-fx-stream: fx-stream-pulse 1.1s ease-in-out infinite;
+  --animate-fx-status: fx-status-pulse 1.6s ease-in-out infinite;
+  --animate-fx-chip-in: fx-chip-in var(--motion-enter) var(--ease-out-quint);
+  --animate-fx-tooltip-in: fx-chip-in var(--motion-micro) var(--ease-out-quint);
+  --animate-fx-fade-in: fx-fade-in var(--motion-enter) var(--ease-out-quint);
+  --animate-fx-fade-out: fx-fade-out var(--motion-exit) var(--ease-out-quint) forwards;
+  --animate-fx-modal-in: fx-modal-in var(--motion-enter) var(--ease-out-quint);
+  --animate-fx-modal-out: fx-modal-out var(--motion-exit) var(--ease-out-quint) forwards;
+}
+
+@utility duration-instant { --tw-duration: var(--motion-instant); transition-duration: var(--motion-instant); }
+@utility duration-micro { --tw-duration: var(--motion-micro); transition-duration: var(--motion-micro); }
+@utility duration-fast { --tw-duration: var(--motion-fast); transition-duration: var(--motion-fast); }
+@utility duration-enter { --tw-duration: var(--motion-enter); transition-duration: var(--motion-enter); }
+@utility duration-exit { --tw-duration: var(--motion-exit); transition-duration: var(--motion-exit); }
+@utility duration-slow { --tw-duration: var(--motion-slow); transition-duration: var(--motion-slow); }
+
+/* The one focus ring (D3, 91 A1): 2px brand at 100% + 2px offset. */
+@utility focus-ring {
+  &:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
+}
+@utility focus-ring-inset {
+  &:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: calc(var(--focus-ring-width) * -1); }
+}
+@utility focus-ring-within {
+  &:focus-within { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
+}
+
+@utility corner-squircle { corner-shape: superellipse(1.4); }

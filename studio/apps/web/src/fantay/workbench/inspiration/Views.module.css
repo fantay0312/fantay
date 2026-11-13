@@ -1,0 +1,318 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* 网格 and 信息流 scrollers, the resurface strip, the inbox triage row and the empty / loading states. */
+
+.scroll {
+  position: absolute;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 28px 112px;
+  scrollbar-gutter: stable;
+}
+.scroll[data-view='grid'] {
+  cursor: default;
+}
+
+/* ── masonry ── */
+.masonry {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+}
+.column {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+}
+.cell {
+  min-width: 0;
+  animation: view-rise 520ms var(--ease-out-quint) both;
+}
+@keyframes view-rise {
+  from { opacity: 0; transform: translateY(8px); }
+}
+
+.marquee {
+  position: absolute;
+  z-index: 20;
+  border: 1px solid color-mix(in srgb, var(--info) 70%, transparent);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--info) 10%, transparent);
+  pointer-events: none;
+}
+
+/* ── feed ── */
+.feed {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.feedGroup + .feedGroup {
+  margin-top: 28px;
+}
+.feedHead {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 6px;
+  padding: 14px 0 10px 72px;
+  background: linear-gradient(to bottom, var(--paper) 70%, transparent);
+  color: var(--ink);
+  font-size: var(--type-lead);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.feedCount {
+  color: var(--ink-faint);
+  font-size: var(--type-label);
+  font-weight: 450;
+  font-variant-numeric: tabular-nums;
+}
+.feedList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.feedRow {
+  position: relative;
+  display: grid;
+  grid-template-columns: 48px 24px minmax(0, 1fr);
+  align-items: start;
+  animation: view-rise 520ms var(--ease-out-quint) both;
+}
+.feedTime {
+  padding-top: 14px;
+  color: var(--ink-faint);
+  font-size: var(--type-label);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.feedRail {
+  position: relative;
+  align-self: stretch;
+}
+.feedRail::before {
+  position: absolute;
+  top: 0;
+  bottom: -14px;
+  left: 50%;
+  width: 1px;
+  background: var(--line);
+  content: '';
+}
+.feedRail::after {
+  position: absolute;
+  top: 18px;
+  left: calc(50% - 4px);
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--paper);
+  border-radius: 999px;
+  background: var(--ink-ghost);
+  content: '';
+}
+.feedRow:last-child .feedRail::before {
+  bottom: 0;
+}
+
+/* ── header rows inside the scroller ── */
+.strip {
+  margin: 0 0 22px;
+}
+.stripHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: var(--ink-soft);
+  font-size: var(--type-body);
+}
+.stripHead b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.stripHead .stripSpacer {
+  flex: 1;
+}
+.stripRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.resurface {
+  position: relative;
+  justify-content: flex-start;
+  min-width: 0;
+  height: 88px;
+  padding: 8px;
+  border-radius: var(--radius-panel);
+  background: var(--sub);
+  color: var(--ink);
+  font-weight: 400;
+  text-align: start;
+  white-space: normal;
+  transition:
+    transform 420ms cubic-bezier(0.2, 1.3, 0.4, 1),
+    box-shadow var(--motion-fast) var(--ease-out-quint);
+  animation: view-rise 520ms var(--ease-out-quint) both;
+}
+.resurface > [data-slot='button-label'] {
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+}
+.resurface:hover {
+  background: var(--sub);
+  color: var(--ink);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-float);
+}
+.resurface:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+.resurfaceThumb {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink-ghost);
+  font-size: 26px;
+  font-weight: 300;
+}
+.resurfaceThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.resurfaceText {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  padding-right: 6px;
+}
+.resurfaceTitle {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 13px;
+  font-weight: 550;
+  line-height: 18px;
+}
+.resurfaceMeta {
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: var(--type-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.triage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin: 0 0 18px;
+  padding: 10px 12px 10px 14px;
+  border-radius: var(--radius-panel);
+  background: var(--sub);
+  color: var(--ink-soft);
+  font-size: var(--type-body);
+}
+.triageLead {
+  color: var(--ink);
+  font-weight: 600;
+}
+.hints {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  min-width: 0;
+}
+.hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+/* ── states ── */
+.center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px 24px 96px;
+  overflow-y: auto;
+}
+.empty {
+  width: min(520px, 100%);
+}
+.emptyMark {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--sub);
+  color: var(--ink-soft);
+}
+.skeletons {
+  display: flex;
+  gap: 16px;
+}
+.skeletonColumn {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.skeletonCard {
+  border-radius: var(--radius-panel);
+}
+
+@media (max-width: 760px) {
+  .scroll {
+    padding: 14px 14px 112px;
+  }
+  .stripRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .feedRow {
+    grid-template-columns: 0 14px minmax(0, 1fr);
+  }
+  .feedTime {
+    visibility: hidden;
+  }
+  .feedHead {
+    padding-left: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell,
+  .feedRow,
+  .resurface {
+    animation: none;
+  }
+}

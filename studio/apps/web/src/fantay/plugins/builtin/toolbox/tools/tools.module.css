@@ -1,0 +1,289 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The built-in 工具台 tools. One grammar for all three: an optional full-width control row, then hairline
+   blocks (Settings' group: 1px --line, radius 12, never nested) with a 40px caption strip. Input and output
+   sit side by side when the tool is wide enough and stack when it is not; the tool measures itself, not
+   the window, so the layout follows the page column. */
+
+.tool {
+  container: toolbox-tool / inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* ── control row: segmented groups that share the full width ─────────────────────────────── */
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.segmented {
+  display: flex;
+  width: 100%;
+}
+
+.segment {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* ── layout ─────────────────────────────────────────────────────────────────────────────── */
+
+.split,
+.pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.pair {
+  align-items: start;
+}
+
+@container toolbox-tool (min-width: 720px) {
+  .split,
+  .pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container toolbox-tool (max-width: 520px) {
+  .controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── block ──────────────────────────────────────────────────────────────────────────────── */
+
+.block {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  overflow: hidden;
+  transition:
+    border-color var(--motion-micro) var(--ease-out-quint),
+    box-shadow var(--motion-micro) var(--ease-out-quint);
+}
+
+/* The editor has no edge of its own: its block takes the field's focus treatment (the Input primitive's). */
+.block:has(textarea:focus-visible) {
+  border-color: var(--brand);
+  box-shadow: var(--shadow-elevation-1-focus);
+}
+
+.block[data-invalid]:not(:has(textarea:focus-visible)) {
+  border-color: color-mix(in srgb, var(--accent-ink) 45%, var(--line));
+}
+
+.blockHead {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  min-height: 40px;
+  padding: 4px 6px 4px 14px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.blockLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.blockTools {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── editor and output bodies: the same box, so a side-by-side pair lines up ──────────────── */
+
+.body {
+  box-sizing: border-box;
+  height: clamp(200px, 38vh, 460px);
+  padding: 12px 14px;
+}
+
+.editor {
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+.output {
+  overflow: auto;
+  overscroll-behavior: contain;
+  outline: none;
+}
+
+.output:focus-visible {
+  box-shadow: inset 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+}
+
+.code {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 2;
+}
+
+.placeholder {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.errorIcon {
+  flex: none;
+  margin-top: 3px;
+  color: var(--accent-ink);
+}
+
+.errorText {
+  min-width: 0;
+}
+
+.errorTitle {
+  margin: 0;
+  color: var(--accent-ink);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.errorDetail {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* ── timestamp: a field over value rows ─────────────────────────────────────────────────── */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px 10px;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* One line is always reserved, so the hint turning into an error never moves the rows below. */
+.note {
+  min-height: 17px;
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.note[data-tone='error'] {
+  color: var(--accent-ink);
+}
+
+.tag {
+  flex: none;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: var(--radius-tag);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.rows {
+  margin: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 4px 6px 4px 14px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.rowLabel {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.rowMeta {
+  color: var(--ink-faint);
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rowValue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+}
+
+.valueText {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.valueText[data-empty] {
+  color: var(--ink-ghost);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .block {
+    transition: none;
+  }
+}

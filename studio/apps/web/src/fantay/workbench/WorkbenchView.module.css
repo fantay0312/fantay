@@ -1,0 +1,210 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/*
+ * Fantay 工作台 shell. Fills the main column (fantay/styles/workbench.css lets it); header on top, then an
+ * optional sign-in notice, then the body: pages | assistant. The assistant column glides 0 ↔ 360 px; its
+ * content is anchored at full width so it is revealed, not squeezed. In a narrow body it floats instead.
+ * The studio covers the whole body (absolute) when an item is open.
+ */
+
+.root {
+  --wb-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --wb-dock-w: 360px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+/* ── signed-out notice ─────────────────────────────────────────────── */
+
+.banner {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 12px 0 16px;
+  padding: 10px 12px 10px 14px;
+  border-radius: var(--radius-card);
+  background: var(--sub);
+  animation: wb-rise 240ms var(--wb-ease) both;
+}
+
+.bannerIcon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+  color: var(--ink-soft);
+}
+
+.bannerText {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  min-width: 0;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 19px;
+}
+.bannerText b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.bannerText span {
+  color: var(--ink-soft);
+}
+
+/* ── body: pages | assistant ───────────────────────────────────────── */
+
+.projects {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.body[hidden] {
+  display: none;
+}
+
+.body {
+  position: relative;
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 0px;
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
+  container: wb-body / inline-size;
+  transition: grid-template-columns 160ms var(--wb-ease);
+}
+.body[data-assistant='open'] {
+  grid-template-columns: minmax(0, 1fr) var(--wb-dock-w);
+  transition-duration: 240ms;
+}
+
+.pages {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.page {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.page[hidden] {
+  display: none;
+}
+.page > * {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+}
+
+.loadingText {
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+
+.dock {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  box-shadow: inset 1px 0 0 var(--line-soft);
+}
+
+.dockInner {
+  flex: none;
+  width: var(--wb-dock-w);
+  height: 100%;
+  min-height: 0;
+  opacity: 0;
+  transition: opacity 140ms var(--wb-ease);
+}
+.body[data-assistant='open'] .dockInner {
+  opacity: 1;
+  transition-duration: 240ms;
+}
+
+/* Narrow: the assistant is a floating card over the page instead of a column. */
+.root[data-narrow] .body,
+.root[data-narrow] .body[data-assistant='open'] {
+  grid-template-columns: minmax(0, 1fr) 0px;
+}
+.root[data-narrow] .dock {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  bottom: 8px;
+  z-index: 5;
+  width: min(var(--wb-dock-w), calc(100% - 16px));
+  border-radius: var(--radius-panel);
+  background: var(--paper);
+  box-shadow: var(--shadow-pop);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(12px);
+  transition:
+    opacity 140ms var(--wb-ease),
+    transform 140ms var(--wb-ease);
+}
+.root[data-narrow] .body[data-assistant='open'] .dock {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+  transition-duration: 240ms;
+}
+.root[data-narrow] .dockInner {
+  width: 100%;
+}
+
+@keyframes wb-rise {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .body,
+  .dockInner,
+  .root[data-narrow] .dock {
+    transition: none;
+  }
+  .banner {
+    animation: none;
+  }
+}

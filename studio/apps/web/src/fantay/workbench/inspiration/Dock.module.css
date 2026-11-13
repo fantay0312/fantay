@@ -1,0 +1,123 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Floating glass bars at the bottom of the view (the original desk's dockbar; Resurf's sort and density). */
+
+.dock,
+.bulk {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  z-index: 14;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100% - 140px);
+  padding: 5px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  backdrop-filter: blur(28px) saturate(170%);
+  box-shadow: var(--shadow-float);
+  transform: translateX(-50%);
+  transition:
+    opacity var(--motion-exit) var(--ease-out-quint),
+    transform var(--motion-slow) var(--ease-out-quint);
+}
+.dock[data-hidden],
+.bulk[data-hidden] {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(14px) scale(0.98);
+}
+.dock:not([data-hidden]),
+.bulk:not([data-hidden]) {
+  transition-duration: var(--motion-enter), 360ms;
+}
+.views {
+  flex: none;
+}
+.sep {
+  flex: none;
+  width: 1px;
+  height: 20px;
+  margin: 0 2px;
+  background: var(--line);
+}
+.sortButton {
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 10px;
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+  font-weight: 500;
+}
+.sortButton:hover,
+.sortButton[data-state='open'] {
+  background: var(--sub);
+  color: var(--ink);
+}
+.density {
+  flex: none;
+}
+
+/* ── bulk ── */
+.bulk {
+  padding: 5px 6px 5px 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.bulkCount {
+  flex: none;
+  color: var(--ink);
+  font-size: var(--type-body);
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.bulkButton {
+  flex: none;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 10px;
+  color: var(--ink);
+  font-size: var(--type-label);
+  font-weight: 500;
+}
+.bulkButton:hover:not([data-disabled]),
+.bulkButton[data-state='open'] {
+  background: var(--sub);
+  color: var(--ink);
+}
+.bulkButton[data-tone='danger'],
+.bulkButton[data-tone='danger']:hover {
+  color: var(--accent-ink);
+}
+.bulkButton[data-tone='danger']:hover {
+  background: color-mix(in srgb, var(--accent-ink) 10%, transparent);
+}
+.tagPop {
+  padding: 12px;
+}
+
+/* ── shuffle ── */
+.shuffle {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  z-index: 14;
+}
+
+@media (max-width: 760px) {
+  .dock,
+  .bulk {
+    max-width: calc(100% - 96px);
+    left: calc(50% + 28px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock,
+  .bulk {
+    transition: opacity var(--motion-fast) linear;
+  }
+}

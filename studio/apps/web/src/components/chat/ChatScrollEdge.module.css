@@ -1,0 +1,67 @@
+.edge {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 40px;
+  z-index: 7;
+  pointer-events: none;
+  opacity: 0;
+  /* 只是一层淡进淡出的遮罩:走 chat 接缝的曲线与「出」那一档短时长,
+     不再自己写一份 140ms 的字面曲线(值随接缝层统一调)。
+     视口那层 mask 是瞬切的(mask-image 不可插值),所以这里刻意保持短。 */
+  transition: opacity var(--chat-dur-exit) var(--chat-ease-out);
+}
+
+.edge[data-active='true'] {
+  opacity: 1;
+}
+
+/* Overlapping masks soften the blur radius toward the readable transcript. */
+.edge > span {
+  position: absolute;
+  inset: 0 0 auto;
+  -webkit-mask-image: linear-gradient(to bottom, #000 20%, transparent);
+  mask-image: linear-gradient(to bottom, #000 20%, transparent);
+}
+
+.edge > span:nth-child(1) {
+  height: 100%;
+  -webkit-backdrop-filter: blur(1px);
+  backdrop-filter: blur(1px);
+}
+
+.edge > span:nth-child(2) {
+  height: 75%;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+.edge > span:nth-child(3) {
+  height: 50%;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.edge > span:nth-child(4) {
+  height: 25%;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+/* Fade the composited transcript and blur together, revealing the actual
+   surface beneath (including desktop vibrancy) instead of painting a white cap. */
+:global(.chat-log-viewport):has(> .edge[data-active='true']) {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 40px);
+  mask-image: linear-gradient(to bottom, transparent, #000 40px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edge { transition: none; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .edge { display: none; }
+  :global(.chat-log-viewport):has(> .edge[data-active='true']) {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}

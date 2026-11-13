@@ -1,0 +1,90 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* What CSS owns on the mascot: its box, which of the artwork and the living canvas is
+   showing, and the fade the canvas arrives with. All of its motion is drawn on the canvas (mascot-stage.ts). */
+.root {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  /* The box is the artwork's; the cloth may swing out of it. */
+  overflow: visible;
+}
+
+.root[data-interactive] {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.still {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* The living canvas is larger than the box and centred on it (OVERSCAN in mascot-art.ts is 2). */
+.stage {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.root[data-live] > .stage {
+  visibility: visible;
+}
+
+.root[data-live] > .still,
+.root[data-wait] > .still {
+  visibility: hidden;
+}
+
+/* The canvas fades in when it goes live, so a stage that was slow to load still arrives softly; an entrance takes a
+   little longer over it, and fades the mark in the same way where the mark is all there is. */
+.root[data-live] > .stage {
+  animation: mascotFadeIn 160ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.root[data-appear] > .still,
+.root[data-appear][data-live] > .stage {
+  animation: mascotFadeIn 280ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.shadow {
+  --ground: 1;
+  --ground-x: 0%;
+  position: absolute;
+  top: 95%;
+  left: 25%;
+  width: 50%;
+  height: 5.5%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--ink) 15%, transparent) 0%,
+    color-mix(in srgb, var(--ink) 9%, transparent) 60%,
+    transparent 100%
+  );
+  transform: translateX(var(--ground-x)) scale(var(--ground));
+}
+
+@keyframes mascotFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root[data-live] > .stage,
+  .root[data-appear] > .still,
+  .root[data-appear][data-live] > .stage {
+    animation: none;
+  }
+}

@@ -1,0 +1,33 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* ── AI 用量 ───────────────────────────────────────────────────────────────────────────────── */
+/* The dashboard's own look is in components/usage/UsageDashboard.module.css, because it also renders in the project
+   popover. What belongs to Settings is that its fantay/ui Segmented matches the legacy .seg-control beside it. The same
+   rule covers 账户's models and tools switch. */
+:is([data-fantay-shell], [data-client-type='desktop']) .settings-page-shell {
+  & [data-slot='segmented'] {
+    gap: 1px;
+    height: var(--settings-control-h);
+    padding: 2px;
+    border-radius: 9px;
+    background: var(--sub);
+  }
+  & [data-slot='segmented-item'] {
+    height: 28px;
+    padding: 0 14px;
+    border-radius: 7px;
+    color: var(--ink-soft);
+    font-size: var(--settings-type-control);
+    font-weight: 500;
+    transition: background-color 100ms var(--settings-ease), color 100ms var(--settings-ease);
+
+    &:hover:not([data-disabled], [data-state='on']) {
+      color: var(--ink);
+    }
+    &[data-state='on'] {
+      background: var(--settings-seg-on);
+      color: var(--ink);
+      box-shadow: var(--settings-seg-on-shadow);
+      font-weight: 500;
+    }
+  }
+}

@@ -1,0 +1,428 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The panel docked beside the canvas. It stays mounted and animates its width, so closing plays too. */
+
+.dock {
+  flex: none;
+  width: 320px;
+  min-height: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+  transition: width 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.dock[data-state='closed'] {
+  width: 0;
+  border-right-width: 0;
+  transition-duration: 140ms;
+}
+
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 320px;
+  height: 100%;
+  min-height: 0;
+}
+
+.view {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.view[hidden] {
+  display: none;
+}
+
+.close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 12px 48px 8px 16px;
+}
+
+.title {
+  margin: 0;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.headerActions {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.empty {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+}
+
+/* three cards fanned out, the empty state's one piece of illustration */
+.stack {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.stack span {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 72px;
+  border-radius: 8px;
+  background: var(--paper-deep);
+  box-shadow: 0 0 0 1px var(--line);
+  color: var(--ink-faint);
+}
+
+.stack span:first-child {
+  transform: translateX(10px) rotate(-8deg);
+}
+
+.stack span:nth-child(2) {
+  position: relative;
+  z-index: 1;
+  background: var(--surface);
+  color: var(--brand);
+}
+
+.stack span:last-child {
+  transform: translateX(-10px) rotate(8deg);
+}
+
+.emptyTitle {
+  margin: 0;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.emptyBody {
+  max-width: 240px;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.doors {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 220px;
+  margin-top: 16px;
+}
+
+.note {
+  padding: 24px 16px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  text-align: center;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 4px 16px 16px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.card {
+  min-width: 0;
+}
+
+.thumb {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--paper-deep);
+  cursor: grab;
+}
+
+.cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.glyph {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: var(--ink-faint);
+  font-size: 22px;
+}
+
+.badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: var(--on-brand);
+}
+
+.badge svg {
+  width: 11px;
+  height: 11px;
+}
+
+.overlay {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.thumb:hover .overlay,
+.thumb:focus-within .overlay {
+  opacity: 1;
+}
+
+.cardTitle {
+  margin: 6px 0 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardMeta {
+  margin: 2px 0 0;
+  color: var(--ink-faint);
+  font-size: 11px;
+}
+
+.tabs {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0 16px;
+}
+
+.tabBody {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  margin: 0 -16px;
+  padding-top: 12px;
+  overflow-y: auto;
+}
+
+.tabBody > .grid {
+  overflow: visible;
+}
+
+.create {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 72px;
+  margin: 0 16px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 140ms cubic-bezier(0.23, 1, 0.32, 1), color 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.create:hover:not(:disabled) {
+  background: var(--paper-deep);
+  color: var(--ink);
+}
+
+.create:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.create svg {
+  width: 16px;
+  height: 16px;
+}
+
+.brandList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px 16px;
+  list-style: none;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.brand:hover {
+  background: var(--paper-deep);
+}
+
+.brandLogo {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+.brandBody {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.brandBody .cardTitle {
+  margin: 0;
+}
+
+.swatches {
+  display: flex;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.swatches span {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #000 10%, transparent);
+}
+
+.brandUse,
+.brandState {
+  flex: none;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.brandUse {
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.brandUse:hover:not(:disabled) {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.editorFiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.editorFile {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+  font-size: 11px;
+  word-break: break-all;
+}
+
+.editorFile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.editorFile span {
+  padding: 6px;
+}
+
+.editorFile button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+}
+
+.editorAdd {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  aspect-ratio: 1;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.editorAdd:hover:not(:disabled) {
+  background: var(--paper-deep);
+  color: var(--ink);
+}
+
+.editorAdd svg {
+  width: 16px;
+  height: 16px;
+}
+
+.editorDelete {
+  margin-right: auto;
+  color: var(--danger);
+}

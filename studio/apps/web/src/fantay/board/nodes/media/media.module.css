@@ -1,0 +1,132 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Media faces (spec 03 §4.3–§4.5): the picture itself, a video with a 32 px control bar, an audio capsule. Face
+   controls carry data-board-interactive and sit above the live shield. */
+
+.body {
+  position: absolute;
+  inset: 0;
+}
+
+.image {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.video {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: rgb(0 0 0);
+  box-shadow: 0 0 0 calc(1px * var(--inv-zoom, 1)) var(--board-frame-border);
+}
+
+.player {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 32px;
+  padding: 0 8px 0 4px;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.55), rgb(0 0 0 / 0));
+  color: rgb(255 255 255);
+}
+
+.controls [data-slot="icon-button"] {
+  color: rgb(255 255 255 / 0.92);
+}
+
+.time {
+  margin-inline-start: auto;
+  font: 500 var(--type-caption) / var(--type-caption-lh) var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.playOverlay {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  transform: translate(-50%, -50%);
+}
+
+.audio {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px 0 12px;
+  border-radius: 36px;
+  background: var(--surface);
+  box-shadow: 0 0 0 calc(1px * var(--inv-zoom, 1)) var(--line);
+  color: var(--ink);
+}
+
+.audio .time {
+  margin-inline-start: 0;
+  color: var(--ink-soft);
+}
+
+.audioPlay {
+  display: inline-flex;
+  flex: none;
+}
+
+.audioBody {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.audioTitle {
+  overflow: hidden;
+  font: 500 var(--type-body) / var(--type-body-lh) var(--font-ui);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.audioTrack {
+  position: relative;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--line-soft);
+}
+
+.audioFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--brand);
+}

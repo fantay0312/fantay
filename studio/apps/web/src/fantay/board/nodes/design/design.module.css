@@ -1,0 +1,58 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Design face (spec 03 §4.10): the document cover on paper, a format badge, "Open editor" on hover. */
+
+.design {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--paper-deep);
+  box-shadow: 0 0 0 calc(1px * var(--inv-zoom, 1)) var(--line);
+}
+
+.design :global(img) {
+  object-fit: contain;
+}
+
+.badge {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: var(--radius-chip);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow: var(--shadow-ring);
+  color: var(--ink-soft);
+  font: 500 var(--type-caption) / var(--type-caption-lh) var(--font-ui);
+  pointer-events: none;
+}
+
+.open {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 3;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity var(--motion-exit) var(--ease-out-quint),
+    transform var(--motion-exit) var(--ease-out-quint);
+  pointer-events: none;
+}
+
+.open[data-visible] {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  transition-duration: var(--motion-enter);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .open {
+    transition: none;
+  }
+}

@@ -1,0 +1,79 @@
+/* Pluggable-hooks panel: a section heading over one hairline group of toggle rows. */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 48px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.row:first-child {
+  border-top: none;
+}
+
+.rowCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.rowLabel {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.rowDesc {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-faint);
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}

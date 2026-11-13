@@ -1,0 +1,11 @@
+.body { display: grid; gap: 16px; padding: 16px 0 4px; max-height: 72vh; overflow: auto; color: var(--ink); }
+.hint { color: var(--ink-soft); font-size: 12px; line-height: 1.6; margin: 0; }
+.environment { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.environment > div { display: grid; gap: 4px; }
+.environment span, .summary { font-size: 12px; color: var(--ink-soft); }
+.field { display: grid; gap: 7px; font-size: 12px; font-weight: 500; }
+.consent { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; line-height: 1.6; }
+.actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 8px; }
+.result { display: grid; gap: 8px; padding-top: 16px; border-top: 1px solid var(--line); }
+.result > span { overflow-wrap: anywhere; font-size: 12px; }
+.result p { margin: 0; font-size: 12px; }

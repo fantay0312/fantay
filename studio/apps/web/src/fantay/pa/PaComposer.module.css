@@ -1,0 +1,607 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/*
+ * Fantay PA composer (spec §7). Uses a single persistent CSS Grid (`.bodyGrid`) so `<Textarea>` never
+ * unmounts or loses focus/IME state when adapting from a single-line capsule (`'start input end'`) to a
+ * full-width multi-line / group / expanded card (`'input input input' / 'start hint end'`), capped at
+ * max-height with an accessible thin scrollbar.
+ */
+
+.wrap {
+  position: relative;
+  /* Above the transcript's jump pill (z 2), so the docked @ list is never covered by it. */
+  z-index: 3;
+  box-sizing: border-box;
+  flex: none;
+  width: 100%;
+  max-width: 784px;
+  margin: 0 auto;
+  padding: 0 32px 16px;
+  container-type: inline-size;
+}
+.wrap[data-narrow] {
+  padding-inline: 24px;
+}
+
+/* One 20 px note at most; the first condition that applies wins. It is inset to the card's text edge and led by
+   a small glyph, so it reads as the composer's own state, not as a caption of the transcript line above it. */
+.note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 20px;
+  margin: 8px 0 6px;
+  padding-inline: 14px;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  animation: pa-note-in var(--pa-dur-enter) var(--pa-ease) both;
+}
+.note[data-tone='error'] {
+  color: var(--accent-ink);
+}
+.note[data-tone='faint'] {
+  color: var(--ink-faint);
+}
+
+.noteIcon {
+  flex: none;
+  opacity: 0.85;
+}
+
+.noteText {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+
+.noteLink {
+  flex: none;
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  animation: pa-note-in var(--pa-dur-enter) var(--pa-ease) both;
+}
+
+.errorText {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* The `@` list docks above this box; the card is its only other child. */
+.anchor {
+  position: relative;
+}
+
+/* ── Adaptive Composer Shell ──────────────────────────────────────────────────────────────── */
+
+.wrap .shell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 7px;
+  border: 1px solid var(--pa-composer-border);
+  /* 18px button radius + 7px shell padding + 1px border = 26px true capsule at 1 line */
+  border-radius: 26px;
+  background: var(--pa-composer-bg);
+  box-shadow: var(--pa-composer-shadow);
+  transition:
+    border-color var(--pa-dur-quick) var(--pa-ease),
+    background-color var(--pa-dur-quick) var(--pa-ease),
+    box-shadow var(--pa-dur-quick) var(--pa-ease),
+    border-radius var(--pa-dur-quick) var(--pa-ease);
+}
+
+.wrap .shell[data-stacked] {
+  gap: 6px;
+  padding: 10px 10px 8px;
+  border-radius: 20px;
+}
+
+.wrap .shell:focus-within {
+  border-color: var(--pa-composer-border-focus);
+  box-shadow: var(--pa-composer-shadow-focus);
+}
+
+/* Reply chip: the chip text plus a sibling remove button inside its right padding (never a button in a button). */
+.replyRow {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 2px 4px 0;
+}
+.wrap .shell[data-stacked] .replyRow {
+  padding: 0 2px;
+}
+
+.replyChip {
+  position: relative;
+  display: inline-flex;
+  align-self: flex-start;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.replyChipButton {
+  max-width: 100%;
+  min-width: 0;
+  padding-inline-end: 28px;
+}
+
+.replyChipText {
+  overflow: hidden;
+  min-width: 0;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.replyRemove {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 2px;
+  margin-block: auto;
+}
+
+/* Project row (groups, 创建项目 on): the optional name, then who builds / who reviews on its own line. */
+.projectRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  margin: 0 6px 2px;
+  padding: 2px 0 8px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.projectInput {
+  width: 100%;
+  min-width: 0;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.criteriaInput {
+  width: 100%;
+  min-width: 0;
+  font-size: 13px;
+}
+
+.projectCaption {
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+
+/* ── Persistent 3-Slot Grid (Inline Capsule <-> Full-Width Stacked Card) ──────────────────── */
+
+.bodyGrid {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'start input end';
+  align-items: center;
+  column-gap: 8px;
+  min-width: 0;
+}
+
+.wrap .shell[data-stacked] .bodyGrid {
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto;
+  grid-template-areas:
+    'input input input'
+    'start hint  end';
+  row-gap: 6px;
+  column-gap: 6px;
+  align-items: center;
+}
+
+.startCluster {
+  grid-area: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.endCluster {
+  grid-area: end;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Auto-Growing Textarea with Max-Height Cap & Accessible Thin Scrollbar ────────────────── */
+
+.input {
+  grid-area: input;
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  field-sizing: content;
+  height: auto;
+  min-height: 36px;
+  min-block-size: 36px;
+  max-height: min(196px, 36vh);
+  max-block-size: min(196px, 36vh);
+  overflow-y: hidden;
+  overscroll-behavior: contain;
+  padding: 7px 4px;
+  border: 0;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+  color: var(--ink);
+  resize: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--pa-scrollbar-thumb) var(--pa-scrollbar-track);
+}
+
+.wrap .shell[data-stacked] .input {
+  min-height: 28px;
+  min-block-size: 28px;
+  padding: 3px 6px;
+}
+
+.wrap .shell[data-expanded] .input {
+  min-height: 132px;
+  min-block-size: 132px;
+  max-height: min(360px, 54vh);
+  max-block-size: min(360px, 54vh);
+}
+
+.input[data-scrollable] {
+  overflow-y: auto;
+  padding-inline-end: 8px;
+}
+
+.input::placeholder {
+  color: var(--ink-faint);
+}
+
+@supports not (scrollbar-color: auto) {
+  .input::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .input::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: var(--pa-scrollbar-thumb);
+  }
+  .input::-webkit-scrollbar-track {
+    background: var(--pa-scrollbar-track);
+  }
+}
+
+/* ── Soft Circular Action Buttons (+, @, Voice, Expand) ───────────────────────────────────── */
+
+.wrap .toolCircle {
+  box-sizing: border-box;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--pa-composer-btn-bg);
+  color: var(--ink-soft);
+  box-shadow: none;
+  transition:
+    background-color var(--pa-dur-quick) var(--pa-ease),
+    color var(--pa-dur-quick) var(--pa-ease),
+    transform var(--pa-dur-quick) var(--pa-ease);
+}
+
+.wrap .shell[data-stacked] .toolCircle {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+}
+
+.wrap .toolCircle:hover:not(:disabled),
+.wrap .toolCircle[data-state='open'],
+.wrap .toolCircle[data-on] {
+  background: var(--pa-composer-btn-hover);
+  color: var(--ink);
+}
+
+.wrap .toolCircle:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.wrap .toolCircle[data-recording] {
+  background: color-mix(in srgb, var(--danger) 14%, var(--surface));
+  color: var(--danger);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 30%, transparent);
+}
+.wrap .toolCircle[data-recording]:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 20%, var(--surface));
+  color: var(--danger);
+}
+
+.plusGlyph {
+  transition: transform var(--pa-dur-enter) var(--pa-ease);
+}
+.wrap .toolCircle[data-state='open'] .plusGlyph {
+  transform: rotate(45deg);
+}
+
+.wrap .expandButton {
+  box-sizing: border-box;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-faint);
+  box-shadow: none;
+  transition:
+    background-color var(--pa-dur-quick) var(--pa-ease),
+    color var(--pa-dur-quick) var(--pa-ease),
+    transform var(--pa-dur-quick) var(--pa-ease);
+}
+.wrap .expandButton:hover:not(:disabled),
+.wrap .expandButton[data-on] {
+  background: var(--pa-composer-btn-bg);
+  color: var(--ink);
+}
+.wrap .expandButton:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+/* ── Upgraded Circular Send Disc & Paper-Plane Glyph ──────────────────────────────────────── */
+
+.wrap .sendButton {
+  box-sizing: border-box;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--pa-send-bg);
+  color: var(--pa-send-fg);
+  box-shadow: var(--pa-send-shadow);
+  opacity: 1;
+  transition:
+    background-color var(--pa-dur-quick) var(--pa-ease),
+    color var(--pa-dur-quick) var(--pa-ease),
+    box-shadow var(--pa-dur-quick) var(--pa-ease),
+    transform var(--pa-dur-quick) var(--pa-ease);
+}
+
+.wrap .shell[data-stacked] .sendButton {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+}
+
+.wrap .sendButton:hover:not(:disabled) {
+  background: var(--pa-send-hover);
+  color: var(--pa-send-fg);
+  box-shadow: var(--pa-send-shadow);
+  transform: translateY(-0.5px);
+}
+
+.wrap .sendButton:active:not(:disabled) {
+  background: var(--pa-send-hover);
+  color: var(--pa-send-fg);
+  transform: scale(0.95);
+}
+
+.wrap .sendButton:disabled {
+  background: var(--pa-send-idle-bg);
+  color: var(--pa-send-idle-fg);
+  box-shadow: none;
+  opacity: 1;
+  cursor: default;
+  transform: none;
+}
+
+.wrap .sendButton:disabled[data-unavailable] {
+  background: var(--sub);
+  color: var(--ink-ghost);
+}
+
+.sendGlyph {
+  display: block;
+  width: 18px;
+  height: 18px;
+  transform: translate(-0.5px, 0.5px);
+  transition: transform var(--pa-dur-quick) var(--pa-ease);
+}
+
+.wrap .sendButton:hover:not(:disabled) .sendGlyph {
+  transform: translate(0.5px, -0.5px);
+}
+
+/* ── Group Project Chip & Responder Preview ───────────────────────────────────────────────── */
+
+.projectChip {
+  flex: none;
+}
+/* On: an ink-washed pill with a filled glyph tile, unmistakably pressed (the bare chip only darkens its text). */
+.projectChip[data-on] {
+  background: color-mix(in srgb, var(--ink) 7%, var(--surface));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 28%, transparent);
+  color: var(--ink);
+}
+.projectChip[data-on] [data-slot='chip-icon'] {
+  background: var(--ink);
+  box-shadow: none;
+  color: var(--paper);
+}
+
+/* A chip the project gate refuses: faded, still focusable so its tooltip explains why. */
+.chipBlocked {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.preview {
+  display: inline-flex;
+  overflow: hidden;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding-inline-start: 2px;
+  font-size: 12px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.previewFaces {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+.previewText {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+
+/* Free space in the stacked bottom toolbar: hidden in inline capsule mode. */
+.hintSlot {
+  grid-area: hint;
+  display: none;
+  overflow: hidden;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  height: 32px;
+  padding-inline-end: 4px;
+}
+
+.wrap .shell[data-stacked] .hintSlot {
+  display: flex;
+}
+
+.hintStrut {
+  flex: none;
+  width: 0;
+  height: 32px;
+}
+
+.hint {
+  flex: none;
+  font-size: 12px;
+  line-height: 32px;
+  color: var(--ink-ghost);
+  white-space: nowrap;
+  animation: pa-hint-in var(--pa-dur-quick) var(--pa-ease) both;
+}
+
+@keyframes pa-hint-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── `@` list: docked above the card, not portaled; motion from menuContentClass (fx-chip-in / fade-out). ── */
+
+.mentionList {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  inset-inline-start: 0;
+  z-index: 3;
+  box-sizing: border-box;
+  width: min(360px, 100%);
+  max-height: 264px;
+  overflow-y: auto;
+}
+.mentionList[data-state='closed'] {
+  pointer-events: none;
+}
+
+.mentionRow {
+  gap: 8px;
+}
+
+.mentionGlyph {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  color: var(--ink-soft);
+}
+
+.mentionToken {
+  overflow: hidden;
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mentionCaption {
+  overflow: hidden;
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-inline-start: auto;
+  padding-inline-start: 8px;
+  font-size: 12px;
+  color: var(--ink-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes pa-note-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .note,
+  .error,
+  .hint {
+    animation: none;
+  }
+  .wrap .shell,
+  .wrap .toolCircle,
+  .wrap .expandButton,
+  .wrap .sendButton,
+  .plusGlyph,
+  .sendGlyph {
+    transition: none;
+  }
+}

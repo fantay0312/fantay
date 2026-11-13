@@ -1,0 +1,245 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Fantay's own MCP server on 插件 ▸ 连接器: one bordered row that opens into its setup. */
+.root {
+  margin-bottom: 28px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 12px 14px 12px 12px;
+}
+
+.mark {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--sub);
+}
+
+.copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.hint {
+  margin: 1px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.head .toggle {
+  flex: none;
+  gap: 4px;
+  height: 32px;
+  min-height: 0;
+  padding: 0 10px 0 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.chevron {
+  margin-left: 2px;
+  transition: transform 200ms var(--ease-out-quint);
+}
+
+.root[data-open] .chevron {
+  transform: rotate(180deg);
+}
+
+/* Auto height: the panel stays mounted so closing it can animate. */
+.collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 140ms var(--ease-out-quint), opacity 140ms var(--ease-out-quint);
+}
+
+.root[data-open] .collapse {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition-duration: 200ms;
+}
+
+.collapseInner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* The client picker's list hangs below the row while it is open. */
+.root[data-open] .collapseInner {
+  overflow: visible;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 16px 14px 16px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.capabilities {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.capabilities li {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 6px;
+  align-items: baseline;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.capabilities svg {
+  align-self: center;
+  color: var(--ink-faint);
+}
+
+/* A picker of a few short names needs a field's width, and one line like every other dropdown. */
+.block :global(.ds-picker) {
+  max-width: 320px;
+}
+
+.block :global(.ds-picker-trigger) {
+  height: 32px;
+  padding: 0 10px;
+}
+
+.block :global(.ds-picker-item) {
+  padding: 0 10px;
+}
+
+.block :global(:is(.ds-picker-meta, .ds-picker-item-text)) {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.block :global(.ds-picker-item-title) {
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.note {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.note[data-tone='danger'] {
+  color: var(--danger);
+}
+
+.inlineAction {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.warning {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--warning) 8%, var(--surface));
+  color: var(--warning-ink);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.snippet {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--sub);
+}
+
+.snippetBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 36px;
+  padding: 0 4px 0 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.snippetLang {
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.snippet pre {
+  max-height: 220px;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  background: none;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  user-select: text;
+  white-space: pre;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.snippet pre[data-lang='bash'] {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* The global inline-`code` chip style does not belong inside a block (issue #4509). */
+.snippet pre code {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+}

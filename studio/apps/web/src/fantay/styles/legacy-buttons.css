@@ -1,0 +1,118 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * Fantay legacy button, select, and plugins tab fixes (spec 01 §6).
+ * Loaded inside @layer legacy-fixes via app.css so these rules outrank
+ * @layer legacy (styles.css) while staying below @layer components/utilities (.fx).
+ */
+
+/* 1 · Disabled buttons keep their variant identity at opacity: 0.45 */
+button:disabled,
+button[aria-disabled='true'],
+.od-button:disabled,
+.od-button[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text);
+}
+
+button.primary:disabled,
+button.primary[aria-disabled='true'],
+.od-button--primary:disabled,
+.od-button--primary[aria-disabled='true'] {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--on-brand);
+}
+
+button.primary-ghost:disabled,
+button.primary-ghost[aria-disabled='true'],
+button.subtle:disabled,
+button.subtle[aria-disabled='true'],
+.od-button--primary-ghost:disabled,
+.od-button--primary-ghost[aria-disabled='true'],
+.od-button--subtle:disabled,
+.od-button--subtle[aria-disabled='true'] {
+  background: var(--bg-subtle);
+  border-color: transparent;
+  color: var(--text-strong);
+}
+
+button.ghost:disabled,
+button.ghost[aria-disabled='true'],
+.od-button--ghost:disabled,
+.od-button--ghost[aria-disabled='true'] {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text);
+}
+
+/* Native selects and custom-icon wrappers own their own chevrons. A global
+   image override defeats wrappers that deliberately suppress the background
+   and produces duplicate arrows (or a tiled image after a background reset). */
+
+/* 4 · Plugins page tabs unified on one segmented pill style */
+.plugins-view__tabs,
+.plugin-marketplace__switch,
+.plugin-marketplace__create-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-chip);
+  background: var(--paper-deep);
+  border: 1px solid transparent;
+}
+
+.plugins-view__tab,
+.plugin-marketplace__switch button,
+.plugin-marketplace__create-tabs button,
+.plugin-marketplace__filter-pill {
+  min-height: 28px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: calc(var(--radius-chip) - 3px);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: var(--type-body);
+  font-weight: 600;
+  line-height: 1.4;
+  box-shadow: none;
+  transition:
+    background-color var(--motion-micro) var(--ease-out-quint),
+    color var(--motion-micro) var(--ease-out-quint),
+    box-shadow var(--motion-micro) var(--ease-out-quint);
+}
+
+.plugins-view__tab:hover:not(:disabled),
+.plugin-marketplace__switch button:hover:not(:disabled),
+.plugin-marketplace__create-tabs button:hover:not(:disabled),
+.plugin-marketplace__filter-pill:hover:not(:disabled) {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ink);
+}
+
+.plugins-view__tab.is-active,
+.plugins-view__tab[aria-selected='true'],
+.plugin-marketplace__switch button.is-active,
+.plugin-marketplace__create-tabs button.is-active,
+.plugin-marketplace__filter-pill.is-active {
+  background: var(--surface);
+  border-color: transparent;
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(28, 27, 26, 0.06), 0 0 0 1px rgba(28, 27, 26, 0.04);
+}
+
+.plugins-view__tab:focus-visible,
+.plugin-marketplace__switch button:focus-visible,
+.plugin-marketplace__create-tabs button:focus-visible,
+.plugin-marketplace__filter-pill:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+}

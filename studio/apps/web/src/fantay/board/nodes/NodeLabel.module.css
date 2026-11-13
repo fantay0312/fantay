@@ -1,0 +1,154 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * Fantay — derived from Doop (https://github.com/kgoedecke/doop)
+ *   source: src/components/FrameView.tsx (frame title layer L1082-1157) @ d261a85d3f9d87ac0653bb8512915f4e5bdff2b9
+ *   Copyright (c) the Doop contributors. Licensed under the GNU Affero General Public License v3.0
+ *   (see licenses/doop-AGPL-3.0.txt and THIRD_PARTY_NOTICES.md). "Doop" is a trademark of its
+ *   owner and is not used to brand Fantay.
+ * Modifications Copyright (c) 2026 Fantay contributors, AGPL-3.0-only: Wonder-style label above the node
+ *   (glyph + status dot, title, source tag, state chip, rename field); screen-width thresholds as container
+ *   queries so zooming never re-renders the label (spec 03 §4.0).
+ */
+
+.label {
+  position: absolute;
+  height: 20px;
+  transform: translateY(calc(-100% - 6px));
+  pointer-events: auto;
+  container-type: inline-size;
+  cursor: default;
+  color: var(--board-label);
+  font-family: var(--font-ui);
+  font-size: var(--type-label);
+  line-height: 16px;
+  font-weight: 600;
+}
+
+.label[data-selected] {
+  color: var(--board-label-strong);
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.glyph {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  width: 12px;
+  height: 12px;
+}
+
+.glyph svg {
+  width: 12px;
+  height: 12px;
+}
+
+.dot {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1.5px var(--board-bg);
+}
+
+.dot[data-tone="live"] {
+  background: var(--board-live-dot);
+}
+
+.dot[data-tone="building"] {
+  background: var(--board-building);
+}
+
+.dot[data-tone="error"] {
+  background: var(--board-error);
+}
+
+.title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.count {
+  flex: none;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.tag {
+  flex: none;
+  padding: 0 5px;
+  border-radius: var(--radius-tag);
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+  font-size: var(--type-caption);
+  line-height: 16px;
+}
+
+/* a generator's output shape, at the far end of the label */
+.meta {
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--brand) 14%, transparent);
+  color: var(--brand-ink);
+  font-size: var(--type-caption);
+}
+
+.chip[data-tone="error"] {
+  background: color-mix(in srgb, var(--board-error) 14%, transparent);
+  color: var(--board-error);
+}
+
+.lock {
+  flex: none;
+  display: inline-flex;
+  color: var(--ink-faint);
+}
+
+.rename {
+  width: 100%;
+  min-width: 80px;
+  height: 20px;
+  color: var(--ink);
+  font-size: var(--type-label);
+}
+
+/* below 48 screen px: no label; below 120: glyph and dot only */
+@container (max-width: 47.99px) {
+  .inner {
+    display: none;
+  }
+}
+
+@container (max-width: 119.99px) {
+  .title,
+  .count,
+  .tag,
+  .meta,
+  .chip,
+  .lock {
+    display: none;
+  }
+}

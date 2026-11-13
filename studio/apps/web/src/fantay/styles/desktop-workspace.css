@@ -1,0 +1,568 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Desktop chrome & Fantay workspace refinement.
+   Unified gallery-grade surface hierarchy — eliminates top-vs-bottom color splits. */
+:root:has([data-client-type='desktop'], [data-desktop-workspace], [data-fantay-shell]) {
+  --fx-bg: var(--paper);
+  --fx-bg-subtle: var(--sidebar);
+  --fx-bg-elevated: var(--surface);
+  --fx-border: var(--line);
+  --fx-border-subtle: var(--line-soft);
+  --radius-row: 7px;
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-panel: 12px;
+  --radius-modal: 14px;
+  --type-title: 22px;
+  --type-heading: 16px;
+  --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --control-lg: 34px;
+  --shadow-ring: 0 0 0 1px var(--line-soft);
+  --glass-regular: var(--surface);
+  --glass-regular-blur: 0px;
+}
+
+/* ── Editorial shell & sidebar elevation ──────────────────────────────────────────────────── */
+[data-fantay-shell] [data-testid='fantay-sidebar-new-chat'] {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.04);
+  font-weight: 500;
+}
+[data-fantay-shell] [data-testid='fantay-sidebar-new-chat']:hover:not(:disabled) {
+  background: var(--surface);
+  border-color: var(--ink-ghost);
+  box-shadow: 0 2px 6px rgba(24, 24, 27, 0.06);
+}
+[data-fantay-shell] .entry-main__inner--wide {
+  padding: 24px 34px 72px;
+}
+[data-fantay-shell] .entry-section__title {
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+}
+
+/* ── Preserve the centered Home hero layout ───────────────────────────────────────────────── */
+[data-client-type='desktop'] .home-hero__brand { display: none; }
+/* The headline is centred on the composer's own axis, with the subtitle under it on the same line of
+   symmetry; the mascot hangs in the left gutter instead of pushing the pair off centre. The empty
+   third column mirrors the mascot's, which is what keeps the title on the axis. */
+.home-hero__greeting {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  column-gap: clamp(8px, 1.2cqi, 14px);
+  width: 100%;
+}
+/* Mascot and title scale together with the column; the artwork's own margin stands in for most of the gap.
+   It is taller than the headline's line, so it overhangs above and below instead of setting the row's
+   height: the subtitle then sits against the headline as one group, not halfway to the composer.
+   The living body stands in the middle of its box and is about two thirds of it wide, so a sixth of the box
+   beside it is empty: the box is drawn in by that much towards the headline, or the pair would stand apart. */
+.home-hero__mascot { display: block; flex: none; justify-self: end; width: clamp(60px, 8cqi, 88px); height: clamp(60px, 8cqi, 88px); margin-block: calc(-1 * clamp(12px, 1.2cqi, 17px)); margin-inline-end: calc(-1 * clamp(10px, 1.28cqi, 14px)); }
+/* The composer sits high enough for the template gallery to start above the fold. */
+[data-fantay-shell] .home-view--centered { justify-content: flex-start; }
+[data-fantay-shell] .home-view .home-hero {
+  padding-top: clamp(16px, 6vh, 72px);
+  padding-bottom: 32px;
+}
+/* The headline and its line below are set in two revivals of metal type, joined as one family by
+   script: CJK in 京華老宋体 (KingHwa OldSong, © TerryWang), the 1961 Beijing Xinhua 61-1 letterpress
+   face; Latin in IM FELL English (© Igino Marini, SIL OFL 1.1), the Fell types cut in the 1670s.
+   KingHwa's terms allow free commercial use and embedding in software, and forbid altering the glyphs
+   or selling the font file. Its shipped file is a glyph subset (outlines untouched, names kept) holding
+   only the characters the zh-CN / zh-TW / ja headline, rotating type words, Fantay chip labels, subtitle
+   and empty-chat greetings use; any other character falls through to the system Song face. After changing that copy, rebuild:
+     pyftsubset 京華老宋体2.002.ttf --text-file=<chars> --flavor=woff2 --layout-features='*' \
+       --name-IDs='*' --name-languages='*' --name-legacy --output-file=KingHwaOldSong-hero.woff2
+   The Fell files ship unmodified. Every face is a single 400 weight, so nothing is synthesised bold. */
+@font-face {
+  font-family: "Fantay Hero";
+  src: url("/fonts/KingHwaOldSong-hero.woff2") format("woff2");
+  font-display: fallback;
+  font-style: normal;
+  font-weight: 400;
+  unicode-range: U+2E80-2FFF, U+3000-303F, U+3400-9FFF, U+F900-FAFF, U+FE30-FE4F, U+FF00-FFEF;
+}
+@font-face {
+  font-family: "Fantay Hero";
+  src: url("/fonts/IMFellEnglish-Regular.ttf") format("truetype");
+  font-display: fallback;
+  font-style: normal;
+  font-weight: 400;
+  unicode-range: U+0000-02FF, U+2000-206F, U+20AC, U+2122;
+}
+@font-face {
+  font-family: "Fantay Hero";
+  src: url("/fonts/IMFellEnglish-Italic.ttf") format("truetype");
+  font-display: fallback;
+  font-style: italic;
+  font-weight: 400;
+  unicode-range: U+0000-02FF, U+2000-206F, U+20AC, U+2122;
+}
+[data-fantay-shell] .home-hero__title {
+  margin: 0;
+  font-family: "Fantay Hero", "Songti SC", STSong, Georgia, serif;
+  font-size: clamp(30px, 4.8cqi, 46px);
+  font-weight: 400;
+  font-synthesis: none;
+  line-height: 1.15;
+  letter-spacing: -0.005em;
+  text-align: center;
+  color: var(--ink);
+}
+/* The subtitle is a colophon: small, widely spaced, quiet, signed at the end in the italic face. */
+[data-fantay-shell] .home-hero__subtitle {
+  margin: clamp(2px, 0.6vh, 6px) 0 clamp(22px, 3.6vh, 34px);
+  text-align: center;
+  font-family: "Fantay Hero", "Songti SC", STSong, Georgia, serif;
+  font-size: clamp(13px, 1.45cqi, 15px);
+  font-weight: 400;
+  font-synthesis: none;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+[data-fantay-shell] .home-hero__latin {
+  font-style: italic;
+  font-size: 1.3em;
+  letter-spacing: 0.005em;
+  color: var(--ink);
+}
+/* CJK letterpress wants air: positive tracking, with the trailing tracking after the last glyph handed
+   back so the ink stays on the axis. `halt` sets full-width punctuation on a half-width body (the
+   face's halt touches punctuation only): at full width, plus the tracking, the comma opened a
+   two-character hole mid-line. Latin lines keep their own fitting. */
+:is(:lang(zh), :lang(ja), :lang(ko)) [data-fantay-shell] .home-hero__title {
+  margin-inline-end: -0.06em;
+  font-feature-settings: "halt";
+  letter-spacing: 0.06em;
+}
+:is(:lang(zh), :lang(ja), :lang(ko)) [data-fantay-shell] .home-hero__subtitle {
+  font-feature-settings: "halt";
+  letter-spacing: 0.24em;
+}
+/* The product name as a wordmark (components/BrandName.tsx), wherever it stands as a title or a
+   signature: the italic of the Home headline's Latin face, a touch larger than the sans around it since
+   Fell's x-height is small. The line height is pinned so the wordmark does not open its line box. */
+.fx-brand {
+  font-family: "Fantay Hero", Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-synthesis: none;
+  font-size: 1.16em;
+  line-height: 1;
+  letter-spacing: 0.005em;
+}
+/* Home creation chips across container widths. The composer's own collapse order lives in composer.css. */
+[data-fantay-shell] [data-testid='fantay-home-type-row'] {
+  width: 100%;
+  max-width: 100%;
+  margin-top: 4px;
+  margin-inline: auto;
+}
+
+@container (max-width: 680px) {
+  [data-fantay-shell] [data-testid='fantay-home-type-row'] {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    max-width: 100%;
+  }
+  [data-fantay-shell] [data-testid='fantay-home-type-row'] > * {
+    width: 100%;
+    min-width: 0;
+    height: 30px;
+    justify-content: center;
+    padding-inline: 6px;
+    font-size: 12px;
+    border-radius: 8px;
+  }
+}
+
+@container (max-width: 420px) {
+  [data-fantay-shell] [data-testid='fantay-home-type-row'] {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+  }
+  [data-fantay-shell] [data-testid='fantay-home-type-row'] > * {
+    width: 100%;
+    min-width: 0;
+    height: 30px;
+    justify-content: flex-start;
+    padding-inline: 10px;
+    border-radius: 8px;
+  }
+}
+
+/* Collapse composer's advanced working-directory bar unless a folder is actively selected */
+[data-fantay-shell] .home-hero__workdir-row:not(:has(.home-hero__working-dir-clear, .home-hero__workdir-chip)) {
+  display: none;
+}
+
+/* ── Integrations, on the 插件 page: flat like the catalogue beside them, no card around the card ── */
+[data-fantay-shell] .plugin-marketplace__switch {
+  flex-wrap: wrap;
+}
+[data-fantay-shell] .plugin-marketplace__manage {
+  appearance: none;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+[data-fantay-shell] .plugin-marketplace__manage:hover {
+  background: var(--sub);
+}
+[data-fantay-shell] .integrations-view {
+  margin-top: 20px;
+}
+[data-fantay-shell] .integrations-view__panel > .settings-section {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+[data-fantay-shell] .integrations-view .section-head {
+  align-items: center;
+  margin-bottom: 4px;
+}
+[data-fantay-shell] .integrations-view .section-head h3 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+[data-fantay-shell] .integrations-view .section-head .hint {
+  margin-top: 2px;
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+[data-fantay-shell] .integrations-view .mcp-add-btn {
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+[data-fantay-shell] .integrations-view .mcp-agent-support {
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--sub);
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.6;
+}
+[data-fantay-shell] .integrations-view .mcp-agent-support-unsupported {
+  color: var(--ink-faint);
+}
+[data-fantay-shell] .integrations-view .empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 40px 24px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 13px;
+  text-align: center;
+}
+[data-fantay-shell] .integrations-view .empty-card strong {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+[data-fantay-shell] .integrations-view .empty-card .hint {
+  max-width: 560px;
+  margin: 0;
+  line-height: 1.6;
+}
+[data-fantay-shell] .integrations-view input:not([type='checkbox'], [type='radio']) {
+  height: var(--page-control-h);
+  min-height: var(--page-control-h);
+  border-radius: 8px;
+  font-size: 13px;
+}
+[data-fantay-shell] .integrations-view :is(.settings-connectors-save, .settings-connectors-clear) {
+  height: var(--page-control-h);
+  min-height: var(--page-control-h);
+  border-radius: 8px;
+  font-size: 13px;
+}
+[data-fantay-shell] .integrations-view .settings-section-connectors-credentials .hint {
+  color: var(--ink-faint);
+  font-size: 13px;
+  font-weight: 500;
+}
+[data-fantay-shell] .integrations-view__use-everywhere {
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+[data-fantay-shell] .integrations-view__use-everywhere .use-everywhere-modal__tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--line-soft);
+  background: transparent;
+}
+[data-fantay-shell] .integrations-view__use-everywhere .use-everywhere-modal__tab {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 13px;
+  font-weight: 500;
+}
+[data-fantay-shell] .integrations-view__use-everywhere .use-everywhere-modal__tab:hover {
+  color: var(--ink);
+}
+[data-fantay-shell] .integrations-view__use-everywhere .use-everywhere-modal__tab.is-active {
+  background: var(--sub);
+  color: var(--ink);
+}
+[data-fantay-shell] .integrations-view__use-everywhere .use-everywhere-modal__body {
+  padding: 18px 0 0;
+  background: transparent;
+}
+[data-fantay-shell] .integrations-view__use-everywhere .use-everywhere-section__heading {
+  font-size: 15px;
+  font-weight: 600;
+}
+[data-fantay-shell] .integrations-view__use-everywhere .use-everywhere-section__intro {
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+[data-fantay-shell] .integrations-view__use-everywhere .use-everywhere-snippet {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+[data-fantay-shell] .integrations-view__use-everywhere .use-everywhere-snippet > :first-child {
+  background: var(--sub);
+}
+[data-fantay-shell] .integrations-view__use-everywhere .use-everywhere-section__footer {
+  border: 0;
+  border-radius: 12px;
+  background: var(--sub);
+}
+[data-fantay-shell] .integrations-view__use-everywhere .use-everywhere-modal__foot {
+  padding: 16px 0 0;
+  background: transparent;
+}
+[data-fantay-shell] .integrations-view__use-everywhere :is(.use-everywhere-modal__primary, .use-everywhere-modal__secondary) {
+  min-height: 36px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+/* A saved list needs no button saying so; it comes back as soon as there is something to save. */
+[data-fantay-shell] .integrations-view .mcp-foot > button:disabled {
+  display: none;
+}
+[data-fantay-shell] .integrations-view .mcp-foot {
+  margin-top: 0;
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+/* ── Eliminate top-vs-bottom color layering across all headers and toolbars ────────────────── */
+[data-fantay-shell] .entry-header,
+[data-fantay-shell] .settings-main-header,
+[data-fantay-shell] .designs-tab-header,
+[data-fantay-shell] .ds-tab-header,
+[data-fantay-shell] .ws-tabs-shell,
+[data-fantay-shell] .split-chat-tabs-dock,
+[data-fantay-shell] .project-workspace-header {
+  background: var(--paper) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ── One tone for the chat column ──────────────────────────────────────────────────────────── */
+/* Legacy paints the pane, the transcript and the composer's strip with --surface, in dark only. On --paper that boxes
+   the column inside a darker gutter and leaves the --surface composer card nothing to stand on. Clear, the column is
+   the page, and the card is raised exactly as it is on Home. The composer layer is portaled to <body>, so it cannot be
+   scoped to the shell. */
+[data-fantay-shell] :is(.split-chat-slot, [data-testid='side-chat-tab']) :is(.pane, .chat-log),
+.chat-composer-fixed-layer .composer {
+  background: transparent;
+}
+
+/* ── Remove the redundant/ugly chat history icon ───────────────────────────────────────────── */
+[data-fantay-shell] [data-testid='chat-history-dock'],
+[data-fantay-shell] [data-testid='conversation-history-trigger'] {
+  display: none !important;
+}
+
+/* ── Prevent empty notebook panel from covering main canvas content ────────────────────────── */
+[data-fantay-shell] .notebook-panel:has(.notebook-empty-state):not([data-user-pinned='true']) {
+  max-width: 280px;
+}
+
+/* ── Source / plain-text viewer: one page, not a grey slab ─────────────────────────────────── */
+/* The global `code` chip rule (styles/primitives.css) also lands on the line column, so a source file read as a
+   grey block beside a white gutter, with chip padding and a smaller font. The file reads on paper; the gutter is a
+   quiet ruler. */
+[data-fantay-shell] .code-viewer {
+  background: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+[data-fantay-shell] .code-viewer .gutter {
+  min-width: 52px;
+  padding: 18px 14px 18px 20px;
+  border-radius: 0;
+  border-right: 1px solid var(--line-soft);
+  background: var(--paper);
+  color: var(--ink-ghost);
+  font-size: inherit;
+}
+[data-fantay-shell] .code-viewer .lines {
+  padding: 18px 24px 18px 20px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: inherit;
+}
+
+@media (max-width: 640px), (max-height: 560px) {
+  [data-fantay-shell] .entry-main__inner {
+    padding: 10px 14px 20px;
+    gap: 12px;
+  }
+  [data-fantay-shell] .home-hero {
+    padding-top: clamp(6px, 1.8vh, 18px);
+    padding-bottom: 6px;
+    gap: 10px;
+  }
+  [data-fantay-shell] .home-hero__subtitle {
+    margin-bottom: 4px;
+  }
+  [data-fantay-shell] .home-hero__input-card {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+  [data-fantay-shell] .home-hero__input {
+    min-height: 40px;
+  }
+}
+
+/* ── Centered empty state for blank projects & sub-conversations ──────────────────────────── */
+@keyframes fantay-empty-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+[data-fantay-shell] :is(.split-chat-slot > .pane, [data-testid='side-chat-tab'] .pane)[data-empty-centered='true'] {
+  container-type: inline-size;
+  padding-bottom: clamp(20px, 7vh, 64px);
+}
+[data-fantay-shell] :is(.split-chat-slot > .pane, [data-testid='side-chat-tab'] .pane)[data-empty-centered='true'] > .chat-log-wrap {
+  flex: 0 0 auto;
+  margin-top: auto;
+}
+[data-fantay-shell] :is(.split-chat-slot > .pane, [data-testid='side-chat-tab'] .pane)[data-empty-centered='true'] .chat-log-viewport {
+  flex: 0 0 auto;
+}
+[data-fantay-shell] :is(.split-chat-slot > .pane, [data-testid='side-chat-tab'] .pane)[data-empty-centered='true'] .chat-log {
+  flex: 0 0 auto;
+  overflow: visible;
+  padding-top: 16px;
+  padding-bottom: clamp(16px, 2.4vh, 24px);
+  padding-inline: 20px;
+}
+[data-fantay-shell] :is(.split-chat-slot > .pane, [data-testid='side-chat-tab'] .pane)[data-empty-centered='true'] .chat-log-tail-spacer {
+  display: none;
+}
+[data-fantay-shell] :is(.split-chat-slot > .pane, [data-testid='side-chat-tab'] .pane)[data-empty-centered='true'] .chat-empty-wrap {
+  margin-block: 0;
+  padding: 0;
+  align-items: center;
+}
+[data-fantay-shell] [data-testid='chat-empty-mascot'] {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(6px, 1cqi, 10px);
+  max-width: 100%;
+}
+[data-fantay-shell] [data-testid='chat-empty-mascot'] p {
+  color: var(--ink);
+  font-family: "Fantay Hero", "Songti SC", STSong, Georgia, serif;
+  font-weight: 400;
+  font-synthesis: none;
+  line-height: 1.22;
+  letter-spacing: -0.005em;
+  text-align: start;
+  text-wrap: balance;
+}
+[data-fantay-shell] :is(.split-chat-slot > .pane, [data-testid='side-chat-tab'] .pane)[data-empty-centered='true'] [data-testid='chat-empty-mascot'] {
+  gap: clamp(6px, 1cqi, 10px);
+  animation: fantay-empty-rise 260ms var(--ease-out-quint) both;
+}
+[data-fantay-shell] :is(.split-chat-slot > .pane, [data-testid='side-chat-tab'] .pane)[data-empty-centered='true'] [data-testid='chat-empty-mascot'] [data-testid='fantay-mascot'] {
+  width: clamp(50px, 7.6cqi, 72px);
+  height: clamp(50px, 7.6cqi, 72px);
+  margin-block: calc(-1 * clamp(8px, 1.1cqi, 14px));
+  margin-inline-start: calc(-1 * clamp(6px, 0.9cqi, 11px));
+  margin-inline-end: calc(-1 * clamp(8px, 1.15cqi, 13px));
+  transform: translateY(-2px);
+}
+[data-fantay-shell] :is(.split-chat-slot > .pane, [data-testid='side-chat-tab'] .pane)[data-empty-centered='true'] [data-testid='chat-empty-mascot'] p {
+  font-size: clamp(22px, 4.2cqi, 36px);
+}
+:is(:lang(zh), :lang(ja), :lang(ko)) [data-fantay-shell] [data-testid='chat-empty-mascot'] p {
+  margin-inline-end: -0.05em;
+  font-feature-settings: 'halt';
+  letter-spacing: 0.05em;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-fantay-shell] :is(.split-chat-slot > .pane, [data-testid='side-chat-tab'] .pane)[data-empty-centered='true'] [data-testid='chat-empty-mascot'] {
+    animation: none;
+  }
+}
+[data-fantay-shell] :is(.split-chat-slot > .pane, [data-testid='side-chat-tab'] .pane)[data-empty-centered='true'] .chat-bottom-float-slot {
+  display: none;
+}
+[data-fantay-shell] :is(.split-chat-slot > .pane, [data-testid='side-chat-tab'] .pane)[data-empty-centered='true'] > .chat-composer-slot {
+  width: 100%;
+  max-width: min(740px, calc(100% - 32px));
+  margin-inline: auto;
+  margin-bottom: auto;
+}
+[data-fantay-shell] .split:not(.split-workspace-collapsed) .split-chat-slot > .pane[data-empty-centered='true'] > .chat-composer-slot,
+[data-fantay-shell] [data-testid='side-chat-tab'] .pane[data-empty-centered='true'] > .chat-composer-slot {
+  max-width: min(740px, calc(100% - 20px));
+}
+
+@media (max-width: 680px) {
+  [data-fantay-shell] .entry-main__inner {
+    padding: 12px 14px 24px;
+  }
+}

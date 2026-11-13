@@ -1,0 +1,785 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* 复盘: hero sentence, KPI blocks, then two-column rows of tiles (one column when narrow).
+   The chart is one series in --info on a recessive grid; text stays in the ink tokens.
+   Derived from dsh-media-desk client/styles.css (https://github.com/woniuniuniu/dsh-media-desk),
+   MIT, Copyright (c) 2026 woniuniuniu. */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+  gap: 10px;
+  align-items: stretch;
+}
+
+@container (max-width: 900px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.heroEmpty {
+  min-height: 240px;
+}
+
+.sampleHint {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+.quietLine {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-faint);
+}
+
+.padded {
+  padding: 4px 18px 18px;
+}
+
+.isNum {
+  text-align: end !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.spin {
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── trend ──────────────────────────────────────────────────────────────────────────────── */
+
+.trend {
+  min-height: 320px;
+}
+
+.chartBox {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 240px;
+  padding: 0 16px 12px 6px;
+}
+
+.chart {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.chartSvg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: visible;
+  border-radius: 6px;
+  outline: none;
+}
+
+.chartSvg:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+.chartGrid {
+  stroke: var(--line-soft);
+  stroke-width: 1;
+}
+
+.chartAxis {
+  fill: var(--ink-faint);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chartLine {
+  fill: none;
+  stroke: var(--info);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: draw 900ms var(--ease-out-quint) both;
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+.chartArea {
+  fill: color-mix(in srgb, var(--info) 9%, transparent);
+  animation: fade 600ms 200ms var(--ease-out-quint) both;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.chartCross {
+  stroke: var(--ink-ghost);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.chartDot {
+  fill: var(--info);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.chartTip {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  min-width: 128px;
+  padding: 7px 10px;
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+  pointer-events: none;
+  font-size: 12px;
+  line-height: 17px;
+  color: var(--ink);
+}
+
+.chartTip small {
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.chartTip b {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.tableBox {
+  flex: 1 1 auto;
+  max-height: 300px;
+  min-height: 0;
+  padding: 0 10px 10px;
+  overflow-y: auto;
+}
+
+.plainTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--ink-soft);
+}
+
+.plainTable th {
+  position: sticky;
+  top: 0;
+  height: 32px;
+  padding: 0 8px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-faint);
+  text-align: start;
+}
+
+.plainTable td {
+  height: 32px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── platform bars: one hue (magnitude), labels in ink ──────────────────────────────────── */
+
+.platforms {
+  min-height: 320px;
+}
+
+.bars {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  margin: 0;
+  padding: 4px 18px 18px;
+  list-style: none;
+}
+
+.bars li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 5px 8px;
+}
+
+.barName {
+  overflow: hidden;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barValue {
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 22px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.barTrack {
+  grid-column: 1 / -1;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.barTrack i {
+  display: block;
+  height: 100%;
+  min-width: 4px;
+  border-radius: 999px;
+  background: var(--info);
+  transform-origin: left center;
+  animation: grow 800ms var(--ease-out-quint) both;
+}
+
+:global([dir='rtl']) .barTrack i {
+  transform-origin: right center;
+}
+
+@keyframes grow {
+  from {
+    transform: scaleX(0.02);
+  }
+}
+
+.barSub {
+  grid-column: 1 / -1;
+  margin-top: -1px;
+  font-size: 11.5px;
+  line-height: 16px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── top content ────────────────────────────────────────────────────────────────────────── */
+
+.top {
+  min-height: 280px;
+}
+
+.topList {
+  margin: 0;
+  padding: 0 8px 10px;
+  list-style: none;
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px 7px 8px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color var(--motion-micro) var(--ease-out-quint);
+}
+
+.topRow:not(:disabled):hover {
+  background: var(--sub);
+}
+
+.topRow:disabled {
+  cursor: default;
+}
+
+.topRow:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: -2px;
+}
+
+.topRank {
+  flex: none;
+  width: 16px;
+  font-size: 15px;
+  font-weight: 300;
+  color: var(--ink-faint);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.topThumb {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  background: var(--sub);
+}
+
+.topTitle {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.topTitle strong {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 19px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topTitle small {
+  overflow: hidden;
+  font-size: 11.5px;
+  line-height: 16px;
+  color: var(--ink-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.topValue {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.topValue b {
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 22px;
+  color: var(--ink);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.topValue small {
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+/* ── suggestions and rules ──────────────────────────────────────────────────────────────── */
+
+.advice {
+  min-height: 280px;
+}
+
+.adviceList {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 460px;
+  padding: 0 14px 14px;
+  overflow-y: auto;
+}
+
+.ruleCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  animation: cardIn var(--motion-enter) var(--ease-out-quint) both;
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.ruleCardHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.ruleCardHead strong {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--ink);
+}
+
+.confidence {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.confidenceTrack {
+  width: 36px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.confidenceTrack i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ink-soft);
+}
+
+.ruleText {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.ruleEvidence {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+.ruleActions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.exported {
+  padding: 0 14px 10px;
+}
+
+.exportedRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.exportedText {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.path {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.rules {
+  margin: 0;
+  padding: 0 8px 10px;
+  list-style: none;
+}
+
+.rules > .quietLine {
+  padding: 4px 10px 8px;
+}
+
+.rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border-radius: var(--radius-control);
+  transition: background-color var(--motion-micro) var(--ease-out-quint);
+}
+
+.rule:hover,
+.rule:focus-within {
+  background: var(--sub);
+}
+
+.ruleBody {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ruleBody strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--ink);
+}
+
+.ruleBody p {
+  margin: 1px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.ruleTag {
+  padding: 0 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--success-ink);
+}
+
+.ruleRowActions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--ease-out-quint);
+}
+
+.rule:hover .ruleRowActions,
+.rule:focus-within .ruleRowActions {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .ruleRowActions {
+    opacity: 1;
+  }
+}
+
+/* ── accounts ───────────────────────────────────────────────────────────────────────────── */
+
+.accounts {
+  margin: 0;
+  padding: 0 8px 10px;
+  list-style: none;
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 6px 8px 10px;
+  border-radius: var(--radius-control);
+}
+
+.account:hover {
+  background: var(--sub);
+}
+
+.avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--info) 14%, var(--surface));
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.accountBody {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.accountBody strong {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 19px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountBody small {
+  overflow: hidden;
+  font-size: 11.5px;
+  line-height: 16px;
+  color: var(--ink-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountBody .accountError {
+  color: var(--accent-ink);
+  white-space: normal;
+}
+
+.accountFollowers {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-inline-end: 4px;
+}
+
+.accountFollowers b {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 20px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.accountFollowers small {
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.accountsEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 0 18px 18px;
+}
+
+/* ── dialogs ────────────────────────────────────────────────────────────────────────────── */
+
+.numberGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .numberGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.csvInput {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+.csvCount {
+  font-size: 12px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.previewWrap {
+  overflow-x: auto;
+  border-radius: var(--radius-control);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.preview {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink);
+}
+
+.preview th {
+  height: 30px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--line-soft);
+  font-weight: 500;
+  color: var(--ink-faint);
+  text-align: start;
+  white-space: nowrap;
+}
+
+.preview td {
+  height: 30px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--line-soft);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.preview tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.previewLine {
+  color: var(--ink-faint);
+}
+
+.problemTitle {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.problemList {
+  margin: 0;
+  padding-inline-start: 16px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.problemList code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chartLine,
+  .chartArea,
+  .barTrack i,
+  .ruleCard {
+    animation: none;
+  }
+
+  .spin {
+    animation-duration: 2s;
+  }
+}

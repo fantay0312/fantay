@@ -1,0 +1,72 @@
+<!--
+  SPDX-License-Identifier: MIT
+  SPDX-FileCopyrightText: 2026 Danila Poyarkov and OpenPencil contributors
+  Source: https://github.com/open-pencil/open-pencil/blob/v0.16.0/src/components/properties/PageSection.vue
+  Modified by Fantay: no
+-->
+<script setup lang="ts">
+import { computed } from 'vue'
+
+import type { Color, Fill } from '@open-pencil/scene-graph'
+import { useI18n, useVariableModes } from '@open-pencil/vue'
+
+import { useEditorStore } from '@/app/editor/active-store'
+import ColorPicker from '@/components/ColorPicker/ColorPicker.vue'
+import PaintField from '@/components/inputs/PaintField.vue'
+import PaintValue from '@/components/properties/paint/PaintValue.vue'
+import FillSwatch from '@/components/ui/paint/FillSwatch.vue'
+import PanelSection from '@/components/ui/panel/PanelSection.vue'
+
+import VariableModeMenu from './variable-modes/VariableModeMenu.vue'
+import VariableModeRows from './variable-modes/VariableModeRows.vue'
+
+const editor = useEditorStore()
+const pageColor = computed(() => editor.state.pageColor)
+const pageFill = computed<Fill>(() => ({
+  type: 'SOLID',
+  color: pageColor.value,
+  opacity: 1,
+  visible: true
+}))
+const { panels } = useI18n()
+const variableModes = useVariableModes()
+
+function updatePageAlpha(alpha: number) {
+  editor.setPageColor({ ...pageColor.value, a: alpha })
+}
+
+function updatePageColor(color: Color) {
+  editor.setPageColor(color)
+}
+</script>
+
+<template>
+  <PanelSection :label="panels.page">
+    <template #actions>
+      <VariableModeMenu :choices="variableModes.choices.value" @set="variableModes.setMode" />
+    </template>
+    <PaintField
+      :opacity="pageColor.a"
+      :opacity-label="panels.opacity"
+      @update:opacity="updatePageAlpha"
+    >
+      <template #preview>
+        <ColorPicker :color="pageColor" @update="updatePageColor">
+          <template #trigger>
+            <button
+              type="button"
+              :aria-label="panels.pageBackground"
+              class="size-5 shrink-0 cursor-pointer rounded border-0 bg-transparent p-0"
+            >
+              <FillSwatch :fill="pageFill" class="size-full" />
+            </button>
+          </template>
+        </ColorPicker>
+      </template>
+      <template #value>
+        <PaintValue :color="pageColor" :label="panels.pageBackground" @update="updatePageColor" />
+      </template>
+    </PaintField>
+    <VariableModeRows :choices="variableModes.applied.value" @set="variableModes.setMode" />
+  </PanelSection>
+</template>

@@ -1,0 +1,90 @@
+/* Astryx Neutral semantic adaptation for FantayDesign.
+ * Meta Platforms, Inc. and affiliates, MIT. Pinned upstream: df15de7fc3941b479d3bfb8d4576a3b3c27bca3d.
+ * See source/evidence.md for source values and compatibility-only layout bindings.
+ */
+:root {
+  --bg: #f1f1f1;
+  --surface: #ffffff;
+  --surface-warm: #f1f1f1;
+  --fg: #000000;
+  --fg-2: #474747;
+  --muted: #474747;
+  --meta: var(--muted);
+  --border: #00000014;
+  --border-soft: #d4d4d4;
+  --accent: #1b1b1b;
+  --accent-on: #ffffff;
+  --accent-hover: #303030;
+  --accent-active: #474747;
+  --success: #198100;
+  --warn: #ffce2f;
+  --danger: #c9303a;
+  --font-display: "Figtree", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-body: "Figtree", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  --text-xs: 12px;
+  --text-sm: 12px;
+  --text-base: 14px;
+  --text-lg: 17px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 29px;
+  --text-4xl: 42px;
+  --leading-body: 1.5;
+  --leading-tight: 1.2;
+  --tracking-display: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --section-y-desktop: 64px;
+  --section-y-tablet: 48px;
+  --section-y-phone: 32px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
+  --elev-flat: none;
+  --elev-ring: 0 0 0 1px var(--border);
+  --elev-raised: 0 2px 4px rgb(0 0 0 / 5%), 0 4px 8px rgb(0 0 0 / 10%);
+  --focus-ring: 0 0 0 3px rgb(0 116 226 / 45%);
+  --motion-fast: 125ms;
+  --motion-base: 300ms;
+  --ease-standard: cubic-bezier(0.24, 1, 0.4, 1);
+  --container-max: 1200px;
+  --container-gutter-desktop: 24px;
+  --container-gutter-tablet: 20px;
+  --container-gutter-phone: 16px;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1b1b1b;
+  --surface: #262626;
+  --surface-warm: #1b1b1b;
+  --fg: #ffffff;
+  --fg-2: #9e9e9e;
+  --muted: #9e9e9e;
+  --border: #ffffff1a;
+  --border-soft: #525252;
+  --accent: #f1f1f1;
+  --accent-on: #111111;
+  --accent-hover: #e2e2e2;
+  --accent-active: #d4d4d4;
+  --success: #64af4c;
+  --danger: #ff705d;
+  --elev-raised: 0 2px 4px rgb(0 0 0 / 25%), 0 4px 8px rgb(0 0 0 / 40%), inset 0 0 0 1px rgb(255 255 255 / 8%);
+  --focus-ring: 0 0 0 3px rgb(109 156 254 / 60%);
+}
+
+@font-face {
+  font-family: "Figtree";
+  src: url("fonts/Figtree.ttf") format("truetype");
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}

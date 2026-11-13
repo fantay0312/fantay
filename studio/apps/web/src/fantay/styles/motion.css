@@ -1,0 +1,22 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * Fantay — derived from Doop (https://github.com/kgoedecke/doop)
+ *   source: src/styles.css (keyframes L409-500) @ d261a85d3f9d87ac0653bb8512915f4e5bdff2b9
+ *   Copyright (c) the Doop contributors. Licensed under the GNU Affero General Public License v3.0
+ *   (see licenses/doop-AGPL-3.0.txt and THIRD_PARTY_NOTICES.md). "Doop" is a trademark of its
+ *   owner and is not used to brand Fantay.
+ * Modifications Copyright (c) 2026 Fantay contributors, AGPL-3.0-only: keyframes renamed fx-* (upstream owns
+ *   global fade-in/pulse/spin); theme-switch transition guard.
+ */
+@keyframes fx-spin { to { transform: rotate(360deg); } }
+@keyframes fx-chip-in { from { transform: translateY(4px); opacity: 0; } }
+@keyframes fx-fade-in { from { opacity: 0; } }
+@keyframes fx-fade-out { to { opacity: 0; } }
+@keyframes fx-modal-in { from { transform: scale(0.96); opacity: 0; } }
+@keyframes fx-modal-out { to { transform: scale(0.96); opacity: 0; } }
+@keyframes fx-skeleton-pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+@keyframes fx-stream-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+@keyframes fx-status-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.6); opacity: 0.5; } }
+/* theme switch: no colour transitions anywhere for two frames (theme.ts sets/clears the attribute) */
+:root[data-theme-switching] *, :root[data-theme-switching] *::before, :root[data-theme-switching] *::after { transition: none !important; }

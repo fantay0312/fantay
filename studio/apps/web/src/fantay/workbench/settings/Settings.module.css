@@ -1,0 +1,219 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Fantay 工作台 settings dialog: grouped cards of rows, label and hint on the left, the control on the right;
+   segmented choices and text fields drop under their label and take the full width. */
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-card);
+  background: var(--sub);
+}
+
+.accountIcon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+  color: var(--ink-soft);
+}
+.accountOn .accountIcon {
+  color: var(--success-ink);
+}
+
+.accountText {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.accountText b {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+}
+.accountText span {
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.groupTitle {
+  margin: 0;
+  padding-inline-start: 2px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.groupCard {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 52px;
+  padding: 10px 14px;
+}
+.row + .row,
+.groupCard > .sample {
+  border-top: 1px solid var(--line-soft);
+}
+
+.rowStacked {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.rowLabel {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rowTitle {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.rowHint {
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 17px;
+  overflow-wrap: anywhere;
+}
+
+.rowControl {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+.rowStacked .rowControl {
+  display: block;
+  width: 100%;
+}
+
+.full {
+  display: flex;
+  width: 100%;
+}
+.full > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: calc(var(--radius-row) + 3px);
+  background: var(--sub);
+}
+
+.stepperValue {
+  min-width: 32px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.sample {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px 14px;
+}
+.sample img {
+  display: block;
+  width: 100%;
+  max-height: 340px;
+  border-radius: var(--radius-card);
+  object-fit: contain;
+  background: var(--sub);
+  animation: settings-develop 700ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.modelSelect {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  width: 240px;
+  max-width: 100%;
+}
+
+.modelTrigger {
+  width: 100%;
+}
+
+.modelStatus {
+  color: var(--ink-faint);
+  font-size: 11.5px;
+  line-height: 16px;
+}
+
+@keyframes settings-develop {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+  }
+}
+
+@media (max-width: 560px) {
+  .row {
+    flex-wrap: wrap;
+  }
+  .modelSelect {
+    width: 100%;
+  }
+}

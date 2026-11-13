@@ -1,0 +1,27 @@
+import {afterEach,expect,it,vi} from 'vitest';
+import express from 'express';
+import {createServer,type Server} from 'node:http';
+import {mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import {AiUsageStore} from '../../src/integrations/usage-store.js';
+import {registerUsageRoutes} from '../../src/routes/usage.js';
+const servers:Server[]=[],stores:AiUsageStore[]=[],dirs:string[]=[];
+afterEach(async()=>{await Promise.all(servers.splice(0).map(server=>new Promise<void>(resolve=>server.close(()=>resolve()))));stores.splice(0).forEach(store=>store.close());dirs.splice(0).forEach(dir=>rmSync(dir,{recursive:true,force:true}));});
+it('serves account-scoped and authorized project usage from the same read model',async()=>{
+  const dir=mkdtempSync(path.join(tmpdir(),'usage-route-'));dirs.push(dir);const usage=new AiUsageStore(dir);stores.push(usage);
+  usage.begin('user-a','a','model-a','chat',{projectId:'film'});usage.observe('user-a','a',{tokentosea:{runId:'a-run',chargedUsd:'0.100000'},usage:{prompt_tokens:12,completion_tokens:3}});
+  usage.begin('user-b','b','model-b','chat',{projectId:'film'});usage.observe('user-b','b',{tokentosea:{runId:'b-run',chargedUsd:'9.000000'}});
+  usage.recordLocal({key:'hidden',provider:'claude',model:'m',context:{projectId:'denied'},usage:{input_tokens:999},at:Date.now()});
+  const app=express(),sync=vi.fn(),reconcile=vi.fn(async()=>{});
+  registerUsageRoutes(app,{runtime:{usage,current:()=>({user:{id:'user-a'}}),reconcileUsage:reconcile} as never,requireLocalDaemonRequest:(_req,_res,next)=>next(),canReadProject:async(_req,id)=>id!=='denied',authorizeProject:async(_req,res,id)=>{if(id==='denied'){res.status(403).json({error:'Not authorized'});return false;}return true;},syncLocal:sync});
+  const server=createServer(app);servers.push(server);await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve));const base=`http://127.0.0.1:${(server.address() as {port:number}).port}`;
+  const response=await fetch(`${base}/api/usage?days=30&projectId=film&timeZone=Asia%2FTaipei`),result=await response.json() as {totals:{chargedUsd:string;requests:number};timeZone:string};
+  expect(response.status).toBe(200);expect(response.headers.get('cache-control')).toBe('no-store');expect(result.totals).toMatchObject({requests:1,chargedUsd:'0.100000'});expect(result.timeZone).toBe('Asia/Taipei');
+  expect((await fetch(`${base}/api/usage?projectId=denied`)).status).toBe(403);expect((await fetch(`${base}/api/usage?days=2`)).status).toBe(400);expect((await fetch(`${base}/api/usage?timeZone=not-a-zone`)).status).toBe(400);expect(sync).toHaveBeenCalledOnce();
+  const all=await (await fetch(`${base}/api/usage`)).json() as {totals:{requests:number;inputTokens:number};projects:{projectId:string}[]};
+  expect(all.totals).toMatchObject({requests:1,inputTokens:12});expect(all.projects.map(row=>row.projectId)).toEqual(['film']);
+  const ranged=await (await fetch(`${base}/api/usage?from=2026-01-01&to=2026-01-31&provider=tokentosea&limit=0&activity=1&timeZone=UTC`)).json() as {from:string;to:string;provider:string;recent:unknown[];activity?:{days:unknown[]}};
+  expect(ranged).toMatchObject({from:'2026-01-01',to:'2026-01-31',provider:'tokentosea',recent:[]});expect(Array.isArray(ranged.activity?.days)).toBe(true);
+  for(const query of ['from=2026-01-02&to=2026-01-01','from=2026-02-30&to=2026-03-01','from=2025-01-01&to=2026-12-31','from=2026-01-01','limit=1001','provider='])expect((await fetch(`${base}/api/usage?${query}`)).status).toBe(400);
+});

@@ -1,0 +1,44 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Where DeepSeek Harness plugin components are drawn inside Fantay. Harness plugins colour themselves
+   with the Harness alias tokens; pointing those at Fantay's tokens makes them follow Fantay's theme,
+   light and dark, instead of falling back to their own literals. */
+.harness {
+  --dsw-alias-label-primary: var(--ink);
+  --dsw-alias-label-secondary: var(--ink-soft);
+  --dsw-alias-label-tertiary: var(--ink-faint);
+  --dsw-alias-bg-base: var(--paper);
+  --dsw-alias-bg-layer-1: var(--surface);
+  --dsw-alias-bg-layer-2: var(--surface);
+  --dsw-alias-bg-layer-3: var(--sub);
+  --dsw-alias-border-l1: var(--line-soft);
+  --dsw-alias-border-l2: var(--line);
+  --dsw-alias-brand-primary: var(--ink);
+}
+
+/* `sidebar.footer.action`: the foot of the sidebar, above the account rows. Each action is the plugin's
+   own control; the block only gives it the sidebar's text colour and side padding. */
+.footerActions {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 12px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+/* Fantay centres button content by default; a sidebar action reads from the leading edge like the rows
+   above it. An action that sets its own alignment inline keeps it. */
+.footerActions button {
+  justify-content: flex-start;
+  text-align: start;
+}
+
+/* `conversation.input.dock`: full-width entries directly above the composer. */
+.inputDock {
+  flex: 0 0 auto;
+  min-width: 0;
+  padding: 0 16px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}

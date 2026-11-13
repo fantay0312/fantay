@@ -1,0 +1,342 @@
+/*
+ * Video editing surface (design brief 2026-11-03): one grid for the compact project pane and the full
+ * workbench. The chrome stays ink on paper; colour marks content identity and the playhead only.
+ * The --movie-* tokens below are declared once here and shared by every editor module.
+ * Resize behaviour derives from the Palmier adaptation credited in THIRD_PARTY_NOTICES.md.
+ */
+.workspace {
+  --movie-ground: var(--sub);
+  --movie-stage: var(--sub);
+  --movie-card: var(--surface);
+  --movie-stage-dot: color-mix(in srgb, var(--ink) 8%, transparent);
+  --movie-hover: color-mix(in srgb, var(--ink) 5%, transparent);
+  --movie-active: color-mix(in srgb, var(--ink) 8%, transparent);
+  --movie-lane-main: color-mix(in srgb, var(--ink) 3%, transparent);
+  --movie-tint: 16%;
+  --movie-tint-on: 26%;
+  --movie-video-strip: color-mix(in srgb, var(--ink) 8%, var(--surface));
+  --movie-video-strip-on: color-mix(in srgb, var(--ink) 16%, var(--surface));
+  --movie-audio: color-mix(in srgb, var(--success) var(--movie-tint), var(--surface));
+  --movie-audio-on: color-mix(in srgb, var(--success) var(--movie-tint-on), var(--surface));
+  --movie-audio-edge: color-mix(in srgb, var(--success) 40%, transparent);
+  --movie-wave: color-mix(in srgb, var(--success-ink) 72%, transparent);
+  --movie-text: color-mix(in srgb, var(--warning) var(--movie-tint), var(--surface));
+  --movie-text-on: color-mix(in srgb, var(--warning) var(--movie-tint-on), var(--surface));
+  --movie-text-edge: color-mix(in srgb, var(--warning) 45%, transparent);
+  --movie-caption: color-mix(in srgb, var(--info) var(--movie-tint), var(--surface));
+  --movie-caption-edge: color-mix(in srgb, var(--info) 35%, transparent);
+  --movie-select: var(--ink);
+  --movie-playhead: var(--accent-ink);
+  --movie-snap: var(--info);
+  --movie-changed: color-mix(in srgb, var(--info) 75%, transparent);
+  --movie-guide: color-mix(in srgb, var(--ink) 45%, transparent);
+  --ink-muted: var(--ink-faint);
+  --agent-width: clamp(280px, 28vw, 400px);
+  --media-width: 320px;
+  --inspector-width: 320px;
+  container: movie-editor / inline-size;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  /* --timeline-height is set inline only once the user resizes; each layout keeps its own default. */
+  grid-template-rows: 40px minmax(0, 1fr) 6px minmax(220px, var(--timeline-height, 42%));
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--movie-card);
+  color: var(--ink);
+  font: 12px/1.4 var(--font-ui);
+}
+:global([data-theme='dark']) .workspace { --movie-ground: var(--paper); --movie-stage: var(--paper); --movie-tint: 24%; --movie-tint-on: 34%; }
+.workspace[data-layout=compact] { grid-template-rows:40px minmax(0,1fr) 6px minmax(180px,var(--timeline-height,35%)); }
+/* After the dark rule: the full stage sits a step lighter than the ground in both themes, so the viewer card reads. */
+.workspace[data-layout=full] { padding: 0 6px 6px; background: var(--movie-ground); --movie-stage: color-mix(in srgb, var(--movie-ground) 45%, var(--movie-card)); }
+
+/* Header: compact actions end on the player bar's 6px line; full 导出 is flush with the card edge below
+   and the back glyph sits on the 12px content line. */
+.header { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 0 6px 0 12px; border-bottom: 1px solid var(--line-soft); background: var(--movie-card); }
+.workspace[data-layout=full] .header { padding: 0 0 0 5px; border: 0; background: transparent; }
+.identity { display: flex; flex: 1; align-items: center; gap: 8px; min-width: 0; }
+.title { min-width: 0; overflow: hidden; font-size: 13px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+.persistence { flex: none; color: var(--ink-faint); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.persistence[data-dirty=true] { display: inline-flex; align-items: center; gap: 5px; color: var(--warning-ink); }
+.persistence[data-dirty=true]::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--warning); }
+.saveDot { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+.saveDot[data-dirty=true] { background: var(--warning); }
+.actions { display: flex; flex: none; align-items: center; gap: 2px; }
+.actionDivider { width: 1px; height: 16px; margin: 0 6px; background: var(--line); }
+.exportGroup { display: inline-flex; align-items: center; gap: 2px; margin-left: 4px; }
+.expandButton { margin: 0 2px; }
+
+.exportMenu { display: grid; gap: 8px; padding: 4px; font-size: 12px; }
+.exportMenu > strong { font-size: 12.5px; font-weight: 600; }
+.exportRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--ink-soft); }
+.exportHint,.exportProgress { margin: 0; color: var(--ink-faint); font-size: 11px; font-variant-numeric: tabular-nums; }
+.exportProgress { color: var(--ink-soft); }
+.exportDivider { height: 1px; margin: 2px 0; background: var(--line-soft); }
+.exportActions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Body: compact = viewer with a drawer; full = cards [resources | viewer | inspector] with 6px gutters */
+.body { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; min-height: 0; }
+.workspace[data-layout=full] .body { grid-template-columns: var(--media-width) 6px minmax(360px, 1fr) 6px var(--inspector-width); }
+.workspace[data-layout=full][data-agent-open=true] .body { grid-template-columns: var(--agent-width) var(--media-width) 6px minmax(360px, 1fr) 6px var(--inspector-width); }
+.workspace[data-layout=full] .resources,
+.workspace[data-layout=full] .viewer,
+.workspace[data-layout=full] .inspector,
+.workspace[data-layout=full] .timelineCard,
+.workspace[data-layout=full] .agentPanel {
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--movie-card);
+  box-shadow: var(--shadow-ring);
+}
+
+.agentPanel { display: flex; flex-direction: column; min-width: 0; min-height: 0; margin-right: 6px; }
+.agentPanel[hidden] { display: none; }
+.composer { display: grid; gap: 8px; margin-top: auto; padding: 12px; }
+
+.resources { position: relative; display: flex; min-width: 0; min-height: 0; }
+.workspace[data-layout=compact] .resources {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 8px;
+  z-index: 6;
+  width: min(380px, calc(100% - 16px));
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--movie-card);
+  box-shadow: var(--shadow-pop);
+  opacity: 0;
+  transform: translateX(-8px);
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--motion-exit) var(--ease-out-quint), transform var(--motion-exit) var(--ease-out-quint), visibility 0s linear var(--motion-exit);
+}
+.workspace[data-layout=compact][data-media-open=true] .resources {
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity var(--motion-enter) var(--ease-out-quint), transform var(--motion-enter) var(--ease-out-quint), visibility 0s;
+}
+
+/* Gutters double as resize handles */
+.gutter,.rowGutter { position: relative; min-width: 0; min-height: 0; padding: 0; border: 0; background: transparent; touch-action: none; }
+.gutter { cursor:col-resize; }
+.rowGutter { cursor: row-resize; }
+.gutter::after,.rowGutter::after { content: ''; position: absolute; background: transparent; transition: background-color 100ms var(--ease-out-quint); }
+.gutter::after { top: 12px; bottom: 12px; left: 50%; width: 1px; }
+.rowGutter::after { left: 12px; right: 12px; top: 50%; height: 1px; }
+.gutter:hover::after,.gutter:active::after,.rowGutter:hover::after,.rowGutter:active::after { background: var(--ink-ghost); }
+.workspace[data-layout=compact] .rowGutter { border-top: 1px solid var(--line); }
+.workspace[data-layout=compact] .rowGutter::after { top: 2px; }
+
+/* Viewer */
+.viewer { container: movie-viewer / inline-size; position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--movie-stage); }
+.stage {
+  position: relative;
+  display: grid;
+  flex: 1;
+  place-items: center;
+  min-height: 160px;
+  container-type: size;
+  background: radial-gradient(circle, var(--movie-stage-dot) 1px, transparent 1.5px) 0 0 / 20px 20px, var(--movie-stage);
+}
+.frame {
+  position: relative;
+  width: min(calc(100cqw - 48px), calc((100cqh - 48px) * var(--movie-ratio)));
+  aspect-ratio: var(--movie-ratio);
+  overflow: hidden;
+  border-radius: 8px;
+  background: #000;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent), 0 18px 40px -22px rgba(0, 0, 0, .45);
+}
+.frame > * { width: 100%; height: 100%; }
+.frame:fullscreen { border-radius: 0; box-shadow: none; }
+.workspace[data-layout=compact] .frame { width: min(calc(100cqw - 24px), calc((100cqh - 24px) * var(--movie-ratio))); }
+
+.stageEmpty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 6px;
+  padding: 16px;
+  background: color-mix(in srgb, var(--movie-stage) 90%, transparent);
+  color: var(--ink-faint);
+  text-align: center;
+}
+.stageEmpty strong { margin-top: 2px; color: var(--ink); font-size: 13px; font-weight: 600; }
+.stageEmpty span { font-size: 11px; }
+.stageEmptyActions { display: flex; gap: 6px; margin-top: 8px; }
+
+.changeChip {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  max-width: calc(100% - 24px);
+  height: 28px;
+  padding: 0 4px 0 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--movie-card) 92%, transparent);
+  box-shadow: var(--shadow-float);
+  font-size: 11px;
+}
+.changeDot { flex: none; width: 6px; height: 6px; margin-right: 4px; border-radius: 50%; background: var(--info); }
+.changeLabel { min-width: 0; overflow: hidden; padding: 0 4px; border: 0; background: transparent; color: var(--ink); font: 500 11px var(--font-ui); white-space: nowrap; text-overflow: ellipsis; cursor: pointer; }
+.changeLabel:hover { text-decoration: underline; text-underline-offset: 2px; }
+.busyChip {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 50%;
+  height: 26px;
+  padding: 0 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--movie-card) 92%, transparent);
+  box-shadow: var(--shadow-float);
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.busySpinner { flex: none; width: 10px; height: 10px; border: 1.5px solid var(--line); border-top-color: var(--ink); border-radius: 50%; animation: spin 800ms linear infinite; }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+.stageBars { position: absolute; right: 12px; bottom: 12px; left: 12px; z-index: 3; display: grid; justify-items: center; gap: 6px; pointer-events: none; }
+.noticeBar,.errorBar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: min(560px, 100%);
+  margin: 0;
+  padding: 5px 4px 5px 12px;
+  border-radius: 8px;
+  box-shadow: var(--shadow-float);
+  font-size: 12px;
+  pointer-events: auto;
+}
+.noticeBar { background: var(--movie-card); color: var(--ink-soft); }
+.errorBar { background: color-mix(in srgb, var(--danger) 8%, var(--surface)); color: var(--accent-ink); }
+
+/* Player bar */
+.playerBar {
+  display: grid;
+  flex: none;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 6px;
+  border-top: 1px solid var(--line-soft);
+  background: var(--movie-card);
+}
+.workspace[data-layout=compact] .playerBar { height: 40px; }
+.playerSide { display: flex; align-items: center; gap: 4px; min-width: 0; }
+/* safe: an overflowing cluster clips on the right instead of covering the transport. */
+.playerEnd { justify-content: safe flex-end; }
+.playerDivider { flex: none; width: 1px; height: 16px; margin: 0 4px; background: var(--line); }
+.transport { display: flex; align-items: center; gap: 4px; }
+/* Sized to its digits (6px padding + 1px border puts them on the 13px line), so "/ total" follows at once;
+   it never shrinks below them, the total gives way instead. */
+.timecode {
+  flex: none;
+  width: auto;
+  max-width: 140px;
+  field-sizing: content;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink);
+  font: 600 13px var(--font-ui);
+  font-variant-numeric: tabular-nums;
+}
+.timecode:hover { background: var(--movie-hover); }
+.timecode:focus { border-color: var(--line); background: var(--paper); outline: none; }
+.totalTime { overflow: hidden; color: var(--ink-faint); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Ghost select, the same grammar as .timecode: no ring or fill until hovered or open. */
+.ratioTrigger { width: auto; min-width: 0; gap: 4px; padding: 0 6px 0 8px; background: transparent; box-shadow: none; }
+.ratioTrigger:hover { background: var(--movie-hover); box-shadow: none; }
+.ratioTrigger[data-state='open'] { background: var(--movie-active); }
+
+/* Inspector dock */
+.inspector { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.inspectorBody { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+/* Sized to the inspector up to the cap; past it the tab body or settings page scrolls, the footer stays last. */
+.adjustContent { display: flex; flex-direction: column; height: auto; max-height: min(70vh, 640px); min-height: 0; margin: -4px; overflow: hidden; }
+.adjustContent > * { flex: 0 1 auto; min-height: 0; }
+
+/* Timeline card and status */
+.timelineCard { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--movie-card); }
+.timeline { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; }
+.timeline > section { flex: 1; min-height: 0; }
+.status {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 26px;
+  min-width: 0;
+  padding: 0 12px;
+  border-top: 1px solid var(--line-soft);
+  color: var(--ink-faint);
+  font-size: var(--type-caption);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.status > span { overflow: hidden; text-overflow: ellipsis; }
+/* The clip summary keeps its text; the shortcut hint yields first. */
+.status > span:first-child { flex: 0 1 auto; max-width: 60%; }
+.status > span:last-child { flex: 1 1 0; min-width: 0; text-align: right; }
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace[data-layout=compact] .resources,.workspace[data-layout=compact][data-media-open=true] .resources { transform: none; }
+}
+
+/* Narrow full layouts keep the viewer usable; the agent column (embedded presentation) yields first.
+   Side caps match so the viewer stays centred over the timeline. */
+@container movie-editor (max-width: 1439px) {
+  .workspace[data-layout=full][data-agent-open=true] .body { grid-template-columns: min(var(--agent-width), 280px) min(var(--media-width), 280px) 6px minmax(0, 1fr) 6px min(var(--inspector-width), 280px); }
+}
+@container movie-editor (max-width: 1279px) {
+  .workspace[data-layout=full] .body { grid-template-columns: min(var(--media-width), 288px) 6px minmax(0, 1fr) 6px min(var(--inspector-width), 288px); }
+}
+@container movie-editor (max-width: 1099px) {
+  .workspace[data-layout=full][data-agent-open=true] .agentPanel { display: none; }
+  .workspace[data-layout=full][data-agent-open=true] .body { grid-template-columns: min(var(--media-width), 280px) 6px minmax(0, 1fr) 6px min(var(--inspector-width), 280px); }
+}
+.gutter:focus-visible::after,.rowGutter:focus-visible::after { background: var(--focus-ring-color); }
+/* Narrow compact pane: the shell's maximize stays in the tab bar; aspect stays in 全片设置 › 画幅. */
+/* FULL viewer narrower than its player bar (a ~960px pane, the embedded editor with its agent column): the aspect
+   select (also in 全片设置 › 画幅), then go-to-start/end (Home / End), then the total give way, so the transport
+   stays centred and fullscreen stays reachable. */
+@container movie-viewer (max-width: 579px) {
+  .workspace[data-layout=full] .ratioTrigger,.workspace[data-layout=full] .playerDivider { display: none; }
+}
+@container movie-viewer (max-width: 519px) {
+  .workspace[data-layout=full] .skipButton { display: none; }
+}
+@container movie-viewer (max-width: 439px) {
+  .workspace[data-layout=full] .totalTime { display: none; }
+}
+@container movie-editor (max-width: 559px) {
+  .expandButton,.ratioTrigger,.playerDivider { display: none; }
+}
+@container movie-editor (max-width: 520px) {
+  .totalTime { display: none; }
+}

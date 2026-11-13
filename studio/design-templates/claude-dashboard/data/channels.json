@@ -1,0 +1,38 @@
+[
+  {
+    "channel": "Direct",
+    "orders": 301,
+    "revenue": 13420,
+    "prev_revenue": 13010
+  },
+  {
+    "channel": "Organic search",
+    "orders": 487,
+    "revenue": 20950,
+    "prev_revenue": 19880
+  },
+  {
+    "channel": "Email",
+    "orders": 268,
+    "revenue": 12310,
+    "prev_revenue": 11450
+  },
+  {
+    "channel": "Paid social",
+    "orders": 232,
+    "revenue": 9460,
+    "prev_revenue": 10120
+  },
+  {
+    "channel": "Referral",
+    "orders": 214,
+    "revenue": 9150,
+    "prev_revenue": 8760
+  },
+  {
+    "channel": "Marketplace",
+    "orders": 169,
+    "revenue": 6750,
+    "prev_revenue": 6060
+  }
+]

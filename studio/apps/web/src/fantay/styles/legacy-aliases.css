@@ -1,0 +1,135 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * Upstream token names → Fantay semantic tokens. Imported into @layer theme: beats every definition
+ * in @layer legacy (styles/tokens.css :root + [data-theme="dark"] + prefers-color-scheme blocks,
+ * styles/base.css, styles/material.css) regardless of specificity. Declared on `:root, [data-theme]`
+ * so values re-resolve inside theme islands. Not aliased on purpose: shadows/radii/spacing/z (upstream
+ * keeps its own), material/glass/vibrancy tokens (their reduced-transparency fallbacks in
+ * material.css:191-252 must keep working), --share-* (share-tokens.css: deliberately fixed light).
+ */
+:root, [data-theme] {
+  /* surfaces — tokens.css:12-30 */
+  --bg: var(--paper);
+  --bg-app: var(--paper);
+  --bg-panel: var(--surface);
+  --bg-subtle: var(--paper-deep);
+  --bg-muted: var(--line);
+  --bg-elevated: var(--surface);
+  --bg-fill-tertiary: color-mix(in srgb, var(--ink) 5%, transparent);
+  --bg-fill-secondary: color-mix(in srgb, var(--ink) 9%, transparent);
+  --bg-fill: color-mix(in srgb, var(--ink) 15%, transparent);
+  /* lines — tokens.css:31-34 */
+  --border: var(--line);
+  --border-soft: var(--line-soft);
+  --border-strong: var(--ink-ghost);
+  --border-selected: var(--ink-faint);
+  /* text — tokens.css:9, 36-40 */
+  --text-strong: var(--ink);
+  --text: var(--ink);
+  --text-muted: var(--ink-soft);
+  --text-soft: var(--ink-faint);
+  --text-faint: var(--ink-ghost);
+  --select-ink: var(--ink);
+  /* accent defaults — tokens.css:42-47; overridden inline only for a custom accent (§3.6) */
+  --accent: var(--ink);
+  --accent-contrast: var(--paper);
+  --accent-strong: var(--ink);
+  --accent-soft: var(--paper-deep);
+  --accent-tint: var(--sub);
+  --accent-hover: color-mix(in srgb, var(--ink) 85%, var(--paper));
+  --selected: var(--brand);
+  --selected-soft: var(--brand-soft);
+  /* brand family — tokens.css:48-66 (--brand/--brand-ink/--brand-soft come from @fantay/tokens) */
+  --brand-weak: var(--brand-soft);
+  --brand-text: var(--brand-ink);
+  --brand-surface: var(--brand-soft);
+  /* send / upgrade marks — tokens.css:70-78, 92-93: ink disc + paper glyph */
+  --send-ink: var(--ink);
+  --send-ground: var(--paper);
+  --upgrade-ground: var(--brand);
+  --upgrade-ink: var(--on-brand);
+  /* status — tokens.css:96-109 */
+  --green: var(--success-ink);
+  --green-bg: color-mix(in srgb, var(--success) 12%, transparent);
+  --green-border: color-mix(in srgb, var(--success) 35%, transparent);
+  --blue: var(--info-ink);
+  --blue-bg: var(--info-soft);
+  --blue-border: color-mix(in srgb, var(--info) 35%, transparent);
+  --purple: var(--ink);
+  --purple-bg: var(--paper-deep);
+  --purple-border: var(--line);
+  --red: var(--accent-ink);
+  --red-bg: color-mix(in srgb, var(--accent-ink) 10%, transparent);
+  --red-border: color-mix(in srgb, var(--accent-ink) 30%, transparent);
+  --amber: var(--warning-ink);
+  --amber-bg: color-mix(in srgb, var(--warning) 14%, transparent);
+  /* fonts — tokens.css:209-211 (D1: Inter + CJK fallback, ui-monospace) */
+  --sans: var(--font-ui);
+  --serif: var(--font-ui);
+  --mono: var(--font-mono);
+  /* phantom tokens: used upstream/fork, defined nowhere (scan: scratchpad ui-foundation/phantoms.py) */
+  --text-primary: var(--ink);
+  --text-secondary: var(--ink-soft);
+  --text-default: var(--ink);
+  --text-disabled: var(--ink-ghost);
+  --text-danger: var(--accent-ink);
+  --text-success: var(--success-ink);
+  --text-warning: var(--warning-ink);
+  --bg-primary: var(--paper);
+  --bg-secondary: var(--sub);
+  --bg-tertiary: var(--paper-deep);
+  --bg-default: var(--surface);
+  --bg-hover: var(--paper-deep);
+  --bg-panel-strong: var(--paper-deep);
+  --border-color: var(--line);
+  --border-subtle: var(--line-soft);
+  --surface-1: var(--surface);
+  --surface-2: var(--sub);
+  --surface-subtle: var(--sub);
+  --surface-strong: var(--paper-deep);
+  --surface-hover: var(--paper-deep);
+  --panel: var(--surface);
+  --subtle: var(--sub);
+  --foreground: var(--ink);
+  --background: var(--paper);
+  --fg-1: var(--ink);
+  --fg-2: var(--ink-soft);
+  --accent-subtle: var(--paper-deep);
+  --accent-text: var(--ink);
+  --danger-text: var(--accent-ink);
+  --danger-fg: var(--accent-ink);
+  --success-text: var(--success-ink);
+  --success-fg: var(--success-ink);
+  --success-bg: color-mix(in srgb, var(--success) 12%, transparent);
+  --warning-text: var(--warning-ink);
+  --warning-fg: var(--warning-ink);
+  --warning-border: color-mix(in srgb, var(--warning) 35%, transparent);
+  --warning-surface: color-mix(in srgb, var(--warning) 12%, transparent);
+  /* every modal backdrop dims with the same scrim, never a white wash */
+  --scrim-tint: var(--scrim);
+  --scrim-backdrop: none;
+  /* phantom in upstream: home-hero, marketplace and plugin-marketplace-demo read it as a box-shadow */
+  --focus-ring: 0 0 0 2px var(--focus-ring-color);
+}
+/* Upstream re-declares --sans on EVERY element under :lang(zh|ko) and [dir="rtl"] (styles/viewer/library.css:467-479,
+   Albert Sans + PingFang SC), which the root alias above cannot reach. D1: the UI font is --font-ui (Inter + CJK
+   fallback). :lang(ja) keeps upstream's Inter-first Japanese stack (library.css:472). */
+:lang(zh), :lang(ko), [dir="rtl"] {
+  --sans: var(--font-ui);
+}
+/* tick mark (tokens.css:7, used by composio.css:1150,2705,4731 and theater.css:1760 via --chat-tick-img):
+   same geometry, ink disc + paper check instead of neon green. */
+:root, [data-theme="light"] {
+  --tick-img: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='%23ffffff'/%3E%3Cpath fill='%23181818' d='M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22ZM17.4571 9.45711L11 15.9142L6.79289 11.7071L8.20711 10.2929L11 13.0858L16.0429 8.04289L17.4571 9.45711Z'/%3E%3C/svg%3E");
+}
+[data-theme="dark"] {
+  --tick-img: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='%23181818'/%3E%3Cpath fill='%23ffffff' d='M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22ZM17.4571 9.45711L11 15.9142L6.79289 11.7071L8.20711 10.2929L11 13.0858L16.0429 8.04289L17.4571 9.45711Z'/%3E%3C/svg%3E");
+}
+/* Keep the closed track visible against the dark paper and raised surfaces. */
+[data-theme='light'] {
+  --switch-off-track: initial;
+}
+
+[data-theme='dark'] {
+  --switch-off-track: #757575;
+}

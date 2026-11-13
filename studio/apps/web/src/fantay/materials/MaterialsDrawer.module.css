@@ -1,0 +1,128 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* 素材库 drawer (spec 07 §7.2): floats beside the sidebar, below the top row. Its top and start offsets
+   come from the geometry FantayShell publishes on the document root (inline, see MaterialsDrawer.tsx);
+   the panel is resizable at its end edge.
+   Enter: 8px slide + fade in 200ms; exit: 140ms, then hidden (kept mounted). */
+
+.drawer {
+  --materials-drawer-shift: -8px;
+  position: fixed;
+  top: calc(var(--fx-shell-header-h, 44px) + 8px);
+  inset-inline-start: calc(var(--fx-sidebar-w, 0px) + 12px);
+  bottom: 12px;
+  /* above page chrome (150) and viewer popovers (220); below legacy modals (1000) and dialogs (1500),
+     so the material detail dialog opens over it; menus and tooltips portal above both */
+  z-index: 300;
+  display: flex;
+  max-width: calc(100vw - 24px);
+}
+
+@media (min-width: 1081px) {
+  :global(body:has(.entry.entry--rail-open):not(:has([data-fantay-shell]))) .drawer {
+    inset-inline-start: calc(236px + 12px);
+  }
+}
+
+:global([dir='rtl']) .drawer {
+  --materials-drawer-shift: 8px;
+}
+
+.drawer[data-state='open'] {
+  animation: drawerIn var(--motion-enter) var(--ease-out-quint);
+}
+
+.drawer[data-state='closed'] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(var(--materials-drawer-shift));
+  transition:
+    opacity var(--motion-exit) var(--ease-out-quint),
+    transform var(--motion-exit) var(--ease-out-quint),
+    visibility 0s linear var(--motion-exit);
+}
+
+@keyframes drawerIn {
+  from {
+    opacity: 0;
+    transform: translateX(var(--materials-drawer-shift));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The floating panel fills the drawer box instead of positioning itself (its width and the
+   viewport cap are inline: the stored width and the shell geometry). */
+.panel {
+  position: relative;
+  height: 100%;
+}
+
+.header {
+  gap: 8px;
+}
+
+.heading {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: var(--type-copy);
+  font-weight: 600;
+  line-height: var(--type-copy-lh);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.count {
+  flex: none;
+  color: var(--ink-faint);
+  font-size: var(--type-label);
+  font-variant-numeric: tabular-nums;
+}
+
+.footer {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.hint,
+.status {
+  margin: 0;
+  font-size: var(--type-label);
+  line-height: var(--type-label-lh);
+}
+
+.hint {
+  color: var(--ink-faint);
+}
+
+/* Reserves its line so the footer does not jump when a status appears. */
+.status {
+  min-height: calc(var(--type-label) * var(--type-label-lh));
+  color: var(--ink-soft);
+}
+
+.statusFailed {
+  color: var(--accent-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer[data-state='open'],
+  .drawer[data-state='closed'] {
+    animation: none;
+    transition: none;
+  }
+}

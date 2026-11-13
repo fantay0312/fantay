@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "od-design-system-project/v1",
+  "id": "fantay",
+  "name": "Fantay",
+  "category": "Starter",
+  "description": "Fantay's own product UI language, formalized: monochrome ink on white, a rationed neon-green signal, black pill CTAs, tone-grouped borderless surfaces, liquid-glass floating layers, Albert Sans at 600, and quick ease-out motion.",
+  "source": {
+    "type": "bundled",
+    "origin": "Derived from Open Design's own web UI tokens (apps/web/src/styles/tokens.css + base.css) and shared primitives; Albert Sans bundled under the SIL Open Font License 1.1"
+  },
+  "files": {
+    "design": "DESIGN.md",
+    "tokens": "tokens.css",
+    "components": "components.html"
+  },
+  "usage": "USAGE.md",
+  "componentsManifest": "components.manifest.json",
+  "importMode": "normalized",
+  "craft": {
+    "applies": [],
+    "suggested": [
+      "color",
+      "accessibility-baseline",
+      "animation-discipline"
+    ],
+    "exemptions": []
+  },
+  "fonts": [
+    {
+      "family": "Albert Sans",
+      "file": "fonts/AlbertSans-VariableFont_wght.ttf",
+      "weight": "100 900",
+      "style": "normal"
+    },
+    {
+      "family": "Albert Sans",
+      "file": "fonts/AlbertSans-Italic-VariableFont_wght.ttf",
+      "weight": "100 900",
+      "style": "italic"
+    }
+  ],
+  "preview": {
+    "dir": "preview",
+    "pages": [
+      {
+        "path": "preview/colors.html",
+        "role": "colors",
+        "title": "Colors"
+      },
+      {
+        "path": "preview/typography.html",
+        "role": "typography",
+        "title": "Typography"
+      },
+      {
+        "path": "preview/spacing.html",
+        "role": "spacing",
+        "title": "Spacing, Radius & Elevation"
+      },
+      {
+        "path": "preview/app.html",
+        "role": "app",
+        "title": "App Shell"
+      }
+    ]
+  }
+}

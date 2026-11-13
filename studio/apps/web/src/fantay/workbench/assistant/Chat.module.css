@@ -1,0 +1,520 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/*
+ * Fantay 工作台 conversation: the desk assistant and the 成稿 studio share it. Motion follows the app
+ * chat grammar (components/chat/AGENTS.md): a turn rises 240 ms on the ease-out, exits only fade, the
+ * thinking line shimmers in place. Derived from dsh-media-desk client/styles.css (MIT, woniuniuniu).
+ */
+
+.thread {
+  --chat-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --chat-enter: 240ms;
+  --chat-quick: 120ms;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 8px 10px 4px 16px;
+}
+
+.scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 6px 16px 14px;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ink) 14%, transparent) transparent;
+}
+
+.intro {
+  margin: auto 0;
+  padding: 12px 2px 16px;
+}
+
+/* ── messages ───────────────────────────────────────────────────────────── */
+
+.msg {
+  min-width: 0;
+  font-size: 13.5px;
+  line-height: 22px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  animation: chat-rise var(--chat-enter) var(--chat-ease) both;
+}
+
+.user {
+  align-self: flex-end;
+  max-width: 88%;
+  padding: 8px 13px;
+  border-radius: 16px 16px 6px 16px;
+  background: var(--sub);
+  white-space: pre-wrap;
+}
+
+.bot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prose :where(p, ul, ol, blockquote, table, h1, h2, h3, h4) {
+  margin: 0 0 6px;
+}
+.prose :where(p, ul, ol, blockquote, table, h1, h2, h3, h4):last-child {
+  margin-bottom: 0;
+}
+.prose :where(h1, h2, h3, h4) {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 22px;
+}
+.prose :where(ul, ol) {
+  padding-inline-start: 18px;
+}
+.prose ul {
+  list-style: disc;
+}
+.prose ol {
+  list-style: decimal;
+}
+.prose blockquote {
+  padding-inline-start: 10px;
+  border-inline-start: 2px solid var(--line);
+  color: var(--ink-soft);
+}
+.prose code {
+  padding: 1px 4px;
+  border-radius: var(--radius-tag);
+  background: var(--sub);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+.prose :where(th, td) {
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--line-soft);
+  text-align: start;
+  vertical-align: top;
+}
+
+.thinking {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.shimmer {
+  background: linear-gradient(100deg, var(--ink-faint) 30%, var(--ink) 50%, var(--ink-faint) 70%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: chat-shimmer 1.6s linear infinite;
+}
+
+.elapsed {
+  color: var(--ink-ghost);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* receipts: what the turn actually changed, one checked row each */
+.receipts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.receipt {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 18px;
+  text-align: start;
+  height: auto;
+  justify-content: flex-start;
+  font-weight: 400;
+  white-space: normal;
+}
+
+.receiptLink {
+  cursor: pointer;
+  transition: box-shadow var(--chat-quick) var(--chat-ease);
+}
+.receiptLink:hover {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-ring-hover);
+}
+.receiptLink > [data-slot='button-label'] {
+  align-items: flex-start;
+}
+.receiptLink:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+.receiptCheck {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.receiptText {
+  min-width: 0;
+}
+
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  color: var(--accent-ink);
+  font-size: 12.5px;
+  line-height: 18px;
+}
+.error svg {
+  flex: none;
+  margin-top: 2.5px;
+}
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 18px;
+}
+.notice svg {
+  flex: none;
+  margin-top: 3px;
+}
+
+/* citations: the library items an answer leaned on, numbered like footnotes */
+.citations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.citation {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+  height: 26px;
+  padding: 0 10px 0 4px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: box-shadow var(--chat-quick) var(--chat-ease), color var(--chat-quick) var(--chat-ease);
+  justify-content: flex-start;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.citation:hover {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-ring-hover);
+}
+.citation:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+.citationNo {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--sub);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.citationTitle {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 20px;
+  color: var(--ink-ghost);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.engine {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.undo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  margin-inline-start: auto;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-row);
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color var(--chat-quick) var(--chat-ease), color var(--chat-quick) var(--chat-ease);
+  font-weight: 400;
+}
+.undo:hover {
+  background: var(--sub);
+  color: var(--ink);
+}
+
+/* ── suggestions: a quiet group above the composer ─────────────────────── */
+
+.suggest {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0 10px 6px;
+}
+
+.suggestRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: var(--radius-row);
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 18px;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color var(--chat-quick) var(--chat-ease), color var(--chat-quick) var(--chat-ease);
+  animation: chat-rise var(--chat-enter) var(--chat-ease) both;
+  justify-content: flex-start;
+  height: auto;
+  font-weight: 400;
+  white-space: normal;
+}
+.suggestRow:nth-child(2) { animation-delay: 30ms; }
+.suggestRow:nth-child(3) { animation-delay: 60ms; }
+.suggestRow:nth-child(4) { animation-delay: 90ms; }
+.suggestRow:hover:not(:disabled) {
+  background: var(--sub);
+  color: var(--ink);
+}
+.suggestRow:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.suggestRow:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: -2px;
+}
+
+.suggestGlyph {
+  flex: none;
+  color: var(--ink-ghost);
+}
+
+/* ── composer: a capsule that grows into a card ────────────────────────── */
+
+.composer {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 12px 12px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: border-color var(--chat-quick) var(--chat-ease), box-shadow var(--chat-quick) var(--chat-ease);
+}
+.composer:focus-within {
+  border-color: color-mix(in srgb, var(--ink) 28%, var(--line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 6%, transparent);
+}
+.composer[data-disabled] {
+  opacity: 0.6;
+}
+
+.quote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 2px 4px 0 8px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 18px;
+}
+.quote > svg {
+  flex: none;
+}
+
+.quoteText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quoteClear {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-inline-start: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+}
+.quoteClear:hover {
+  background: var(--sub);
+  color: var(--ink);
+}
+
+.composerRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 32px;
+  max-height: 168px;
+  padding: 6px 4px 6px 10px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 20px;
+  resize: none;
+  scrollbar-width: thin;
+}
+.input::placeholder {
+  color: var(--ink-faint);
+}
+
+.send {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--paper);
+  cursor: pointer;
+  transition: opacity var(--chat-quick) var(--chat-ease), transform 150ms var(--chat-ease);
+  min-width: 32px;
+}
+.send:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.send:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.send:disabled {
+  opacity: 0.22;
+  cursor: default;
+}
+.send:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+@keyframes chat-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes chat-shimmer {
+  to {
+    background-position: -220% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .msg,
+  .suggestRow {
+    animation: none;
+  }
+  .shimmer {
+    animation: none;
+    color: var(--ink-soft);
+  }
+}

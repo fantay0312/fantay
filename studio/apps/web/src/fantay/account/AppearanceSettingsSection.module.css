@@ -1,0 +1,136 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Settings ▸ 通用 ▸ 外观: three theme previews as one radio group. Each tile sets data-theme, so its
+   colours are the tokens of the theme it shows, not of the app around it. */
+
+.options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--settings-heading-gap);
+  width: 100%;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.option,
+.option[data-state='on'] {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  box-shadow: none;
+  cursor: pointer;
+  text-align: left;
+  white-space: normal;
+}
+
+/* The selected weight is drawn inside the tile's box: the page column clips anything outside it. */
+.frame {
+  position: relative;
+  display: block;
+  height: 96px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--settings-control-radius);
+  transition: border-color 100ms var(--settings-ease);
+}
+
+.option:hover .frame {
+  border-color: var(--ink-ghost);
+}
+
+.option[data-state='on'] .frame {
+  border: 2px solid var(--ink);
+}
+
+.option:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.option:focus-visible .frame {
+  outline: 2px solid var(--info);
+  outline-offset: -2px;
+}
+
+.label {
+  font-size: var(--settings-type-control);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.option[data-state='on'] .label {
+  color: var(--ink);
+}
+
+.window {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 30% minmax(0, 1fr);
+  background: var(--paper);
+}
+
+.sidebar,
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.sidebar {
+  background: var(--sidebar);
+  border-right: 1px solid var(--line);
+}
+
+.bar,
+.barStrong {
+  display: block;
+  flex: none;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+}
+
+.barStrong {
+  width: 62%;
+  background: var(--ink-ghost);
+}
+
+.main .bar {
+  width: 80%;
+}
+
+.composer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: none;
+  height: 20px;
+  margin-top: auto;
+  padding: 0 4px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.send {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--brand);
+}
+
+.systemHalf {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(0 0 0 50%);
+}

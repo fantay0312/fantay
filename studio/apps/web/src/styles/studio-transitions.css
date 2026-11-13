@@ -1,0 +1,91 @@
+/* Design system studio page transitions, driven by runtime/studio-view-transition.ts through
+   html[data-studio-vt]. Pseudo-elements of the view transition hang off <html>, so they cannot read
+   the --st-* variables set on the studio root and can only be styled from a global sheet.
+
+   The page is not part of the transition: only the named studio pieces are captured, so the rest of
+   the app keeps painting and keeps taking clicks while a chapter changes.
+
+   `studio-page` is the scroller, not the content inside it. The scroller's box is the visible page,
+   while a long chapter would hand the browser a snapshot taller than the app, drawn over everything
+   around the pane. */
+
+:root[data-studio-vt] {
+  view-transition-name: none;
+}
+:root[data-studio-vt]::view-transition {
+  --studio-vt-ease: cubic-bezier(0.22, 0.9, 0.24, 1);
+  --studio-vt-ease-ui: cubic-bezier(0.23, 1, 0.32, 1);
+  pointer-events: none;
+}
+
+/* Chapters and systems: the old page leaves fast, the new one arrives. The group clips, so the short
+   horizontal travel stays inside the pane instead of sliding over the list beside it. */
+:root[data-studio-vt]::view-transition-group(studio-page) {
+  overflow: clip;
+  animation-duration: 300ms;
+  animation-timing-function: var(--studio-vt-ease-ui);
+}
+:root[data-studio-vt]::view-transition-old(studio-page),
+:root[data-studio-vt]::view-transition-new(studio-page) {
+  mix-blend-mode: normal;
+}
+:root[data-studio-vt='forward']::view-transition-old(studio-page) {
+  animation: studio-vt-leave-start 140ms var(--studio-vt-ease-ui) both;
+}
+:root[data-studio-vt='forward']::view-transition-new(studio-page) {
+  animation: studio-vt-enter-end 260ms var(--studio-vt-ease-ui) 40ms both;
+}
+:root[data-studio-vt='back']::view-transition-old(studio-page) {
+  animation: studio-vt-leave-end 140ms var(--studio-vt-ease-ui) both;
+}
+:root[data-studio-vt='back']::view-transition-new(studio-page) {
+  animation: studio-vt-enter-start 260ms var(--studio-vt-ease-ui) 40ms both;
+}
+:root[data-studio-vt='swap']::view-transition-old(studio-page) {
+  animation: studio-vt-fade 140ms var(--studio-vt-ease-ui) both;
+}
+:root[data-studio-vt='swap']::view-transition-new(studio-page) {
+  animation: studio-vt-rise 260ms var(--studio-vt-ease-ui) 40ms both;
+}
+
+/* Full screen: the pane's box grows while its content fades through. Both pictures keep their natural
+   scale and are cropped by the growing box, so nothing stretches on the way, and the box is opaque,
+   so the app does not show through. The two layouts differ, so they never show at once: the old
+   picture is gone before the new one starts, and the empty box carries the motion in between. */
+:root[data-studio-vt='expand']::view-transition-group(studio-root) {
+  overflow: clip;
+  background-color: var(--paper);
+  animation-duration: 420ms;
+  animation-timing-function: var(--studio-vt-ease);
+}
+:root[data-studio-vt='expand']::view-transition-old(studio-root),
+:root[data-studio-vt='expand']::view-transition-new(studio-root) {
+  width: 100%;
+  height: 100%;
+  object-fit: none;
+  object-position: 0 0;
+}
+:root[data-studio-vt='expand']::view-transition-old(studio-root) {
+  animation: studio-vt-fade 90ms var(--studio-vt-ease-ui) both;
+}
+/* Starts as the old one is all but gone (the ease-out has done ~95% by then), so the box is never
+   empty for more than a frame and the two layouts never read as one. */
+:root[data-studio-vt='expand']::view-transition-new(studio-root) {
+  animation: studio-vt-fade-in 250ms var(--studio-vt-ease-ui) 70ms both;
+}
+
+@keyframes studio-vt-leave-start { to { opacity: 0; transform: translateX(-16px); } }
+@keyframes studio-vt-leave-end { to { opacity: 0; transform: translateX(16px); } }
+@keyframes studio-vt-enter-end { from { opacity: 0; transform: translateX(20px); } }
+@keyframes studio-vt-enter-start { from { opacity: 0; transform: translateX(-20px); } }
+@keyframes studio-vt-fade { to { opacity: 0; } }
+@keyframes studio-vt-fade-in { from { opacity: 0; } }
+@keyframes studio-vt-rise { from { opacity: 0; transform: translateY(8px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-studio-vt]::view-transition-group(*),
+  :root[data-studio-vt]::view-transition-old(*),
+  :root[data-studio-vt]::view-transition-new(*) {
+    animation: none;
+  }
+}

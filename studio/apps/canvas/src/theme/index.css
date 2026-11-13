@@ -1,0 +1,49 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/*
+ * Design editor stylesheet (06 §4.2, R12). The editor is its own document (iframe), so the full
+ * Tailwind preflight is fine. Fantay tokens come straight from @fantay/tokens; op-theme.css maps
+ * OpenPencil's theme variables onto them.
+ */
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import '@fantay/tokens/tokens.css';
+@import './op-theme.css';
+
+@source '../vendor/open-pencil';
+@source '../fx';
+@source '../../node_modules/@open-pencil/vue/dist';
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--color-surface);
+  background: var(--color-canvas);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+input,
+textarea,
+[contenteditable] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  display: none;
+}

@@ -1,0 +1,203 @@
+/* Claude Design's overview: the cover edge to edge at the top of the sheet, then the brand book as
+   calm prose. Only the cover paints with the system on show; everything else reads app variables. */
+.overview {
+  container: overview / inline-size;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* The studio marks a page that arrived without a view transition; inside one the stagger would drift
+   within the captured picture. */
+:global([data-studio-enter]) .rise {
+  animation: ovRise var(--st-dur-enter) var(--st-ease-ui) backwards;
+  animation-delay: calc(min(var(--i, 0), 8) * 40ms);
+}
+@keyframes ovRise {
+  from { opacity: 0; transform: translateY(8px); }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 36px clamp(22px, 6cqw, 72px) 72px;
+}
+
+/* ── Head of the book: what the author still has to write, the version, the edit button ── */
+.bookHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 16px;
+  min-width: 0;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.version {
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.meter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  margin-inline-start: -8px;
+}
+.meter .layer {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  margin: 0;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-faint);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--st-dur-micro) var(--st-ease-ui);
+}
+.meter .layer[data-done] { color: var(--ink); }
+.meter .layer:hover { background-color: var(--sub); }
+.layerDot {
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+}
+.layer[data-done] .layerDot { background-color: currentColor; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-inline-start: auto; }
+
+/* ── The brand book: DESIGN.md as prose ── */
+.book {
+  max-width: 760px;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.book > * { margin-block: 0; }
+.book > * + * { margin-top: 14px; }
+.book :global(.md-p) { color: var(--ink); }
+.book :global(.md-h) {
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.book > :global(.md-h1), .book > :global(.md-h2) { margin-top: 44px; font-size: 21px; line-height: 30px; }
+.book > :global(.md-h3) { margin-top: 30px; font-size: 16.5px; line-height: 26px; }
+.book > :global(.md-h4), .book > :global(.md-h5), .book > :global(.md-h6) { margin-top: 22px; font-size: 15px; line-height: 24px; }
+.book > :first-child { margin-top: 0; }
+.book strong { color: var(--ink); font-weight: 650; }
+.book a { color: inherit; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--ink) 30%, transparent); text-underline-offset: 3px; }
+.book a:hover { text-decoration-color: currentColor; }
+.book :global(.md-inline-code) {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  white-space: break-spaces;
+}
+.book :global(.md-quote) {
+  margin-inline: 0;
+  padding: 2px 0 2px 18px;
+  border-left: 3px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  color: var(--ink-soft);
+}
+.book :global(.md-quote) > * { margin: 0; color: inherit; }
+.book ul, .book ol { padding-inline-start: 1.5em; }
+.book li { padding-inline-start: 4px; }
+.book li + li { margin-top: 6px; }
+.book li::marker { color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.book :global(.md-hr) { margin-block: 36px; border: 0; border-top: 1px solid var(--line-soft); }
+.book :global(.md-table-wrap) {
+  overflow-x: auto;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+.book :global(.md-table) { width: 100%; border-collapse: collapse; font-size: 13.5px; line-height: 1.55; }
+.book :global(.md-table) th, .book :global(.md-table) td { padding: 9px 14px; border-bottom: 1px solid var(--line-soft); text-align: left; vertical-align: top; }
+.book :global(.md-table) tr:last-child td { border-bottom: 0; }
+.book :global(.md-table) th { background: color-mix(in srgb, var(--ink) 3%, transparent); color: var(--ink-soft); font-weight: 600; }
+.book :global(.md-code-block) { border-radius: 12px; font-size: 12.5px; }
+.book img { max-width: 100%; border-radius: 10px; }
+
+/* ── Quiet hints where nothing has been written ── */
+.hints {
+  margin-top: 8px;
+  padding: 14px 16px 16px;
+  border-radius: var(--st-radius-small);
+  background-color: var(--sub);
+}
+.hintsHead {
+  margin: 0;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+.hintList {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px 32px;
+  margin: 10px 0 0;
+}
+.hintList dt { color: var(--ink-soft); font-size: 13px; font-weight: 500; line-height: 18px; }
+.hintList dd { margin: 2px 0 0; color: var(--ink-faint); font-size: 12px; line-height: 18px; }
+
+.start { margin-top: 36px; }
+
+/* ── The starter: no system yet, so no cover — a title, a line and the ways to begin ── */
+.starterHead { display: grid; justify-items: start; gap: 10px; padding-block: 8px 4px; }
+.starterHead h1 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 30px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.starterHead p { max-width: 62ch; margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.7; }
+.starterHead .actions { margin: 6px 0 0; }
+
+@container overview (min-width: 480px) {
+  .hintList { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :global([data-studio-enter]) .rise { animation: none; }
+  .meter .layer { transition: none; }
+}

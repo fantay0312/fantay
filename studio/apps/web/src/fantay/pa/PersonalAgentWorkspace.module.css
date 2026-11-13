@@ -1,0 +1,361 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Fantay workspace root (spec §4.1, §16, §17.2). The host fills the full-bleed PA view (see styles/pa.css); the
+   roster column and the docked inspector width arrive inline as --pa-roster-col / --pa-inspector-w. */
+
+.host {
+  /* The ground avatar collars cut into (PaAvatar.module.css); surfaces that sit on another ground override it. */
+  --pa-avatar-collar: var(--paper);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.root {
+  display: grid;
+  grid-template-columns: var(--pa-roster-col) minmax(0, 1fr);
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+}
+.root[data-roster='sheet'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.rosterCol {
+  min-width: 0;
+  min-height: 0;
+  border-inline-end: 1px solid var(--line-soft);
+}
+
+.main {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* ── conversation place: chat column + docked inspector column (Varin docked seam) ── */
+
+.chatArea {
+  position: relative;
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.chatColumn {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.conversation {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+.conversation > * {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* The column glides 0 ↔ W (240 ms open, 160 ms close). The content is anchored to the window edge at its own
+   fixed width, so it is revealed rather than squeezed, and only its opacity changes. */
+.dock {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  transition: width var(--pa-dur-exit) var(--pa-ease);
+}
+.dock[data-open] {
+  transition-duration: var(--pa-dur-enter);
+}
+.dock:has([data-panel-resizing]) {
+  transition: none;
+}
+
+.dockInner {
+  --pa-avatar-collar: var(--pa-inspector-bg);
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  border-inline-start: 1px solid var(--line-soft);
+  background: var(--pa-inspector-bg);
+  /* `backwards`, not `both`: a filling animation would own opacity after the fade-in, and the close would snap to
+     0 instead of fading over 160 ms. */
+  animation: pa-dock-fade var(--pa-dur-exit) var(--pa-ease) backwards;
+  transition: opacity var(--pa-dur-exit) var(--pa-ease);
+}
+.dockInner[data-state='closed'] {
+  opacity: 0;
+}
+.dockInner > * {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* The resize edge (Panel's 6 px handle just inside the seam): invisible at rest; on a held hover or while dragging,
+   a 2 px line lights the seam so the edge reads as grabbable. */
+.dockInner [data-slot='panel-resize']::after {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: -1px;
+  width: 2px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--ink) 24%, transparent);
+  content: '';
+  opacity: 0;
+  transition: opacity var(--pa-dur-exit) var(--pa-ease);
+}
+.dockInner [data-slot='panel-resize']:hover::after,
+.dockInner [data-panel-resizing] [data-slot='panel-resize']::after {
+  opacity: 1;
+  transition-delay: 120ms;
+}
+.dockInner [data-panel-resizing] [data-slot='panel-resize']::after {
+  transition-delay: 0s;
+}
+
+@keyframes pa-dock-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Floating inspector (< 980 px): over the chat, inset 8 px; opacity + 12 px slide, 200 in / 150 out. */
+.float {
+  --pa-avatar-collar: var(--pa-inspector-bg);
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  inset-inline-end: 8px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius-panel);
+  background: var(--pa-inspector-bg);
+  box-shadow: var(--shadow-float);
+  animation: pa-float-in 200ms var(--pa-ease) both;
+}
+.float[data-state='closed'] {
+  pointer-events: none;
+  animation: pa-float-out 150ms var(--pa-ease) both;
+}
+.float > * {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+/* The floating Panel fills this frame; the frame carries the radius, shadow and motion. */
+.float [data-slot='panel'][data-surface='floating'] {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  box-shadow: none;
+}
+
+@keyframes pa-float-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+@keyframes pa-float-out {
+  to {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+
+.inspectorSkeleton {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 0 24px;
+}
+.inspectorStage {
+  display: grid;
+  width: 100%;
+  height: 176px;
+  place-items: center;
+}
+.inspectorLine {
+  width: 50%;
+}
+.inspectorLineShort {
+  width: 34%;
+}
+
+/* ── pages ── */
+
+.pageColumn {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Below 720 px the roster button sits in the page's 32 px start gutter (every page pads 28 px top, 32 px sides),
+   centred on the 32 px heading line: 28 + (32 − 28) / 2 = 30 px down, 2 px in, so its glyph ends 8 px before the
+   title. Page content never enters that gutter, so scrolled rows do not pass under it. */
+.pageRosterButton {
+  position: absolute;
+  top: 30px;
+  inset-inline-start: 2px;
+  z-index: 1;
+  display: flex;
+}
+
+/* The fallback row for a page whose gutter cannot hold the button (connections in a small container): the bar
+   tucks 12 px into the page's own top padding and stays above the page (on its ground), so scrolled content passes
+   under it. */
+.pageBar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: none;
+  height: 44px;
+  align-items: flex-start;
+  margin-bottom: -12px;
+  padding: 12px 16px 0;
+  background: var(--paper);
+}
+
+.page {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+.page > :not(.pageRosterButton) {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* ── global states (spec §17.2) ── */
+
+/* Over a conversation the bar spans the column on the chat header's 16 px gutters; over a page it takes the
+   page's own measure (任务 760, 记忆 / 连接 680, each plus 32 px gutters), so its edges line up with the page. */
+.staleBar {
+  box-sizing: border-box;
+  flex: none;
+  width: 100%;
+  margin: 0 auto;
+  padding: 10px 16px 0;
+}
+.staleBar[data-place='tasks'] {
+  max-width: calc(760px + 64px);
+  padding: 16px 32px 0;
+}
+.staleBar[data-place='memory'],
+.staleBar[data-place='connections'] {
+  max-width: calc(680px + 64px);
+  padding: 16px 32px 0;
+}
+
+.stale {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.staleText {
+  min-width: 0;
+  color: var(--ink-soft);
+}
+
+.offline {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+
+.offlineCard {
+  max-width: 440px;
+  border: 0;
+}
+
+.offlineBody,
+.offlineDetail {
+  display: block;
+}
+
+/* The raw transport error, for the curious and for bug reports: quiet, mono, never the headline. */
+.offlineDetail {
+  margin-top: 6px;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+/* The roster as a Sheet (rail and sheet layouts): a floating panel over the host's start edge, inset 8 px (the
+   frame arrives inline), mirroring the floating inspector on the other side: the same --surface ground, radius and
+   float shadow, so in dark mode it lifts off the page instead of sharing its colour. The roster brings its own
+   padding and scroll area. */
+.sheet {
+  --pa-avatar-collar: var(--surface);
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock {
+    transition: none;
+  }
+  .float {
+    animation-name: pa-dock-fade;
+  }
+  .float[data-state='closed'] {
+    animation-name: pa-fade-away;
+  }
+}
+
+@keyframes pa-fade-away {
+  to {
+    opacity: 0;
+  }
+}
+.enterpriseAccess {
+  display: grid;
+  place-items: center;
+  min-height: 100%;
+}
+
+.enterpriseAccess form {
+  display: grid;
+  gap: 12px;
+  width: min(360px, 90%);
+}
+
+.enterpriseAccess h2 {
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 600;
+}

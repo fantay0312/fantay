@@ -1,0 +1,203 @@
+/* SPDX-License-Identifier: MIT
+ * Derived from infinite-canvas (https://github.com/basketikun/infinite-canvas),
+ * commit 9cd3deacbcc598361807afc16c059a80dd18b6f9, web/src/components/canvas/canvas-prompt-chip-input.tsx
+ * (chip and mention menu classes).
+ * Copyright (c) 2026 basketikun. Released under the MIT License; the full
+ * license text is reproduced in THIRD_PARTY_NOTICES.md.
+ * Modified for Fantay on 2026-10-29: Fantay tokens, broken-reference chips, the one focus ring.
+ */
+.root {
+  position: relative;
+  width: 100%;
+}
+
+.editor {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 120px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--type-copy);
+  line-height: var(--type-copy-lh);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  cursor: text;
+  outline: none;
+  transition: border-color var(--motion-micro) var(--ease-out-quint);
+}
+
+.editor:focus-visible {
+  border-color: var(--brand);
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: calc(var(--focus-ring-width) * -1);
+}
+
+/* Bare is the input of a composer card, so it takes the card's own text metrics and the card is its box. */
+.editor[data-variant='bare'] {
+  padding: 8px var(--composer-input-inset) 4px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: var(--composer-text-size);
+  line-height: var(--composer-text-leading);
+}
+
+.editor[data-variant='bare']:focus-visible {
+  outline: none;
+}
+
+.editor[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: var(--disabled-opacity);
+}
+
+.placeholder {
+  position: absolute;
+  top: 9px;
+  left: 11px;
+  right: 11px;
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-family: var(--font-ui);
+  font-size: var(--type-copy);
+  line-height: var(--type-copy-lh);
+  pointer-events: none;
+  white-space: pre-wrap;
+}
+
+.placeholder[data-variant='bare'] {
+  top: 8px;
+  left: var(--composer-input-inset);
+  right: var(--composer-input-inset);
+  font-size: var(--composer-text-size);
+  line-height: var(--composer-text-leading);
+}
+
+/* chips (created imperatively, so the classes are applied from TS) */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 160px;
+  height: 24px;
+  margin: 0 1px;
+  padding: 0 6px;
+  overflow: hidden;
+  border-radius: var(--radius-row);
+  background: var(--sub);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--ink);
+  font-size: var(--type-label);
+  line-height: 1;
+  vertical-align: middle;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.chipLabel {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chipImage {
+  width: 24px;
+  padding: 0;
+  cursor: zoom-in;
+}
+
+.chipImage img {
+  display: block;
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+}
+
+.chipBroken {
+  background: transparent;
+  box-shadow: none;
+  border: 1px dashed var(--accent-ink);
+  color: var(--accent-ink);
+}
+
+/* mention menu (portal). It is not a Radix layer: inside a modal (the expanded prompt editor) the body
+   carries `pointer-events: none`, so the menu re-enables pointer events for itself. */
+.menu {
+  position: fixed;
+  z-index: var(--z-fx-floating);
+  pointer-events: auto;
+  width: 256px;
+  max-height: 224px;
+  overflow-y: auto;
+  padding: 4px;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--type-body);
+  line-height: var(--type-body-lh);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+.option[aria-selected='true'] {
+  background: var(--sub);
+}
+
+.optionPreview {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  overflow: hidden;
+  border-radius: var(--radius-row);
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+}
+
+.optionPreview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.optionText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.optionLabel {
+  font-weight: 500;
+}
+
+.optionDetail {
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: var(--type-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menuEmpty {
+  padding: 8px;
+  color: var(--ink-faint);
+  font-size: var(--type-label);
+}

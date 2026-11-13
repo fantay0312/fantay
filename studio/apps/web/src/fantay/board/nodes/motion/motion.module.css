@@ -1,0 +1,38 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Motion fallback face (spec 03 §4.11): cover or "not rendered" placeholder with a Play glyph; compositions run on
+   the frame surface. 07's MotionNode body replaces the film face when injected. */
+
+.body {
+  position: absolute;
+  inset: 0;
+}
+
+.motion {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 6px;
+  background: rgb(0 0 0);
+  box-shadow: 0 0 0 calc(1px * var(--inv-zoom, 1)) var(--board-frame-border);
+}
+
+.placeholder {
+  position: absolute;
+  inset: 0;
+}
+
+.play {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  box-shadow: var(--shadow-ring);
+  color: var(--ink);
+  transform: translate(-50%, 70%);
+  pointer-events: none;
+}

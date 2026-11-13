@@ -1,0 +1,93 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Generator fallback face (spec 03 §4.9): surface card, header with the surface and model, prompt preview,
+   input/settings footer. The generation body (05) replaces it when injected. */
+
+.body {
+  position: absolute;
+  inset: 0;
+}
+
+.generator {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 0 0 calc(1px * var(--inv-zoom, 1)) var(--line),
+    0 4px 16px -4px rgba(28, 27, 26, 0.08);
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+.generator[data-selected] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 0 0 calc(1px * var(--inv-zoom, 1)) color-mix(in srgb, var(--info) 60%, var(--line)),
+    0 4px 16px -4px rgba(28, 27, 26, 0.12);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font: 600 var(--type-body) / var(--type-body-lh) var(--font-ui);
+}
+
+.glyph {
+  display: inline-flex;
+  color: var(--brand-ink);
+}
+
+.surface {
+  flex: none;
+}
+
+.model {
+  min-width: 0;
+  margin-inline-start: auto;
+  overflow: hidden;
+  padding: 1px 8px;
+  border-radius: var(--radius-chip);
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+  font-size: var(--type-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prompt {
+  flex: 1 1 auto;
+  margin: 0;
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--ink);
+  font: 400 var(--type-copy) / var(--type-copy-lh) var(--font-ui);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.prompt[data-empty] {
+  color: var(--ink-faint);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--ink-soft);
+  font: 400 var(--type-caption) / var(--type-caption-lh) var(--font-ui);
+}
+
+.settings {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

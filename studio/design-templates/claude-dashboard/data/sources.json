@@ -1,0 +1,32 @@
+[
+  {
+    "id": "monthly",
+    "title": "Sample monthly orders",
+    "description": "Illustrative monthly orders, revenue and repeat rate, Nov 2025 to Oct 2026. Rows written for this template, not real business data.",
+    "source": {
+      "kind": "file",
+      "name": "data/monthly.json",
+      "format": "json"
+    },
+    "updated": {
+      "at": "2026-11-02T00:00:00Z",
+      "by": "Agent"
+    },
+    "fixed": true
+  },
+  {
+    "id": "channels",
+    "title": "Sample revenue by channel",
+    "description": "Illustrative revenue and orders per channel for Oct 2026, with Sep 2026 revenue. Channel rows add up to the Oct 2026 and Sep 2026 monthly totals. Rows written for this template, not real business data.",
+    "source": {
+      "kind": "file",
+      "name": "data/channels.json",
+      "format": "json"
+    },
+    "updated": {
+      "at": "2026-11-02T00:00:00Z",
+      "by": "Agent"
+    },
+    "fixed": true
+  }
+]

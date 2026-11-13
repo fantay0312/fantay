@@ -1,0 +1,10 @@
+{
+  "name": "@fantaydesign/jianying-draft-lab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "exports": { ".": { "types": "./src/index.d.ts", "default": "./src/index.js" } },
+  "bin": { "fantay-jianying": "./src/cli.js" },
+  "scripts": { "test": "mise run test", "demo": "mise run demo" }
+}

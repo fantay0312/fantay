@@ -1,0 +1,289 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Film create panel (spec 07 §5.2): two columns from 880px of container width, one below. */
+.panel {
+  container-type: inline-size;
+  display: flex;
+  flex: 1 1 0%;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 4px 2px 12px;
+}
+
+.error {
+  margin-bottom: 12px;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+}
+
+@container (min-width: 880px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+}
+
+.main,
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* Segmented tracks keep their content width in these flex columns (a stretched item would
+   span the column with the options packed at the start). */
+.segmented {
+  align-self: flex-start;
+}
+
+/* The four start modes do not fit one row on a phone (~400px in English): 2 × 2 below 480px. */
+@container (max-width: 479px) {
+  .startModes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-self: stretch;
+    border-radius: var(--radius-control);
+  }
+}
+
+.sectionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.heading {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--type-copy);
+  font-weight: 600;
+  line-height: var(--type-copy-lh);
+}
+
+.copy {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--type-body);
+  line-height: var(--type-body-lh);
+}
+
+.caption {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--type-label);
+  line-height: var(--type-label-lh);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.styleCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+  transition: box-shadow var(--motion-micro) var(--ease-out-quint);
+}
+
+.styleCard:hover {
+  box-shadow: var(--shadow-ring-hover);
+}
+
+.styleCard[data-selected] {
+  box-shadow: 0 0 0 2px var(--info);
+}
+
+.styleCover {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #000;
+}
+
+.styleVideo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The full-card toggle sits over the cover and the text, under the play button. */
+.styleChoose {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: auto;
+  height: auto;
+  padding: 0;
+  border-radius: var(--radius-card);
+  background: transparent;
+}
+
+.styleChoose:hover {
+  background: transparent;
+}
+
+/* The toggle covers the whole card, which clips overflow: an outer focus ring would be cut off,
+   so it is drawn inside the card edge. */
+.styleChoose:focus-visible {
+  outline-offset: calc(var(--focus-ring-width) * -1);
+}
+
+.stylePlay {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+}
+
+.styleText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px 12px;
+}
+
+.styleName {
+  font-size: var(--type-body);
+  font-weight: 600;
+  line-height: var(--type-body-lh);
+}
+
+.styleMeta {
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  /* the zh/ja/ko text ("12s · 3 镜头") gets the 12px CJK floor through the token */
+  font-size: var(--type-caption);
+}
+
+.styleDescription {
+  margin: 2px 0 0;
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+  line-height: var(--type-label-lh);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.footage {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.footageRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px;
+  border-radius: var(--radius-row);
+  background: var(--sub);
+}
+
+.footageVideo {
+  flex: none;
+  width: 96px;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-tag);
+  background: #000;
+  object-fit: cover;
+}
+
+.footageName {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: var(--type-body);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selected {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.selectedFrame {
+  border-radius: var(--radius-card);
+}
+
+.selectedName {
+  font-size: var(--type-body);
+  font-weight: 600;
+}
+
+.selects {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.footer {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.note {
+  flex: 1 1 200px;
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--type-label);
+  line-height: var(--type-label-lh);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* The dialog shell (MotionCreateDialog): a fixed-height column so the body scrolls. */
+.dialog {
+  display: flex;
+  flex-direction: column;
+  height: min(720px, 90dvh);
+  overflow: hidden;
+  gap: 12px;
+}

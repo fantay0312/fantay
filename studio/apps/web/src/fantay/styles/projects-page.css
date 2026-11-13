@@ -1,0 +1,614 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* 全部项目: the sixth library page on resource-pages.css's tokens. Its markup is the shared legacy
+   `.design-card` / `.design-grid` contract, which e2e and the home strip also read, so everything here
+   is scoped to `.designs-page` and leaves those selectors alone elsewhere. */
+
+/* ── Head and toolbar ───────────────────────────────────────────────────────────────────────── */
+[data-fantay-shell] .designs-page {
+  gap: 0;
+}
+[data-fantay-shell] .designs-page__head {
+  align-items: center;
+  min-height: var(--page-control-h);
+  margin-bottom: 12px;
+}
+[data-fantay-shell] .designs-page__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+[data-fantay-shell] .designs-library-link {
+  height: var(--page-control-h);
+  min-height: var(--page-control-h);
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color 140ms var(--page-ease), color 140ms var(--page-ease);
+}
+[data-fantay-shell] .designs-library-link:hover {
+  background: var(--sub);
+  color: var(--ink);
+}
+
+/* One hairline carries the tabs and the tools. Sticky, so it needs the page's own ground. */
+[data-fantay-shell] .tab-panel-toolbar.designs-toolbar {
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 16px;
+  min-height: 46px;
+  margin: 0 0 22px;
+  padding: 0;
+  background: var(--paper);
+  box-shadow: inset 0 -1px 0 var(--line-soft);
+}
+[data-fantay-shell] .designs-kind-tabs {
+  display: flex;
+  flex: 1 1 auto;
+  align-self: stretch;
+  gap: 20px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+[data-fantay-shell] .designs-kind-tabs::-webkit-scrollbar {
+  display: none;
+}
+[data-fantay-shell] .designs-kind-tabs button {
+  appearance: none;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-bottom: 1.5px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 140ms var(--page-ease), border-color 140ms var(--page-ease);
+}
+[data-fantay-shell] .designs-kind-tabs button:hover:not([aria-pressed='true']) {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink);
+}
+[data-fantay-shell] .designs-kind-tabs button[aria-pressed='true'] {
+  border-color: transparent;
+  border-bottom-color: var(--ink);
+  color: var(--ink);
+}
+[data-fantay-shell] .designs-kind-tabs button:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+[data-fantay-shell] .designs-kind-tabs button > span {
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-fantay-shell] .designs-toolbar .toolbar-right {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+[data-fantay-shell] .designs-search {
+  flex: 0 1 200px;
+  width: 200px;
+  margin-inline-end: 4px;
+  border: 1px solid transparent;
+  background: var(--sub);
+  box-shadow: none;
+  transition: background-color 140ms var(--page-ease), border-color 140ms var(--page-ease);
+}
+[data-fantay-shell] .designs-search:focus-within {
+  border-color: var(--line);
+  background: var(--surface);
+  box-shadow: none;
+}
+[data-fantay-shell] .designs-search input {
+  font-size: 13px;
+}
+[data-fantay-shell] .designs-search input::placeholder {
+  color: var(--ink-soft);
+}
+[data-fantay-shell] .designs-tool-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: var(--page-control-h);
+  min-height: var(--page-control-h);
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-row);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 140ms var(--page-ease), color 140ms var(--page-ease);
+}
+[data-fantay-shell] .designs-tool-button:hover,
+[data-fantay-shell] .designs-tool-button[data-state='open'] {
+  border-color: transparent;
+  background: var(--paper-deep);
+  color: var(--ink);
+}
+[data-fantay-shell] .designs-tool-button:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: -2px;
+}
+[data-fantay-shell] .designs-view-toggle {
+  display: inline-flex;
+  gap: 2px;
+  margin-inline-start: 4px;
+}
+
+[data-fantay-shell] .designs-select-bar {
+  gap: 2px;
+  height: var(--page-control-h);
+  margin-inline-start: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+[data-fantay-shell] .designs-select-count {
+  margin-inline-end: 8px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+[data-fantay-shell] .designs-select-delete,
+[data-fantay-shell] .designs-select-cancel {
+  height: 28px;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius-row);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color 140ms var(--page-ease);
+}
+[data-fantay-shell] .designs-select-delete {
+  color: var(--accent-ink);
+}
+[data-fantay-shell] .designs-select-delete:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+[data-fantay-shell] .designs-select-delete:disabled {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+[data-fantay-shell] .designs-select-cancel {
+  color: var(--ink-soft);
+}
+[data-fantay-shell] .designs-select-cancel:hover {
+  background: var(--paper-deep);
+  color: var(--ink);
+}
+
+/* ── Shelves ────────────────────────────────────────────────────────────────────────────────── */
+[data-fantay-shell] .designs-shelf-title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  letter-spacing: 0;
+}
+[data-fantay-shell] .designs-shelf-title > span {
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+/* The headings live in the grid so every tile keeps one column system across shelves. */
+[data-fantay-shell] .designs-page .design-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 232px), 1fr));
+  gap: 22px 18px;
+}
+[data-fantay-shell] .design-grid > .designs-shelf-title {
+  grid-column: 1 / -1;
+  margin-bottom: -10px;
+}
+[data-fantay-shell] .design-grid > .designs-shelf-title:not(:first-child) {
+  margin-top: 16px;
+}
+
+[data-fantay-shell] .designs-active {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+[data-fantay-shell] .designs-active__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+[data-fantay-shell] .designs-active__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  min-height: 36px;
+  max-width: min(340px, 100%);
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--sub);
+  box-shadow: none;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 140ms var(--page-ease);
+}
+[data-fantay-shell] .designs-active__item:hover {
+  border-color: transparent;
+  background: var(--paper-deep);
+}
+[data-fantay-shell] .designs-active__item:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+[data-fantay-shell] .designs-active__name {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+[data-fantay-shell] .designs-active__status {
+  flex: 0 0 auto;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* ── Tiles: 素材库's silhouette, a framed cover over two lines of text ───────────────────────── */
+[data-fantay-shell] .designs-page .design-card {
+  gap: 10px;
+  border: 0;
+  border-radius: var(--page-tile-radius);
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+  transition: none;
+}
+[data-fantay-shell] .designs-page .design-card:hover,
+[data-fantay-shell] .designs-page .live-artifact-card,
+[data-fantay-shell] .designs-page .design-card.is-selected {
+  border: 0;
+  box-shadow: none;
+  transform: none;
+}
+[data-fantay-shell] .designs-page .design-card:active {
+  transform: none;
+}
+[data-fantay-shell] .designs-page .design-card:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 3px;
+}
+[data-fantay-shell] .designs-page .design-card-thumb {
+  min-height: 0;
+  border-radius: var(--page-tile-radius);
+  background: var(--sub);
+}
+/* The ring sits over the cover: an inset shadow on the frame itself would lie under the media. */
+[data-fantay-shell] .designs-page .design-card-thumb::after {
+  content: '';
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: auto;
+  height: auto;
+  margin: 0;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--page-tile-ring);
+  pointer-events: none;
+  transition: box-shadow 140ms var(--page-ease);
+}
+[data-fantay-shell] .designs-page .design-card:hover .design-card-thumb::after {
+  box-shadow: inset 0 0 0 1px var(--page-tile-ring-hover);
+}
+[data-fantay-shell] .designs-page .design-card.is-selected .design-card-thumb::after {
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+
+/* A project with nothing to show yet wears its kind, tinted like its sidebar mark. */
+[data-fantay-shell] .designs-page .project-thumb:is(.project-thumb-fallback, .project-thumb-brand)[data-kind='motion'] {
+  background: color-mix(in srgb, var(--success) 9%, var(--sub));
+}
+[data-fantay-shell] .designs-page .project-thumb:is(.project-thumb-fallback, .project-thumb-brand)[data-kind='designSystem'] {
+  background: color-mix(in srgb, var(--brand) 5%, var(--sub));
+}
+[data-fantay-shell] .designs-page .project-thumb-glyph {
+  width: auto;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-faint);
+  font-size: 18px;
+  font-weight: 500;
+}
+[data-fantay-shell] .designs-page .project-thumb[data-kind='motion'] .project-thumb-glyph {
+  color: var(--success-ink);
+}
+[data-fantay-shell] .designs-page .project-thumb[data-kind='designSystem'] .project-thumb-glyph {
+  color: var(--brand-ink);
+}
+[data-fantay-shell] .designs-page .live-artifact-thumb {
+  background: var(--sub);
+}
+[data-fantay-shell] .designs-page .design-live-count {
+  z-index: 2;
+  right: 8px;
+  bottom: 8px;
+  padding: 2px 7px;
+  border: 0;
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+[data-fantay-shell] .designs-page .design-card-meta-block {
+  gap: 3px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+[data-fantay-shell] .designs-page .design-card-name {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+}
+[data-fantay-shell] .designs-page .design-card-meta {
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 17px;
+}
+[data-fantay-shell] .designs-page .design-card-meta .ds {
+  color: inherit;
+  font-weight: 400;
+}
+[data-fantay-shell] .designs-page .design-card-meta-time {
+  margin-inline-start: auto;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+/* On a tile the kind is a word in the caption, not a coloured chip. */
+[data-fantay-shell] .designs-page .design-card-tag-row .design-card-tag {
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 17px;
+  letter-spacing: 0;
+}
+[data-fantay-shell] .designs-page .design-card-status {
+  color: var(--ink);
+  font-weight: 500;
+}
+[data-fantay-shell] .designs-page .design-card-status-failed {
+  color: var(--accent-ink);
+}
+[data-fantay-shell] .designs-page .design-card-status-published {
+  color: var(--success-ink);
+}
+
+/* Floating controls on the cover. */
+[data-fantay-shell] .designs-page .design-card-more,
+[data-fantay-shell] .designs-page .design-card-close {
+  width: 26px;
+  height: 26px;
+  min-height: 26px;
+  border: 0;
+  border-radius: var(--radius-row);
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+  color: var(--ink-soft);
+}
+[data-fantay-shell] .designs-page .design-card-more:hover,
+[data-fantay-shell] .designs-page .design-card-close:hover {
+  box-shadow: var(--shadow-ring-hover);
+  color: var(--ink);
+}
+[data-fantay-shell] .designs-page .design-card-menu {
+  min-width: 148px;
+  border: 0;
+  border-radius: var(--page-tile-radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+}
+[data-fantay-shell] .designs-page .design-card-menu button {
+  justify-content: flex-start;
+  width: 100%;
+  height: 30px;
+  min-height: 30px;
+  padding: 0 8px;
+  border-radius: var(--radius-row);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+}
+[data-fantay-shell] .designs-page .design-card-menu button:hover {
+  background: var(--paper-deep);
+}
+[data-fantay-shell] .designs-page .design-card-menu button.danger {
+  color: var(--accent-ink);
+}
+[data-fantay-shell] .designs-page .design-card-menu button.danger:hover {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+[data-fantay-shell] .designs-page .design-card-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-row);
+  background: var(--surface);
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, #000 32%, transparent), 0 1px 3px rgba(0, 0, 0, 0.16);
+}
+[data-fantay-shell] .designs-page .design-card-checkbox.checked {
+  background: var(--ink);
+  color: var(--paper);
+}
+[data-fantay-shell] .designs-page .design-card-badges {
+  position: absolute;
+  top: 8px;
+  inset-inline-start: 8px;
+  z-index: 2;
+}
+
+/* ── Empty answers ──────────────────────────────────────────────────────────────────────────── */
+[data-fantay-shell] .designs-page .tab-empty {
+  color: var(--ink-soft);
+}
+[data-fantay-shell] .designs-page .designs-empty-title {
+  color: var(--ink);
+  font-size: 16px;
+  letter-spacing: -0.01em;
+}
+[data-fantay-shell] .designs-page .designs-empty-cta {
+  height: var(--page-control-h);
+  min-height: var(--page-control-h);
+  padding: 0 14px;
+  border: 1px solid var(--brand);
+  border-radius: var(--radius-control);
+  background: var(--brand);
+  box-shadow: none;
+  color: var(--on-brand);
+  font-weight: 500;
+  transition: background-color 140ms var(--page-ease);
+}
+[data-fantay-shell] .designs-page .designs-empty-cta:hover,
+[data-fantay-shell] .designs-page .designs-empty-cta:active {
+  background: var(--brand-hover);
+  box-shadow: none;
+  transform: none;
+}
+
+/* ── 看板: same surfaces, grouped by tone ───────────────────────────────────────────────────── */
+/* One row of columns that scrolls, so 已取消 never drops under 未开始 and reads as a second board. */
+[data-fantay-shell] .designs-page .design-kanban-board {
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(176px, 1fr);
+  gap: 10px;
+}
+[data-fantay-shell] .designs-page .design-kanban-col {
+  border: 0;
+  border-radius: var(--page-tile-radius);
+  background: var(--sub);
+}
+[data-fantay-shell] .designs-page .design-kanban-header {
+  border: 0;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+}
+[data-fantay-shell] .designs-page .design-kanban-count {
+  border: 0;
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+[data-fantay-shell] .designs-page .design-kanban-card {
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+}
+[data-fantay-shell] .designs-page .design-kanban-card:hover {
+  box-shadow: var(--shadow-ring-hover);
+  transform: none;
+}
+[data-fantay-shell] .designs-page .design-kanban-card-name {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+}
+[data-fantay-shell] .designs-page .design-kanban-card-meta,
+[data-fantay-shell] .designs-page .design-kanban-empty {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* ── Narrow windows: tabs keep the hairline, tools take their own row ───────────────────────── */
+@media (max-width: 860px) {
+  /* Two rows of chrome are too much to pin in a short window. */
+  [data-fantay-shell] .tab-panel-toolbar.designs-toolbar {
+    position: static;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    box-shadow: none;
+  }
+  [data-fantay-shell] .designs-kind-tabs {
+    flex: 0 0 38px;
+    box-shadow: inset 0 -1px 0 var(--line-soft);
+  }
+  [data-fantay-shell] .designs-toolbar .toolbar-right {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    row-gap: 8px;
+  }
+  [data-fantay-shell] .designs-search {
+    flex: 1 1 180px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-fantay-shell] .designs-page .design-card-thumb::after,
+  [data-fantay-shell] .designs-kind-tabs button,
+  [data-fantay-shell] .designs-tool-button,
+  [data-fantay-shell] .designs-active__item {
+    transition: none;
+  }
+}

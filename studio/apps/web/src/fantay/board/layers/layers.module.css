@@ -1,0 +1,261 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* World sublayers, connections and the screen-space overlay (spec 03 §3.1). Screen-space boxes are placed with
+   calc(var(--vx) + x * var(--zoom)) so pan/zoom never re-renders them; world hairlines use --inv-zoom. */
+
+.groups,
+.nodes {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+}
+
+.edges {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.edgeHit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: calc(16px * var(--inv-zoom, 1));
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+.edgePath {
+  fill: none;
+  stroke: var(--board-edge);
+  stroke-width: calc(1.5px * var(--inv-zoom, 1));
+  stroke-opacity: 0.85;
+  pointer-events: none;
+}
+
+.edgePath[data-kind="output"] {
+  stroke: var(--board-edge-output);
+}
+
+.edgePath[data-kind="lineage"] {
+  stroke-dasharray: calc(4px * var(--inv-zoom, 1)) calc(4px * var(--inv-zoom, 1));
+}
+
+.edgePath[data-selected] {
+  stroke: var(--board-select);
+  stroke-width: calc(2.5px * var(--inv-zoom, 1));
+  stroke-opacity: 1;
+}
+
+.connectPath {
+  fill: none;
+  stroke: var(--board-select);
+  stroke-width: calc(2px * var(--inv-zoom, 1));
+  stroke-dasharray: calc(5px * var(--inv-zoom, 1)) calc(5px * var(--inv-zoom, 1));
+  pointer-events: none;
+}
+
+/* ── screen-space overlay ─────────────────────────────────────────────────────────────── */
+
+.box {
+  position: absolute;
+  pointer-events: none;
+}
+
+.selectionOutline {
+  position: absolute;
+  pointer-events: none;
+  box-shadow: 0 0 0 1.5px var(--board-select);
+  border-radius: 2px;
+  /* small on screen: drop the edge handles so the corners stay grabbable (no re-render on zoom) */
+  container-type: size;
+}
+
+@container (max-width: 39.99px) {
+  .handle[data-board-handle="n"],
+  .handle[data-board-handle="s"] {
+    display: none;
+  }
+}
+
+@container (max-height: 39.99px) {
+  .handle[data-board-handle="e"],
+  .handle[data-board-handle="w"] {
+    display: none;
+  }
+}
+
+@container (max-width: 23.99px) or (max-height: 23.99px) {
+  .handle {
+    display: none;
+  }
+}
+
+.selectionOutline[data-mode="edit"] {
+  box-shadow: none;
+  outline: 1.5px dashed var(--board-select);
+  outline-offset: 0;
+}
+
+.hoverOutline {
+  position: absolute;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px var(--board-hover);
+  border-radius: 2px;
+}
+
+.connectTarget {
+  position: absolute;
+  pointer-events: none;
+  box-shadow: 0 0 0 2px var(--board-select);
+  border-radius: var(--radius-card);
+}
+
+.union {
+  position: absolute;
+  pointer-events: none;
+  border: 1.5px dashed color-mix(in srgb, var(--board-select) 55%, transparent);
+  border-radius: var(--radius-panel);
+  background: color-mix(in srgb, var(--board-select) 4%, transparent);
+}
+
+.handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border: 1.5px solid var(--board-select);
+  border-radius: 2px;
+  background: var(--surface);
+  pointer-events: auto;
+}
+
+.handle[data-board-handle="nw"],
+.handle[data-board-handle="se"] {
+  cursor: nwse-resize;
+}
+
+.handle[data-board-handle="ne"],
+.handle[data-board-handle="sw"] {
+  cursor: nesw-resize;
+}
+
+.handle[data-board-handle="n"],
+.handle[data-board-handle="s"] {
+  cursor: ns-resize;
+}
+
+.handle[data-board-handle="e"],
+.handle[data-board-handle="w"] {
+  cursor: ew-resize;
+}
+
+.connector {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border: 1.5px solid var(--board-select);
+  border-radius: 999px;
+  background: var(--surface);
+  pointer-events: auto;
+  cursor: crosshair;
+  box-shadow: var(--shadow-ring);
+}
+
+.connector:hover {
+  background: var(--board-select);
+}
+
+/* a hover-only dot (no handles drawn) reaches back across the gap to the node's edge, so the hover does not
+   drop on the way from the node to the dot */
+.connector[data-hover-only]::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  bottom: -8px;
+  left: -10px;
+  right: -4px;
+}
+
+.marquee {
+  position: absolute;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--board-select) 10%, transparent);
+  box-shadow: inset 0 0 0 1px var(--board-select);
+}
+
+.drawPreview {
+  position: absolute;
+  pointer-events: none;
+  border: 1.5px dashed var(--board-select);
+  background: color-mix(in srgb, var(--board-select) 6%, transparent);
+}
+
+.drawPreview[data-tool="ellipse"] {
+  border-radius: 50%;
+}
+
+.guideV,
+.guideH {
+  position: absolute;
+  pointer-events: none;
+  background: var(--board-guide);
+}
+
+.guideV {
+  width: 1px;
+  margin-left: -0.5px;
+}
+
+.guideH {
+  height: 1px;
+  margin-top: -0.5px;
+}
+
+.badge {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, 8px);
+  padding: 2px 6px;
+  border-radius: var(--radius-tag);
+  background: var(--board-select);
+  color: var(--on-info);
+  font: 500 var(--type-caption) / var(--type-caption-lh) var(--font-mono);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.focusPill {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  transition: opacity var(--motion-enter) var(--ease-out-quint), transform var(--motion-enter) var(--ease-out-quint);
+}
+
+.focusPill[data-state="closed"] {
+  opacity: 0;
+  transform: translate(-50%, -6px);
+  pointer-events: none;
+  transition-duration: var(--motion-exit);
+}
+
+.debug {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  padding: 4px 8px;
+  border-radius: var(--radius-tag);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--ink-soft);
+  font: 500 var(--type-caption) / var(--type-caption-lh) var(--font-mono);
+  pointer-events: none;
+  white-space: pre;
+}

@@ -1,0 +1,671 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* One page system for the library surfaces: 设计系统, 素材库, 插件, 自动化, 社区.
+   Each grew its own header, tab control and card; they now share one title, one toolbar, one tab,
+   one quiet filter chip and one gallery tile. Component-owned layout stays in that component's CSS
+   Module; this file only holds what the six pages have in common and the legacy global markup that
+   has no module of its own. Settings pages are not in scope here. */
+
+[data-fantay-shell] {
+  --page-control-h: 32px;
+  --page-tab-h: 38px;
+  --page-tile-radius: 10px;
+  --page-tile-ring: color-mix(in srgb, var(--ink) 8%, transparent);
+  --page-tile-ring-hover: color-mix(in srgb, var(--ink) 18%, transparent);
+  --page-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --page-band: 0px;
+  --page-top: 28px;
+}
+/* The shell reserves its top row above the page in these modes (FantayShell.module.css `.main`). The
+   band is already air, so the title drops into it: on desktop it centres on the 新对话 row beside it. */
+[data-fantay-shell][data-client-type='desktop'],
+[data-fantay-shell][data-sidebar-mode='overlay'],
+[data-fantay-shell][data-sidebar-mode='docked'][data-sidebar='collapsed'] {
+  --page-band: var(--fx-top-row-h, 44px);
+  --page-top: 4px;
+}
+
+/* ── Page frame: every title starts at the same point ───────────────────────────────────────── */
+[data-fantay-shell] [data-testid='entry-view-design-systems'][data-active='true'],
+[data-fantay-shell] [data-testid='entry-view-plugins'][data-active='true'] {
+  padding-top: 0;
+}
+[data-fantay-shell] .entry-main__inner--wide:has(
+    > [data-active='true']:is(
+      [data-testid='entry-view-design-systems'],
+      [data-testid='entry-view-materials'],
+      [data-testid='entry-view-plugins'],
+      [data-testid='entry-view-tasks'],
+      [data-testid='entry-view-canvas']
+    ),
+    > .community-template-view
+  ) {
+  padding-top: var(--page-top);
+}
+/* 设计系统 is a two-pane workbench, not a scrolling page: its panes hang from the tab row and reach the
+   window's foot, so the section gap and the page's bottom inset both give way. */
+[data-fantay-shell] .entry-main__inner--wide:has(> [data-testid='entry-view-design-systems'][data-active='true']) {
+  padding-bottom: 0;
+}
+[data-fantay-shell] [data-testid='entry-view-design-systems'] > .entry-section {
+  gap: 0;
+}
+[data-fantay-shell] .entry-section__title,
+[data-fantay-shell] .plugin-marketplace__hero .entry-section__title {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 32px;
+  letter-spacing: -0.02em;
+}
+[data-fantay-shell] .plugin-marketplace__hero,
+[data-fantay-shell] .community-template-view__hero {
+  align-items: center;
+  min-height: var(--page-control-h);
+  margin-bottom: 14px;
+}
+
+/* ── Primary page action: one height, one radius, one voice ─────────────────────────────────── */
+[data-fantay-shell] .plugin-marketplace__create,
+[data-fantay-shell] .automations-view__new,
+[data-fantay-shell] .fx-page-action {
+  gap: 6px;
+  height: var(--page-control-h);
+  min-height: var(--page-control-h);
+  padding: 0 12px;
+  border: 1px solid var(--brand);
+  border-radius: var(--radius-control);
+  background: var(--brand);
+  box-shadow: none;
+  color: var(--on-brand);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  white-space: nowrap;
+  transition: background-color 140ms var(--page-ease), border-color 140ms var(--page-ease);
+}
+[data-fantay-shell] .plugin-marketplace__create:hover:not(:disabled),
+[data-fantay-shell] .automations-view__new:hover:not(:disabled),
+[data-fantay-shell] .fx-page-action:hover:not(:disabled) {
+  border-color: var(--brand-hover);
+  background: var(--brand-hover);
+  box-shadow: none;
+}
+[data-fantay-shell] .plugin-marketplace__manage {
+  height: var(--page-control-h);
+  min-height: var(--page-control-h);
+  padding: 0 12px;
+  border-radius: var(--radius-control);
+  border-color: var(--line);
+  background: transparent;
+  color: var(--ink-soft);
+}
+
+/* ── Tabs: text on a hairline, the same object on every page ────────────────────────────────── */
+[data-fantay-shell] .ds-top-scopes,
+[data-fantay-shell] .plugin-marketplace__toolbar,
+[data-fantay-shell] .automations-template-tabs,
+[data-fantay-shell] .community-template-view__filter-main {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  min-height: var(--page-tab-h);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  /* A painted hairline, not a border: the tab strips scroll sideways, and a scroller would clip a
+     tab pulled down over a real border. Painted, the active underline simply lands on top of it. */
+  box-shadow: inset 0 -1px 0 var(--line-soft);
+}
+[data-fantay-shell] .plugin-marketplace__switch,
+[data-fantay-shell] .community-template-view__type-tabs,
+[data-fantay-shell] [data-testid='materials-kind-filter'],
+[data-fantay-shell] [data-testid='materials-category-tabs'] {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 20px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+[data-fantay-shell] .automations-template-tabs {
+  flex-wrap: nowrap;
+  gap: 20px;
+}
+/* Strips scroll sideways in a narrow window. The fade sits in the strip's own end, so it only ever
+   touches a tab that is actually running out of room. */
+[data-fantay-shell] .plugin-marketplace__switch,
+[data-fantay-shell] .automations-template-tabs,
+[data-fantay-shell] .community-template-view__type-tabs,
+[data-fantay-shell] [data-testid='materials-kind-filter'],
+[data-fantay-shell] [data-testid='materials-category-tabs'],
+[data-fantay-shell] .plugin-marketplace__category-tags {
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  -webkit-mask-image: linear-gradient(to right, var(--brand) calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to right, var(--brand) calc(100% - 28px), transparent);
+}
+[data-fantay-shell] .ds-top-scope-chip,
+[data-fantay-shell] .plugin-marketplace__switch button,
+[data-fantay-shell] .automations-template-tab,
+[data-fantay-shell] .community-template-view__type-tabs .home-hero__type-pill,
+[data-fantay-shell] [data-testid='materials-kind-filter'] button,
+[data-fantay-shell] [data-testid='materials-category-tabs'] button {
+  appearance: none;
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  height: var(--page-tab-h);
+  min-height: var(--page-tab-h);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-bottom: 1.5px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-faint);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 140ms var(--page-ease), border-color 140ms var(--page-ease);
+}
+[data-fantay-shell] .ds-top-scope-chip:hover,
+[data-fantay-shell] .plugin-marketplace__switch button:hover:not(:disabled),
+[data-fantay-shell] .automations-template-tab:hover,
+[data-fantay-shell] .community-template-view__type-tabs .home-hero__type-pill:hover,
+[data-fantay-shell] [data-testid='materials-kind-filter'] button:hover:not([aria-pressed='true']),
+[data-fantay-shell] [data-testid='materials-category-tabs'] button:hover:not([aria-selected='true']) {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink);
+}
+[data-fantay-shell] .ds-top-scope-chip.is-active,
+[data-fantay-shell] .plugin-marketplace__switch button.is-active,
+[data-fantay-shell] .automations-template-tab.is-active,
+[data-fantay-shell] .community-template-view__type-tabs .home-hero__type-pill.is-active,
+[data-fantay-shell] [data-testid='materials-kind-filter'] button[aria-pressed='true'],
+[data-fantay-shell] [data-testid='materials-category-tabs'] button[aria-selected='true'] {
+  border-color: transparent;
+  border-bottom-color: var(--ink);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink);
+  font-weight: 500;
+}
+[data-fantay-shell] .ds-top-scope-chip:focus-visible,
+[data-fantay-shell] .plugin-marketplace__switch button:focus-visible,
+[data-fantay-shell] .automations-template-tab:focus-visible,
+[data-fantay-shell] .community-template-view__type-tabs .home-hero__type-pill:focus-visible,
+[data-fantay-shell] [data-testid='materials-kind-filter'] button:focus-visible,
+[data-fantay-shell] [data-testid='materials-category-tabs'] button:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+/* 设计系统's scopes are the same tab object with one underline that slides between them. A chip keeps
+   its own underline only until that one has been measured (`SlidingMark` in DesignSystemsTab). */
+[data-fantay-shell] .ds-top-scopes {
+  position: relative;
+}
+.ds-top-scopes__underline {
+  display: none;
+}
+[data-fantay-shell] .ds-top-scopes__underline[data-placed] {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  display: block;
+  height: 1.5px;
+  background: var(--ink);
+  pointer-events: none;
+  transition: transform 320ms var(--page-ease), width 320ms var(--page-ease);
+}
+[data-fantay-shell] .ds-top-scopes__underline[data-placed] ~ .ds-top-scope-chip.is-active {
+  border-bottom-color: transparent;
+}
+[data-fantay-shell] .ds-top-scope-count,
+[data-fantay-shell] .ds-top-scope-chip.is-active .ds-top-scope-count,
+[data-fantay-shell] .automations-template-tab__count,
+[data-fantay-shell] .automations-template-tab.is-active .automations-template-tab__count,
+[data-fantay-shell] [data-testid='materials-kind-filter'] button > span,
+[data-fantay-shell] [data-testid='materials-category-tabs'] button > span {
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink-faint);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+/* The tab row carries words only; the type glyphs stay on Home, where they help you pick. */
+[data-fantay-shell] .community-template-view__type-tabs .home-hero__type-pill > .od-icon,
+[data-fantay-shell] .community-template-view__type-tabs .home-hero__type-pill > svg {
+  display: none;
+}
+[data-fantay-shell] .community-template-view__filters {
+  margin-bottom: 20px;
+}
+
+/* ── Filter chips: the second, quieter level under a tab row ────────────────────────────────── */
+[data-fantay-shell] .plugin-marketplace__filter-block {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0;
+  margin: 12px 0 20px;
+}
+[data-fantay-shell] .plugin-marketplace__filters,
+[data-fantay-shell] .plugin-marketplace__category-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+[data-fantay-shell] .plugin-marketplace__filters {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  padding-inline-end: 9px;
+  margin-inline-end: 9px;
+  border-inline-end: 1px solid var(--line-soft);
+}
+[data-fantay-shell] .plugin-marketplace__category-tags {
+  flex: 1 1 0;
+  flex-wrap: nowrap;
+}
+[data-fantay-shell] .plugin-marketplace__category-tags button {
+  flex: 0 0 auto;
+}
+[data-fantay-shell] .plugin-marketplace__filters button,
+[data-fantay-shell] .plugin-marketplace__category-tags button,
+[data-fantay-shell] [data-testid='materials-section-capsules'] button {
+  height: 26px;
+  min-height: 26px;
+  margin: 0;
+  padding: 0 9px;
+  border: 0;
+  border-radius: var(--radius-row);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 500;
+  transition: background-color 140ms var(--page-ease), color 140ms var(--page-ease);
+}
+[data-fantay-shell] .plugin-marketplace__filters button:hover,
+[data-fantay-shell] .plugin-marketplace__category-tags button:hover,
+[data-fantay-shell] [data-testid='materials-section-capsules'] button:hover {
+  border-color: transparent;
+  background: var(--sub);
+  color: var(--ink);
+}
+[data-fantay-shell] .plugin-marketplace__filters button.is-active,
+[data-fantay-shell] .plugin-marketplace__category-tags button.is-active,
+[data-fantay-shell] [data-testid='materials-section-capsules'] button[aria-pressed='true'],
+[data-fantay-shell] [data-testid='materials-section-capsules'] button.is-active {
+  border-color: transparent;
+  background: var(--paper-deep);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* ── Search: a filled field that wakes on focus ─────────────────────────────────────────────── */
+[data-fantay-shell] .plugin-marketplace__search,
+[data-fantay-shell] .plugin-marketplace__filters .plugin-marketplace__search {
+  flex: 0 1 216px;
+  align-self: center;
+  gap: 7px;
+  width: 216px;
+  height: var(--page-control-h);
+  margin: 0 0 0 auto;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: var(--sub);
+  color: var(--ink-faint);
+  transition: background-color 140ms var(--page-ease), border-color 140ms var(--page-ease);
+}
+[data-fantay-shell] .plugin-marketplace__search:focus-within {
+  border-color: var(--line);
+  background: var(--surface);
+  box-shadow: none;
+}
+[data-fantay-shell] .plugin-marketplace__search input {
+  font-size: 13px;
+}
+[data-fantay-shell] .plugin-marketplace__search input::placeholder {
+  color: var(--ink-faint);
+}
+
+/* ── Gallery tiles: 插件 and 社区 share 素材库's silhouette ───────────────────────────────────── */
+[data-fantay-shell] .plugin-marketplace__rows,
+[data-fantay-shell] .community-template-grid:not([data-layout='masonry']) {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 232px), 1fr));
+  gap: 26px 18px;
+}
+[data-fantay-shell] .plugin-marketplace__item,
+[data-fantay-shell] .plugin-marketplace__item--skill {
+  gap: 10px;
+  border-radius: var(--page-tile-radius);
+}
+[data-fantay-shell] .plugin-marketplace__cover {
+  border-radius: var(--page-tile-radius);
+  background: var(--sub);
+  box-shadow: inset 0 0 0 1px var(--page-tile-ring);
+}
+[data-fantay-shell] .plugin-marketplace__item:hover .plugin-marketplace__cover {
+  transform: none;
+  box-shadow: inset 0 0 0 1px var(--page-tile-ring-hover);
+}
+[data-fantay-shell] .plugin-marketplace__row,
+[data-fantay-shell] .plugin-marketplace__item.is-clickable .plugin-marketplace__row {
+  padding: 0;
+}
+[data-fantay-shell] .plugin-marketplace__row-main {
+  gap: 3px;
+}
+[data-fantay-shell] .plugin-marketplace__row-main strong,
+[data-fantay-shell] .community-template-card__title {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0;
+}
+[data-fantay-shell] .plugin-marketplace__row-main small {
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 17px;
+}
+[data-fantay-shell] .plugin-marketplace__meta-row,
+[data-fantay-shell] .community-template-card__byline {
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+[data-fantay-shell] .plugin-marketplace__author-avatar {
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+}
+[data-fantay-shell] .plugin-marketplace__author-name,
+[data-fantay-shell] .plugin-marketplace__meta-tag,
+[data-fantay-shell] .community-template-card__author {
+  color: var(--ink-faint);
+}
+[data-fantay-shell] .community-template-card,
+[data-fantay-shell] .community-template-card__preview {
+  border-radius: var(--page-tile-radius);
+}
+[data-fantay-shell] .community-template-card.is-clickable:hover {
+  transform: none;
+}
+[data-fantay-shell] .community-template-card__preview {
+  aspect-ratio: 16 / 10;
+  border-color: var(--page-tile-ring);
+  transition: border-color 140ms var(--page-ease);
+}
+[data-fantay-shell] .community-template-card.is-clickable:hover .community-template-card__preview {
+  border-color: var(--page-tile-ring-hover);
+}
+[data-fantay-shell] .community-template-card__foot {
+  gap: 3px;
+  padding: 10px 0 0;
+}
+
+/* ── 自动化: an index you can scan, not a wall of cards ──────────────────────────────────────── */
+[data-fantay-shell] .automations-view {
+  gap: 30px;
+  width: 100%;
+  margin: 0;
+  padding: 0 0 72px;
+}
+[data-fantay-shell] .automations-hero {
+  align-items: start;
+  gap: 24px;
+  padding: 0;
+}
+[data-fantay-shell] .automations-hero__lede {
+  margin: 2px 0 0;
+  max-width: 640px;
+  color: var(--ink-faint);
+  font-size: 13px;
+  line-height: 20px;
+}
+[data-fantay-shell] .automations-hero__actions {
+  align-items: center;
+  gap: 16px;
+  height: var(--page-control-h);
+}
+[data-fantay-shell] .automations-metrics {
+  display: flex;
+  gap: 14px;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+[data-fantay-shell] .automations-metric {
+  gap: 4px;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+}
+[data-fantay-shell] .automations-metric__value {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+[data-fantay-shell] .automations-metric__label {
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+[data-fantay-shell] .automations-section__label {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+[data-fantay-shell] .automations-section__sub {
+  margin-top: 2px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 18px;
+}
+[data-fantay-shell] .automations-section__meta {
+  color: var(--ink-faint);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+[data-fantay-shell] .automation-empty {
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 12px;
+  height: auto;
+  min-height: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--page-tile-radius);
+  background: transparent;
+  box-shadow: none;
+  transition: background-color 140ms var(--page-ease), border-color 140ms var(--page-ease);
+}
+[data-fantay-shell] .automation-empty:hover {
+  border-color: var(--line);
+  background: var(--sub);
+  transform: none;
+}
+[data-fantay-shell] .automation-empty__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-row);
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+}
+[data-fantay-shell] .automation-empty__body strong {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+}
+[data-fantay-shell] .automation-empty__body span {
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+[data-fantay-shell] .automations-templates {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+[data-fantay-shell] .automations-templates__grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 32px;
+  margin-top: 2px;
+}
+[data-fantay-shell] .automation-template-card {
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 12px;
+  height: auto;
+  min-height: 0;
+  padding: 13px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transition: border-color 140ms var(--page-ease);
+}
+[data-fantay-shell] .automation-template-card:hover {
+  border-color: var(--line-soft);
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+[data-fantay-shell] .automation-template-card:active {
+  transform: none;
+}
+[data-fantay-shell] .automation-template-card:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+[data-fantay-shell] .automation-template-card__icon,
+[data-fantay-shell] .automation-template-card.is-orbit .automation-template-card__icon,
+[data-fantay-shell] .automation-template-card.is-live-artifact .automation-template-card__icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink-faint);
+}
+[data-fantay-shell] .automation-template-card__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 14px;
+}
+[data-fantay-shell] .automation-template-card__title {
+  grid-column: 1;
+  grid-row: 1;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+}
+[data-fantay-shell] .automation-template-card__desc {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  -webkit-line-clamp: 2;
+}
+/* The label names the family at rest; the same cell turns into the action under the pointer. */
+[data-fantay-shell] .automation-template-card__kicker,
+[data-fantay-shell] .automation-template-card__cta {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+  justify-self: end;
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  white-space: nowrap;
+  transition: opacity 140ms var(--page-ease);
+}
+[data-fantay-shell] .automation-template-card__kicker > svg,
+[data-fantay-shell] .automation-template-card__kicker > .od-icon {
+  display: none;
+}
+[data-fantay-shell] .automation-template-card__cta {
+  color: var(--ink);
+  font-weight: 500;
+  opacity: 0;
+}
+[data-fantay-shell] .automation-template-card:hover .automation-template-card__kicker,
+[data-fantay-shell] .automation-template-card:focus-visible .automation-template-card__kicker {
+  opacity: 0;
+}
+[data-fantay-shell] .automation-template-card:hover .automation-template-card__cta,
+[data-fantay-shell] .automation-template-card:focus-visible .automation-template-card__cta {
+  opacity: 1;
+}
+
+/* ── Browser surfaces on these pages ────────────────────────────────────────────────────────── */
+[data-fantay-shell] .entry-main ::selection {
+  background: var(--selection-bg);
+}
+
+@media (max-width: 860px) {
+  [data-fantay-shell] .automations-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  [data-fantay-shell] .automations-templates__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  [data-fantay-shell] .plugin-marketplace__toolbar {
+    flex-wrap: wrap;
+    box-shadow: none;
+  }
+  [data-fantay-shell] .plugin-marketplace__switch {
+    flex-basis: 100%;
+    box-shadow: inset 0 -1px 0 var(--line-soft);
+  }
+  [data-fantay-shell] .plugin-marketplace__search {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-fantay-shell] .automation-template-card__kicker,
+  [data-fantay-shell] .automation-template-card__cta,
+  [data-fantay-shell] .ds-top-scopes__underline[data-placed] {
+    transition: none;
+  }
+}

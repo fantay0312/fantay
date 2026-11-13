@@ -1,0 +1,335 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Trend: a heading with its two switches over a hairline card; axis text in meta ink, bars in the dashboard's ink ramp
+   (--usage-shade-*). */
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--usage-heading-gap, 12px);
+  min-width: 0;
+  margin: 0;
+  container-type: inline-size;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px 16px 14px;
+  border: var(--settings-hairline);
+  border-radius: var(--settings-radius);
+  background: var(--surface);
+}
+
+.chart[data-compact='true'] .card {
+  gap: 8px;
+  padding: 12px 12px 8px;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+.titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  color: var(--ink);
+  font-size: var(--settings-type-section);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.4;
+}
+
+.caption {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--settings-type-meta);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* Metric and split sit on the heading's line, at its right edge; when the column is too narrow for that they take a
+   row of their own and share it. */
+.controls {
+  display: flex;
+  flex: none;
+  gap: 8px;
+}
+
+.fill[data-slot='segmented'] {
+  display: flex;
+}
+
+.fill [data-slot='segmented-item'] {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+@container (max-width: 560px) {
+  .controls {
+    flex: 1 1 100%;
+  }
+
+  .controls > .fill[data-slot='segmented'] {
+    flex: 1 1 0;
+  }
+}
+
+@container (max-width: 400px) {
+  .controls {
+    flex-direction: column;
+  }
+}
+
+/* ── Plot ────────────────────────────────────────────────────────────────────────────────── */
+.plot {
+  position: relative;
+  min-width: 0;
+  border-radius: 6px;
+  outline: none;
+}
+
+.plot:focus-visible {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--focus-ring-color, var(--info));
+}
+
+.plot svg {
+  display: block;
+  overflow: visible;
+}
+
+.grid {
+  stroke: var(--line-soft);
+  stroke-width: 1;
+}
+
+.baseline {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.axisText {
+  fill: var(--ink-faint);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+/* The hovered day: a soft column behind its bar that glides from day to day; the other days step back. */
+.highlight {
+  fill: var(--sub);
+  transition: x 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.hit {
+  fill: transparent;
+}
+
+.column {
+  transition: opacity 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.column[data-muted] {
+  opacity: 0.42;
+}
+
+.bar {
+  transition: opacity 120ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.bar[data-dim] {
+  opacity: 0.22;
+}
+
+.bar[data-shade='0'], .swatch[data-shade='0'] { fill: var(--usage-shade-0); background: var(--usage-shade-0); }
+.bar[data-shade='1'], .swatch[data-shade='1'] { fill: var(--usage-shade-1); background: var(--usage-shade-1); }
+.bar[data-shade='2'], .swatch[data-shade='2'] { fill: var(--usage-shade-2); background: var(--usage-shade-2); }
+.bar[data-shade='3'], .swatch[data-shade='3'] { fill: var(--usage-shade-3); background: var(--usage-shade-3); }
+.bar[data-shade='4'], .swatch[data-shade='4'] { fill: var(--usage-shade-4); background: var(--usage-shade-4); }
+.bar[data-shade='5'], .swatch[data-shade='5'] { fill: var(--usage-shade-5); background: var(--usage-shade-5); }
+
+/* ── Tooltip: a solid panel, never glass, so the figures stay legible over the bars ────────── */
+/* Its width is its content's (up to 260px, never wider than the plot) wherever it is placed, so the width the chart
+   measures to choose a side is the width it shows there. */
+.tooltip {
+  position: absolute;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: max-content;
+  min-width: 168px;
+  max-width: min(260px, 100%);
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+  color: var(--ink);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  line-height: 1.45;
+  pointer-events: none;
+  transform-origin: left top;
+  transition: left 140ms cubic-bezier(0.23, 1, 0.32, 1);
+  animation: usage-tip-in 180ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.tooltip[data-side='left'] {
+  transform: translateX(-100%);
+  transform-origin: right top;
+}
+
+.tooltip[data-side='over'] {
+  transform-origin: center top;
+}
+
+@keyframes usage-tip-in {
+  from {
+    opacity: 0;
+    scale: 0.97;
+  }
+}
+
+.tooltipTitle {
+  font-weight: 600;
+}
+
+.tooltipEmpty {
+  color: var(--ink-faint);
+}
+
+.tooltipRows {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tooltipRows li,
+.tooltipTotal {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tooltipName {
+  flex: 1;
+  color: var(--ink-soft);
+}
+
+/* A series name: an optional route in a quieter tone that is cut first, then the name itself. */
+.seriesName {
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.seriesRoute {
+  flex: 0 1000 auto;
+  min-width: 12px;
+  overflow: hidden;
+  color: var(--ink-faint);
+  text-overflow: ellipsis;
+}
+
+.seriesTail {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tooltipTotal {
+  justify-content: space-between;
+  padding-top: 6px;
+  border-top: 1px solid var(--line-soft);
+  font-weight: 600;
+}
+
+.tooltipMeta {
+  color: var(--ink-faint);
+}
+
+/* ── Legend ──────────────────────────────────────────────────────────────────────────────── */
+/* A grid of name/value pairs under a hairline, so long model ids line up instead of wrapping ragged. */
+.legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 7px 32px;
+  margin: 0;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--line-soft);
+  list-style: none;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: var(--settings-type-meta);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  transition: opacity 120ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.legend li[data-dim] {
+  opacity: 0.45;
+}
+
+.swatch {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.legendName {
+  flex: 1 1 auto;
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.legendValue {
+  flex: none;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.note {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--settings-type-meta);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar,
+  .column,
+  .highlight,
+  .tooltip,
+  .legend li {
+    transition: none;
+  }
+
+  .tooltip {
+    animation: none;
+  }
+}

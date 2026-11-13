@@ -1,0 +1,299 @@
+/* A zero-height line pinned to the scroller's bottom edge. The panel hangs up from it, so a closed
+   dock takes no layout space at the end of the column. */
+.dock {
+  position: sticky;
+  bottom: 12px;
+  z-index: 6;
+  height: 0;
+}
+
+.panel {
+  container: dock / inline-size;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  overflow: hidden auto;
+  max-height: min(46vh, 340px);
+  padding: 12px 12px 14px 14px;
+  border-radius: 14px;
+  background: var(--glass-regular);
+  box-shadow:
+    inset 0 1px 0 var(--glass-edge-highlight),
+    inset 0 0 0 1px color-mix(in srgb, var(--ink) 6%, transparent),
+    0 18px 44px -18px color-mix(in srgb, var(--ink) 30%, transparent);
+  color: var(--ink);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(16px);
+  -webkit-backdrop-filter: blur(var(--glass-regular-blur)) saturate(180%);
+  backdrop-filter: blur(var(--glass-regular-blur)) saturate(180%);
+  transition:
+    opacity var(--st-dur-exit) var(--st-ease-ui),
+    transform var(--st-dur-exit) var(--st-ease-ui);
+}
+
+.dock[data-open] .panel {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+  transition-duration: var(--st-dur-enter);
+}
+
+/* Crossfade: the outgoing token lies over the incoming one, and only opacity moves. */
+.leaving {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  left: 14px;
+  animation: dockOut var(--st-dur-micro) var(--st-ease-ui) both;
+}
+
+.entering {
+  animation: dockIn var(--st-dur-micro) var(--st-ease-ui) both;
+}
+
+@keyframes dockOut {
+  to { opacity: 0; }
+}
+
+@keyframes dockIn {
+  from { opacity: 0; }
+}
+
+.body {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.title {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  overflow: hidden;
+  margin: 0;
+  color: var(--ink);
+  font: 600 14px/20px var(--font-ui);
+  white-space: nowrap;
+}
+
+.label code {
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font: 500 12px/20px var(--font-mono);
+  text-overflow: ellipsis;
+}
+
+.note {
+  overflow: hidden;
+  margin: 0;
+  color: var(--ink-soft);
+  font: 400 12px/18px var(--font-ui);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+.rule {
+  width: 1px;
+  height: 16px;
+  margin-inline: 4px;
+  background-color: var(--line);
+}
+
+.copy {
+  padding-inline: 8px;
+}
+
+.copyText {
+  font-family: var(--font-ui);
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 8px var(--st-gap);
+}
+
+.field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.fieldHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--ink-faint);
+  font: 500 12px/16px var(--font-ui);
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding-inline: 8px;
+  border-radius: var(--radius-control);
+  background-color: color-mix(in srgb, var(--paper) 78%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 9%, transparent);
+}
+
+.control:focus-within {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: -1px;
+  background-color: var(--paper);
+  box-shadow: none;
+}
+
+.control[data-invalid] {
+  box-shadow: inset 0 0 0 1px var(--accent-ink);
+}
+
+/* Two classes: the studio root resets every control's font with `.root input`. */
+.control .input {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+  font: 400 12px/16px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+}
+
+.control .input::placeholder {
+  color: var(--ink-faint);
+}
+
+.control .input[readonly] {
+  cursor: text;
+}
+
+.swatch {
+  position: relative;
+  flex: none;
+  overflow: hidden;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+/* The native control stays operable and invisible; the swatch underneath is what shows. */
+.picker {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.contrast,
+.contrastLow {
+  flex: none;
+  font: 500 11px/16px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.contrast {
+  color: var(--ink-soft);
+}
+
+.contrastLow {
+  color: var(--accent-ink);
+}
+
+.alias,
+.aliasBroken {
+  overflow: hidden;
+  margin: 0;
+  font: 500 11px/16px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alias {
+  color: var(--ink-soft);
+}
+
+.aliasBroken {
+  color: var(--accent-ink);
+}
+
+.error {
+  margin: 8px 0 0;
+  color: var(--accent-ink);
+  font: 500 12px/16px var(--font-ui);
+}
+
+@container dock (max-width: 559px) {
+  .head {
+    flex-wrap: wrap;
+    gap: 8px 10px;
+  }
+
+  .title {
+    flex-basis: calc(100% - 54px);
+  }
+
+  .actions {
+    justify-content: flex-end;
+    width: 100%;
+  }
+
+  .note {
+    white-space: normal;
+  }
+}
+
+@container dock (max-width: 359px) {
+  .copyText {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    transition: none;
+  }
+
+  .leaving {
+    display: none;
+  }
+
+  .entering {
+    animation: none;
+  }
+}

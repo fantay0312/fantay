@@ -1,0 +1,64 @@
+/* Side Chat workspace tab: a ChatPane mounted in `.ws-body` with a context
+   banner pinned above it. Fills the body so the pane scrolls internally. */
+
+.sideChat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--bg);
+}
+
+/* A note on where this chat came from, not a toolbar: it stays quieter than the transcript under it. */
+.banner {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 16px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-faint);
+  background: transparent;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.bannerIcon {
+  flex: 0 0 auto;
+  display: inline-flex;
+}
+
+.pane {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Matches the project chat slot's bottom inset, so the two composers sit on one baseline side by side. */
+.sideChat:not(.movieChat) .pane {
+  padding-bottom: 8px;
+}
+
+/* The shell hides the history trigger, the only thing in this row, which leaves it an empty band under the banner. */
+:global([data-fantay-shell]) .sideChat:not(.movieChat) :global(.chat-project-header) {
+  display: none;
+}
+
+/* ChatPane renders its own `.pane` shell; let it fill the remaining space. */
+.pane > :global(.pane) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Palmier-style editing chat: one surface, one compact composer. */
+.movieChat { --bg:var(--paper); --bg-panel:var(--paper); --bg-subtle:var(--sub); --bg-fill-tertiary:var(--sub); --bg-fill-secondary:var(--paper-deep); --text:var(--ink); --text-muted:var(--ink-soft); --text-soft:var(--ink-faint); --text-faint:var(--ink-faint); background:var(--paper); }
+.movieChat :global(.pane),.movieChat :global(.chat-log),.movieChat :global(.chat-log-viewport) { background:var(--paper); border:0; box-shadow:none; }
+.movieChat :global(.chat-project-header) { height:38px; min-height:38px; padding:6px 10px; box-sizing:border-box; gap:6px; flex:none; }
+.newChat { flex:1; text-align:left; height:26px; padding:0 12px; border:1px solid var(--line-soft); border-radius:16px; background:var(--sub); color:var(--ink); font:inherit; font-size:11px; cursor:pointer; }.newChat:disabled { cursor:default; }
+.movieChat :global(.chat-session-trigger) { width:26px; height:26px; color:var(--ink-soft); }
+.movieChat :global(.chat-empty-wrap) { display:none; }
+.movieChat :global(.composer) { padding:8px 10px 10px; background:transparent; gap:0; }
+.movieChat :global(.inline-switcher__popover) { background:var(--surface); color:var(--ink); border-color:var(--line); box-shadow:0 10px 24px #0006; }
+.movieChat :global(.session-mode-toggle) { display:none; }

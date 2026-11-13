@@ -1,0 +1,1132 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Composer: one card and one toolbar on every surface (home hero, project chat, design-system chat,
+   side chat, comment form, board comment popover). The board's generator panel lives in its own module
+   and builds on the variables below.
+
+   This file is unlayered, so a plain selector here beats the whole `legacy` layer however specific the
+   legacy rule is. That cuts both ways: a state the legacy layer draws (drag, read-only, manual height,
+   quick switcher) survives only if the rule here leaves it out or restates it, which is why some
+   selectors below look longer than the property they set. The chat composer is portalled to <body>
+   inside `.chat-composer-fixed-layer`, so nothing here may be scoped to `[data-fantay-shell]`. */
+
+:root {
+  --composer-control: 32px;
+  --composer-control-radius: 10px;
+  --composer-radius: 20px;
+  /* Card edge to toolbar. The input adds its own inset on top, so that the first glyph of the toolbar,
+     not its invisible hit box, lines up with the text above it. */
+  --composer-card-pad: 10px;
+  --composer-input-inset: 10px;
+  --composer-text-size: 14.5px;
+  --composer-text-leading: 22px;
+  --composer-max-height: min(200px, 36vh);
+  --composer-scrollbar-thumb: #8c8c8c;
+  /* Motion: the chat turn's grammar (ChatRoot.module.css `--chat-ease-out` / `--chat-dur-*`), restated
+     here because this file also draws the Home and board composers and the menus portalled to <body>,
+     none of which sit inside the chat seam that defines `--chat-*`. One curve
+     (quint ease-out) and one clock per kind of change; menus pop on the 200 ms clock and leave faster,
+     opacity-led; icons that trade places swap on the same 200 ms. Values that match a global duration
+     token read it; 120 and 240 have no global token and are written out. */
+  --composer-ease: var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+  --composer-dur-quick: 120ms; /* hover, colour, border */
+  --composer-dur-press: var(--duration-fast, 150ms); /* press feedback, scale .96 */
+  --composer-dur-pop: var(--duration-normal, 200ms); /* menus in, icon swaps, selected marks settling */
+  --composer-dur-pop-out: var(--duration-fast, 150ms); /* menus and outgoing icons leave faster */
+  --composer-dur-enter: 240ms; /* chips fade up into the card */
+  /* The menus the toolbar opens (plus, model, design system) are one row system, so moving along the
+     row never changes the type or the rhythm. Their surface is 12 with a 1 px --line and --float-shadow. */
+  --composer-menu-row: 32px;
+  --composer-menu-row-radius: 8px;
+  --composer-menu-pad: 6px;
+}
+
+[data-theme='dark'] {
+  --composer-scrollbar-thumb: #787878;
+}
+
+/* ── Card ──────────────────────────────────────────────────────────────────────────────────── */
+
+.composer-shell,
+.home-view:not(.home-view--dock) .home-hero__composer-card {
+  border: 1px solid color-mix(in srgb, var(--line) 88%, var(--ink-ghost));
+  border-radius: var(--composer-radius);
+  background: var(--surface);
+  box-shadow:
+    0 2px 8px -2px rgba(0, 0, 0, 0.035),
+    0 8px 24px -8px rgba(0, 0, 0, 0.055);
+  /* Focus, drag-over and the quick switcher's recede all change only these three, on the quick clock.
+     The height is left alone: it is `auto` in every state (Lexical grows the editor line by line, the
+     drag handle writes `--composer-manual-h`), and CSS cannot interpolate auto to auto. */
+  transition:
+    border-color var(--composer-dur-quick) var(--composer-ease),
+    background-color var(--composer-dur-quick) var(--composer-ease),
+    box-shadow var(--composer-dur-quick) var(--composer-ease);
+}
+[data-theme='dark'] .composer-shell,
+[data-theme='dark'] .home-view:not(.home-view--dock) .home-hero__composer-card {
+  border-color: var(--line);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.28),
+    0 10px 26px -8px rgba(0, 0, 0, 0.44);
+}
+.composer-shell:hover:not(:focus-within),
+.home-view:not(.home-view--dock) .home-hero__composer-card:hover:not(:focus-within) {
+  border-color: color-mix(in srgb, var(--line) 68%, var(--ink-ghost));
+  box-shadow:
+    0 3px 10px -2px rgba(0, 0, 0, 0.045),
+    0 10px 26px -8px rgba(0, 0, 0, 0.065);
+}
+[data-theme='dark'] .composer-shell:hover:not(:focus-within),
+[data-theme='dark'] .home-view:not(.home-view--dock) .home-hero__composer-card:hover:not(:focus-within) {
+  border-color: color-mix(in srgb, var(--line) 74%, var(--ink-ghost));
+}
+.composer-shell:focus-within,
+.home-view:not(.home-view--dock) .home-hero__composer-card:focus-within {
+  border-color: color-mix(in srgb, var(--line) 58%, var(--ink-ghost));
+  box-shadow:
+    0 4px 14px -3px rgba(0, 0, 0, 0.05),
+    0 12px 32px -8px rgba(0, 0, 0, 0.08);
+}
+[data-theme='dark'] .composer-shell:focus-within,
+[data-theme='dark'] .home-view:not(.home-view--dock) .home-hero__composer-card:focus-within {
+  border-color: color-mix(in srgb, var(--line) 60%, var(--ink-ghost));
+  box-shadow:
+    0 4px 12px -2px rgba(0, 0, 0, 0.36),
+    0 14px 34px -8px rgba(0, 0, 0, 0.54);
+}
+.composer-shell {
+  gap: 8px;
+  padding: var(--composer-card-pad);
+}
+
+/* Home wraps the same card in a tray + input card pair; the tray becomes the card and the inner one
+   only carries the padding, so the two surfaces end up with the same box model. */
+.home-view:not(.home-view--dock) .home-hero__composer-card {
+  width: 100%;
+  gap: 0;
+  padding: 0;
+}
+.home-view:not(.home-view--dock) .home-hero__input-card,
+.home-view:not(.home-view--dock) .home-hero__input-card:focus-within {
+  gap: 8px;
+  max-width: none;
+  padding: var(--composer-card-pad);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* The focus beam is an overlay drawn on the same 1px as the card's border, in a lighter tone, so while it
+   exists the raised border cannot be seen. The border is the focus signal now. */
+.home-view:not(.home-view--dock) .home-hero__composer-beam {
+  display: none;
+}
+
+/* A file dragged over the card reads as a tone change, not a colour. */
+.composer.drag-active .composer-shell,
+.home-view:not(.home-view--dock) .home-hero__composer-card:has(.is-drag-active) {
+  border-color: var(--ink-ghost);
+  background: var(--sub);
+  box-shadow: none;
+}
+
+/* The quick switcher owns the keyboard while it is open and the card recedes behind it. */
+body.od-quick-switcher-open .chat-composer-fixed-layer .composer-shell,
+body.od-quick-switcher-open .chat-composer-fixed-layer .composer-shell:focus-within {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* ── Input ─────────────────────────────────────────────────────────────────────────────────── */
+
+.composer-input-wrap,
+.composer-input-wrap:focus-within {
+  border: 0;
+  border-radius: calc(var(--composer-radius) - var(--composer-card-pad));
+  background: transparent;
+  box-shadow: none;
+}
+.composer-input-editor {
+  max-height: var(--composer-max-height);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--composer-scrollbar-thumb) transparent;
+}
+.composer.composer-active-file-mode .composer-shell:not(.composer-shell--manual-height) .composer-input-editor {
+  max-height: min(300px, 38vh);
+}
+.composer .composer-shell--manual-height .composer-input-editor {
+  min-height: var(--composer-manual-h);
+  max-height: var(--composer-manual-h);
+}
+.composer-input-editor [contenteditable='true'],
+.composer-input-editor .composer-editable {
+  padding: 6px var(--composer-input-inset) 6px;
+  font-size: var(--composer-text-size);
+  font-weight: 400;
+  line-height: var(--composer-text-leading);
+}
+/* Two lines at rest in split chat, roomier hero floor on empty centered chat & Home. A hand-dragged
+   height keeps its own value. */
+.composer .composer-shell:not(.composer-shell--manual-height) .composer-input-editor,
+.composer .composer-shell:not(.composer-shell--manual-height) .composer-input-editor [contenteditable='true'],
+.composer .composer-shell:not(.composer-shell--manual-height) .composer-input-editor .composer-editable,
+.composer.composer-active-file-mode .composer-shell:not(.composer-shell--manual-height) textarea {
+  min-height: calc(var(--composer-text-leading) * 2 + 12px);
+}
+body:has([data-fantay-shell] .pane[data-empty-centered='true']) .chat-composer-fixed-layer .composer .composer-shell:not(.composer-shell--manual-height) .composer-input-editor,
+body:has([data-fantay-shell] .pane[data-empty-centered='true']) .chat-composer-fixed-layer .composer .composer-shell:not(.composer-shell--manual-height) .composer-input-editor [contenteditable='true'],
+body:has([data-fantay-shell] .pane[data-empty-centered='true']) .chat-composer-fixed-layer .composer .composer-shell:not(.composer-shell--manual-height) .composer-input-editor .composer-editable,
+[data-fantay-shell] .pane[data-empty-centered='true'] .composer .composer-shell:not(.composer-shell--manual-height) .composer-input-editor,
+[data-fantay-shell] .pane[data-empty-centered='true'] .composer .composer-shell:not(.composer-shell--manual-height) .composer-input-editor [contenteditable='true'],
+[data-fantay-shell] .pane[data-empty-centered='true'] .composer .composer-shell:not(.composer-shell--manual-height) .composer-input-editor .composer-editable {
+  min-height: calc(var(--composer-text-leading) * 2 + 20px);
+}
+.composer-input-placeholder {
+  top: 6px;
+  left: var(--composer-input-inset);
+  max-width: calc(100% - var(--composer-input-inset) * 2);
+  color: var(--ink-faint);
+  font-size: var(--composer-text-size);
+  font-weight: 400;
+  line-height: var(--composer-text-leading);
+}
+.composer-input-wrap .home-hero__carousel {
+  top: 6px;
+  right: var(--composer-input-inset);
+  left: var(--composer-input-inset);
+  color: var(--ink-faint);
+  font-size: var(--composer-text-size);
+  font-weight: 400;
+  line-height: var(--composer-text-leading);
+}
+
+/* Home keeps attachments, the lead chip and the prompt in one flow, so the inset moves up to the flow
+   and the editor inside it stays flush. Everything in the flow then shares the text's left edge. */
+.home-view:not(.home-view--dock) .home-hero__prompt-flow {
+  padding: 6px var(--composer-input-inset) 6px;
+}
+.home-view:not(.home-view--dock) .home-hero__prompt-surface {
+  max-height: var(--home-hero-prompt-max-height, var(--composer-max-height));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--composer-scrollbar-thumb) transparent;
+}
+.home-hero__prompt-flow .composer-input-editor {
+  max-height: none;
+  overflow: visible;
+}
+.home-hero__lexical .composer-input-editor,
+.home-hero__lexical .composer-editable {
+  min-height: calc(var(--composer-text-leading) * 2 + 8px);
+}
+.home-hero__lexical .composer-editable {
+  padding: 0;
+  font-size: var(--composer-text-size);
+  font-weight: 400;
+  line-height: var(--composer-text-leading);
+}
+.home-hero__lexical .composer-input-placeholder,
+.home-hero__lexical .home-hero__carousel {
+  top: 0;
+  right: 0;
+  left: 0;
+  max-width: 100%;
+  color: var(--ink-faint);
+  font-size: var(--composer-text-size);
+  font-weight: 400;
+  line-height: var(--composer-text-leading);
+}
+/* Typewriter placeholder flows naturally across the two-line editor height so long scenarios never
+   freeze at a single-line ellipsis (`... |`) while leaving the second line blank. */
+:is(.composer-input-wrap, .home-hero__lexical) .home-hero__carousel {
+  display: block;
+  max-height: calc(var(--composer-text-leading) * 2);
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+:is(.composer-input-wrap, .home-hero__lexical) .home-hero__carousel-text {
+  display: inline;
+  overflow: visible;
+  font-weight: 400;
+  text-overflow: clip;
+  white-space: inherit;
+}
+:is(.composer-input-wrap, .home-hero__lexical) .home-hero__carousel-caret {
+  display: inline-block;
+  width: 1px;
+  height: 17px;
+  margin-block: 0;
+  margin-inline: 1px 0;
+  vertical-align: -3px;
+  background: var(--ink-soft);
+}
+
+/* Whatever is staged above the input starts on the text's left edge. */
+.composer-shell > .staged-row,
+.composer-att {
+  padding-inline: var(--composer-input-inset);
+}
+.composer-shell > .composer-active-file {
+  max-width: calc(100% - var(--composer-input-inset) * 2);
+  margin-inline: var(--composer-input-inset);
+}
+
+/* The plain textarea of the comment form sits on the same metrics as the rich editor, and the card is
+   its only box. */
+.composer-textarea-layer textarea,
+.composer-textarea-layer textarea:focus,
+.comment-popover-composer textarea,
+.comment-popover-composer textarea:focus {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  max-height: var(--composer-max-height);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px var(--composer-input-inset) 6px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--composer-text-size);
+  line-height: var(--composer-text-leading);
+  box-shadow: none;
+  resize: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--composer-scrollbar-thumb) transparent;
+}
+.composer-textarea-layer textarea::placeholder,
+.comment-popover-composer textarea::placeholder {
+  color: var(--ink-faint);
+}
+
+@supports not (scrollbar-color: auto) {
+  :is(
+    .composer-input-editor,
+    .home-view:not(.home-view--dock) .home-hero__prompt-surface,
+    .composer-textarea-layer textarea,
+    .comment-popover-composer textarea
+  )::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  :is(
+    .composer-input-editor,
+    .home-view:not(.home-view--dock) .home-hero__prompt-surface,
+    .composer-textarea-layer textarea,
+    .comment-popover-composer textarea
+  )::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  :is(
+    .composer-input-editor,
+    .home-view:not(.home-view--dock) .home-hero__prompt-surface,
+    .composer-textarea-layer textarea,
+    .comment-popover-composer textarea
+  )::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: var(--composer-scrollbar-thumb);
+  }
+}
+
+/* ── Toolbar row ───────────────────────────────────────────────────────────────────────────── */
+
+/* `composer-toolbar` is the container every collapse step below measures. The row, not the viewport,
+   decides: the same width means the same layout on Home, in a project and in the side panel. */
+.composer-row,
+.home-hero__input-foot {
+  container: composer-toolbar / inline-size;
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  min-height: var(--composer-control);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+/* The start cluster gives way first (9999:1), so any picked design-system label absorbs essentially
+   all shrink until the start cluster hits its icon floor; past that floor, `.composer-row__end` shrinks
+   cleanly (`min-width: 0`) so `.composer-send` never overflows the card at any width. */
+.composer-row__start,
+.home-hero__foot-left {
+  display: flex;
+  flex: 0 9999 auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 4px;
+  min-width: var(--composer-control);
+}
+/* Giving way stops at two bare icons; without this floor the cluster would shrink past its own "+". */
+.composer-row__start:has(> .home-hero__ds-row-picker, > .composer-ds-icon, [data-permission]),
+.home-hero__foot-left:has(.home-hero__ds-row-picker) {
+  min-width: calc(var(--composer-control) * 2 + 4px);
+}
+.composer-ds-folded {
+  display: none;
+}
+.composer-row__end,
+.home-hero__foot-right {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+}
+.composer-row > *,
+.composer-row__start > *,
+.composer-row__end > * {
+  align-self: center;
+}
+.plus-menu {
+  flex: none;
+}
+
+/* ── Ghost controls ────────────────────────────────────────────────────────────────────────── */
+
+:is(.composer-row, .home-hero__input-foot) .plus-menu__trigger,
+:is(.composer-row, .home-hero__input-foot) .home-hero__ds-row-trigger,
+:is(.composer-row, .home-hero__input-foot) .composer-ds-icon-trigger,
+.composer-row > .icon-btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  height: var(--composer-control);
+  min-height: var(--composer-control);
+  border: 0;
+  border-radius: var(--composer-control-radius);
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: none;
+  transition:
+    background-color var(--composer-dur-quick) var(--composer-ease),
+    color var(--composer-dur-quick) var(--composer-ease),
+    transform var(--composer-dur-press) var(--composer-ease);
+}
+/* Press feedback, the same .96 as the send disc and the turn's footer actions. */
+/* The design-system triggers are left out on purpose: DesignSystemPicker anchors its 760px popover
+   to the trigger's getBoundingClientRect() in the same task as the click, which would read the
+   pressed (.96) box and land the popover ~4-5px off. */
+:is(.composer-row, .home-hero__input-foot) .plus-menu__trigger:active:not(:disabled),
+.composer-row > .icon-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+:is(.composer-row, .home-hero__input-foot) .plus-menu__trigger,
+.composer-row > .icon-btn {
+  justify-content: center;
+  width: var(--composer-control);
+  min-width: var(--composer-control);
+  padding: 0;
+}
+:is(.composer-row, .home-hero__input-foot) .plus-menu__trigger:hover:not(:disabled),
+:is(.composer-row, .home-hero__input-foot) .plus-menu__trigger:focus-visible,
+:is(.composer-row, .home-hero__input-foot) .plus-menu__trigger.is-active,
+:is(.composer-row, .home-hero__input-foot) .home-hero__ds-row-picker .home-hero__ds-row-trigger:hover:not(:disabled),
+:is(.composer-row, .home-hero__input-foot) .home-hero__ds-row-picker .home-hero__ds-row-trigger:focus-visible,
+:is(.composer-row, .home-hero__input-foot) .home-hero__ds-row-trigger[aria-expanded='true'],
+:is(.composer-row, .home-hero__input-foot) .composer-ds-icon-trigger:hover:not(:disabled),
+:is(.composer-row, .home-hero__input-foot) .composer-ds-icon-trigger:focus-visible,
+:is(.composer-row, .home-hero__input-foot) .composer-ds-icon-trigger.is-active,
+.composer-row > .icon-btn:hover:not(:disabled) {
+  border: 0;
+  background: var(--sub);
+  color: var(--ink);
+  box-shadow: none;
+}
+:is(.composer-row, .home-hero__input-foot) .plus-menu__trigger:focus-visible,
+:is(.composer-row, .home-hero__input-foot) .home-hero__ds-row-trigger:focus-visible,
+:is(.composer-row, .home-hero__input-foot) .composer-ds-icon-trigger:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 1px;
+}
+
+/* ── Design system control: the "+" family, growing a name when one is picked ──────────────── */
+
+.home-hero__ds-row-picker,
+.composer-ds-icon {
+  position: relative;
+  display: inline-flex;
+  flex: 0 1 auto;
+  min-width: var(--composer-control);
+}
+:is(.composer-row, .home-hero__input-foot) .home-hero__ds-row-trigger,
+:is(.composer-row, .home-hero__input-foot) .composer-ds-icon-trigger.is-picked {
+  gap: 6px;
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  /* 8 keeps the palette exactly where it sits in the empty 32 box, so picking a system grows the
+     control to the right and the glyph does not move. */
+  padding: 0 10px 0 8px;
+}
+:is(.composer-row, .home-hero__input-foot) .home-hero__ds-row-trigger.is-icon-only,
+:is(.composer-row, .home-hero__input-foot) .composer-ds-icon-trigger:not(.is-picked) {
+  justify-content: center;
+  gap: 0;
+  width: var(--composer-control);
+  min-width: var(--composer-control);
+  padding: 0;
+}
+.home-hero__ds-row-trigger-icon {
+  display: inline-flex;
+  flex: none;
+}
+.composer-ds-icon-trigger > svg {
+  flex: none;
+}
+.home-hero__ds-row-trigger-label,
+.composer-ds-icon-trigger-label {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 200px;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The clear mark takes the palette's place on hover, centred on the same point: 8 + 16 / 2 = 16. */
+.home-hero__ds-row-clear {
+  top: 2px;
+  left: 2px;
+  color: var(--ink-soft);
+}
+.home-hero__ds-row-picker .home-hero__ds-row-clear:hover,
+.home-hero__ds-row-picker .home-hero__ds-row-clear:focus-visible {
+  color: var(--ink);
+}
+
+/* ── Home's task-type and plugin fields: the same family again, with their words ───────────── */
+
+.home-hero__foot-left .home-hero__footer-option[data-field-name] {
+  height: var(--composer-control);
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--composer-control-radius);
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: none;
+}
+.home-hero__foot-left .home-hero__footer-option[data-field-name]:hover,
+.home-hero__foot-left .home-hero__footer-option[data-field-name].is-open,
+.home-hero__foot-left .home-hero__footer-option[data-field-name]:focus-within {
+  border: 0;
+  background: var(--sub);
+  color: var(--ink);
+  box-shadow: none;
+}
+.home-hero__foot-left .home-hero__footer-select-trigger,
+.home-hero__foot-left .home-hero__footer-option[data-field-name] .home-hero__footer-select-label {
+  color: inherit;
+  font-size: 13px;
+  font-weight: 500;
+}
+.home-hero__foot-left .home-hero__footer-option[data-field-name] button {
+  color: inherit;
+}
+.home-hero__foot-left .home-hero__footer-option.has-selection button > svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ── Model switcher fallbacks ──────────────────────────────────────────────────────────────── */
+
+/* MovieChannelSwitcher carries the look in its own module. These are the two older triggers a host
+   can still mount in the same slot; they must not bring a different shape back into the row. */
+.composer-row .avatar-agent-trigger,
+:is(.composer-row, .home-hero__execution-switcher) .inline-switcher__chip {
+  box-sizing: border-box;
+  gap: 6px;
+  width: auto;
+  height: var(--composer-control);
+  min-height: var(--composer-control);
+  margin: 0;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--composer-control-radius);
+  background: transparent;
+  color: var(--ink-soft);
+  box-shadow: none;
+  transition:
+    background-color var(--composer-dur-quick) var(--composer-ease),
+    color var(--composer-dur-quick) var(--composer-ease);
+}
+.composer-row .avatar-agent-trigger:hover:not(:disabled),
+:is(.composer-row, .home-hero__execution-switcher) .inline-switcher__chip:hover,
+:is(.composer-row, .home-hero__execution-switcher) .inline-switcher__chip[aria-expanded='true'] {
+  border: 0;
+  background: var(--sub);
+  color: var(--ink);
+  box-shadow: none;
+}
+.composer-row .avatar-agent-trigger__model,
+:is(.composer-row, .home-hero__execution-switcher) .inline-switcher__chip-model-name {
+  max-width: 170px;
+  margin: 0;
+  opacity: 1;
+  color: inherit;
+  font-size: 13px;
+  font-weight: 500;
+}
+:is(.composer-row, .home-hero__execution-switcher) .inline-switcher__chip-conn {
+  width: 6px;
+  height: 6px;
+}
+:is(.composer-row, .home-hero__execution-switcher) .inline-switcher__chip-chevron {
+  color: var(--ink-faint);
+}
+
+/* ── Send, stop and pending: one disc ──────────────────────────────────────────────────────── */
+
+.composer-send,
+.home-hero__submit {
+  --composer-send-fill: var(--brand);
+  --composer-send-glyph: var(--on-brand);
+
+  box-sizing: border-box;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--composer-control);
+  min-width: var(--composer-control);
+  height: var(--composer-control);
+  min-height: var(--composer-control);
+  margin-inline-start: 2px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 50%;
+  background: var(--composer-send-fill);
+  color: var(--composer-send-glyph);
+  box-shadow: none;
+  opacity: 1;
+  cursor: pointer;
+  /* The fill changes on the quick clock, so empty → ready → running → empty is a tone easing over,
+     never a cut: the chat composer keeps ONE button through all three states (ChatComposer.tsx,
+     `sendCellMode`), so these transitions actually run between them. */
+  transition:
+    background-color var(--composer-dur-quick) var(--composer-ease),
+    color var(--composer-dur-quick) var(--composer-ease),
+    transform var(--composer-dur-press) var(--composer-ease);
+}
+.composer-send:hover:not(:disabled),
+.home-hero__submit:hover:not(:disabled) {
+  background: var(--brand-hover);
+  color: var(--composer-send-glyph);
+  box-shadow: none;
+  transform: none;
+}
+.composer-send:active:not(:disabled),
+.home-hero__submit:active:not(:disabled) {
+  background: var(--brand-hover);
+  color: var(--composer-send-glyph);
+  transform: scale(0.96);
+}
+.composer-send:focus-visible,
+.home-hero__submit:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+.composer-send:disabled,
+.home-hero__submit:disabled,
+.home-hero__submit[aria-disabled='true'] {
+  background: var(--sub);
+  color: var(--ink-ghost);
+  box-shadow: none;
+  opacity: 1;
+  cursor: default;
+  transform: none;
+}
+.composer-send.stop,
+.composer-send.stop:hover,
+.composer-send.stop:active,
+.composer-send.stop.admission-pending:disabled {
+  border-radius: 50%;
+  background: var(--brand);
+  color: var(--on-brand);
+}
+/* The legacy narrow-column rule hides every span inside the button, and that would take the pending
+   ring and the glyph layers with it: below 430 the disc would just sit there blank. */
+.composer-send .composer-pending-ring {
+  display: block;
+}
+/* A solid square reads heavier than the arrow it replaces, so it is drawn a little smaller. */
+.composer-send .composer-stop-glyph {
+  width: 26px;
+  height: 26px;
+}
+/* One cell, three glyphs (arrow / stop square / preparing ring) stacked in the disc's single grid
+   area. The button's `data-mode` says which one is on; the others sit at scale .6 + 2 px blur +
+   opacity 0. Trading places is the chat's icon swap (the same move as copy → check in the turn's
+   footer): the incoming glyph settles from .6 over 200 ms, the outgoing one leaves faster, led by
+   its opacity. Nothing ever scales from 0. */
+.composer-send .composer-send__glyph {
+  grid-area: 1 / 1;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.6);
+  filter: blur(2px);
+  transition:
+    opacity var(--composer-dur-pop-out) var(--composer-ease),
+    transform var(--composer-dur-pop) var(--composer-ease),
+    filter var(--composer-dur-pop-out) var(--composer-ease);
+}
+.composer-send[data-mode='send'] .composer-send__glyph--send,
+.composer-send[data-mode='stop'] .composer-send__glyph--stop,
+.composer-send[data-mode='pending'] .composer-send__glyph--pending {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  transition:
+    opacity var(--composer-dur-pop) var(--composer-ease),
+    transform var(--composer-dur-pop) var(--composer-ease),
+    filter var(--composer-dur-pop) var(--composer-ease);
+}
+/* The ring keeps its own rotation inside the swapping layer; it only turns while it is the one on. */
+.composer-send:not([data-mode='pending']) .composer-pending-ring {
+  animation-play-state: paused;
+}
+/* The comment form's send button still ships a text label. The disc has no room for it and the word
+   stays in the accessibility tree. */
+.comment-side-new-comment .composer-send {
+  max-width: none;
+}
+.comment-side-new-comment .composer-send > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.comment-side-new-comment .composer-send.is-sending:disabled {
+  background: var(--sub);
+  color: var(--ink-ghost);
+}
+
+/* ── Board comment popover ─────────────────────────────────────────────────────────────────── */
+
+/* The same card as every other composer. The legacy popover is a translucent sheet at radius 8. */
+.comment-popover-composer {
+  padding: var(--composer-card-pad);
+  border: 1px solid var(--line);
+  border-radius: var(--composer-radius);
+  background: var(--surface);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: var(--float-shadow);
+  transition: border-color var(--composer-dur-quick) var(--composer-ease);
+}
+.comment-popover-composer:focus-within {
+  border-color: var(--ink-ghost);
+}
+/* Everything above the input starts on the text's left edge. The grip's dots sit 5 inside its 22 box,
+   so the bar starts 5 short of the inset. */
+.comment-popover-composer .comment-popover-titlebar {
+  padding-inline: calc(var(--composer-input-inset) - 5px) var(--composer-input-inset);
+}
+.comment-popover-composer .comment-popover-section-params {
+  padding-inline: var(--composer-input-inset);
+}
+/* The input adds 8 above its text, so the section adds only 2: the text sits as far below the hairline
+   as the summary sits above it. */
+.comment-popover-composer .comment-popover-section + .comment-popover-section {
+  padding-top: 2px;
+}
+
+/* Its actions are words, so the row stays a row of text buttons, but its icon buttons are the same
+   ghost family as the "+" and the row keeps the same 6 between controls. */
+.comment-popover-close {
+  box-sizing: border-box;
+  width: var(--composer-control);
+  height: var(--composer-control);
+  border: 0;
+  border-radius: var(--composer-control-radius);
+  background: transparent;
+  color: var(--ink-soft);
+  box-shadow: none;
+  transition:
+    background-color var(--composer-dur-quick) var(--composer-ease),
+    color var(--composer-dur-quick) var(--composer-ease);
+}
+.comment-popover-close:hover:not(:disabled) {
+  border: 0;
+  background: var(--sub);
+  color: var(--ink);
+}
+/* Deleting is the one action in the family that says so on hover. */
+.comment-popover-close.comment-popover-delete:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  color: var(--danger);
+}
+.comment-popover-actions-start {
+  gap: 4px;
+}
+.comment-popover-actions-end {
+  gap: 6px;
+}
+/* The shared Button is 36 tall at 14/600 and mixes radius 4 with a pill. Here it is toolbar height and
+   type, one radius, and no inset highlight: that white line is a light-theme value and draws an arc in
+   dark. The states are scoped here so the shared Button stays as it is everywhere else. */
+.comment-popover-actions :is(.primary, .ghost) {
+  box-sizing: border-box;
+  height: var(--composer-control);
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--composer-control-radius);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: none;
+  transition:
+    background-color var(--composer-dur-quick) var(--composer-ease),
+    color var(--composer-dur-quick) var(--composer-ease);
+}
+.comment-popover-actions .primary {
+  background: var(--brand);
+  color: var(--on-brand);
+}
+.comment-popover-actions .primary:hover:not(:disabled),
+.comment-popover-actions .primary:active:not(:disabled) {
+  background: var(--brand-hover);
+  color: var(--on-brand);
+}
+.comment-popover-actions .ghost {
+  background: transparent;
+  color: var(--ink-soft);
+}
+.comment-popover-actions .ghost:hover:not(:disabled),
+.comment-popover-actions .ghost:active:not(:disabled) {
+  background: var(--sub);
+  color: var(--ink);
+}
+/* Disabled is lighter than enabled, never heavier: the primary is the send disc's quiet fill and the
+   ghost is only its word, faded. */
+.comment-popover-actions .primary:disabled {
+  background: var(--sub);
+  color: var(--ink-ghost);
+  opacity: 1;
+  cursor: default;
+}
+.comment-popover-actions .ghost:disabled {
+  background: transparent;
+  color: var(--ink-ghost);
+  opacity: 1;
+  cursor: default;
+}
+
+/* ── Motion: what arrives in the card, and the menus the toolbar opens ─────────────────────── */
+
+/* Chips staged above the input arrive with the turn's enter recipe: opacity, 4 px rise, 2 px blur
+   clearing, 240 ms. They are React-unmounted on removal, so they leave at once; an exit would need
+   a presence wrapper in ChatComposer, which this pass does not add.
+   The attachment tray animates only cards that are still uploading (`.is-up`): when an upload
+   finishes its card is re-keyed from `pending:` to `staged:` (runtime/chat/staged-attachment.ts)
+   and remounts, and an enter on the ready card would replay the fade-up in place. Restating the
+   tray's own upload sweep here keeps it running, since this rule replaces the legacy `animation`. */
+@keyframes fantay-composer-chip-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+    filter: blur(2px);
+  }
+}
+.composer-shell .staged-chip,
+.composer-shell > .composer-active-file {
+  animation: fantay-composer-chip-in var(--composer-dur-enter) var(--composer-ease) backwards;
+}
+.composer-att .msg-att-img.is-up,
+.composer-att .msg-att-doc.is-up {
+  animation:
+    fantay-composer-chip-in var(--composer-dur-enter) var(--composer-ease) backwards,
+    composer-att-up-travel 1.4s linear infinite;
+}
+/* The rows staged above the input (run contexts, the attachment tray, the active-file strip) used to
+   appear and disappear in one frame, so the whole composer jumped by a row. A row now opens from zero
+   height (interpolate-size lets `auto` interpolate) and, when it empties, collapses back:
+   ChatComposer's useStagedRowPresence keeps it mounted for the exit with its last content and marks it
+   `data-state="closed"`. The −4 px end margin cancels the card's 4 px flex gap while the row is shut,
+   so the gap grows in with the row instead of popping. Content is clipped only while it moves. */
+/* `min-block-size: 0` is held for the whole run: a flex item's automatic minimum is its content
+   height, which would pin the row open and turn the height animation into a no-op. */
+@keyframes fantay-composer-row-open {
+  from {
+    block-size: 0;
+    min-block-size: 0;
+    padding-block: 0;
+    margin-block-end: -4px;
+    opacity: 0;
+    overflow: clip;
+  }
+  99% {
+    min-block-size: 0;
+    overflow: clip;
+  }
+}
+@keyframes fantay-composer-row-close {
+  from {
+    min-block-size: 0;
+    overflow: clip;
+  }
+  to {
+    block-size: 0;
+    min-block-size: 0;
+    padding-block: 0;
+    margin-block-end: -4px;
+    opacity: 0;
+    overflow: clip;
+  }
+}
+.composer-shell > .staged-row,
+.composer-shell > .composer-att-wrap,
+.composer-shell > .composer-active-file {
+  interpolate-size: allow-keywords;
+}
+.composer-shell > .staged-row,
+.composer-shell > .composer-att-wrap {
+  animation: fantay-composer-row-open var(--composer-dur-enter) var(--composer-ease) backwards;
+}
+.composer-shell > .composer-active-file {
+  animation:
+    fantay-composer-row-open var(--composer-dur-enter) var(--composer-ease) backwards,
+    fantay-composer-chip-in var(--composer-dur-enter) var(--composer-ease) backwards;
+}
+.composer-shell > .staged-row[data-state='closed'],
+.composer-shell > .composer-att-wrap[data-state='closed'] {
+  animation: fantay-composer-row-close 180ms var(--composer-ease) forwards;
+  pointer-events: none;
+}
+/* A failed card keeps the (already finished) chip-in in its list, so 重试 (is-fail → is-up on the same
+   `pending:` key) only adds the sweep back instead of restarting the fade-up in place. */
+.composer-att .msg-att-img.is-fail,
+.composer-att .msg-att-doc.is-fail {
+  animation: fantay-composer-chip-in var(--composer-dur-enter) var(--composer-ease) backwards;
+}
+
+/* Every menu the composer opens pops from its anchor: scale .97 + opacity + 4 px towards the trigger,
+   200 ms on the quint curve, `transform-origin` on the edge that faces the trigger. These menus
+   (plus, its flyouts, design system, @-mention and / commands) are mounted only while open, so they
+   leave at once; the model and effort menus are Radix and fade out opacity-led on 140 ms
+   (components/movie/MovieChannelSwitcher.module.css). `--composer-pop-dy` is the 4 px, signed towards
+   the trigger. */
+@keyframes fantay-composer-pop {
+  from {
+    opacity: 0;
+    transform: translateY(var(--composer-pop-dy, 4px)) scale(0.97);
+  }
+}
+@keyframes fantay-composer-pop-side {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+@keyframes fantay-composer-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+.plus-menu__popup {
+  --composer-pop-dy: -4px;
+  transform-origin: top left;
+  animation: fantay-composer-pop var(--composer-dur-pop) var(--composer-ease);
+}
+.plus-menu__popup[data-placement='above'],
+.plus-menu__popup.composer-toolbox-standalone-popup {
+  /* The standalone design-toolbox / 插件 popovers float above the composer (chat.css
+     `bottom: calc(100% + 44px)`), so they rise from the pills under them. */
+  --composer-pop-dy: 4px;
+  transform-origin: bottom left;
+}
+.plus-menu__flyout {
+  transform-origin: top left;
+  animation: fantay-composer-pop-side var(--composer-dur-pop) var(--composer-ease);
+}
+.plus-menu__popup--flyout-left .plus-menu__flyout {
+  transform-origin: top right;
+}
+.plus-menu__popup--flyout-y-up .plus-menu__flyout {
+  transform-origin: bottom left;
+}
+.plus-menu__popup--flyout-y-up.plus-menu__popup--flyout-left .plus-menu__flyout {
+  transform-origin: bottom right;
+}
+/* Narrow viewports fold the flyout into the menu's own flow, where scaling would shove its rows. */
+.plus-menu__popup--flyout-contained .plus-menu__flyout {
+  animation-name: fantay-composer-fade-in;
+}
+.project-ds-picker-popover {
+  --composer-pop-dy: -4px;
+  transform-origin: top left;
+  animation: fantay-composer-pop var(--composer-dur-pop) var(--composer-ease);
+}
+.project-ds-picker-popover[data-placement='up'] {
+  --composer-pop-dy: 4px;
+  transform-origin: bottom left;
+}
+/* @-mention and / commands share the caret layer; it replaces the layer's legacy 6 px / .98 enter. */
+.caret-floating-layer[data-placement='above'] > * {
+  --composer-pop-dy: 4px;
+  transform-origin: bottom left;
+  animation: fantay-composer-pop var(--composer-dur-pop) var(--composer-ease);
+}
+.caret-floating-layer[data-placement='below'] > * {
+  --composer-pop-dy: -4px;
+  transform-origin: top left;
+  animation: fantay-composer-pop var(--composer-dur-pop) var(--composer-ease);
+}
+
+/* Hovered and keyboard-active rows fill on the quick clock, in every one of those menus. */
+.plus-menu__item,
+.project-ds-picker-option,
+.mention-item,
+.slash-item {
+  transition: background-color var(--composer-dur-quick) var(--composer-ease);
+}
+.mention-tabs .mention-tab {
+  transition:
+    background-color var(--composer-dur-quick) var(--composer-ease),
+    color var(--composer-dur-quick) var(--composer-ease);
+}
+/* The selected system's check settles into its row (.8 → 1) instead of snapping in. */
+@keyframes fantay-composer-settle {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+.project-ds-picker-option-check {
+  animation: fantay-composer-settle var(--composer-dur-pop) var(--composer-ease) backwards;
+}
+
+/* Reduced motion switches off everything this file moves; colour and border changes stay instant.
+   The off glyphs of the send disc stay hidden, they just no longer scale or blur. */
+/* Closing: the plus menu, the design-system popover and the @ / slash layer stay mounted for one exit clock
+   (hooks/usePresence) and fade out opacity-led, matching the Radix model / effort menus beside them.
+   They are inert while they go. */
+@keyframes fantay-composer-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+.plus-menu__popup[data-state='closed'],
+.project-ds-picker-popover[data-state='closed'],
+.caret-floating-layer[data-state='closed'] {
+  animation: fantay-composer-fade-out var(--composer-dur-pop-out) var(--composer-ease) forwards;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer-shell,
+  .home-view:not(.home-view--dock) .home-hero__composer-card,
+  :is(.composer-row, .home-hero__input-foot) .plus-menu__trigger,
+  :is(.composer-row, .home-hero__input-foot) .home-hero__ds-row-trigger,
+  :is(.composer-row, .home-hero__input-foot) .composer-ds-icon-trigger,
+  .composer-row > .icon-btn,
+  .composer-row .avatar-agent-trigger,
+  :is(.composer-row, .home-hero__execution-switcher) .inline-switcher__chip,
+  .composer-send,
+  .home-hero__submit,
+  .composer-send .composer-send__glyph,
+  .composer-send[data-mode='send'] .composer-send__glyph--send,
+  .composer-send[data-mode='stop'] .composer-send__glyph--stop,
+  .composer-send[data-mode='pending'] .composer-send__glyph--pending,
+  .comment-popover-composer,
+  .comment-popover-close,
+  .comment-popover-actions :is(.primary, .ghost),
+  .plus-menu__item,
+  .project-ds-picker-option,
+  .mention-item,
+  .slash-item,
+  .mention-tabs .mention-tab {
+    transition: none;
+  }
+  :is(.composer-row, .home-hero__input-foot) .plus-menu__trigger:active:not(:disabled),
+  :is(.composer-row, .home-hero__input-foot) .home-hero__ds-row-trigger:active:not(:disabled),
+  :is(.composer-row, .home-hero__input-foot) .composer-ds-icon-trigger:active:not(:disabled),
+  .composer-row > .icon-btn:active:not(:disabled),
+  .composer-send:active:not(:disabled),
+  .home-hero__submit:active:not(:disabled) {
+    transform: none;
+  }
+  .composer-send .composer-send__glyph {
+    transform: none;
+    filter: none;
+  }
+  .composer-shell .staged-chip,
+  .composer-shell > .composer-active-file,
+  .composer-shell > .staged-row,
+  .composer-shell > .composer-att-wrap,
+  .composer-att .msg-att-img.is-up,
+  .composer-att .msg-att-doc.is-up,
+  .composer-att .msg-att-img.is-fail,
+  .composer-att .msg-att-doc.is-fail,
+  .plus-menu__popup,
+  .plus-menu__flyout,
+  .plus-menu__popup--flyout-contained .plus-menu__flyout,
+  .project-ds-picker-popover,
+  .caret-floating-layer > *,
+  .caret-floating-layer[data-placement] > *,
+  .project-ds-picker-option-check {
+    animation: none;
+  }
+}
+
+/* ── Collapse order ────────────────────────────────────────────────────────────────────────── */
+
+/* Below full width the design-system name truncates first (`flex-shrink: 9999` on start vs `1` on end).
+   Once the start cluster hits its icon floor, each step below removes one label, narrowest last:
+   ExecutionPermissionPicker collapses to its shield icon in its own module, and MovieChannelSwitcher
+   collapses effort and model name in its module, keeping the send disc inside the card at every width. */
+@container composer-toolbar (max-width: 420px) {
+  .home-hero__foot-left .home-hero__footer-select-label {
+    display: none;
+  }
+}
+@container composer-toolbar (max-width: 340px) {
+  .home-hero__ds-row-trigger-label,
+  .composer-ds-icon-trigger-label {
+    display: none;
+  }
+  :is(.composer-row, .home-hero__input-foot) .home-hero__ds-row-trigger,
+  :is(.composer-row, .home-hero__input-foot) .composer-ds-icon-trigger.is-picked {
+    justify-content: center;
+    gap: 0;
+    width: var(--composer-control);
+    padding: 0;
+  }
+}
+@container composer-toolbar (max-width: 240px) {
+  .composer-row .avatar-agent-trigger__model,
+  :is(.composer-row, .home-hero__execution-switcher) .inline-switcher__chip-model-name {
+    display: none;
+  }
+}
+/* Below this no column in the product is this narrow; it exists so the row can never overlap. */
+@container composer-toolbar (max-width: 150px) {
+  .home-hero__ds-row-picker,
+  .composer-ds-icon {
+    display: none;
+  }
+  .composer-row__start:has(.home-hero__ds-row-picker, .composer-ds-icon),
+  .home-hero__foot-left:has(.home-hero__ds-row-picker) {
+    min-width: var(--composer-control);
+  }
+}

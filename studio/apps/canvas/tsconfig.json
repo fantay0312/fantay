@@ -1,0 +1,49 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "types": [
+      "vite/client",
+      "unplugin-icons/types/vue"
+    ],
+    "jsx": "preserve",
+    "allowSyntheticDefaultImports": true,
+    "useDefineForClassFields": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "paths": {
+      "@/app/editor/active-store": ["./src/fx/compat/active-store.ts"],
+      "@/app/editor/session": ["./src/fx/compat/session.ts"],
+      "@/app/editor/fonts": ["./src/fx/compat/fonts.ts"],
+      "@/app/editor/fonts/cache": ["./src/fx/compat/fonts-cache.ts"],
+      "@/app/tauri/env": ["./src/fx/compat/tauri-env.ts"],
+      "@/app/settings/preferences/store": ["./src/fx/compat/preferences-store.ts"],
+      "@/app/settings/preferences/apply": ["./src/fx/compat/preferences-apply.ts"],
+      "@/app/editor/design-check/layers": ["./src/fx/compat/design-check-layers.ts"],
+      "@/app/editor/canvas/menu/actions": ["./src/fx/compat/canvas-menu-actions.ts"],
+      "@/app/shell/menu/shortcut": ["./src/fx/compat/menu-shortcut.ts"],
+      "@/*": ["./src/vendor/open-pencil/*"],
+      "@open-pencil/vue": ["./src/fx/engine/open-pencil-vue.d.ts"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.vue",
+    "src/components.d.ts",
+    "tests/**/*.ts",
+    "aliases.ts",
+    "icons.ts",
+    "vite.config.ts",
+    "vitest.config.ts"
+  ]
+}

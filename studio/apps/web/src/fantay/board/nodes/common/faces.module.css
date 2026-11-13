@@ -1,0 +1,123 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * Fantay — derived from Doop (https://github.com/kgoedecke/doop)
+ *   source: src/components/GhostFrames.tsx @ d261a85d3f9d87ac0653bb8512915f4e5bdff2b9
+ *   Copyright (c) the Doop contributors. Licensed under the GNU Affero General Public License v3.0
+ *   (see licenses/doop-AGPL-3.0.txt and THIRD_PARTY_NOTICES.md). "Doop" is a trademark of its
+ *   owner and is not used to brand Fantay.
+ * Modifications Copyright (c) 2026 Fantay contributors, AGPL-3.0-only: the pending skeleton (bars + status
+ *   line) plus the placeholder, error, missing and cover faces shared by every node kind (spec 03 §4.0).
+ */
+
+.face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  overflow: hidden;
+  border-radius: inherit;
+  background: var(--surface);
+  box-shadow: 0 0 0 calc(1px * var(--inv-zoom, 1)) var(--line);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: var(--type-body);
+  line-height: var(--type-body-lh);
+  text-align: center;
+}
+
+/* hatch of an empty frame (Doop FrameView) */
+.placeholder {
+  background-color: var(--surface);
+  background-image: repeating-linear-gradient(45deg, transparent 0 10px, color-mix(in srgb, var(--ink) 3%, transparent) 10px 20px);
+}
+
+.glyph {
+  display: inline-flex;
+  color: var(--ink-faint);
+}
+
+.caption {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pending {
+  background: color-mix(in srgb, var(--board-building) 4%, var(--surface));
+  outline: 1.5px dashed color-mix(in srgb, var(--board-building) 55%, transparent);
+  outline-offset: -1.5px;
+  gap: 18px;
+}
+
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(60%, 280px);
+}
+
+.bar {
+  height: 10px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--board-building) 18%, transparent);
+}
+
+.bar:nth-child(1) {
+  width: 55%;
+}
+
+.bar:nth-child(2) {
+  width: 100%;
+  animation-delay: 0.2s;
+}
+
+.bar:nth-child(3) {
+  width: 78%;
+  animation-delay: 0.4s;
+}
+
+.error {
+  color: var(--accent-ink);
+}
+
+.message {
+  max-width: 100%;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 1;
+  transition: opacity var(--motion-exit) var(--ease-out-quint);
+}
+
+.cover[data-loaded="false"] {
+  opacity: 0;
+}
+
+.cover[data-hidden] {
+  opacity: 0;
+}
+
+.stale {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  padding: 0 6px;
+  border-radius: var(--radius-tag);
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  color: var(--ink-soft);
+  font-size: var(--type-caption);
+  line-height: 18px;
+}

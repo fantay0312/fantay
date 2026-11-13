@@ -1,0 +1,140 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Model picker (spec 05 §5.5): pill trigger, searchable grouped listbox, capability filter. */
+.triggerWrap {
+  display: inline-flex;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+/* Shrinks before the Run button does; the label truncates. */
+.trigger.trigger {
+  flex-shrink: 1;
+  gap: 6px;
+  min-width: 0;
+  max-width: 180px;
+  padding-inline: 8px;
+}
+
+.triggerLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  max-height: min(420px, var(--radix-popover-content-available-height, 420px));
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 10px 8px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.list {
+  flex: 1;
+  min-height: 0;
+  padding: 6px;
+  overflow-y: auto;
+  outline: none;
+}
+
+.groupLabel {
+  padding: 8px 8px 4px;
+  color: var(--ink-faint);
+  font-size: var(--type-caption);
+  font-weight: 600;
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 8px;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+.option[data-active] {
+  background: var(--sub);
+}
+
+.option[aria-selected='true'] .optionLabel::after {
+  content: ' ✓';
+  color: var(--brand-ink);
+}
+
+.option[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+.option[aria-disabled='true'] .optionLabel,
+.option[aria-disabled='true'] .optionMeta {
+  opacity: var(--disabled-opacity);
+}
+
+.optionLabel {
+  color: var(--ink);
+  font-size: var(--type-body);
+  font-weight: 600;
+}
+
+.optionMeta {
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: var(--type-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.caps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.cap {
+  padding: 1px 6px;
+  border-radius: var(--radius-tag);
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+  font-size: var(--type-caption);
+}
+
+.reason {
+  color: var(--accent-ink);
+  font-size: var(--type-label);
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 10px;
+  color: var(--ink-faint);
+  font-size: var(--type-label);
+}
+
+.setup {
+  padding: 6px 8px 8px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.setupList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 8px;
+  padding: 0;
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+  list-style: none;
+}

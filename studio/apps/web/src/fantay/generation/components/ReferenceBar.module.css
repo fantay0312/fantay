@@ -1,0 +1,196 @@
+/* SPDX-License-Identifier: MIT
+ * Derived from infinite-canvas (https://github.com/basketikun/infinite-canvas),
+ * commit 9cd3deacbcc598361807afc16c059a80dd18b6f9, web/src/components/canvas/canvas-node-reference-bar.tsx.
+ * Copyright (c) 2026 basketikun. Released under the MIT License; the full
+ * license text is reproduced in THIRD_PARTY_NOTICES.md.
+ * Modified for Fantay on 2026-10-29: Fantay tokens, label badges, "not sent" state, pick list fallback.
+ * Modified for Fantay on 2026-10-31: tall tiles with a labelled add tile.
+ * Modified for Fantay on 2026-11-02: the add tile is a ghost control of the composer's toolbar family.
+ */
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-inline: var(--composer-input-inset);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tile {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border-radius: var(--composer-control-radius);
+  background: var(--sub);
+  color: var(--ink-soft);
+}
+
+.tile[data-sent='false'] .tileMedia,
+.tile[data-sent='false'] .tileIcon {
+  opacity: 0.4;
+}
+
+.tileMedia {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.badge {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 1px 2px;
+  overflow: hidden;
+  text-align: center;
+  background: color-mix(in oklab, var(--ink) 72%, transparent);
+  color: var(--paper);
+  font-size: var(--type-caption);
+  font-weight: 600;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.strike {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  color: var(--accent-ink);
+}
+
+.remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  opacity: 0;
+  transition: opacity var(--motion-exit) var(--ease-out-quint);
+}
+
+.tile:hover .remove,
+.tile:focus-within .remove {
+  opacity: 1;
+  transition-duration: var(--motion-enter);
+}
+
+.add.add {
+  flex: none;
+  gap: 6px;
+  height: var(--composer-control);
+  /* Same box as the design-system control in the chat toolbar: icon on the 8, label to the right. */
+  padding: 0 10px 0 8px;
+  border: 0;
+  border-radius: var(--composer-control-radius);
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 140ms var(--composer-ease), color 140ms var(--composer-ease);
+}
+
+.add.add:hover:not([data-disabled]) {
+  background: var(--sub);
+  color: var(--ink);
+}
+
+/* Alone in the strip it steps back over the inset, so that its glyph, not its invisible box, sits
+   above the text and above the toolbar's first glyph. */
+.add.add:first-child {
+  margin-inline-start: calc(var(--composer-input-inset) * -1);
+}
+
+.add svg {
+  width: 16px;
+  height: 16px;
+}
+
+.addLabel {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hint {
+  align-self: flex-start;
+  margin-inline: var(--composer-input-inset);
+  padding: 4px 10px;
+  border-radius: var(--radius-chip);
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  font-size: var(--type-label);
+}
+
+.preview {
+  display: block;
+  width: 280px;
+  max-height: 208px;
+  object-fit: contain;
+  border-radius: var(--radius-row);
+}
+
+.previewText {
+  max-width: 280px;
+  max-height: 208px;
+  overflow: hidden;
+  white-space: pre-wrap;
+}
+
+.pickList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 320px;
+  padding: 6px;
+  overflow-y: auto;
+}
+
+.pickEmpty {
+  padding: 10px;
+  color: var(--ink-faint);
+  font-size: var(--type-label);
+}
+
+.pickRow {
+  justify-content: flex-start;
+  width: 100%;
+  height: auto;
+  min-height: 40px;
+  padding: 4px 8px;
+}
+
+.pickThumb {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  overflow: hidden;
+  border-radius: var(--radius-row);
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+}
+
+.pickThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pickTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

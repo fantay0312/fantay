@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shop performance (sample data)</title>
+<style>
+  /* Theme tokens. In a real build these are pasted from the active design system's tokens.css;
+     the chart slots come from the design system's chart tokens or, failing that, the dataviz
+     default palette (light and dark chosen separately). */
+  :root {
+    color-scheme: light;
+    --bg: #f9f9f7;
+    --surface: #fcfcfb;
+    --fg: #0b0b0b;
+    --muted: #52514e;
+    --meta: #898781;
+    --border: rgba(11, 11, 11, 0.10);
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --success: #006300;
+    --danger: #d03b3b;
+    --chart-1: #2a78d6;
+    --radius-md: 12px;
+    --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-6: 24px; --space-8: 32px;
+    --text-xs: 12px; --text-sm: 14px; --text-base: 16px; --text-lg: 20px; --text-xl: 25px; --text-2xl: 40px;
+    --font-display: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --bg: #0d0d0d; --surface: #1a1a19; --fg: #f0efec; --muted: #c3c2b7; --meta: #898781;
+      --border: rgba(255, 255, 255, 0.10); --grid: #2c2c2a; --axis: #383835;
+      --success: #0ca30c; --danger: #e66767; --chart-1: #3987e5;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0d0d0d; --surface: #1a1a19; --fg: #f0efec; --muted: #c3c2b7; --meta: #898781;
+    --border: rgba(255, 255, 255, 0.10); --grid: #2c2c2a; --axis: #383835;
+    --success: #0ca30c; --danger: #e66767; --chart-1: #3987e5;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: var(--text-base) / 1.5 var(--font-body); -webkit-font-smoothing: antialiased; }
+  .page { max-width: 1120px; margin: 0 auto; padding: var(--space-8) var(--space-6) 64px; display: flex; flex-direction: column; gap: var(--space-6); }
+  h1, h2, h3 { margin: 0; font-weight: 500; }
+  h1 { font-family: var(--font-display); font-size: var(--text-xl); line-height: 1.15; font-weight: 400; }
+  .head { display: flex; flex-direction: column; gap: var(--space-2); }
+  .head-row { display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; }
+  .pill { font-size: var(--text-xs); line-height: 1; padding: 5px 8px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); }
+  .takeaway { margin: 0; font-size: var(--text-lg); line-height: 1.35; color: var(--muted); max-width: 56ch; }
+
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: var(--space-4); }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-6); }
+  .kpi { display: flex; flex-direction: column; gap: var(--space-2); }
+  .kpi-label { font-size: var(--text-sm); color: var(--muted); font-weight: 500; }
+  .kpi-value { margin: 0; font-family: var(--font-display); font-size: var(--text-2xl); line-height: 1.05; font-weight: 400; }
+  .kpi-delta { margin: 0; font-size: var(--text-sm); display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: baseline; }
+  .kpi-delta .delta { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .delta[data-tone="good"] { color: var(--success); }
+  .delta[data-tone="bad"] { color: var(--danger); }
+  .kpi-window { color: var(--meta); }
+
+  .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); gap: var(--space-4); }
+  .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3); margin-bottom: var(--space-4); }
+  .card-title { font-size: var(--text-base); font-weight: 500; }
+  .card-note { margin: 2px 0 0; font-size: var(--text-sm); color: var(--muted); }
+  button { font: inherit; color: inherit; }
+  .toggle { font-size: var(--text-sm); padding: 4px 10px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
+  .toggle[aria-pressed="true"] { color: var(--fg); border-color: var(--axis); }
+  .toggle:focus-visible, .th-btn:focus-visible, .search:focus-visible, .hit:focus-visible { outline: 2px solid var(--chart-1); outline-offset: 2px; }
+  .plot { position: relative; min-height: 260px; }
+  .plot svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .plot .tick { fill: var(--meta); font-size: 12px; font-family: var(--font-body); }
+  .plot .end-label { fill: var(--fg); font-size: 14px; font-weight: 600; font-family: var(--font-body); }
+  .tip { position: absolute; z-index: 2; pointer-events: none; padding: 6px 10px; background: var(--surface); color: var(--fg); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12); font-size: var(--text-sm); white-space: nowrap; transform: translate(-50%, -100%); }
+  .tip[hidden] { display: none; }
+  .tip .when { color: var(--muted); }
+  .tip .row { display: flex; align-items: center; gap: 8px; }
+  .tip .key { width: 12px; height: 2px; background: var(--chart-1); display: inline-block; }
+  .tip .val { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tv { display: none; }
+  .show-table .tv { display: block; }
+  .show-table .plot { display: none; }
+
+  .tools { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
+  .search { flex: 1; max-width: 18rem; font: inherit; font-size: var(--text-sm); padding: 6px 10px; color: var(--fg); background: transparent; border: 1px solid var(--border); border-radius: 8px; }
+  .tablewrap { max-height: 22rem; overflow: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--grid); }
+  th { position: sticky; top: 0; background: var(--surface); font-weight: 500; color: var(--muted); }
+  th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .th-btn { all: unset; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+  .th-btn::after { content: ""; width: 0; height: 0; border: 4px solid transparent; opacity: 0; }
+  th[aria-sort="ascending"] .th-btn::after { border-bottom-color: currentColor; border-top-width: 0; opacity: 1; }
+  th[aria-sort="descending"] .th-btn::after { border-top-color: currentColor; border-bottom-width: 0; opacity: 1; }
+  .share { display: inline-block; height: 8px; border-radius: 4px; background: color-mix(in srgb, var(--chart-1) 30%, transparent); vertical-align: middle; margin-left: 8px; }
+  td .delta { font-weight: 600; }
+
+  .dash-skeleton { color: transparent !important; background: var(--grid); border-radius: 6px; min-width: 4ch; }
+  .state { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 120px; color: var(--muted); font-size: var(--text-sm); }
+  .state::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--danger); }
+  .state.empty::before { background: var(--meta); }
+
+  .sources { font-size: var(--text-sm); color: var(--muted); }
+  .sources summary { cursor: pointer; }
+  .sources dl { margin: var(--space-3) 0 0; display: grid; grid-template-columns: max-content 1fr; gap: 4px var(--space-4); }
+  .sources dt { color: var(--meta); }
+  .sources dd { margin: 0; }
+  .sources pre { margin: 0; white-space: pre-wrap; font: 12px / 1.45 ui-monospace, Menlo, monospace; }
+  .sources .item { padding: var(--space-3) 0; border-top: 1px solid var(--grid); }
+  .sources .item:first-of-type { border-top: 0; }
+  @media (prefers-reduced-motion: no-preference) { .toggle { transition: border-color 0.15s ease-out; } }
+</style>
+</head>
+<body>
+<main class="page" id="dash">
+  <header class="head">
+    <div class="head-row">
+      <h1>Shop performance</h1>
+      <span class="pill" id="sample-pill" hidden>Sample data</span>
+    </div>
+    <p class="takeaway dash-skeleton" data-source="summary" data-field="takeaway">—</p>
+  </header>
+
+  <section class="kpis" aria-label="Key figures">
+    <article class="card kpi">
+      <h2 class="kpi-label">Revenue</h2>
+      <p class="kpi-value dash-skeleton" data-source="kpis" data-where="id=revenue" data-field="value" data-format="usd-compact">—</p>
+      <p class="kpi-delta"><span class="delta dash-skeleton" data-source="kpis" data-where="id=revenue" data-field="delta" data-format="signed-percent" data-good="up">—</span><span class="kpi-window" data-source="kpis" data-where="id=revenue" data-field="window">—</span></p>
+    </article>
+    <article class="card kpi">
+      <h2 class="kpi-label">Orders</h2>
+      <p class="kpi-value dash-skeleton" data-source="kpis" data-where="id=orders" data-field="value" data-format="int">—</p>
+      <p class="kpi-delta"><span class="delta dash-skeleton" data-source="kpis" data-where="id=orders" data-field="delta" data-format="signed-percent" data-good="up">—</span><span class="kpi-window" data-source="kpis" data-where="id=orders" data-field="window">—</span></p>
+    </article>
+    <article class="card kpi">
+      <h2 class="kpi-label">Average order value</h2>
+      <p class="kpi-value dash-skeleton" data-source="kpis" data-where="id=aov" data-field="value" data-format="usd-cents">—</p>
+      <p class="kpi-delta"><span class="delta dash-skeleton" data-source="kpis" data-where="id=aov" data-field="delta" data-format="signed-percent" data-good="up">—</span><span class="kpi-window" data-source="kpis" data-where="id=aov" data-field="window">—</span></p>
+    </article>
+    <article class="card kpi">
+      <h2 class="kpi-label">Repeat purchase rate</h2>
+      <p class="kpi-value dash-skeleton" data-source="kpis" data-where="id=repeat" data-field="value" data-format="percent">—</p>
+      <p class="kpi-delta"><span class="delta dash-skeleton" data-source="kpis" data-where="id=repeat" data-field="delta" data-format="signed-points" data-good="up">—</span><span class="kpi-window" data-source="kpis" data-where="id=repeat" data-field="window">—</span></p>
+    </article>
+  </section>
+
+  <section class="charts" aria-label="Trends">
+    <article class="card" id="card-orders">
+      <div class="card-head">
+        <div><h2 class="card-title">Orders per month</h2><p class="card-note">Last 12 months</p></div>
+        <button class="toggle" type="button" aria-pressed="false">Table view</button>
+      </div>
+      <div class="plot" id="plot-orders" data-source="monthly"></div>
+      <div class="tv" id="tv-orders"></div>
+    </article>
+    <article class="card" id="card-repeat">
+      <div class="card-head">
+        <div><h2 class="card-title">Repeat purchase rate</h2><p class="card-note">Share of orders from returning customers, last 12 months</p></div>
+        <button class="toggle" type="button" aria-pressed="false">Table view</button>
+      </div>
+      <div class="plot" id="plot-repeat" data-source="monthly"></div>
+      <div class="tv" id="tv-repeat"></div>
+    </article>
+  </section>
+
+  <section class="card" aria-label="Channels">
+    <div class="card-head">
+      <div><h2 class="card-title">Revenue by channel</h2><p class="card-note" id="channels-note">Latest month, compared with the month before</p></div>
+    </div>
+    <div class="tools"><input class="search" id="search" type="search" placeholder="Filter channels" aria-label="Filter channels"></div>
+    <div class="tablewrap">
+      <table id="channels" data-source="channels_vs_prior" data-row-key="channel">
+        <thead><tr>
+          <th scope="col" data-field="channel" aria-sort="none"><button class="th-btn" type="button">Channel</button></th>
+          <th scope="col" class="num" data-field="orders" aria-sort="none"><button class="th-btn" type="button">Orders</button></th>
+          <th scope="col" class="num" data-field="revenue" aria-sort="descending"><button class="th-btn" type="button">Revenue</button></th>
+          <th scope="col" class="num" data-field="change" aria-sort="none"><button class="th-btn" type="button">vs prior month</button></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <details class="sources card">
+    <summary>Sources and formulas</summary>
+    <div id="sources-list"></div>
+  </details>
+</main>
+
+<!-- Datasets: every figure, chart and table on this page reads from these islands.
+     Provenance for each id lives in data/sources.json and is mirrored in #sources below. -->
+<script type="application/json" data-dataset="monthly">[
+  {"month":"2025-11","orders":1180,"revenue":49420,"repeat_rate":0.31},
+  {"month":"2025-12","orders":1215,"revenue":53110,"repeat_rate":0.33},
+  {"month":"2026-01","orders":1090,"revenue":45210,"repeat_rate":0.29},
+  {"month":"2026-02","orders":1264,"revenue":52740,"repeat_rate":0.30},
+  {"month":"2026-03","orders":1330,"revenue":56100,"repeat_rate":0.32},
+  {"month":"2026-04","orders":1402,"revenue":59480,"repeat_rate":0.34},
+  {"month":"2026-05","orders":1388,"revenue":58230,"repeat_rate":0.33},
+  {"month":"2026-06","orders":1475,"revenue":63120,"repeat_rate":0.35},
+  {"month":"2026-07","orders":1540,"revenue":66050,"repeat_rate":0.36},
+  {"month":"2026-08","orders":1512,"revenue":64310,"repeat_rate":0.35},
+  {"month":"2026-09","orders":1598,"revenue":69280,"repeat_rate":0.37},
+  {"month":"2026-10","orders":1671,"revenue":72040,"repeat_rate":0.38}
+]</script>
+<script type="application/json" data-dataset="channels">[
+  {"channel":"Direct","orders":301,"revenue":13420,"prev_revenue":13010},
+  {"channel":"Organic search","orders":487,"revenue":20950,"prev_revenue":19880},
+  {"channel":"Email","orders":268,"revenue":12310,"prev_revenue":11450},
+  {"channel":"Paid social","orders":232,"revenue":9460,"prev_revenue":10120},
+  {"channel":"Referral","orders":214,"revenue":9150,"prev_revenue":8760},
+  {"channel":"Marketplace","orders":169,"revenue":6750,"prev_revenue":6060}
+]</script>
+<script type="application/json" id="sources">[
+  {"id":"monthly","title":"Sample monthly orders","description":"Illustrative monthly orders, revenue and repeat rate, Nov 2025 to Oct 2026. Rows written for this template, not real business data.","source":{"kind":"file","name":"data/monthly.json","format":"json"},"updated":{"at":"2026-11-02T00:00:00Z","by":"Agent"},"fixed":true},
+  {"id":"channels","title":"Sample revenue by channel","description":"Illustrative revenue and orders per channel for Oct 2026, with Sep 2026 revenue. Channel rows add up to the Oct 2026 and Sep 2026 monthly totals. Rows written for this template, not real business data.","source":{"kind":"file","name":"data/channels.json","format":"json"},"updated":{"at":"2026-11-02T00:00:00Z","by":"Agent"},"fixed":true}
+]</script>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ---- Data layer: datasets, calculations, marks ---------------------------------------------
+  var store = {};
+  document.querySelectorAll('script[data-dataset]').forEach(function (el) {
+    var id = el.getAttribute('data-dataset');
+    try { store[id] = { status: 'ok', data: JSON.parse(el.textContent) }; }
+    catch (e) { store[id] = { status: 'error', data: [], message: String(e) }; }
+  });
+  var calcs = {};
+  var listeners = [];
+  var dash = {
+    data: function (id) { return store[id] || { status: 'missing', data: [] }; },
+    // A value worked out from datasets, under an id no dataset has. Readers see the formula under Sources.
+    calc: function (id, spec) {
+      var inputs = spec.inputs.map(function (i) { return dash.data(i); });
+      var bad = inputs.find(function (i) { return i.status !== 'ok'; });
+      calcs[id] = spec;
+      if (bad) { store[id] = { status: 'error', data: [], message: bad.message || 'input missing' }; return; }
+      try { store[id] = { status: 'ok', data: spec.fn.apply(null, inputs.map(function (i) { return i.data; })) }; }
+      catch (e) { store[id] = { status: 'error', data: [], message: String(e) }; }
+    },
+    onData: function (fn) { listeners.push(fn); fn(); }
+  };
+  var redraw = function () { listeners.forEach(function (fn) { fn(); }); };
+
+  // ---- Formats ----------------------------------------------------------------------------------
+  var usdCompact = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 });
+  var usdCents = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 });
+  var usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+  var fmt = {
+    int: d3.format(','),
+    'usd-compact': function (v) { return usdCompact.format(v); },
+    'usd-cents': function (v) { return usdCents.format(v); },
+    usd: function (v) { return usd.format(v); },
+    percent: d3.format('.0%'),
+    'signed-percent': d3.format('+.1%'),
+    'signed-points': function (v) { return d3.format('+.1f')(v * 100) + ' pt'; }
+  };
+  var month = d3.utcParse('%Y-%m');           // UTC, never new Date('2026-10')
+  var monthShort = d3.utcFormat('%b');
+  var monthLong = d3.utcFormat('%b %Y');
+
+  // ---- Calculations (formulas readers can see) ---------------------------------------------------
+  dash.calc('kpis', {
+    title: 'Monthly key figures',
+    description: 'Latest month against the month before: revenue, orders, average order value (revenue / orders) and repeat rate.',
+    inputs: ['monthly'],
+    fn: function (monthly) {
+      var cur = monthly[monthly.length - 1], prev = monthly[monthly.length - 2];
+      var win = monthShort(month(cur.month)) + ' vs ' + monthShort(month(prev.month));
+      var change = function (a, b) { return (a - b) / b; };
+      return [
+        { id: 'revenue', value: cur.revenue, delta: change(cur.revenue, prev.revenue), window: win },
+        { id: 'orders', value: cur.orders, delta: change(cur.orders, prev.orders), window: win },
+        { id: 'aov', value: cur.revenue / cur.orders, delta: change(cur.revenue / cur.orders, prev.revenue / prev.orders), window: win },
+        { id: 'repeat', value: cur.repeat_rate, delta: cur.repeat_rate - prev.repeat_rate, window: win }
+      ];
+    }
+  });
+  dash.calc('channels_vs_prior', {
+    title: 'Channel revenue change',
+    description: 'Revenue per channel for the latest month and its change against the month before: (revenue - prev_revenue) / prev_revenue.',
+    inputs: ['channels'],
+    fn: function (channels) {
+      return channels.map(function (c) {
+        return { channel: c.channel, orders: c.orders, revenue: c.revenue, change: (c.revenue - c.prev_revenue) / c.prev_revenue };
+      });
+    }
+  });
+  dash.calc('summary', {
+    title: 'Headline sentence',
+    description: 'One sentence from the key figures and the channel changes: direction words come from the sign of the change.',
+    inputs: ['kpis', 'channels_vs_prior'],
+    fn: function (kpis, channels) {
+      var rev = kpis.find(function (k) { return k.id === 'revenue'; });
+      var sorted = channels.slice().sort(function (a, b) { return b.change - a.change; });
+      var top = sorted[0], low = sorted[sorted.length - 1];
+      var dir = rev.delta >= 0 ? 'grew' : 'fell';
+      var s = 'Revenue ' + dir + ' ' + d3.format('.1%')(Math.abs(rev.delta)) + ' to ' + usdCompact.format(rev.value) + ', led by ' + top.channel + ' (' + fmt['signed-percent'](top.change) + ').';
+      if (low.change < 0) s += ' ' + low.channel + ' slipped ' + d3.format('.1%')(Math.abs(low.change)) + '.';
+      return [{ takeaway: s }];
+    }
+  });
+
+  // ---- Marks: placeholders filled by script, text only ---------------------------------------------
+  function fillMarks() {
+    document.querySelectorAll('[data-source][data-field]').forEach(function (el) {
+      if (el.closest('table')) return;
+      var src = dash.data(el.getAttribute('data-source'));
+      el.classList.remove('dash-skeleton');
+      if (src.status !== 'ok') { el.textContent = 'Failed to load'; el.setAttribute('data-state', 'error'); return; }
+      var rows = src.data, where = el.getAttribute('data-where');
+      if (where) {
+        var pairs = where.split('&').map(function (p) { return p.split('='); });
+        rows = rows.filter(function (r) { return pairs.every(function (p) { return String(r[p[0]]) === p[1]; }); });
+      }
+      var row = rows[0];
+      if (!row || row[el.getAttribute('data-field')] == null) { el.textContent = '—'; el.setAttribute('data-state', 'empty'); return; }
+      var v = row[el.getAttribute('data-field')], f = el.getAttribute('data-format');
+      el.textContent = f && fmt[f] ? fmt[f](v) : String(v);           // textContent only
+      if (el.hasAttribute('data-good')) {
+        var up = v >= 0;
+        el.setAttribute('data-tone', (up === (el.getAttribute('data-good') === 'up')) ? 'good' : 'bad');
+      }
+    });
+  }
+
+  // ---- Shared chart helpers ----------------------------------------------------------------------
+  function measure(svg, text) {
+    var t = svg.append('text').attr('class', 'tick').text(text);
+    var w = t.node().getComputedTextLength(); t.remove(); return w;
+  }
+  function stateLine(host, text, empty) {
+    var d = document.createElement('div'); d.className = 'state' + (empty ? ' empty' : ''); d.textContent = text;
+    host.replaceChildren(d);
+  }
+  function tooltip(host) {
+    var tip = host.querySelector('.tip');
+    if (!tip) { tip = document.createElement('div'); tip.className = 'tip'; tip.hidden = true; host.appendChild(tip); }
+    return {
+      show: function (x, y, when, label, value, line) {
+        var a = document.createElement('div'); a.className = 'when'; a.textContent = when;
+        var r = document.createElement('div'); r.className = 'row';
+        if (line) { var k = document.createElement('span'); k.className = 'key'; r.appendChild(k); }
+        var v = document.createElement('span'); v.className = 'val'; v.textContent = value;
+        var l = document.createElement('span'); l.textContent = label;
+        r.append(v, l); tip.replaceChildren(a, r);
+        tip.hidden = false;
+        var hw = host.clientWidth, w = tip.offsetWidth;
+        tip.style.left = Math.max(w / 2, Math.min(hw - w / 2, x)) + 'px'; tip.style.top = Math.max(y - 10, tip.offsetHeight + 4) + 'px';
+      },
+      hide: function () { tip.hidden = true; }
+    };
+  }
+  function roundedTop(x, y, w, h, r) {
+    r = Math.min(r, w / 2, h);
+    return 'M' + x + ',' + (y + h) + 'V' + (y + r) + 'Q' + x + ',' + y + ' ' + (x + r) + ',' + y + 'H' + (x + w - r) + 'Q' + (x + w) + ',' + y + ' ' + (x + w) + ',' + (y + r) + 'V' + (y + h) + 'Z';
+  }
+  function svgBase(host, h) {
+    var w = Math.max(host.clientWidth, 280);
+    host.querySelectorAll('svg, .state').forEach(function (n) { n.remove(); });
+    var svg = d3.select(host).insert('svg', ':first-child').attr('viewBox', '0 0 ' + w + ' ' + h).attr('width', '100%').attr('role', 'presentation');
+    return { svg: svg, w: w, h: h };
+  }
+  function axes(svg, x, y, m, w, h, ticks, tickFormat, xLabels) {
+    ticks.forEach(function (t) {
+      svg.append('line').attr('x1', m.l).attr('x2', w - m.r).attr('y1', y(t)).attr('y2', y(t)).attr('stroke', t === ticks[0] ? 'var(--axis)' : 'var(--grid)').attr('stroke-width', 1);
+      svg.append('text').attr('class', 'tick').attr('x', m.l - 8).attr('y', y(t)).attr('dy', '0.32em').attr('text-anchor', 'end').text(tickFormat(t));
+    });
+    xLabels.forEach(function (l) {
+      svg.append('text').attr('class', 'tick').attr('x', l.x).attr('y', h - 6).attr('text-anchor', 'middle').text(l.text);
+    });
+  }
+
+  // ---- Bar chart: counts per month ------------------------------------------------------------------
+  function drawBars() {
+    var host = document.getElementById('plot-orders'), src = dash.data('monthly');
+    if (src.status !== 'ok') return stateLine(host, 'Failed to load');
+    if (!src.data.length) return stateLine(host, 'No orders in this period', true);
+    var rows = src.data.map(function (d) { return { date: month(d.month), value: d.orders }; });
+    var b = svgBase(host, 260), svg = b.svg, m = { t: 12, r: 8, b: 28, l: 0 };
+    var y = d3.scaleLinear([0, d3.max(rows, function (d) { return d.value; })], [b.h - m.b, m.t]).nice(4);
+    var ticks = y.ticks(4), tf = d3.format('~s');
+    m.l = d3.max(ticks, function (t) { return measure(svg, tf(t)); }) + 12;
+    var x = d3.scaleBand(rows.map(function (d) { return d.date.getTime(); }), [m.l, b.w - m.r]).paddingInner(0.35).paddingOuter(0.2);
+    var bw = Math.min(24, x.bandwidth());
+    var every = Math.ceil(rows.length / Math.max(1, Math.floor((b.w - m.l) / 44)));
+    axes(svg, x, y, m, b.w, b.h, ticks, tf, rows.filter(function (d, i) { return i % every === 0; }).map(function (d) { return { x: x(d.date.getTime()) + x.bandwidth() / 2, text: monthShort(d.date) }; }));
+    var tip = tooltip(host);
+    var bars = svg.append('g');
+    rows.forEach(function (d) {
+      var cx = x(d.date.getTime()) + x.bandwidth() / 2, top = y(d.value);
+      var bar = bars.append('path').attr('d', roundedTop(cx - bw / 2, top, bw, y(0) - top, 4)).attr('fill', 'var(--chart-1)');
+      var hit = svg.append('rect').attr('class', 'hit').attr('x', x(d.date.getTime())).attr('width', x.bandwidth()).attr('y', m.t).attr('height', b.h - m.b - m.t).attr('fill', 'transparent').attr('tabindex', 0)
+        .attr('role', 'img').attr('aria-label', monthLong(d.date) + ': ' + fmt.int(d.value) + ' orders');
+      var on = function () { bar.attr('opacity', 0.8); tip.show(cx, top, monthLong(d.date), 'orders', fmt.int(d.value), false); };
+      var off = function () { bar.attr('opacity', 1); tip.hide(); };
+      hit.on('pointermove focus', on).on('pointerleave blur', off);
+    });
+    // value at the cap of the latest bar only (label selectively)
+    var last = rows[rows.length - 1];
+    svg.append('text').attr('class', 'end-label').attr('x', x(last.date.getTime()) + x.bandwidth() / 2).attr('y', y(last.value) - 8).attr('text-anchor', 'middle').text(fmt.int(last.value));
+  }
+
+  // ---- Line chart: a rate, point to point ---------------------------------------------------------------
+  function drawLine() {
+    var host = document.getElementById('plot-repeat'), src = dash.data('monthly');
+    if (src.status !== 'ok') return stateLine(host, 'Failed to load');
+    if (!src.data.length) return stateLine(host, 'No data in this period', true);
+    var rows = src.data.map(function (d) { return { date: month(d.month), value: d.repeat_rate }; });
+    var b = svgBase(host, 260), svg = b.svg, m = { t: 20, r: 44, b: 28, l: 0 };
+    var ext = d3.extent(rows, function (d) { return d.value; });
+    var y = d3.scaleLinear([Math.max(0, ext[0] - 0.04), ext[1] + 0.02], [b.h - m.b, m.t]).nice(4);
+    var ticks = y.ticks(4), tf = d3.format('.0%');
+    m.l = d3.max(ticks, function (t) { return measure(svg, tf(t)); }) + 12;
+    var x = d3.scaleUtc([rows[0].date, rows[rows.length - 1].date], [m.l + 8, b.w - m.r]);
+    var every = Math.ceil(rows.length / Math.max(1, Math.floor((b.w - m.l) / 52)));
+    axes(svg, x, y, m, b.w, b.h, ticks, tf, rows.filter(function (d, i) { return i % every === 0; }).map(function (d) { return { x: x(d.date), text: monthShort(d.date) }; }));
+    var line = d3.line().x(function (d) { return x(d.date); }).y(function (d) { return y(d.value); }).curve(d3.curveLinear);
+    var cross = svg.append('line').attr('stroke', 'var(--axis)').attr('y1', m.t).attr('y2', b.h - m.b).attr('opacity', 0);
+    svg.append('path').attr('d', line(rows)).attr('fill', 'none').attr('stroke', 'var(--chart-1)').attr('stroke-width', 2).attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round');
+    var last = rows[rows.length - 1];
+    var dot = svg.append('circle').attr('r', 4).attr('fill', 'var(--chart-1)').attr('stroke', 'var(--surface)').attr('stroke-width', 2).attr('cx', x(last.date)).attr('cy', y(last.value));
+    svg.append('text').attr('class', 'end-label').attr('x', x(last.date) + 10).attr('y', y(last.value)).attr('dy', '0.32em').text(tf(last.value));
+    var tip = tooltip(host), idx = rows.length - 1;
+    var hit = svg.append('rect').attr('class', 'hit').attr('x', m.l).attr('y', m.t).attr('width', b.w - m.l - m.r + 8).attr('height', b.h - m.b - m.t).attr('fill', 'transparent').attr('tabindex', 0)
+      .attr('role', 'img').attr('aria-label', 'Repeat purchase rate by month; use left and right arrows to read each month');
+    var show = function (i) {
+      idx = Math.max(0, Math.min(rows.length - 1, i));
+      var d = rows[idx], px = x(d.date);
+      cross.attr('x1', px).attr('x2', px).attr('opacity', 1);
+      dot.attr('cx', px).attr('cy', y(d.value));
+      tip.show(px, y(d.value), monthLong(d.date), 'repeat rate', fmt.percent(d.value), true);
+    };
+    var clear = function () { cross.attr('opacity', 0); dot.attr('cx', x(last.date)).attr('cy', y(last.value)); tip.hide(); };
+    hit.on('pointermove', function (event) {
+      var px = d3.pointer(event)[0], best = 0;
+      rows.forEach(function (d, i) { if (Math.abs(x(d.date) - px) < Math.abs(x(rows[best].date) - px)) best = i; });
+      show(best);
+    }).on('pointerleave blur', clear).on('focus', function () { show(idx); }).on('keydown', function (event) {
+      if (event.key === 'ArrowLeft') { event.preventDefault(); show(idx - 1); }
+      if (event.key === 'ArrowRight') { event.preventDefault(); show(idx + 1); }
+    });
+  }
+
+  // ---- Table views: the accessible twin of each chart ------------------------------------------------------
+  function simpleTable(id, rows, cols) {
+    var host = document.getElementById(id), t = document.createElement('table');
+    var thead = t.createTHead().insertRow();
+    cols.forEach(function (c) { var th = document.createElement('th'); th.scope = 'col'; th.textContent = c.label; if (c.num) th.className = 'num'; thead.appendChild(th); });
+    var tb = t.createTBody();
+    rows.forEach(function (r) { var tr = tb.insertRow(); cols.forEach(function (c) { var td = tr.insertCell(); td.textContent = c.get(r); if (c.num) td.className = 'num'; }); });
+    host.replaceChildren(t);
+  }
+  function drawTableViews() {
+    var src = dash.data('monthly'); if (src.status !== 'ok') return;
+    simpleTable('tv-orders', src.data, [{ label: 'Month', get: function (r) { return monthLong(month(r.month)); } }, { label: 'Orders', num: true, get: function (r) { return fmt.int(r.orders); } }]);
+    simpleTable('tv-repeat', src.data, [{ label: 'Month', get: function (r) { return monthLong(month(r.month)); } }, { label: 'Repeat rate', num: true, get: function (r) { return fmt.percent(r.repeat_rate); } }]);
+  }
+  ['card-orders', 'card-repeat'].forEach(function (id) {
+    var card = document.getElementById(id), btn = card.querySelector('.toggle');
+    btn.addEventListener('click', function () {
+      var on = btn.getAttribute('aria-pressed') !== 'true';
+      btn.setAttribute('aria-pressed', String(on)); card.classList.toggle('show-table', on);
+    });
+  });
+
+  // ---- Sortable, searchable channel table -----------------------------------------------------------------------
+  var sort = { key: 'revenue', dir: -1 }, query = '';
+  function drawChannels() {
+    var table = document.getElementById('channels'), tb = table.tBodies[0], src = dash.data('channels_vs_prior');
+    if (src.status !== 'ok') { var tr = document.createElement('tr'), td = tr.insertCell(); td.colSpan = 4; td.textContent = 'Failed to load'; tb.replaceChildren(tr); return; }
+    var total = d3.sum(src.data, function (r) { return r.revenue; });
+    var rows = src.data.filter(function (r) { return r.channel.toLowerCase().indexOf(query) !== -1; }).sort(function (a, b) {
+      var va = a[sort.key], vb = b[sort.key];
+      return (typeof va === 'string' ? va.localeCompare(vb) : va - vb) * sort.dir;
+    });
+    if (!rows.length) { var e = document.createElement('tr'), c = e.insertCell(); c.colSpan = 4; c.textContent = 'No channel matches'; tb.replaceChildren(e); return; }
+    tb.replaceChildren.apply(tb, rows.map(function (r) {
+      var tr = document.createElement('tr'); tr.setAttribute('data-key', r.channel);
+      var c1 = tr.insertCell(); c1.textContent = r.channel;
+      var c2 = tr.insertCell(); c2.className = 'num'; c2.textContent = fmt.int(r.orders);
+      var c3 = tr.insertCell(); c3.className = 'num'; c3.textContent = fmt.usd(r.revenue);
+      var bar = document.createElement('span'); bar.className = 'share'; bar.style.width = Math.round(r.revenue / total * 120) + 'px'; bar.setAttribute('aria-hidden', 'true'); c3.appendChild(bar);
+      var c4 = tr.insertCell(); c4.className = 'num';
+      var d = document.createElement('span'); d.className = 'delta'; d.textContent = fmt['signed-percent'](r.change);
+      d.style.color = r.change >= 0 ? 'var(--success)' : 'var(--danger)'; c4.appendChild(d);
+      return tr;
+    }));
+    table.querySelectorAll('th').forEach(function (th) { th.setAttribute('aria-sort', th.getAttribute('data-field') === sort.key ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none'); });
+  }
+  document.querySelectorAll('#channels th').forEach(function (th) {
+    th.querySelector('button').addEventListener('click', function () {
+      var key = th.getAttribute('data-field');
+      sort = sort.key === key ? { key: key, dir: -sort.dir } : { key: key, dir: key === 'channel' ? 1 : -1 };
+      drawChannels();
+    });
+  });
+  document.getElementById('search').addEventListener('input', function (e) { query = e.target.value.trim().toLowerCase(); drawChannels(); });
+
+  // ---- Sources: where every number comes from ----------------------------------------------------------------------
+  function drawSources() {
+    var host = document.getElementById('sources-list'), items = [];
+    try { items = JSON.parse(document.getElementById('sources').textContent); } catch (e) { items = []; }
+    var pill = document.getElementById('sample-pill');
+    pill.hidden = !items.some(function (s) { return /^Sample/.test(s.title); });
+    var nodes = items.map(function (s) {
+      var box = document.createElement('div'); box.className = 'item';
+      var dl = document.createElement('dl');
+      [['Dataset', s.title], ['About', s.description], ['File', s.source.name], ['Updated', s.updated.at.slice(0, 10) + ' by ' + s.updated.by]].forEach(function (p) {
+        var dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = p[0]; dd.textContent = p[1]; dl.append(dt, dd);
+      });
+      box.appendChild(dl); return box;
+    });
+    Object.keys(calcs).forEach(function (id) {
+      var c = calcs[id], box = document.createElement('div'); box.className = 'item';
+      var dl = document.createElement('dl'), pre = document.createElement('pre'); pre.textContent = c.fn.toString();
+      [['Calculation', c.title], ['About', c.description], ['Inputs', c.inputs.join(', ')]].forEach(function (p) {
+        var dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = p[0]; dd.textContent = p[1]; dl.append(dt, dd);
+      });
+      var dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = 'Formula'; dd.appendChild(pre); dl.append(dt, dd);
+      box.appendChild(dl); nodes.push(box);
+    });
+    host.replaceChildren.apply(host, nodes);
+  }
+
+  // ---- Wire up -------------------------------------------------------------------------------------------------------
+  dash.onData(fillMarks);
+  dash.onData(drawBars);
+  dash.onData(drawLine);
+  dash.onData(drawChannels);
+  drawTableViews();
+  drawSources();
+  var raf = 0;
+  new ResizeObserver(function () { cancelAnimationFrame(raf); raf = requestAnimationFrame(function () { drawBars(); drawLine(); }); }).observe(document.getElementById('dash'));
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/* Source videos (spec 07 §6.3). Tokens only; black is the video letterbox. */
+.sources {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.label {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.name {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.meta {
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+}
+
+.video {
+  width: 100%;
+  max-height: 240px;
+  border-radius: var(--radius-card);
+  background: #000;
+}
+
+.frames {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.frame {
+  min-width: 0;
+}
+
+.frameImage {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius-tag);
+  background: var(--paper-deep);
+}
+
+.frameTime {
+  margin-top: 4px;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+}

@@ -1,0 +1,337 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * Fantay — derived from Doop (https://github.com/kgoedecke/doop)
+ *   source: src/styles.css (keyframes L409-459, L483-487) @ d261a85d3f9d87ac0653bb8512915f4e5bdff2b9
+ *   Copyright (c) the Doop contributors. Licensed under the GNU Affero General Public License v3.0
+ *   (see licenses/doop-AGPL-3.0.txt and THIRD_PARTY_NOTICES.md). "Doop" is a trademark of its
+ *   owner and is not used to brand Fantay.
+ * Modifications Copyright (c) 2026 Fantay contributors, AGPL-3.0-only: keyframes renamed with a `board-`
+ *   prefix; board tokens (spec 03 §6.9, names per amendment B1), root/stage/layer positioning and the shared
+ *   animated classes. `board-candidate-in` is modelled after infinite-canvas web/src/styles/globals.css
+ *   `canvas-batch-child-in` (commit 9cd3deacbcc598361807afc16c059a80dd18b6f9); no code copied.
+ */
+
+/* the docked side panel, then the board */
+.shell {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.root {
+  --board-bg: var(--paper);
+  --board-dot: var(--dot);
+  --board-select: var(--info);
+  --board-select-soft: var(--info-soft);
+  --board-hover: color-mix(in srgb, var(--info) 55%, transparent);
+  --board-frame-bg: #ffffff;
+  --board-frame-border: var(--line);
+  --board-edge: var(--ink-faint);
+  --board-edge-output: color-mix(in srgb, var(--info) 70%, var(--ink-faint));
+  --board-label: var(--ink-soft);
+  --board-label-strong: var(--ink);
+  --board-building: var(--info);
+  --board-error: var(--accent-ink);
+  --board-live-dot: var(--success);
+  --board-guide: var(--accent-ink);
+  /* note colours (BOARD_PALETTE; the UI offers yellow/violet/green/blue/gray) */
+  --board-note-gray: #f7f6f3;
+  --board-note-yellow: #fff4c2;
+  --board-note-violet: #eee9ff;
+  --board-note-green: #e3f6e5;
+  --board-note-blue: #e3eeff;
+  --board-note-red: #fde7e4;
+  --board-note-orange: #ffecdf;
+  --board-note-teal: #ddf5f1;
+  --board-note-pink: #fbe7f2;
+  --board-note-ink: #ececec;
+  --board-note-text: #1f1e1c;
+  /* shape colours (palette tokens; the UI offers ink/gray/violet/green/orange/red) */
+  --board-color-ink: var(--ink);
+  --board-color-gray: color-mix(in srgb, var(--ink) 18%, var(--surface));
+  --board-color-red: var(--danger);
+  --board-color-orange: var(--warning);
+  --board-color-yellow: #f2c94c;
+  --board-color-green: var(--success);
+  --board-color-teal: #12a594;
+  --board-color-blue: #3e63dd;
+  --board-color-violet: var(--info);
+  --board-color-pink: #d6409f;
+  /* LOD fills */
+  --board-lod-frame: var(--ink-faint);
+  --board-lod-web: var(--ink-faint);
+  --board-lod-image: var(--brand-soft);
+  --board-lod-video: var(--brand-soft);
+  --board-lod-audio: var(--paper-deep);
+  --board-lod-note: var(--board-note-yellow);
+  --board-lod-shape: var(--paper-deep);
+  --board-lod-group: transparent;
+  --board-lod-generator: var(--brand-soft);
+  --board-lod-design: var(--paper-deep);
+  --board-lod-motion: var(--brand-soft);
+
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--board-bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  outline: none;
+  isolation: isolate;
+}
+
+:global([data-theme="dark"]) .root {
+  --board-note-gray: #2a2a2e;
+  --board-note-yellow: #3d3820;
+  --board-note-violet: #2e2945;
+  --board-note-green: #213326;
+  --board-note-blue: #22303f;
+  --board-note-red: #3f2524;
+  --board-note-orange: #3d2c20;
+  --board-note-teal: #1e3532;
+  --board-note-pink: #3a2433;
+  --board-note-ink: #303030;
+  --board-note-text: #f2f2f2;
+  --board-color-yellow: #e0b43a;
+  --board-color-teal: #0bd8b6;
+  --board-color-blue: #5472e4;
+  --board-color-pink: #e93d82;
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(html:not([data-theme])) .root {
+    --board-note-gray: #2a2a2e;
+    --board-note-yellow: #3d3820;
+    --board-note-violet: #2e2945;
+    --board-note-green: #213326;
+    --board-note-blue: #22303f;
+    --board-note-red: #3f2524;
+    --board-note-orange: #3d2c20;
+    --board-note-teal: #1e3532;
+    --board-note-pink: #3a2433;
+    --board-note-ink: #303030;
+    --board-note-text: #f2f2f2;
+    --board-color-yellow: #e0b43a;
+    --board-color-teal: #0bd8b6;
+    --board-color-blue: #5472e4;
+    --board-color-pink: #e93d82;
+  }
+}
+
+/* any gesture: iframes never steal the pointer (mirrors styles/shell.css `.split.is-resizing-chat iframe`) */
+.root[data-interacting] iframe {
+  pointer-events: none;
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  background: var(--board-bg);
+  cursor: default;
+}
+
+.stage[data-tool="hand"],
+.stage[data-space-held] {
+  cursor: grab;
+}
+
+.stage[data-panning],
+.stage[data-panning] * {
+  cursor: grabbing !important;
+}
+
+.stage[data-tool="frame"],
+.stage[data-tool="rectangle"],
+.stage[data-tool="ellipse"],
+.stage[data-tool="note"],
+.stage[data-tool="generate"] {
+  cursor: crosshair;
+}
+
+.stage[data-tool="text"] {
+  cursor: text;
+}
+
+/* dot grid on its own composited layer: panning is transform-only (zero paint) */
+.grid {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  will-change: transform;
+  transform-origin: 0 0;
+  background-image: radial-gradient(circle, var(--board-dot) 1.2px, transparent 1.2px);
+}
+
+/* node labels in screen px, UNDER the world so a dragged node covers another node's label */
+.labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  transform-origin: 0 0;
+  will-change: transform;
+  overflow: visible;
+}
+
+.world[data-rezoom] * {
+  transition: none !important;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.chrome {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.chrome > * {
+  pointer-events: auto;
+}
+
+/* building outline (Doop FrameView stream border) */
+.building::before {
+  content: '';
+  position: absolute;
+  inset: calc(-3px * var(--inv-zoom, 1));
+  border: calc(2px * var(--inv-zoom, 1)) dashed var(--board-building);
+  border-radius: inherit;
+  pointer-events: none;
+  animation: board-stream-pulse 1.1s ease-in-out infinite;
+}
+
+.streamPulse {
+  animation: board-stream-pulse 1.1s ease-in-out infinite;
+}
+
+.chipIn {
+  animation: board-chip-in 0.25s var(--ease-out-quint) both;
+}
+
+.ellipsis::after {
+  content: '…';
+  display: inline-block;
+  width: 1em;
+  text-align: start;
+  animation: board-ellipsis 1.2s steps(4) infinite;
+}
+
+.skeletonPulse {
+  animation: board-skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+.ghostPulse {
+  animation: board-ghost-pulse 1.6s ease-in-out infinite;
+}
+
+.fadeOut {
+  animation: board-fade-out var(--motion-exit) var(--ease-out-quint) both;
+}
+
+.candidateIn {
+  animation: board-candidate-in 320ms cubic-bezier(0.2, 0.85, 0.18, 1) both;
+}
+
+@keyframes board-stream-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes board-ghost-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes board-chip-in {
+  from {
+    transform: translateY(4px);
+    opacity: 0;
+  }
+}
+
+@keyframes board-ellipsis {
+  0% {
+    content: '';
+  }
+  25% {
+    content: '.';
+  }
+  50% {
+    content: '..';
+  }
+  75% {
+    content: '…';
+  }
+}
+
+@keyframes board-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes board-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes board-candidate-in {
+  from {
+    opacity: 0;
+    transform: translate(-12px, 8px) scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .building::before,
+  .streamPulse,
+  .chipIn,
+  .ellipsis::after,
+  .skeletonPulse,
+  .ghostPulse,
+  .fadeOut,
+  .candidateIn {
+    animation: none;
+  }
+}

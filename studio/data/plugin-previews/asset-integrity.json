@@ -1,0 +1,1766 @@
+{
+  "source": "https://repo-assets.open-design.ai/plugin-previews/",
+  "mirroredAt": "2026-11-06",
+  "files": [
+    {
+      "name": "example-article-magazine/aa75ec69f1240678/poster.jpg",
+      "bytes": 27177,
+      "sha256": "09eba9984943d430a05744aa2e9ccbb09fec7ad2afb82fecc6e072ed76866da9"
+    },
+    {
+      "name": "example-article-magazine/aa75ec69f1240678/preview.mp4",
+      "bytes": 80202,
+      "sha256": "ecc78538dad00ef8499a42a936f372996a2a021b43ff39e498ec26e2838d66ef"
+    },
+    {
+      "name": "example-audio-jingle/ef3c7dd5c40e37f7/poster.jpg",
+      "bytes": 8149,
+      "sha256": "2aabba2ae594d45958bce15b0350624049ab6afaecda66bfbe8aa1846a564fe7"
+    },
+    {
+      "name": "example-audio-jingle/ef3c7dd5c40e37f7/preview.mp4",
+      "bytes": 21443,
+      "sha256": "685a41ce38766789bc1aec3269d8b7f0df911f2d30144079ba1e1a2bae0fbe55"
+    },
+    {
+      "name": "example-blog-post/ad2f1bd871b8ea86/poster.jpg",
+      "bytes": 19402,
+      "sha256": "d7e6f38d6688ff0816a043ead1ddebe5b6cf9b2488379e03c6ab8c26b604e9f4"
+    },
+    {
+      "name": "example-blog-post/ad2f1bd871b8ea86/preview.mp4",
+      "bytes": 130987,
+      "sha256": "b424e7466d2639ad35a59d66fb4e8a501aa93b437573af200bd2dd768c7aa5ae"
+    },
+    {
+      "name": "example-card-twitter/e87f11a1c6069cee/poster.jpg",
+      "bytes": 16316,
+      "sha256": "d1f359f6e48d99c6c91395963bb1c7a09733c5b97ad2567f8bdcfd3819635c48"
+    },
+    {
+      "name": "example-card-twitter/e87f11a1c6069cee/preview.mp4",
+      "bytes": 20079,
+      "sha256": "62ab642688a78775660d618a1e4c8a2c6aca295f4ae973b4f5cc2fc6bcb1dc13"
+    },
+    {
+      "name": "example-card-xiaohongshu/1e5b023c9906e912/poster.jpg",
+      "bytes": 17377,
+      "sha256": "1f99ce02f124db463c6688eb998aaacccfdc97a6a5612a7def7fed126f6c14a1"
+    },
+    {
+      "name": "example-card-xiaohongshu/1e5b023c9906e912/preview.mp4",
+      "bytes": 280172,
+      "sha256": "ec05899863457bb7c7ae761f085cde232511a574cbefe69b73f7c307b9c693f1"
+    },
+    {
+      "name": "example-clinical-case-report/a24cdd60cd3dbbc5/poster.jpg",
+      "bytes": 26777,
+      "sha256": "dc322240676cfa376a08a867ee090c57c28695ade0532bab661f21f933f884a3"
+    },
+    {
+      "name": "example-clinical-case-report/a24cdd60cd3dbbc5/preview.mp4",
+      "bytes": 262617,
+      "sha256": "5d3b8cba622db9c63c761b47da7ac9edc228ff50b12e7874f63b118320c427d3"
+    },
+    {
+      "name": "example-codex-interactive-capability-map/63bae288ac10e88c/poster.jpg",
+      "bytes": 26980,
+      "sha256": "021bf87430026e38332577835d1000397bbb8195c493edd8c989d4593321cd99"
+    },
+    {
+      "name": "example-codex-interactive-capability-map/63bae288ac10e88c/preview.mp4",
+      "bytes": 32814,
+      "sha256": "14614d7545954a760438f89d02d9edfd8bc343ad8815d4b7b4e91c287b7acb50"
+    },
+    {
+      "name": "example-critique/9b71917d072ce689/poster.jpg",
+      "bytes": 25061,
+      "sha256": "dd7ef8b0941adb7662a5b3ff885aeb97516f8cf13b67702d8d1d4d3f33753269"
+    },
+    {
+      "name": "example-critique/9b71917d072ce689/preview.mp4",
+      "bytes": 200148,
+      "sha256": "a5a640b8e2019f89fc8ff480b19d96458c04ceab7dcbadf122c6c929bb76c44a"
+    },
+    {
+      "name": "example-dashboard/69e332de613dce3d/poster.jpg",
+      "bytes": 18221,
+      "sha256": "d2ef81d04347e795177efdf4e5952ae0ad23ef1eb33528c4f73723c99f34b924"
+    },
+    {
+      "name": "example-dashboard/69e332de613dce3d/preview.mp4",
+      "bytes": 13437,
+      "sha256": "844ea4a2a828134a49a9f865e25fe5f31bebf5d1b33fa235c31b92db1409b40b"
+    },
+    {
+      "name": "example-data-report/a05b2f736bcc8c23/poster.jpg",
+      "bytes": 10736,
+      "sha256": "e288351d707f5f92af702eede008f0bfef1453fb1c777728271986fee49b3adf"
+    },
+    {
+      "name": "example-data-report/a05b2f736bcc8c23/preview.mp4",
+      "bytes": 41191,
+      "sha256": "817f8f608357d0e47e4cff8526f5b15f6745fb7341c695bddc045a91944cd63c"
+    },
+    {
+      "name": "example-dating-web/2fdaaf3a51e5a394/poster.jpg",
+      "bytes": 26771,
+      "sha256": "164ccf2ad5763d732f1e886b34fd1397321423aa8338a07855838f5cb716b26a"
+    },
+    {
+      "name": "example-dating-web/2fdaaf3a51e5a394/preview.mp4",
+      "bytes": 16542,
+      "sha256": "6fd4770c11de4c1da4f3f7a5883d5978585100f1c01668e139baa3ec1fa961d3"
+    },
+    {
+      "name": "example-deck-guizang-editorial/4efd31ac447844db/poster.jpg",
+      "bytes": 22294,
+      "sha256": "f19f1150ca4a6eef5f191e2fdf9cf8314853d81f690a32e51e5e3b3e02eb9410"
+    },
+    {
+      "name": "example-deck-guizang-editorial/4efd31ac447844db/preview.mp4",
+      "bytes": 87420,
+      "sha256": "0902786819313ffc6d7e5cdbe247921537666c9e8960dd1a338475eef01d4eee"
+    },
+    {
+      "name": "example-deck-open-slide-canvas/11482b517cf8aabe/poster.jpg",
+      "bytes": 25231,
+      "sha256": "0e86a54318718bd9b5a662c56930825b1467d8377e9cb20aed4eabbf047c4438"
+    },
+    {
+      "name": "example-deck-open-slide-canvas/11482b517cf8aabe/preview.mp4",
+      "bytes": 102914,
+      "sha256": "f855e7c14aa231384cf2ab9c134a1cb153df9168b47705ec5e15f9c3e9d5307e"
+    },
+    {
+      "name": "example-deck-swiss-international/e44a0444241e38c4/poster.jpg",
+      "bytes": 31444,
+      "sha256": "792081aa12dc5e8e535d909121731bd3681e416f1ae3854b99f690016dba7f83"
+    },
+    {
+      "name": "example-deck-swiss-international/e44a0444241e38c4/preview.mp4",
+      "bytes": 93547,
+      "sha256": "d7f6cc8ac0eb7441f757fc5ed4bf87540585d1374a1d45e4f22b3512d776d6af"
+    },
+    {
+      "name": "example-digital-eguide/f37d6f772a3fcccb/poster.jpg",
+      "bytes": 30156,
+      "sha256": "e379ca4d50a5750bdfadeb791372742e554053915b84434ed202ed8e84454ecc"
+    },
+    {
+      "name": "example-digital-eguide/f37d6f772a3fcccb/preview.mp4",
+      "bytes": 22668,
+      "sha256": "8bbe6684f2b509891a311ab3cfa95bd4bf1c771bd9008be83331c23a0129f055"
+    },
+    {
+      "name": "example-doc-kami-parchment/bb70bdafc7433252/poster.jpg",
+      "bytes": 22579,
+      "sha256": "36ae0179e882f8b6c97d5c3378c2954f90ae0845efd61e9bb43b77538dfe3472"
+    },
+    {
+      "name": "example-doc-kami-parchment/bb70bdafc7433252/preview.mp4",
+      "bytes": 18177,
+      "sha256": "ee35f76b25bf44e384a42d5fac3491b64e7e00f1c1fcf3c050aeeeb93788f524"
+    },
+    {
+      "name": "example-docs-page/db42e8fad52abeed/poster.jpg",
+      "bytes": 21988,
+      "sha256": "9ae5f18ec8227056974b9f1a4d8371151af8b330ae5b7ac874d132d05f421f5e"
+    },
+    {
+      "name": "example-docs-page/db42e8fad52abeed/preview.mp4",
+      "bytes": 52547,
+      "sha256": "7346bc8bd16d2deb0a7213dd35c791c46d0fcb18c2d4b06fb18a2b03734b3ea6"
+    },
+    {
+      "name": "example-email-marketing/e8e2bf718b916e9f/poster.jpg",
+      "bytes": 21174,
+      "sha256": "4e71610330b5889f01a3221ab87c99f7879ae6f75707712346aa35e22ede6923"
+    },
+    {
+      "name": "example-email-marketing/e8e2bf718b916e9f/preview.mp4",
+      "bytes": 61487,
+      "sha256": "06486916034c250be6e32dc0a1e9e9e6d9497bbd3330a641bca97d099cc82551"
+    },
+    {
+      "name": "example-eng-runbook/56569eb3391b3f7e/poster.jpg",
+      "bytes": 25901,
+      "sha256": "8d904b360117f14f9b9159583a9c4d8c95ff430160b425c4fc5b17e2cea495a8"
+    },
+    {
+      "name": "example-eng-runbook/56569eb3391b3f7e/preview.mp4",
+      "bytes": 152700,
+      "sha256": "cda8439e3e8f2401d3441559ccec4d9934223e550c7f9be527300f49901ff11e"
+    },
+    {
+      "name": "example-finance-report/886c888f031f2a0c/poster.jpg",
+      "bytes": 19939,
+      "sha256": "ccb800626dae87f40d3dab33545b9a8140c2c71cc5e3271b6304783345809439"
+    },
+    {
+      "name": "example-finance-report/886c888f031f2a0c/preview.mp4",
+      "bytes": 68315,
+      "sha256": "2979d2fa19806a767c5f7fb9fc769854f8480e76cfb40dcbe44ece631cfa7884"
+    },
+    {
+      "name": "example-flowai-live-dashboard-template/7129f76abc23984d/poster.jpg",
+      "bytes": 11012,
+      "sha256": "377a9d66b890e7601d7978b19c60eba3c1cf06077b76e1972087f82a8d0bae5b"
+    },
+    {
+      "name": "example-flowai-live-dashboard-template/7129f76abc23984d/preview.mp4",
+      "bytes": 8033,
+      "sha256": "a014f6a1337dc97055e2aaafa223f3782cad0693e6e45db99fd65604e07e241e"
+    },
+    {
+      "name": "example-frame-data-chart-nyt/aa1cd9def26dfdfb/poster.jpg",
+      "bytes": 27334,
+      "sha256": "8971e4745f1d88aff2577df81c0658168b8f2c2a21be8f88cba128015e4be53f"
+    },
+    {
+      "name": "example-frame-data-chart-nyt/aa1cd9def26dfdfb/preview.mp4",
+      "bytes": 19291,
+      "sha256": "4057bff984eef0366f37b486ed40e8c0643cf7e0609027dd30221f627bb81030"
+    },
+    {
+      "name": "example-frame-flowchart-sticky/5fcc0c2fa54fcc29/poster.jpg",
+      "bytes": 17967,
+      "sha256": "56bda0949a62718534917db3d77b6351549e46ff58a7ad1f363ffb19f53293b8"
+    },
+    {
+      "name": "example-frame-flowchart-sticky/5fcc0c2fa54fcc29/preview.mp4",
+      "bytes": 18862,
+      "sha256": "f1566d74a261750e9ab0cd48dec77a15875e4d73b759313a236dd108492c53f8"
+    },
+    {
+      "name": "example-frame-glitch-title/0838233ba63743a0/poster.jpg",
+      "bytes": 20961,
+      "sha256": "c54a439ae35dd59e34feb25ceca12c3b702bde9fc5a45e0b87a6d485e493b5c6"
+    },
+    {
+      "name": "example-frame-glitch-title/0838233ba63743a0/preview.mp4",
+      "bytes": 30991,
+      "sha256": "fd48d75c7716212dfa7cfdbfe5761b3caf6bfd164ace0229e563cf7c7d5b82de"
+    },
+    {
+      "name": "example-frame-light-leak-cinema/667ede46a5579f4a/poster.jpg",
+      "bytes": 6718,
+      "sha256": "41b79e433e2c500ae3637491c3d067adc09764155260ed98809b872682c41b99"
+    },
+    {
+      "name": "example-frame-light-leak-cinema/667ede46a5579f4a/preview.mp4",
+      "bytes": 5307,
+      "sha256": "8ce507fb53d147889f89fa852059098c0efee59adeb68c3f58611b0977b8abc3"
+    },
+    {
+      "name": "example-frame-liquid-bg-hero/84e86c3b14abe3f4/poster.jpg",
+      "bytes": 21075,
+      "sha256": "88ee0b7e93d0a1c1b01823b06151138bce3863ee4dd03d6c0ddc88226ab1a31c"
+    },
+    {
+      "name": "example-frame-liquid-bg-hero/84e86c3b14abe3f4/preview.mp4",
+      "bytes": 38398,
+      "sha256": "2660af724c82f6ae1b06d3122f63126e9c2fc08bc3d7e32fd708adfbdea987d3"
+    },
+    {
+      "name": "example-frame-logo-outro/1495286331153f01/poster.jpg",
+      "bytes": 7302,
+      "sha256": "723d9c6bcb7e6801d7c45e386a8e71882befb880f67e231d1db9df87745af121"
+    },
+    {
+      "name": "example-frame-logo-outro/1495286331153f01/preview.mp4",
+      "bytes": 8195,
+      "sha256": "3fa70814d1c855af7df980ecd4c1227bed83ba72fa6095333ed2719db5e08710"
+    },
+    {
+      "name": "example-frame-macos-notification/131b8b88d87a0138/poster.jpg",
+      "bytes": 7298,
+      "sha256": "fea6e4f65bdcabbee3932a205b8b1ed224c372e7c83ddde0849d0d82943e79e4"
+    },
+    {
+      "name": "example-frame-macos-notification/131b8b88d87a0138/preview.mp4",
+      "bytes": 7870,
+      "sha256": "485b582025c4b629f212ea379c486be54d6ea5d10cfd509f93a139379049bf5d"
+    },
+    {
+      "name": "example-frontend-slides/a7d98d7f7d5f4d45/poster.jpg",
+      "bytes": 11244,
+      "sha256": "7babfb974f29a2175807ae4d1d8e435fb4b8e5f08b5cd6d3138420c9de2e9ab0"
+    },
+    {
+      "name": "example-frontend-slides/a7d98d7f7d5f4d45/preview.mp4",
+      "bytes": 124538,
+      "sha256": "014154d405241b5a16e2089e29aef578eebf6bcd86860fa7e0a8ab6201ae0bb9"
+    },
+    {
+      "name": "example-fs-creative-voltage/7b176cd0dc57ae7b/poster.jpg",
+      "bytes": 15090,
+      "sha256": "9fb754ad19656c62e1c9239c9a6ced7a43c9bfae4b4486f80b19251d60ff19c6"
+    },
+    {
+      "name": "example-fs-creative-voltage/7b176cd0dc57ae7b/preview.mp4",
+      "bytes": 168597,
+      "sha256": "203661346f83087ef7e65c5c2c006bc546fc75ff0e768191d43ecd6d0ed3bb19"
+    },
+    {
+      "name": "example-fs-editorial-forest/0953d09027f08d3b/poster.jpg",
+      "bytes": 19330,
+      "sha256": "d9f0e9b281857f73113c116dba3a8cbc7ca93ddf60285e11b577c121f8c7fecb"
+    },
+    {
+      "name": "example-fs-editorial-forest/0953d09027f08d3b/preview.mp4",
+      "bytes": 104249,
+      "sha256": "43e9a6fb61708242234dff8c2e55010b7ee41f5a4693c1662a22d56d57b7a71a"
+    },
+    {
+      "name": "example-fs-electric-studio/9d7f7d3d8c4f1c4a/poster.jpg",
+      "bytes": 16357,
+      "sha256": "6e54b35cdbce7618b57abdda9dc302222802b4d260ff7f88683bd0b832a5a95a"
+    },
+    {
+      "name": "example-fs-electric-studio/9d7f7d3d8c4f1c4a/preview.mp4",
+      "bytes": 127515,
+      "sha256": "538a2ba6814cd49570b688b598f39fe60f5ca2b05763b44a693d02cda34586d1"
+    },
+    {
+      "name": "example-fs-emerald-editorial/34c762b6f3ac44c7/poster.jpg",
+      "bytes": 31519,
+      "sha256": "bee8b43a0392c9aa4d329163846fa43e6f9203bbd5c41a89e1eda6316b16526f"
+    },
+    {
+      "name": "example-fs-emerald-editorial/34c762b6f3ac44c7/preview.mp4",
+      "bytes": 135759,
+      "sha256": "424db78163f77456463a98a1d386227c0d31be27405f792164150f908b1a2d65"
+    },
+    {
+      "name": "example-fs-notebook-tabs/d8aaa4d889004fc0/poster.jpg",
+      "bytes": 17550,
+      "sha256": "71d32812ee67cfc2286db388848fcef1e679e239bc8a16866b768a3967b106e4"
+    },
+    {
+      "name": "example-fs-notebook-tabs/d8aaa4d889004fc0/preview.mp4",
+      "bytes": 118365,
+      "sha256": "654ee79ad36fdfdbe657e6d9fad75db3917eb1caab89f9e9fb82945e222cc202"
+    },
+    {
+      "name": "example-gamified-app/6289e3344d0f6ebb/poster.jpg",
+      "bytes": 31626,
+      "sha256": "d64022864dc6d27420d763e61828563f044117f0960e9b44d31b005e6bf41725"
+    },
+    {
+      "name": "example-gamified-app/6289e3344d0f6ebb/preview.mp4",
+      "bytes": 22175,
+      "sha256": "7a61fc1da5e16af5336cc3b030a0c6fd7999f22d0b264d2d726b45ac172d0f87"
+    },
+    {
+      "name": "example-github-dashboard/126c86862d94be61/poster.jpg",
+      "bytes": 23942,
+      "sha256": "1a372b76b4d0477b5472145d4a178397241fbf8ba12196d5d9628505db5e8bef"
+    },
+    {
+      "name": "example-github-dashboard/126c86862d94be61/preview.mp4",
+      "bytes": 58307,
+      "sha256": "28ef112c913cbe468b5e64e7ae1800ad09b874d84830fa4975e3c26652486ce3"
+    },
+    {
+      "name": "example-guizang-ppt/4790978a1ef7dabc/poster.jpg",
+      "bytes": 15309,
+      "sha256": "e61bd40645d2ee68ea285cb3599375ac957cda6130440fa3e7771be72a9d8460"
+    },
+    {
+      "name": "example-guizang-ppt/4790978a1ef7dabc/preview.mp4",
+      "bytes": 64683,
+      "sha256": "088e6a236de2e2e1c46ad456e16c9e4ea8793cc53a9f4cad637acabf69d5b403"
+    },
+    {
+      "name": "example-hps-academic-paper/1ab3760a1a3fb7c2/poster.jpg",
+      "bytes": 8271,
+      "sha256": "a688baeee56576b6ecbbbea1d8fc7065e36b8114c0f65cef55af7a7c509a2f89"
+    },
+    {
+      "name": "example-hps-academic-paper/1ab3760a1a3fb7c2/preview.mp4",
+      "bytes": 86633,
+      "sha256": "84eed4ebce206c6205492729b39dee41bcfb52427900e42a4dffa0d6c45a3a6c"
+    },
+    {
+      "name": "example-hps-bauhaus/9f1ce618b8dd4510/poster.jpg",
+      "bytes": 11452,
+      "sha256": "e4b472bc2d3ae6d5042b017b7df15bf41a0a9193e0524202710de2bc94bb9728"
+    },
+    {
+      "name": "example-hps-bauhaus/9f1ce618b8dd4510/preview.mp4",
+      "bytes": 111156,
+      "sha256": "55e26da33d05f3d552c49641bb6b72f648afb0ba611ddb0a9c32360b83d64ec4"
+    },
+    {
+      "name": "example-hps-memphis-pop/aa4293fa61e4a401/poster.jpg",
+      "bytes": 18738,
+      "sha256": "ebc0d70dafa55cb78a8e7f9cce0064219ec6f073d2f693cf74cad128abb5c206"
+    },
+    {
+      "name": "example-hps-memphis-pop/aa4293fa61e4a401/preview.mp4",
+      "bytes": 153778,
+      "sha256": "67b476a5ac16cd370a24a721f356948fa635841e7cb46c10051ab5f4e490db50"
+    },
+    {
+      "name": "example-hps-retro-tv/33885129da825a0e/poster.jpg",
+      "bytes": 12256,
+      "sha256": "d5bda09c06f3f9b04e6e9db333cabb21d1a92bd7c02dea654b75614eb0feb8e9"
+    },
+    {
+      "name": "example-hps-retro-tv/33885129da825a0e/preview.mp4",
+      "bytes": 129540,
+      "sha256": "4d7d7c91a91c858ca1f5f98363c17ea00054ab4def19621a5aa55030d6a7cf4b"
+    },
+    {
+      "name": "example-hps-true-blueprint/b8d99f8d49a6e048/poster.jpg",
+      "bytes": 14769,
+      "sha256": "bb540aecbc28186f5a31fde0f530c03ac17002875636e6fb00bf50e6bf403dca"
+    },
+    {
+      "name": "example-hps-true-blueprint/b8d99f8d49a6e048/preview.mp4",
+      "bytes": 139996,
+      "sha256": "ca75468e4c85a3f115d8d14ddfd18f35d1c95bfb385ee87de9c42c473d5361f3"
+    },
+    {
+      "name": "example-hps-y2k-chrome/9b83665a2938bd58/poster.jpg",
+      "bytes": 11594,
+      "sha256": "f777d3ec9fd99a56ea4e90215552d6f13f2be174ea151e17814f442982a69ee9"
+    },
+    {
+      "name": "example-hps-y2k-chrome/9b83665a2938bd58/preview.mp4",
+      "bytes": 175575,
+      "sha256": "e60b8a047683088a4496d0d938750c8a09df9c35f00c456255b92fe2c026063c"
+    },
+    {
+      "name": "example-hr-onboarding/93e31f87fe2fed4c/poster.jpg",
+      "bytes": 22659,
+      "sha256": "ec88c661f097a60653c5af4293889eda50831430dd96bee546af15939bea3db7"
+    },
+    {
+      "name": "example-hr-onboarding/93e31f87fe2fed4c/preview.mp4",
+      "bytes": 106769,
+      "sha256": "41a07f614f38a7ce5cbf2465bcb656df2c97a83c6d71b1f2c36480ba3695933c"
+    },
+    {
+      "name": "example-html-ppt-course-module/b30dcf6625f2d5d1/poster.jpg",
+      "bytes": 11775,
+      "sha256": "029d1df31b37a6f4677c12605c9b9361c9b347b96742b4ed7b4b357b746060e7"
+    },
+    {
+      "name": "example-html-ppt-course-module/b30dcf6625f2d5d1/preview.mp4",
+      "bytes": 56494,
+      "sha256": "4559c5512bf10840eb1f4418bf4cdd30124bf99a5f75680221325a26a938b350"
+    },
+    {
+      "name": "example-html-ppt-graphify-dark-graph/df4e87ab00d1ef51/poster.jpg",
+      "bytes": 11393,
+      "sha256": "13412915ea957de163f0071e6ebd49eb4e77f63443242a7a124e07a3887d0797"
+    },
+    {
+      "name": "example-html-ppt-graphify-dark-graph/df4e87ab00d1ef51/preview.mp4",
+      "bytes": 57785,
+      "sha256": "0493edb1a215bf43647a056952338625927ba81f8762495f5e07656406732fdc"
+    },
+    {
+      "name": "example-html-ppt-hermes-cyber-terminal/1fe095e215d39d81/poster.jpg",
+      "bytes": 9031,
+      "sha256": "96b7ddb1c820b4a5b080a680d05f58dd744e13d2178b509219bd3408255710d8"
+    },
+    {
+      "name": "example-html-ppt-hermes-cyber-terminal/1fe095e215d39d81/preview.mp4",
+      "bytes": 52139,
+      "sha256": "db71e0aa89ae5d5b3712f5233c54196ee77c8c8398f499d782545b3c77960525"
+    },
+    {
+      "name": "example-html-ppt-knowledge-arch-blueprint/2ce690039ab7f90f/poster.jpg",
+      "bytes": 18070,
+      "sha256": "b2733383611999bdb6bde53833468e1654adf177dcd07701e3cae592df755e8a"
+    },
+    {
+      "name": "example-html-ppt-knowledge-arch-blueprint/2ce690039ab7f90f/preview.mp4",
+      "bytes": 64880,
+      "sha256": "b5bc1409bc62a5828c7504bdfab8824c298534f40eb2eb7ba42705af392848c1"
+    },
+    {
+      "name": "example-html-ppt-obsidian-claude-gradient/6fd01386bcef031d/poster.jpg",
+      "bytes": 12903,
+      "sha256": "e917df47a9d6488df8b0c19c95109672c0882494da3391ade6788cd290e28606"
+    },
+    {
+      "name": "example-html-ppt-obsidian-claude-gradient/6fd01386bcef031d/preview.mp4",
+      "bytes": 48639,
+      "sha256": "cd3dd901021410c8c9bd54b77b6cfea7418ac3239b6fdf3fb14db2af5abebeb9"
+    },
+    {
+      "name": "example-html-ppt-pitch-deck/bffbb12c19b8aa35/poster.jpg",
+      "bytes": 13765,
+      "sha256": "473dfda21ec2af6aabda564eda06e6c4b322a447d8ae8711e12882671c60fe64"
+    },
+    {
+      "name": "example-html-ppt-pitch-deck/bffbb12c19b8aa35/preview.mp4",
+      "bytes": 60221,
+      "sha256": "beda637bd61e3e71b70c638edf95b56064962809a24255204b50be3acbfb1d8e"
+    },
+    {
+      "name": "example-html-ppt-presenter-mode-reveal/a546c4d79f9ddb36/poster.jpg",
+      "bytes": 10584,
+      "sha256": "49b4c7445e157e1139137eaf24d3e9dfd5bdbdd3ceb3fa84493c5b1d69da35c6"
+    },
+    {
+      "name": "example-html-ppt-presenter-mode-reveal/a546c4d79f9ddb36/preview.mp4",
+      "bytes": 47779,
+      "sha256": "ddb88df5ea9c8247f79928e136bd84cb2d4a2fcb2bfdd6533a34aca67b8ad222"
+    },
+    {
+      "name": "example-html-ppt-product-launch/5782d04e229c1a10/poster.jpg",
+      "bytes": 17207,
+      "sha256": "83a050c21d4176a70920e5f1cbf007ed0fcdbd48380546a1b08c9a52b999e572"
+    },
+    {
+      "name": "example-html-ppt-product-launch/5782d04e229c1a10/preview.mp4",
+      "bytes": 57036,
+      "sha256": "a304e5f015c437134982b73a4f1f9943522c1c6dfeef7aa8502007343eacc1fa"
+    },
+    {
+      "name": "example-html-ppt-taste-brutalist/ca8bb62784b48841/poster.jpg",
+      "bytes": 25813,
+      "sha256": "b8a545eefd62eeaa2d0641bc5501aae361208d7016ab7ff4a4a57a5d9b1a66a6"
+    },
+    {
+      "name": "example-html-ppt-taste-brutalist/ca8bb62784b48841/preview.mp4",
+      "bytes": 519453,
+      "sha256": "6945b08dc03bf031c2db7d0afad0ec22de081b9497f1cf19e1886754da61efb2"
+    },
+    {
+      "name": "example-html-ppt-taste-editorial/355875e5410a3ef1/poster.jpg",
+      "bytes": 27823,
+      "sha256": "eb1b4e86d280ba2dd555d131507fed36fbab85e70206b72bde2ec136950915e5"
+    },
+    {
+      "name": "example-html-ppt-taste-editorial/355875e5410a3ef1/preview.mp4",
+      "bytes": 438247,
+      "sha256": "269cc3a776d30dbe52d3503f99baf5349a9816d9e1acce260e87c2421e17de1c"
+    },
+    {
+      "name": "example-html-ppt-tech-sharing/9adfb3fd28dd86b9/poster.jpg",
+      "bytes": 14878,
+      "sha256": "2bc8fb69ff6a5050a1bb863dda1cefeb7931c7c28ff89d12f7f0e48bdd0aac13"
+    },
+    {
+      "name": "example-html-ppt-tech-sharing/9adfb3fd28dd86b9/preview.mp4",
+      "bytes": 64198,
+      "sha256": "8c78379e2521e4877666051cb76a9dc972785ae5cb92e59b83b9755faf36eeb4"
+    },
+    {
+      "name": "example-html-ppt-testing-safety-alert/22999570a4e4f04d/poster.jpg",
+      "bytes": 26609,
+      "sha256": "67564f09f5e54157e5c791c947c8881dd1b707724d4c03d132d11ec1bb34b500"
+    },
+    {
+      "name": "example-html-ppt-testing-safety-alert/22999570a4e4f04d/preview.mp4",
+      "bytes": 94227,
+      "sha256": "18714dad3339218443010b5372c45a1a3b6c2b7e6350947023d3840d3c647f28"
+    },
+    {
+      "name": "example-html-ppt-weekly-report/efa6b27e88f8d773/poster.jpg",
+      "bytes": 11489,
+      "sha256": "e7013f1207316cc7f0c79fbdbf7320f144ec1709b1bdcb4cc7038aa374cac7e9"
+    },
+    {
+      "name": "example-html-ppt-weekly-report/efa6b27e88f8d773/preview.mp4",
+      "bytes": 52890,
+      "sha256": "4abe5b598d0ad50eab1e329c89bade6a2a96f3a6c1df54ac7806db7619ab4036"
+    },
+    {
+      "name": "example-html-ppt-xhs-pastel-card/83e97f06030303c6/poster.jpg",
+      "bytes": 9920,
+      "sha256": "10b2b6296673114ac5085735623333a1a2ea07bc836578f3a07dcfb0fd6ca8c7"
+    },
+    {
+      "name": "example-html-ppt-xhs-pastel-card/83e97f06030303c6/preview.mp4",
+      "bytes": 58552,
+      "sha256": "0c9922569c6c9d06a6e30faeeab1e5ccd1a74e73b666120d9a1745e414fbbc2f"
+    },
+    {
+      "name": "example-html-ppt-xhs-white-editorial/38ca1deb53717f14/poster.jpg",
+      "bytes": 19883,
+      "sha256": "073cfb4245207ae808aea47c78cd1187db78a997a66778b46d9129a0ceddbcea"
+    },
+    {
+      "name": "example-html-ppt-xhs-white-editorial/38ca1deb53717f14/preview.mp4",
+      "bytes": 64387,
+      "sha256": "20760b30d5e42a15490304c1ec8b80f7b58ccd74c7639925994df81e08fd55e0"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-8-bit-orbit/22d43068944abb8e/poster.jpg",
+      "bytes": 20443,
+      "sha256": "c2d77bd023bd57ac547c2e8d0ac0a162221d64cdd5b71b97598f73e6d49fe88b"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-8-bit-orbit/22d43068944abb8e/preview.mp4",
+      "bytes": 77182,
+      "sha256": "d28dc49c1b4f86f9fc3ed2ef73a115ba6f8eaaa78e10c83f86664ddc086c8bb7"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-biennale-yellow/9362f22950739a6f/poster.jpg",
+      "bytes": 20682,
+      "sha256": "74e3773fa05076188156065a0a927615d08d2ddf5b5c12275ffe2fc9875989c4"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-biennale-yellow/9362f22950739a6f/preview.mp4",
+      "bytes": 127192,
+      "sha256": "0ea8d609096fe6e303579c39b24ec0b35854af55ea4cd41f6429d5f1ad5b40d8"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-block-frame/d021219134aa99bc/poster.jpg",
+      "bytes": 12881,
+      "sha256": "44928a88f211ec8d66dc23635842e653492a17fab41367b890e0858e7e4ef33e"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-block-frame/d021219134aa99bc/preview.mp4",
+      "bytes": 103416,
+      "sha256": "e2513209dcbddd1f5faaebaf502b281dfa81bf6162261f700afa0e8f2e098406"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-blue-professional/a76bff37802bbda8/poster.jpg",
+      "bytes": 11208,
+      "sha256": "af7bbe4beaefd6a78e83e0625b8f76e2dc2584a6831f519a2a517c23a5a4b973"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-blue-professional/a76bff37802bbda8/preview.mp4",
+      "bytes": 123034,
+      "sha256": "2c534cd894f9b95a5933edf42ee5af6e2ed8207eccbddb25375b32096eef35d9"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-bold-poster/c94bf03ed56088c4/poster.jpg",
+      "bytes": 15297,
+      "sha256": "573779d82048207ee9017cce1a2ff44f6063284d1ee06a51c7548acb37409a93"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-bold-poster/c94bf03ed56088c4/preview.mp4",
+      "bytes": 136927,
+      "sha256": "6353b3417beff434cd292f1f2edda2d8a3a393a51062604c451effa1b3104513"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-broadside/6f58b1e85b934193/poster.jpg",
+      "bytes": 16604,
+      "sha256": "4b2a2e686e3919fabd82b35eadbe4a35abd4439273db19347d0b366c1a3b3f42"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-broadside/6f58b1e85b934193/preview.mp4",
+      "bytes": 118315,
+      "sha256": "6c4c013cfb0de063ff50f8e2175c0f371e0d7d7d99b33fc03d52d56f8f141c91"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-capsule/816f54dc2b1b0935/poster.jpg",
+      "bytes": 11796,
+      "sha256": "53d18bbbe3e059e003665b59a6ed64e2e53db8f9c8f8b85a42e9f362031760c3"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-capsule/816f54dc2b1b0935/preview.mp4",
+      "bytes": 91088,
+      "sha256": "5238df90c04f73a0962ae33cf96304f41d008d838e27ce9e08f6f0dd1816f15d"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-cartesian/1d45039bf4be9d48/poster.jpg",
+      "bytes": 9687,
+      "sha256": "809c90b6ea409744e1abd64677d71d33178730cf212223eae08f7b6204d30a04"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-cartesian/1d45039bf4be9d48/preview.mp4",
+      "bytes": 76434,
+      "sha256": "4065904ae3d872e7100d0c03834948237e98075cd162e2ce8234c122ff5cc577"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-cobalt-grid/69462b3e46efe6e0/poster.jpg",
+      "bytes": 27086,
+      "sha256": "9a0224567689066c8c518dff7b83beee8cff979ca6c558f04e8c6f0f86402c64"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-cobalt-grid/69462b3e46efe6e0/preview.mp4",
+      "bytes": 157120,
+      "sha256": "b42ed1cfb0539fe94e88e898ac818986932e4b98dc44e268192907bea4e74631"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-coral/5e56104f70346514/poster.jpg",
+      "bytes": 15942,
+      "sha256": "d604faa302001e86ea00476c8a1447968dbcd17719aeaa2ce8f4b00fd15624de"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-coral/5e56104f70346514/preview.mp4",
+      "bytes": 136248,
+      "sha256": "8344347e19477bda0cca7b8ab8e547d20711643668534ecf29747170d39d8424"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-creative-mode/9d412cb26e79ba18/poster.jpg",
+      "bytes": 21221,
+      "sha256": "0ed3dca57f405bff0202f8c04dbaae7dbfc23b352ad4f2fffdb95bc2fabb1d00"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-creative-mode/9d412cb26e79ba18/preview.mp4",
+      "bytes": 164042,
+      "sha256": "c11171b6c8dba17b8d7806f41ca2c85d8b9f9b5f7214bc0645cbcc7061b2e102"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-daisy-days/b4f19c1086194053/poster.jpg",
+      "bytes": 20116,
+      "sha256": "45957ca8566aa470019910ca29bffdbcd7a50bee38fd938d2f783e46d09a6a57"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-daisy-days/b4f19c1086194053/preview.mp4",
+      "bytes": 203386,
+      "sha256": "3955cb52ca5f6f2a22f8c2245817880ee8c7b3c3f8823822eda79c871cde7734"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-editorial-tri-tone/830879a619f70370/poster.jpg",
+      "bytes": 22406,
+      "sha256": "357eeb47e141ba6ba249f4abd3c3c906b4971cc53f2792d0fafa372b6c31de58"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-editorial-tri-tone/830879a619f70370/preview.mp4",
+      "bytes": 120534,
+      "sha256": "359bd8ef2a059eef6fb8cedea9003a11f845358ce7427e2ed74b0fdabef10b89"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-grove/030dc471adcd3dd6/poster.jpg",
+      "bytes": 16215,
+      "sha256": "28eca485eee19801c79f00b1ae6347d36aa3a94857a5cb1f6328d6f99c5088e5"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-grove/030dc471adcd3dd6/preview.mp4",
+      "bytes": 143383,
+      "sha256": "09cc85820fd69b6589a7032c08d44221adc202904c29f7da2603742b26e937c9"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-long-table/4cb7f0dd08abba83/poster.jpg",
+      "bytes": 19266,
+      "sha256": "3221ab1cdc7bd7fc628aa420047a045f7c5a386db862f28c18f0cd0552ede880"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-long-table/4cb7f0dd08abba83/preview.mp4",
+      "bytes": 134308,
+      "sha256": "4beb8d6882781d42f32813ae8c2ba6997f6887cd200f6d763c817de37259be57"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-mat/87df15d4dc61c733/poster.jpg",
+      "bytes": 19755,
+      "sha256": "e3de8a39d87aea8ff04c017e6d4b99401e0255669cd4969f243f7761d072ea05"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-mat/87df15d4dc61c733/preview.mp4",
+      "bytes": 170089,
+      "sha256": "15e8915eaeed88ef2bd1951f6c2ec0c5a166f738d29f852af3c369ee900a7a44"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-monochrome/66e894abefef8080/poster.jpg",
+      "bytes": 13581,
+      "sha256": "d134f97f05e072fb9bd901eb7c671f130a36d7cd5a540c3a6c4f49256214338f"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-monochrome/66e894abefef8080/preview.mp4",
+      "bytes": 168913,
+      "sha256": "70e9c6b4b0122914bc1682054a8d86715760d2d56a1f6667c7ab1197d747ac6d"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-neo-grid-bold/d2a048376e599f80/poster.jpg",
+      "bytes": 18083,
+      "sha256": "02bf52713a5e54b89c1dcbdae0382034c7f5a6f56937fd213c34cde790d0414a"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-neo-grid-bold/d2a048376e599f80/preview.mp4",
+      "bytes": 162204,
+      "sha256": "197e7979f92f295e165f4a26a8e86972a26f4050ac08a6ac032311e024d36c4e"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-peoples-platform/2517e5795bf6ffce/poster.jpg",
+      "bytes": 24902,
+      "sha256": "16d4e1f07a3fe77eea8c25e308e6db4efb7eb8e470d91f20db5bb45af49ec4e5"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-peoples-platform/2517e5795bf6ffce/preview.mp4",
+      "bytes": 149861,
+      "sha256": "33cc96bd54ac747bd4af836027ce549d86b1e36aa1bbaf4e41b8df9593fd19b6"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-pin-and-paper/36afa3b77eba22e5/poster.jpg",
+      "bytes": 13586,
+      "sha256": "abad5c8850bd13d848f95bda7b3a9500aee1fb3cacd1c9409884cc74d019995c"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-pin-and-paper/36afa3b77eba22e5/preview.mp4",
+      "bytes": 120182,
+      "sha256": "2395df168955158370e04fcd57777015abaca85a53d07273aba93352b1c6c463"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-pink-script/742613fa915f9cd2/poster.jpg",
+      "bytes": 16529,
+      "sha256": "93d9e8425674626a142ecd6edb3d14cdadf84372395cc9c801a39825027965b8"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-pink-script/742613fa915f9cd2/preview.mp4",
+      "bytes": 153518,
+      "sha256": "541b6a42c0cbaa207ea431942a5e782ce12a3d4f6243cc96a0b3b3478853569e"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-playful/6ce231d649fa8c0b/poster.jpg",
+      "bytes": 19201,
+      "sha256": "e5d9a77a28f371033f8ecfe9ce7b5bd8f2782a38f81308159da58e3f8ee8a770"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-playful/6ce231d649fa8c0b/preview.mp4",
+      "bytes": 126469,
+      "sha256": "98985326db1559e9f3a2a7eb0700a0fa8ad0d17fbd21320b9a25ea08221b1fd9"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-raw-grid/e4a980603588ec99/poster.jpg",
+      "bytes": 14819,
+      "sha256": "30353d3675c76dc01f58431e5e634061a70919ec598007910dc5471c0d5ec2a7"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-raw-grid/e4a980603588ec99/preview.mp4",
+      "bytes": 106285,
+      "sha256": "04b0edb7703ade178ee5ea1d9e2ed9771502f414646b1914e577628576f291ec"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-retro-windows/71357ef27b1a2a2c/poster.jpg",
+      "bytes": 11055,
+      "sha256": "73d71f156efe248a289a20b5881ef51c9297805e7b043d2015be5ced43643143"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-retro-windows/71357ef27b1a2a2c/preview.mp4",
+      "bytes": 93957,
+      "sha256": "af597b1b0a21c46ac9881be3ce2e9ad7dd1550a64a3315e83b5c40f27c07a21e"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-retro-zine/35ae21db33156a9a/poster.jpg",
+      "bytes": 9968,
+      "sha256": "1d81786d89839d63c62c4805635f6a48db124e71de7f6fd19eb5651258e8b1e8"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-retro-zine/35ae21db33156a9a/preview.mp4",
+      "bytes": 110779,
+      "sha256": "d83301278a4dec2ef72ffa63a4d3b2e8a30932efe2ea55f5596378a0c735b9d3"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-sakura-chroma/1acb498fcb6566d2/poster.jpg",
+      "bytes": 24404,
+      "sha256": "ccb9d1d420b84cdb320ded868a2d0177716f419564f9241644ceceee0c3525af"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-sakura-chroma/1acb498fcb6566d2/preview.mp4",
+      "bytes": 182602,
+      "sha256": "1d87fe3f2f864e9e4306fe2bfa5b4f1e3985dd44257c17791cf06a79e81654f3"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-scatterbrain/912e2c5a3e1a38c6/poster.jpg",
+      "bytes": 9751,
+      "sha256": "7e58294a8a59af9c5d5df7d94eca179f8aa67b0da72be3809b9d754534e45912"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-scatterbrain/912e2c5a3e1a38c6/preview.mp4",
+      "bytes": 100286,
+      "sha256": "b5b00575e5b58aabba4d7a16804e90a5792c165469d1bf375811ec79d14e1414"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-signal/a9af53234104f1a0/poster.jpg",
+      "bytes": 12724,
+      "sha256": "af108f378ad88f127e1f67174488691d89d4f481d98353d2c56944e08f0af4ea"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-signal/a9af53234104f1a0/preview.mp4",
+      "bytes": 141416,
+      "sha256": "ca7f2b917a5cf7dc08d476d621c2925e44c9ea58c9a3d04acc3a8b1c3fc0978e"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-soft-editorial/b2808db6854b99cd/poster.jpg",
+      "bytes": 17750,
+      "sha256": "fe493c26016331e7ea4662fc0d14e76683d71a3fa3bfb0b5ab6f53d9465c6165"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-soft-editorial/b2808db6854b99cd/preview.mp4",
+      "bytes": 105637,
+      "sha256": "144155b63d127ff20dcfb7f99c1c55a822dee6b0c48961d98b3b6abd91d3dfeb"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-stencil-tablet/ce08bd78a53ecf86/poster.jpg",
+      "bytes": 16879,
+      "sha256": "3c8b367b59a4c85f8fae99d6f66c7c4697c7f109d336bcef6906b5634bf75ed0"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-stencil-tablet/ce08bd78a53ecf86/preview.mp4",
+      "bytes": 188805,
+      "sha256": "c61ac2baee99f041d8e8b52dfb18935eb7358c816bc95cf285739936957058d9"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-studio/42b148e00bb75dc9/poster.jpg",
+      "bytes": 17988,
+      "sha256": "d27b94a9fb84f0d7d57eb5a303c04f6330f64e6ce4f0b16bcc6f806e3b54324b"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-studio/42b148e00bb75dc9/preview.mp4",
+      "bytes": 130859,
+      "sha256": "46e00db0dcfd9220e228dc31cfe16222e98a02398cdbb4d21f53f45fc878207e"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-vellum/0e9f5d8d1117a10f/poster.jpg",
+      "bytes": 15962,
+      "sha256": "1c6d900c503aa69df1e3debf4e7e59bc7df8966333c6ddc338e3e78471e91fed"
+    },
+    {
+      "name": "example-html-ppt-zhangzara-vellum/0e9f5d8d1117a10f/preview.mp4",
+      "bytes": 140199,
+      "sha256": "22b72b40ccdc717612136396ecf1f4fee098507031919a32223d45eb2c5aa5c0"
+    },
+    {
+      "name": "example-huashu-annual-letter/4334ff0bc6d5fc88/poster.jpg",
+      "bytes": 13534,
+      "sha256": "08cc1283bbe2d1b9c29d8205db3cbab32a1a3f49b5bf7c25eaf76a21c11b8ff9"
+    },
+    {
+      "name": "example-huashu-annual-letter/4334ff0bc6d5fc88/preview.mp4",
+      "bytes": 106707,
+      "sha256": "1991d75847dadfb207bd227cda49eca9256801f80dfa790e82c290345c99cabb"
+    },
+    {
+      "name": "example-huashu-bento-insight/365b08bed7ed59fa/poster.jpg",
+      "bytes": 11587,
+      "sha256": "773a8b5dfeec271f8c00c5e2fc78da02c474504bab8dca5d4303417e21470885"
+    },
+    {
+      "name": "example-huashu-bento-insight/365b08bed7ed59fa/preview.mp4",
+      "bytes": 108458,
+      "sha256": "fd0a2980c0b1563da5dea69d2aa2114aeeea27c95b17f207ccf2032559c0fc6a"
+    },
+    {
+      "name": "example-huashu-golden-circle/ea843ba0109bef7e/poster.jpg",
+      "bytes": 16724,
+      "sha256": "8c70483738a585d989ffb532dfd681e3f5cbcfca85c2c537b7578e61de6e3d8e"
+    },
+    {
+      "name": "example-huashu-golden-circle/ea843ba0109bef7e/preview.mp4",
+      "bytes": 84194,
+      "sha256": "717a21a5d339d9a8c291d04b5bda91809c3e7b790d5cce0979f9faeed8b32540"
+    },
+    {
+      "name": "example-huashu-keynote-black/7c8befe375d1804f/poster.jpg",
+      "bytes": 10343,
+      "sha256": "40cfcdff75d22f422111a4c72929d080a0fc95fb9209c0be67e0f2696053c70a"
+    },
+    {
+      "name": "example-huashu-keynote-black/7c8befe375d1804f/preview.mp4",
+      "bytes": 72348,
+      "sha256": "0632448c84a6173362295fd81cd24c2ba1aff8c9e3210b79c09803908bf229a4"
+    },
+    {
+      "name": "example-huashu-luxe-whitespace/0663050462a0eb6c/poster.jpg",
+      "bytes": 7311,
+      "sha256": "0b5b71d3b3c24260badad376f0f1cf35922394440f4f40c483d47c0046917a62"
+    },
+    {
+      "name": "example-huashu-luxe-whitespace/0663050462a0eb6c/preview.mp4",
+      "bytes": 67668,
+      "sha256": "2510f4d4536f7144a14e7f8262c350d6d3ccc3d21806d64c4b5bcf5322d92d7b"
+    },
+    {
+      "name": "example-huashu-pentagram-grid/6bb80750fed2f621/poster.jpg",
+      "bytes": 14678,
+      "sha256": "761755530c0fe6bb0c43115b42ed9c0da078ae0680fd8fb82bba4b66738341fc"
+    },
+    {
+      "name": "example-huashu-pentagram-grid/6bb80750fed2f621/preview.mp4",
+      "bytes": 70375,
+      "sha256": "99672f2e726c4c7bc30f6ee3d8ecbd8b50d2c268e8848e1720603870af233f24"
+    },
+    {
+      "name": "example-huashu-slides/ff8f8f17044ceedc/poster.jpg",
+      "bytes": 12506,
+      "sha256": "d3a6fd7b2e006fc1ec95ba7d22b03b386a40c2c8c7b1ea04d0c50ab194c0b308"
+    },
+    {
+      "name": "example-huashu-slides/ff8f8f17044ceedc/preview.mp4",
+      "bytes": 73696,
+      "sha256": "3937a158c06b4d4372ef6c973ccced68a7cc7a0b5834bf9ade8928c6ccb6dfcb"
+    },
+    {
+      "name": "example-huashu-sparkline-arc/6bcb1916e8743e5e/poster.jpg",
+      "bytes": 11299,
+      "sha256": "813ac6e6441eaa04cb71b95b7cc99500f7d3c7b8f160cf6d57950c924a025e6f"
+    },
+    {
+      "name": "example-huashu-sparkline-arc/6bcb1916e8743e5e/preview.mp4",
+      "bytes": 61017,
+      "sha256": "b206fdfd0c59a02072dd033b71625c3e7c7529cb5a5a8857e13dcb03c6531901"
+    },
+    {
+      "name": "example-huashu-takram-soft-tech/06f7e6a07e879f68/poster.jpg",
+      "bytes": 7179,
+      "sha256": "6715652bf39e5134ba9a12d001a8b94210c6b05ab464bc9e9510d4ef60de054c"
+    },
+    {
+      "name": "example-huashu-takram-soft-tech/06f7e6a07e879f68/preview.mp4",
+      "bytes": 91187,
+      "sha256": "9d1946f0eac8772d20781b01160ad8759aa3f7cdf9b498135b0a87d3b91b0e09"
+    },
+    {
+      "name": "example-ib-pitch-book/8bca422b2430247e/poster.jpg",
+      "bytes": 22032,
+      "sha256": "e3f7ba74a14b3e227c67fb75b39fe57418e43794bae44533ef1388f37a9cb370"
+    },
+    {
+      "name": "example-ib-pitch-book/8bca422b2430247e/preview.mp4",
+      "bytes": 15560,
+      "sha256": "2261b7bb2d14396423ae6c017d02c562d9809a906b71068ca480abb7b064deca"
+    },
+    {
+      "name": "example-image-poster/827e5514edd44925/poster.jpg",
+      "bytes": 8605,
+      "sha256": "9e9476d59bc3443908abc0c61761a4e5030faf293d163ce098e097267c929ece"
+    },
+    {
+      "name": "example-image-poster/827e5514edd44925/preview.mp4",
+      "bytes": 8603,
+      "sha256": "29aff5b39bf57fe9db7f0aa0dca22f0a3d8dc941b8eda37dcc13a0061f902059"
+    },
+    {
+      "name": "example-invoice/32a4c3ff4333909c/poster.jpg",
+      "bytes": 20607,
+      "sha256": "79e04f9140d09d89a16b441aeb6e6e25cf704e6908fb48a60fe565444b9c2810"
+    },
+    {
+      "name": "example-invoice/32a4c3ff4333909c/preview.mp4",
+      "bytes": 49025,
+      "sha256": "72593d03c65ad571b252ed6fbcecdaae242b385034f7a4fa3177c843192fff32"
+    },
+    {
+      "name": "example-kami-deck/5e3285e96269ab5a/poster.jpg",
+      "bytes": 14628,
+      "sha256": "3e93410455fc08fa56bdccc4ab313aed7c67ca240e4b4ad6fb12fbd7b10214aa"
+    },
+    {
+      "name": "example-kami-deck/5e3285e96269ab5a/preview.mp4",
+      "bytes": 107043,
+      "sha256": "9cd4bacc54e939a993dbc58a97fb00383d64b81ef9505ea3039ec22be566b5da"
+    },
+    {
+      "name": "example-kami-landing/eeedabde2d79fa93/poster.jpg",
+      "bytes": 20989,
+      "sha256": "7311250a70b1f107224bc710e17293522cd53d87c7d036b76dca8730441b19f8"
+    },
+    {
+      "name": "example-kami-landing/eeedabde2d79fa93/preview.mp4",
+      "bytes": 179785,
+      "sha256": "a60681ad15194e1e03dc7db9bb7405638a4352eabfd44f10c44c201a046f1539"
+    },
+    {
+      "name": "example-kanban-board/38819c782ae77c19/poster.jpg",
+      "bytes": 26444,
+      "sha256": "ceea4f06634cf7e124928e46f87a6d8176a528f8034f9054bdd587a204b64fa8"
+    },
+    {
+      "name": "example-kanban-board/38819c782ae77c19/preview.mp4",
+      "bytes": 19143,
+      "sha256": "2208310713d0620e3fec97e798ce2dca32656260f86bdf79957d8ef4f8e613db"
+    },
+    {
+      "name": "example-live-dashboard/bbe1a4afad0df258/poster.jpg",
+      "bytes": 23454,
+      "sha256": "2f18263c5553b7acaca83e529a6db5e7dbf5758e9c5400fced05c7123d382079"
+    },
+    {
+      "name": "example-live-dashboard/bbe1a4afad0df258/preview.mp4",
+      "bytes": 43146,
+      "sha256": "bbdd4af23d7fa567441b2a9acc706b2751a1152a3933eb9988472dbf63fe60b4"
+    },
+    {
+      "name": "example-magazine-poster/8084fab7c9c1e102/poster.jpg",
+      "bytes": 30613,
+      "sha256": "1414609428d59d3ee71d44b670b5a283b396cc88c5ff2c8e7e6978163868bc25"
+    },
+    {
+      "name": "example-magazine-poster/8084fab7c9c1e102/preview.mp4",
+      "bytes": 50825,
+      "sha256": "1efce0c6d41099d88a66266ce9e3e87c5c4a4636b3ae17c9b5fe243ae364ba77"
+    },
+    {
+      "name": "example-meeting-notes/9d28fdacec342047/poster.jpg",
+      "bytes": 19029,
+      "sha256": "a0af6e4f24c58b2aeab881b6dd71fcdd0f8571dce546f2c03e660ed8ffe6da28"
+    },
+    {
+      "name": "example-meeting-notes/9d28fdacec342047/preview.mp4",
+      "bytes": 75089,
+      "sha256": "1b9eec4fcf8f37792e1a35f0b2d8ba99d3166ecc40ebfc3bfeae2e8f00a810ac"
+    },
+    {
+      "name": "example-mobile-app/c933a4813cdd1ea7/poster.jpg",
+      "bytes": 11882,
+      "sha256": "560bab57552983932027255912337ded2573d5a511c5203d4a36972aa6a3cf0e"
+    },
+    {
+      "name": "example-mobile-app/c933a4813cdd1ea7/preview.mp4",
+      "bytes": 7809,
+      "sha256": "d5facf5ae4bc9010e7479688ecee6e95446da64334a52721b3d10c52681415f6"
+    },
+    {
+      "name": "example-mobile-onboarding/03ff2c03e294b49e/poster.jpg",
+      "bytes": 24386,
+      "sha256": "dffc4201fad3e6c0f0ad81fb2a60947d6a30b270d58eebd7f1504d56c3ca953e"
+    },
+    {
+      "name": "example-mobile-onboarding/03ff2c03e294b49e/preview.mp4",
+      "bytes": 15976,
+      "sha256": "27c37d9c033fb80ba87d4bbb601d72905a47c810e470cddcc11f8ff421ff5fc0"
+    },
+    {
+      "name": "example-mockup-device-3d/f18bc197a821f80a/poster.jpg",
+      "bytes": 14143,
+      "sha256": "15ae9c580e5628dd9965dd09c72b68954d441f8a852b465a2a219f4dc3e3892b"
+    },
+    {
+      "name": "example-mockup-device-3d/f18bc197a821f80a/preview.mp4",
+      "bytes": 13186,
+      "sha256": "c25da3a67496a830950e2ad8966db24cb51f1dafeed4082a93c46043286a71e3"
+    },
+    {
+      "name": "example-motion-frames/3ae75e8c9a1a15de/poster.jpg",
+      "bytes": 14485,
+      "sha256": "46718b9c3dd8ca60b4f557658bcba91b21969a7e010fd0fdab4f453a9f6159a6"
+    },
+    {
+      "name": "example-motion-frames/3ae75e8c9a1a15de/preview.mp4",
+      "bytes": 53749,
+      "sha256": "6c293e1df08daf395f5136e9f0df72cad3f216e0ca5e07536f5bf0b5f7b3913a"
+    },
+    {
+      "name": "example-open-design-homepage/6b40c0a4f2b15872/poster.jpg",
+      "bytes": 2162,
+      "sha256": "7c4462585280e78186a2de5e08e65944747eca0d1cf0e1fb0aef6d6523f25b53"
+    },
+    {
+      "name": "example-open-design-homepage/6b40c0a4f2b15872/preview.mp4",
+      "bytes": 2988,
+      "sha256": "ce157ce95e925fa3fa2135a026932fcdb0cdf95ad7b01c49d4ea7ab0db998c9d"
+    },
+    {
+      "name": "example-open-design-landing-deck/bb6b89eff13bdb81/poster.jpg",
+      "bytes": 14595,
+      "sha256": "e8aa37289ba9d5e7340a9f378d600b82f7ac1d1d92ab2f6afbb08d5dd49ddc6b"
+    },
+    {
+      "name": "example-open-design-landing-deck/bb6b89eff13bdb81/preview.mp4",
+      "bytes": 167351,
+      "sha256": "f8ecd5019a678d501986dd9fef8f7f7ea439084a2ed1650ec00b8fe839a155dd"
+    },
+    {
+      "name": "example-open-design-landing/8a69e5e7664328c7/poster.jpg",
+      "bytes": 36540,
+      "sha256": "6b83ffb1a13fbbe5e4e39b6c447b4afc7790f3ccf793a7002d56e94f38b4f38b"
+    },
+    {
+      "name": "example-open-design-landing/8a69e5e7664328c7/preview.mp4",
+      "bytes": 611943,
+      "sha256": "f3a605895342c008a7871f2060ac6bfaefbbec03519bb6a9baef833bb019bdbe"
+    },
+    {
+      "name": "example-orbit-general/65935e27858c8c48/poster.jpg",
+      "bytes": 17376,
+      "sha256": "d7618192dcec98f7952c836ae60bf93cb91051a9ddb67ea7886340fe9a9ecb66"
+    },
+    {
+      "name": "example-orbit-general/65935e27858c8c48/preview.mp4",
+      "bytes": 117780,
+      "sha256": "4b2616631335c68fe02063396341c851f544e15e1d3eaffd2dc89bb797ce6b14"
+    },
+    {
+      "name": "example-orbit-github/2c462515823c8898/poster.jpg",
+      "bytes": 21169,
+      "sha256": "de9c8df453881e55962abcb4f785351202f1cdac5c5e5793d6692070662098ba"
+    },
+    {
+      "name": "example-orbit-github/2c462515823c8898/preview.mp4",
+      "bytes": 13129,
+      "sha256": "c90e336797c21346546016db3811095f876c49cb70a7fadd539400ff30e7c07e"
+    },
+    {
+      "name": "example-orbit-gmail/bbf1bb753dbc5a36/poster.jpg",
+      "bytes": 18486,
+      "sha256": "f3946f364a9a445217c718e5ae1e7d83abc80ff391c20ade2c9d86311b27f3e6"
+    },
+    {
+      "name": "example-orbit-gmail/bbf1bb753dbc5a36/preview.mp4",
+      "bytes": 45095,
+      "sha256": "5b5073c1dae9e4d9ea6f95bc5cd66ab410d3e9dc7cdddd379b1fcabb1c9f37c8"
+    },
+    {
+      "name": "example-orbit-linear/d1149c48f49404e1/poster.jpg",
+      "bytes": 14902,
+      "sha256": "e601c73bf2c5a6bd5c6b542dfd912ea4f2afa16cd48ec432e51c408b81554f7b"
+    },
+    {
+      "name": "example-orbit-linear/d1149c48f49404e1/preview.mp4",
+      "bytes": 19786,
+      "sha256": "87f3671f6183afcc7ab6eda24465fc55dd0a0c3b8115608e4e90572754656fa9"
+    },
+    {
+      "name": "example-orbit-notion/86a0e61d23b7c342/poster.jpg",
+      "bytes": 17797,
+      "sha256": "c273dba692fee936223ecfe2dbb9915c9fd1f96a4848c73a40409c9a01d4ff81"
+    },
+    {
+      "name": "example-orbit-notion/86a0e61d23b7c342/preview.mp4",
+      "bytes": 12007,
+      "sha256": "dfd43ed8ec2dec2b5d41a199c26f1c6245d5f46c9e77f5e6c26dffd885fa5d7e"
+    },
+    {
+      "name": "example-pm-spec/2fb72345e7eb5a6b/poster.jpg",
+      "bytes": 27881,
+      "sha256": "93396401d207d4586424e84fd8ca54944d93c5fa8279c95b274cd721bf557189"
+    },
+    {
+      "name": "example-pm-spec/2fb72345e7eb5a6b/preview.mp4",
+      "bytes": 137566,
+      "sha256": "693a3ca10e102069efa6affe201d6bdad9d1269d03f30f9c68c144c1c6ac5974"
+    },
+    {
+      "name": "example-poster-hero/3a70e2b9f2399e5d/poster.jpg",
+      "bytes": 16953,
+      "sha256": "b3cc3f21390a0172af60f78817052cbea52e8a741f1986287abf5642b55c4abc"
+    },
+    {
+      "name": "example-poster-hero/3a70e2b9f2399e5d/preview.mp4",
+      "bytes": 65672,
+      "sha256": "0d15fafa9932377034ce6964e2ad30e7f2feab0400e09fd64666be3782089e9d"
+    },
+    {
+      "name": "example-ppt-keynote/b747212711c36c70/poster.jpg",
+      "bytes": 15355,
+      "sha256": "e62af23e97a674d56abcb11843b1b96559f5762d497771edfac0e993aab56b9e"
+    },
+    {
+      "name": "example-ppt-keynote/b747212711c36c70/preview.mp4",
+      "bytes": 213018,
+      "sha256": "beb7658bbf7f8d1a6632a407608adfa144b937fa02c2a0b3c8315ef3dd9a9957"
+    },
+    {
+      "name": "example-pricing-page/51d62cdd9b836c60/poster.jpg",
+      "bytes": 22890,
+      "sha256": "6567a39f86313f857956247ae518a41c4816aa331a12a67b8dfa1d7966c76a54"
+    },
+    {
+      "name": "example-pricing-page/51d62cdd9b836c60/preview.mp4",
+      "bytes": 52663,
+      "sha256": "5310715bdf672e1488b56d5c145603b9aebe7186af21451fe507693ba403b119"
+    },
+    {
+      "name": "example-replit-deck/881767177be6708e/poster.jpg",
+      "bytes": 13503,
+      "sha256": "a535ac0c4cd77ae8c0796e5fc79e339535cdb40f724dfb1b0d2fcf0d91ec79b8"
+    },
+    {
+      "name": "example-replit-deck/881767177be6708e/preview.mp4",
+      "bytes": 7762,
+      "sha256": "3812e2ba4c16f5c9c5a940c6a55ff042115d089f4e743761a15e2cc590e6283a"
+    },
+    {
+      "name": "example-resume-modern/f310f49ee207fc76/poster.jpg",
+      "bytes": 22532,
+      "sha256": "ad587402a564fbbdac05693311a4282ef1e858f228c6aeb0a8c6f0600906aaf0"
+    },
+    {
+      "name": "example-resume-modern/f310f49ee207fc76/preview.mp4",
+      "bytes": 29833,
+      "sha256": "288cfe2f4e1b8cf755ddb7f04dfe50f1afbd824ea5c8187846cc62b85c85123b"
+    },
+    {
+      "name": "example-saas-landing/a45bacd41a7e48d2/poster.jpg",
+      "bytes": 23463,
+      "sha256": "35d0977668e6dcb207c3b1a31217e649ade27e0cc85a2e4e3f104b606a924cb7"
+    },
+    {
+      "name": "example-saas-landing/a45bacd41a7e48d2/preview.mp4",
+      "bytes": 62203,
+      "sha256": "9426950e454958110ef04656be9d4dd4775421f84f8a617b2660d63a87333701"
+    },
+    {
+      "name": "example-simple-deck/d9f0c0fc28b61d98/poster.jpg",
+      "bytes": 17938,
+      "sha256": "721ae0018783e3f33cfb2c53a8431c17876e82caaa8056ada6b0efe10e13cd42"
+    },
+    {
+      "name": "example-simple-deck/d9f0c0fc28b61d98/preview.mp4",
+      "bytes": 12208,
+      "sha256": "03a24ca1da3ac437f918257acf0219572b9c68a7e52b7aa289c4e7180605f4d6"
+    },
+    {
+      "name": "example-social-carousel/e40e557508c419ab/poster.jpg",
+      "bytes": 16064,
+      "sha256": "5e8bfee9e8e990d517372f0438ceb090feff42a23aacbc4bd8acd8482477f389"
+    },
+    {
+      "name": "example-social-carousel/e40e557508c419ab/preview.mp4",
+      "bytes": 12177,
+      "sha256": "faeb5495f00190d0ca6d37f97917a5f17d8c3b139aeb2da7bd718428e0cf4e62"
+    },
+    {
+      "name": "example-social-media-dashboard/7aa9e7c755347561/poster.jpg",
+      "bytes": 26578,
+      "sha256": "7de871f9930d30abbe86732e4890dc950857b01174119fa72173f8736ec236e0"
+    },
+    {
+      "name": "example-social-media-dashboard/7aa9e7c755347561/preview.mp4",
+      "bytes": 52068,
+      "sha256": "110e69507bcfb046eef948cb797ea8aec00bce1c33e72411ed9900bc50409a37"
+    },
+    {
+      "name": "example-social-media-matrix-tracker-template/20f09560183c9646/poster.jpg",
+      "bytes": 32306,
+      "sha256": "81f5e342d9bbeb4e87b346a24b97c302bd908f038993056c29fee53d2b064445"
+    },
+    {
+      "name": "example-social-media-matrix-tracker-template/20f09560183c9646/preview.mp4",
+      "bytes": 129815,
+      "sha256": "6e2f7e9e938ff16dc893ee8ed80fb0fa358529d711d9f9e9a9e677351b0dcb7f"
+    },
+    {
+      "name": "example-social-reddit-card/543ffb4abd5221e4/poster.jpg",
+      "bytes": 18925,
+      "sha256": "e200f36ef448466ca24e3e3018f65c19fa1f28db68427b64d6a73fd476579973"
+    },
+    {
+      "name": "example-social-reddit-card/543ffb4abd5221e4/preview.mp4",
+      "bytes": 13482,
+      "sha256": "320c5563d1b97d02badd7ea0e7e8a29c1bd179495e9977d2f437fb042058340f"
+    },
+    {
+      "name": "example-social-spotify-card/e4d86832e846ce03/poster.jpg",
+      "bytes": 17273,
+      "sha256": "becfb37143980521820759edfbf72b00949af6c16cbb02ecae20e2a26a5bce0a"
+    },
+    {
+      "name": "example-social-spotify-card/e4d86832e846ce03/preview.mp4",
+      "bytes": 117705,
+      "sha256": "e40015b42466ba2414d159897988f27b58f143dc4a3d1a5ee72d0736be2491dc"
+    },
+    {
+      "name": "example-social-x-post-card/95b53fcd3cbb4045/poster.jpg",
+      "bytes": 15720,
+      "sha256": "65c4473a66de3d7ba1cc7ac328431a06342821b863d351496dea28066decf32a"
+    },
+    {
+      "name": "example-social-x-post-card/95b53fcd3cbb4045/preview.mp4",
+      "bytes": 66189,
+      "sha256": "2a1d9fbd4f91fb466d0ec5409bdad8daf71b38610d7c568cc78b48d4b3f61b4e"
+    },
+    {
+      "name": "example-sprite-animation/11ae2b8effdb107a/poster.jpg",
+      "bytes": 13330,
+      "sha256": "cd3cde295a06f57c13b7d6be3a9073a2b949d34c2729e1f172062f5476c07e32"
+    },
+    {
+      "name": "example-sprite-animation/11ae2b8effdb107a/preview.mp4",
+      "bytes": 55494,
+      "sha256": "4d969d4ac9bdf81686d7c5a304850a76e275d32e766b4cc0092c1ea9249a3cf8"
+    },
+    {
+      "name": "example-team-okrs/f173fa66990cec4d/poster.jpg",
+      "bytes": 27296,
+      "sha256": "45efe00c8f0d9b7d4c4d776d74e502c5c540b2b0aa0d1bfcd7cc04d6b5818882"
+    },
+    {
+      "name": "example-team-okrs/f173fa66990cec4d/preview.mp4",
+      "bytes": 32449,
+      "sha256": "a2849fb84c5d4ea5b586d8cd0c3e2be54fc70ec654baa98282c99fd300dc4f61"
+    },
+    {
+      "name": "example-trading-analysis-dashboard-template/479d00063641ff41/poster.jpg",
+      "bytes": 18936,
+      "sha256": "3d1ea23b5f8c6ab79f2d28e4341f63455d356a74be59340e68e3cc4a955b5fa9"
+    },
+    {
+      "name": "example-trading-analysis-dashboard-template/479d00063641ff41/preview.mp4",
+      "bytes": 19230,
+      "sha256": "eee52e07efca4e712da81dbc5cb03f510e885b4cf824c30fa26851d67c0622af"
+    },
+    {
+      "name": "example-tweaks/40b1ce904aa20a0c/poster.jpg",
+      "bytes": 21635,
+      "sha256": "c39af6219e47ba72406f01b081c404fdbadc9739bd7ab07d1079ea2dce35c7d3"
+    },
+    {
+      "name": "example-tweaks/40b1ce904aa20a0c/preview.mp4",
+      "bytes": 60504,
+      "sha256": "534c9d0133bf1b730ab72a225ab814887df35d388a51055b62d1a957afe95d84"
+    },
+    {
+      "name": "example-ve-midnight-editorial/9f0b29f7e7099940/poster.jpg",
+      "bytes": 14607,
+      "sha256": "dad2853ca02e574588764fc265574e573ac7200b2379c15f25b99bf14da2193f"
+    },
+    {
+      "name": "example-ve-midnight-editorial/9f0b29f7e7099940/preview.mp4",
+      "bytes": 14977,
+      "sha256": "ae7246e075711d60438f1cd579a7cd8b09427611b3b027fd6673ec933f12bc0d"
+    },
+    {
+      "name": "example-ve-terminal-mono/1686fe3e9602a886/poster.jpg",
+      "bytes": 11172,
+      "sha256": "aefc9bf8f3404124c9503b6eb6bd4bc6ca8e46b7e8f9cd781083a84b9838bffb"
+    },
+    {
+      "name": "example-ve-terminal-mono/1686fe3e9602a886/preview.mp4",
+      "bytes": 9854,
+      "sha256": "acad49f01de66807ca70afc5b409e78fc8cd447b0339bf19c283c81a8f7c0823"
+    },
+    {
+      "name": "example-velar-luxury-real-estate/3033ac6b3976d835/poster.jpg",
+      "bytes": 3507,
+      "sha256": "9547960f792f2a6cdb39ff04b5f9873103982d0b1b76fb3ab62ebea3efb2006c"
+    },
+    {
+      "name": "example-velar-luxury-real-estate/3033ac6b3976d835/preview.mp4",
+      "bytes": 150504,
+      "sha256": "0d4f775b1da65bdbb6a347f5e38434ae40be2a1bd96d374c93db14679dc7f22b"
+    },
+    {
+      "name": "example-vfx-text-cursor/409d0dc586d5cf1d/poster.jpg",
+      "bytes": 26280,
+      "sha256": "ff8555ba4cc3b3da0b732d52a5c61bb8883439d75743249ccb86c9817689f9c9"
+    },
+    {
+      "name": "example-vfx-text-cursor/409d0dc586d5cf1d/preview.mp4",
+      "bytes": 23928,
+      "sha256": "8d6d500076e6c2a7de09ec0705fcd05b6a6bf2388015167917c08af7f07bb0ea"
+    },
+    {
+      "name": "example-video-hyperframes/ed2e003ee04f571a/poster.jpg",
+      "bytes": 15929,
+      "sha256": "3f5bdf584af907b194ec3e8d564b4464994613859dc0900c1fa0f1721ebed262"
+    },
+    {
+      "name": "example-video-hyperframes/ed2e003ee04f571a/preview.mp4",
+      "bytes": 42685,
+      "sha256": "7ea12742ebb99ac6c3f332284e69124febc056510ac1ddec7e7df8b8feda586d"
+    },
+    {
+      "name": "example-video-shortform/0c3c15de2860bf42/poster.jpg",
+      "bytes": 7121,
+      "sha256": "1babc8162b443d83fbcfd1166c844f8782d760cbd392e24cc4b62e5848623beb"
+    },
+    {
+      "name": "example-video-shortform/0c3c15de2860bf42/preview.mp4",
+      "bytes": 16226,
+      "sha256": "8803623b51434ec292252eda64f5e2757f0086eaeb3789ba8f43eca4721b75ad"
+    },
+    {
+      "name": "example-waitlist-page/37d0a8776c09c8a0/poster.jpg",
+      "bytes": 18883,
+      "sha256": "214381eabf8d44abeb5e8ac3397275fe3ee126a5dbc639f7116918f97957478a"
+    },
+    {
+      "name": "example-waitlist-page/37d0a8776c09c8a0/preview.mp4",
+      "bytes": 33464,
+      "sha256": "b0f1d51b5153157424b560545bd4f8ce1af59ff822bc804b290b287a3f411d32"
+    },
+    {
+      "name": "example-web-clone/d92cf04f7619478c/poster.jpg",
+      "bytes": 20591,
+      "sha256": "622a8cab5866f5ad606fc1e8d96cc76dc78ee5791bd5131d59225cdb0c5afe2c"
+    },
+    {
+      "name": "example-web-clone/d92cf04f7619478c/preview.mp4",
+      "bytes": 12084,
+      "sha256": "e43f6d94a9a9e45dd96cafc59895d892c301a628d8488e10cc5788a2553297ef"
+    },
+    {
+      "name": "example-web-prototype-taste-brutalist/f5237f9b5efbd199/poster.jpg",
+      "bytes": 41396,
+      "sha256": "3717a1f59c0140682ce635bf0eb87e24d78567e0a497dbb630b362882e5bcadd"
+    },
+    {
+      "name": "example-web-prototype-taste-brutalist/f5237f9b5efbd199/preview.mp4",
+      "bytes": 270161,
+      "sha256": "a55fcaddedd8e916c3edadac23459794ce527ee811e1ee35f44df642a0202cc5"
+    },
+    {
+      "name": "example-web-prototype-taste-editorial/64472810aa8f3a4e/poster.jpg",
+      "bytes": 22588,
+      "sha256": "2de31c448bcef73cfb8d980ccf08d8df5cba1eec9d84efe1dddb2dc18c2e6b29"
+    },
+    {
+      "name": "example-web-prototype-taste-editorial/64472810aa8f3a4e/preview.mp4",
+      "bytes": 181224,
+      "sha256": "23a538e31eabe9eb5fc2c7951954d41b2ade05f29c2a2ab47ac0ad398b2345af"
+    },
+    {
+      "name": "example-web-prototype-taste-soft/f676bb55e428ccf6/poster.jpg",
+      "bytes": 28913,
+      "sha256": "b24bee53e767c30f17cb28f4a3b717d72044d3d863adad118d2a02a6121f21d4"
+    },
+    {
+      "name": "example-web-prototype-taste-soft/f676bb55e428ccf6/preview.mp4",
+      "bytes": 171724,
+      "sha256": "321be068e75b2748edffe6e31a92b89a08b9e39597160b5b8b99280b94d66160"
+    },
+    {
+      "name": "example-web-prototype/aeb5731d76378b6b/poster.jpg",
+      "bytes": 21403,
+      "sha256": "7cfa42a385bf4932c6b80c27380fda3a984b7222a4ac286e90738a20e8f58402"
+    },
+    {
+      "name": "example-web-prototype/aeb5731d76378b6b/preview.mp4",
+      "bytes": 24691,
+      "sha256": "72ede2f2041585bab9cb13e46397eb72f8a3059d3ce548f1a1530d983770a9a5"
+    },
+    {
+      "name": "example-webgl-aurora-veil/660b3af0c2f1054a/poster.jpg",
+      "bytes": 15167,
+      "sha256": "ade462571b61385975e6fb61a7edcbb1de31aa5fdb409d41015310066156e137"
+    },
+    {
+      "name": "example-webgl-aurora-veil/660b3af0c2f1054a/preview.mp4",
+      "bytes": 37892,
+      "sha256": "978c2a387655c98b34295dbdb3b871b3d9eb53754e83fc3f6d4a0d1ea4a53d0c"
+    },
+    {
+      "name": "example-webgl-caustic-pool/68be0b21f73fd5ca/poster.jpg",
+      "bytes": 21431,
+      "sha256": "9f9db7af3b7613a8175f136c48f981fa30d1a0fcf426f3fcc7e676637c16a494"
+    },
+    {
+      "name": "example-webgl-caustic-pool/68be0b21f73fd5ca/preview.mp4",
+      "bytes": 147517,
+      "sha256": "5dab4f2ed5dfd1bf1abc4ab2f8acb3f840e637d1dc063dde65ac16d14e3ab09a"
+    },
+    {
+      "name": "example-webgl-depth-gallery/7d480c131bb4697a/poster.jpg",
+      "bytes": 2136,
+      "sha256": "5ed400b23b9ad00f822f6fadee27738e46c9b82c512181f3db7a17eb798180dc"
+    },
+    {
+      "name": "example-webgl-depth-gallery/7d480c131bb4697a/preview.mp4",
+      "bytes": 3000,
+      "sha256": "9b33cfb4d1c08d8066881e77db40dc2b2f01974f46b4699f5f921f8ec82be688"
+    },
+    {
+      "name": "example-webgl-distortion-grain/c063256872f8a50d/poster.jpg",
+      "bytes": 8339,
+      "sha256": "aeabb25722e2a74a80d5b80965df3593bcc73adad44d62085342b4c879c152bc"
+    },
+    {
+      "name": "example-webgl-distortion-grain/c063256872f8a50d/preview.mp4",
+      "bytes": 27190,
+      "sha256": "97b2fa3209544a8507c09b5f9ba843b525bfad6744b9525f125939b273cf0b33"
+    },
+    {
+      "name": "example-webgl-experience/840cc4684ef7a961/poster.jpg",
+      "bytes": 19325,
+      "sha256": "a2938d791e2223fe6ac9bf571b625dedf83a80dac6944ff9a160e6e450eb9479"
+    },
+    {
+      "name": "example-webgl-experience/840cc4684ef7a961/preview.mp4",
+      "bytes": 53765,
+      "sha256": "bb755ce48ac9e74f078f743b43670078371bfc0a88f248df3daade499b75ac81"
+    },
+    {
+      "name": "example-webgl-halftone-drift/c2ef3819afd68066/poster.jpg",
+      "bytes": 85827,
+      "sha256": "e7e10ae179f265647040de9971e337ce0cf92b46a71b471c7f0de99bf3cc70a4"
+    },
+    {
+      "name": "example-webgl-halftone-drift/c2ef3819afd68066/preview.mp4",
+      "bytes": 287415,
+      "sha256": "e7b747beb285758cd7a72de44ab9a9c2bd021373e7ae22cd7d88d36f546bc4e8"
+    },
+    {
+      "name": "example-webgl-holographic-foil/4a74994d6842263f/poster.jpg",
+      "bytes": 44252,
+      "sha256": "b2ce04a66d6863a7329aca755c5a41360680644a0943d3bc6583e5b997ec21a1"
+    },
+    {
+      "name": "example-webgl-holographic-foil/4a74994d6842263f/preview.mp4",
+      "bytes": 248608,
+      "sha256": "34431259f30410817ace554e437ecabec72739647d2c205fb6a85ebc0ccba753"
+    },
+    {
+      "name": "example-webgl-horizontal-parallax/1d7b6a25cc0af2a6/poster.jpg",
+      "bytes": 8800,
+      "sha256": "52c9291e1176e2614dbab2f30be16bb92959d114f288fda55eaba51e7aa1f29c"
+    },
+    {
+      "name": "example-webgl-horizontal-parallax/1d7b6a25cc0af2a6/preview.mp4",
+      "bytes": 7005,
+      "sha256": "24b70d8f26fa95bbb6e85a92413c8ff3b026a451f14aceca0877c9c80aa86e6f"
+    },
+    {
+      "name": "example-webgl-liquid-iridescence/b053f098ba31161f/poster.jpg",
+      "bytes": 57784,
+      "sha256": "f6bdd66ec3caca4c957f7b917c7d908ec78ac35c6fdcd3ead552ecca56d90d55"
+    },
+    {
+      "name": "example-webgl-liquid-iridescence/b053f098ba31161f/preview.mp4",
+      "bytes": 336977,
+      "sha256": "95148ec07f94e4f03f81970311dbf6f3ac0dd26cb55d15e4f7b4063b767ef0cb"
+    },
+    {
+      "name": "example-webgl-liquid-metal/7a4439597daffcf0/poster.jpg",
+      "bytes": 72424,
+      "sha256": "2b723ee4c91ad3a2c11d384985881b8673af2e2483e4413c35897ce3af55b359"
+    },
+    {
+      "name": "example-webgl-liquid-metal/7a4439597daffcf0/preview.mp4",
+      "bytes": 422781,
+      "sha256": "564e76dacb6b8c59fbbc5a9e2195b5ef0508ecd2924570f492c1a720ba7d09c0"
+    },
+    {
+      "name": "example-webgl-neon-grid/36658d43db8ec900/poster.jpg",
+      "bytes": 20643,
+      "sha256": "80b7ce484462ad7b97b3d60ce349f266746a6ebb6affa4fe5142b6fc260a9da2"
+    },
+    {
+      "name": "example-webgl-neon-grid/36658d43db8ec900/preview.mp4",
+      "bytes": 34482,
+      "sha256": "1939b000dec7bb19fe82d2a04d05c53055d994b0e9d0ecdc6e2ca7775a7ce0c8"
+    },
+    {
+      "name": "example-webgl-particle-galaxy/4f5f66b49ee14e3b/poster.jpg",
+      "bytes": 21549,
+      "sha256": "f3bd384e19dfb1154204996452c77bbb12c2dc75427d9915d3d8a2527751ca75"
+    },
+    {
+      "name": "example-webgl-particle-galaxy/4f5f66b49ee14e3b/preview.mp4",
+      "bytes": 55065,
+      "sha256": "7e68bdd1ceb7a6b01de2c5e74af088696c605476d9efe2c3c8fb85d3b228cd6e"
+    },
+    {
+      "name": "example-webgl-pixel-reveal-gallery/cd1a290f02c2cf9a/poster.jpg",
+      "bytes": 12851,
+      "sha256": "46fb006c4cc6e867dea87d40aea7883b38f49675030ef7be454e9fc9a66d4ea1"
+    },
+    {
+      "name": "example-webgl-pixel-reveal-gallery/cd1a290f02c2cf9a/preview.mp4",
+      "bytes": 28696,
+      "sha256": "14e6564cc37c55c7974477e176f84ac4011070e9050f082dd523a1f4fdbd7030"
+    },
+    {
+      "name": "example-webgl-raymarched-hero/ce0683bb3e1b98fd/poster.jpg",
+      "bytes": 26045,
+      "sha256": "7b4db94fb3a08ea816a69cd1de0b3d30c1e6b9770f608bab59bfc1f485bcb683"
+    },
+    {
+      "name": "example-webgl-raymarched-hero/ce0683bb3e1b98fd/preview.mp4",
+      "bytes": 51910,
+      "sha256": "6d59f606dad92cdbb595e63eae908e2207a68faf37024e4f784181519ef008fe"
+    },
+    {
+      "name": "example-webgl-voronoi-cells/d7f8244fd41af8e5/poster.jpg",
+      "bytes": 31144,
+      "sha256": "39c44df48347e7cdadd223a221272ab6fd1f32739eb7ebbfc0ce471e94d2ad3d"
+    },
+    {
+      "name": "example-webgl-voronoi-cells/d7f8244fd41af8e5/preview.mp4",
+      "bytes": 127184,
+      "sha256": "7aa0199c93394b3903872e6f56c6787852a5f99441cd8de1b508ba2df1167cb6"
+    },
+    {
+      "name": "example-weekly-update/e0e9d441519ce3e8/poster.jpg",
+      "bytes": 9928,
+      "sha256": "057c333bc4e434a6ca86ad55cc822d10afddc9d3b7c16b51715a26f122a76927"
+    },
+    {
+      "name": "example-weekly-update/e0e9d441519ce3e8/preview.mp4",
+      "bytes": 105909,
+      "sha256": "fdbca54eee67c3e7b443f133e746cd5aa7df0d287ebfac3692387e88a71f8638"
+    },
+    {
+      "name": "example-wireframe-annotated/909da33160b3de3b/poster.jpg",
+      "bytes": 23929,
+      "sha256": "ed14d52f8c72a52b8fc278a1a04bc20f2493b69e8b5e25876c4034ff088a2fd5"
+    },
+    {
+      "name": "example-wireframe-annotated/909da33160b3de3b/preview.mp4",
+      "bytes": 12519,
+      "sha256": "67774311719448a43d69ed89f70e95fd5efd3d805e6bc263554fd64a76386031"
+    },
+    {
+      "name": "example-wireframe-greybox/4bc7e23ae3db7719/poster.jpg",
+      "bytes": 16667,
+      "sha256": "13b11790e59a571250a910d8d2cf311779f6cf0ec7a9e3e45c3db61de5599420"
+    },
+    {
+      "name": "example-wireframe-greybox/4bc7e23ae3db7719/preview.mp4",
+      "bytes": 9224,
+      "sha256": "20eef0b37d591c4f8388c185c1b44283030d5d6f0b4448c504cf3189b1eea3fd"
+    },
+    {
+      "name": "example-wireframe-mobile-flow/c98f5ca225b05889/poster.jpg",
+      "bytes": 27866,
+      "sha256": "a5a17b5750835a82c30c548a647b3c5b6bb2e6db0061fc730fdb40c58c0382c6"
+    },
+    {
+      "name": "example-wireframe-mobile-flow/c98f5ca225b05889/preview.mp4",
+      "bytes": 19115,
+      "sha256": "806e6fd5bafac44aed4be975652ad3b1c72cb3627fa3aee8d270f20b47673359"
+    },
+    {
+      "name": "example-wireframe-sketch/e3198ca0f61633c0/poster.jpg",
+      "bytes": 40421,
+      "sha256": "faf64e5ae69fc5bbe5b49f298e07bedfb2175bb7708e1f980f211141dc1dee88"
+    },
+    {
+      "name": "example-wireframe-sketch/e3198ca0f61633c0/preview.mp4",
+      "bytes": 23833,
+      "sha256": "bc5c8d9fdb3823cc087b7311778ba722eed683d9ec25715f73da8aebf1b280ce"
+    },
+    {
+      "name": "example-worker-visualizer/ad725afc09df7e6f/poster.jpg",
+      "bytes": 10261,
+      "sha256": "a22efcc915ee45e00d680ec84e979de8b1f64b55a63392ea34996310ffe88560"
+    },
+    {
+      "name": "example-worker-visualizer/ad725afc09df7e6f/preview.mp4",
+      "bytes": 12251,
+      "sha256": "42609b1ca2382f8befb83b988f3b39a141406c53dccf3e194429bfda07d3b35f"
+    },
+    {
+      "name": "od-code-migration/96efd2e30c163551/poster.jpg",
+      "bytes": 23363,
+      "sha256": "af36a73f6559d4349330623e7fb64bc6d5d43c0012746046c86f264230ffe9f5"
+    },
+    {
+      "name": "od-code-migration/96efd2e30c163551/preview.mp4",
+      "bytes": 33748,
+      "sha256": "d79f73b006d3518ce08a92329cb032e540a5aaa8948b43aaf120174499cf6f03"
+    },
+    {
+      "name": "od-figma-migration/d91113d74728dbb7/poster.jpg",
+      "bytes": 17463,
+      "sha256": "dccb8fbcd983ff9de59093f63fd699e797199a8f243d3b3438e35a86473140a4"
+    },
+    {
+      "name": "od-figma-migration/d91113d74728dbb7/preview.mp4",
+      "bytes": 12710,
+      "sha256": "f89694150e80a895db0203b89c9e1056087671870bc2ab9c1c3d46586136b48d"
+    },
+    {
+      "name": "od-new-generation/7b884ba518d75c52/poster.jpg",
+      "bytes": 14305,
+      "sha256": "98870ccc2e54fc112c6bd63283b2fbbb3c915ae2a77c5f63633c417bce528290"
+    },
+    {
+      "name": "od-new-generation/7b884ba518d75c52/preview.mp4",
+      "bytes": 11454,
+      "sha256": "1f23f75267bb6dd59393d1c912b7bcebe6ee5213b3944dafd557d3ddf0d0988d"
+    },
+    {
+      "name": "od-tune-collab/b6460e965b3c5872/poster.jpg",
+      "bytes": 17129,
+      "sha256": "8df4775450dc69c49a58d285629658f3b87b2e307dee4798ae94119b7490cebe"
+    },
+    {
+      "name": "od-tune-collab/b6460e965b3c5872/preview.mp4",
+      "bytes": 13731,
+      "sha256": "22a025bb7f5fc779d51cddf16b6f2febb7de018c13bb84055017f2ddc37683ae"
+    }
+  ]
+}

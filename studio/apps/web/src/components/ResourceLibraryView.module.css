@@ -1,0 +1,59 @@
+.root {
+  container-type: inline-size;
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+}
+
+.modules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 16px 0 12px;
+}
+
+.module {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--page-control-h, 32px);
+  padding: 0 14px;
+  border-radius: var(--radius-control, 8px);
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.module:hover {
+  background: var(--sub);
+  color: var(--ink);
+}
+
+.module[aria-current='page'] {
+  background: var(--sub);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.module:focus-visible {
+  outline: 2px solid var(--focus-ring-color, var(--ink));
+  outline-offset: -2px;
+}
+
+.guide {
+  max-width: 880px;
+}
+
+.guide > h2 {
+  margin: 0 0 12px;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+}

@@ -1,0 +1,38 @@
+/*
+ * 执行记录壳头那一行字:状态词 + (落定之后)一句静音的小结。
+ *
+ *   进行中 31s                          ← 只有状态词(扫光由 record.module.css 的 .shimmer 画)
+ *   已完成 · 已思考 2s · 3 个操作  1m 2s ← 落定:小结跟在状态词后面
+ *   运行失败 · 当前网络中断  12s         ← 失败:红字只给状态词,原因用静音色
+ *
+ * 字号、字重仍由 `.fold.flat > summary` 统一给(四态同号,W79),这里只管小结那一截
+ * 退回正文字重 + 静音色,以及窄侧栏下**只截小结、不截状态词**。
+ */
+.line {
+  /* 壳头整句是 `.summaryContent` 的最后一个孩子 —— 收缩由这一层承担 */
+  min-width: 0;
+}
+
+.layer {
+  gap: 6px;
+}
+
+.word {
+  flex: none;
+}
+
+.sep {
+  flex: none;
+  font-weight: 400;
+  color: var(--chat-text-faint);
+}
+
+.note {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 400;
+  color: var(--chat-text-muted);
+  font-variant-numeric: tabular-nums;
+}

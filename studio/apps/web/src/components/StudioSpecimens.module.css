@@ -1,0 +1,1190 @@
+.root {
+  container: specimens / inline-size;
+  display: grid;
+  gap: 32px;
+  min-width: 0;
+  color: var(--ink);
+}
+
+.block {
+  display: grid;
+  gap: var(--st-gap);
+  min-width: 0;
+}
+
+.blockHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.blockHead h3 {
+  margin: 0;
+  color: var(--ink);
+  font: 600 14px/20px var(--font-ui);
+}
+
+.blockHead span {
+  color: var(--ink-faint);
+  font: 500 12px/16px var(--font-ui);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  margin: 0;
+  color: var(--ink-faint);
+  font: 500 12px/16px var(--font-ui);
+}
+
+/* Tile: the one selectable object. Ring and lift live on a pseudo element so the state reads the
+   same on any fill, including the inline grounds that belong to the design system. */
+.tile {
+  --ring: var(--ink);
+  position: relative;
+  display: block;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--st-radius-small);
+  background-color: var(--paper);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  transition:
+    transform var(--st-dur-micro) var(--st-ease-ui),
+    background-color var(--st-dur-micro) var(--st-ease-ui);
+}
+
+.tile::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  box-shadow:
+    0 0 0 1.5px var(--ring),
+    0 10px 24px -14px color-mix(in srgb, var(--ink) 40%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--st-dur-micro) var(--st-ease-ui);
+}
+
+@media (hover: hover) {
+  .tile:hover {
+    transform: translateY(-1px);
+  }
+
+  .tile:hover::after {
+    opacity: 0.22;
+  }
+}
+
+.tile[aria-pressed='true'] {
+  transform: translateY(-2px);
+}
+
+.tile[aria-pressed='true']::after {
+  opacity: 1;
+}
+
+.tile:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 3px;
+}
+
+.caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 8px;
+  min-width: 0;
+  padding: 10px 12px 11px;
+}
+
+.captionName {
+  font: 500 12px/16px var(--font-ui);
+}
+
+.captionValue {
+  overflow: hidden;
+  max-width: 100%;
+  font: 500 11px/16px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.58;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.captionHint {
+  flex-basis: 100%;
+  font: 500 11px/16px var(--font-ui);
+  opacity: 0.58;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: var(--st-gap);
+}
+
+/* Tiles that draw to scale keep their shape: a lone gutter must not stretch across the column. */
+.gaps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: var(--st-gap);
+}
+
+/* Typography */
+.families {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--st-gap);
+}
+
+.family {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 248px;
+  padding: 14px 16px 16px;
+  background-color: var(--sp-ground);
+  color: var(--sp-ink);
+}
+
+.familyHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font: 500 12px/16px var(--font-ui);
+}
+
+.familyHead > * {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.familyHead > :first-child {
+  flex: none;
+  max-width: 60%;
+}
+
+.familyHead .mono {
+  font-size: 11px;
+  opacity: 0.58;
+}
+
+/* Sized against its own tile: the widest glyph run is about 2.8em, in any of the three widths. */
+.familyStage {
+  container-type: inline-size;
+  display: block;
+  min-width: 0;
+}
+
+.familyGlyph {
+  display: block;
+  overflow: hidden;
+  font-size: min(calc(100cqi / 2.8), 112px);
+  line-height: 1.12;
+  white-space: nowrap;
+}
+
+.familyFoot {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.familyName {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.familyChars {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 16px;
+  opacity: 0.58;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Ladders: rows inside one panel, so eight steps stay one object. */
+.panel,
+.panelPlain {
+  display: grid;
+  min-width: 0;
+  padding: 4px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--st-radius-small);
+}
+
+.panel {
+  background-color: var(--sp-ground);
+  color: var(--sp-ink);
+}
+
+.panelPlain {
+  background-color: var(--paper);
+  color: var(--ink);
+}
+
+.panel > .tile,
+.panelPlain > .tile {
+  border: 0;
+  border-radius: 10px;
+  background-color: transparent;
+}
+
+.panel > .tile {
+  --ring: var(--sp-ink);
+}
+
+.sizeRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px 96px;
+  align-items: baseline;
+  gap: 12px;
+  padding: 6px 12px;
+}
+
+.sizeRow + .sizeRow::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 12px;
+  left: 12px;
+  height: 1px;
+  background-color: var(--sp-line);
+}
+
+.sizeSample {
+  overflow: hidden;
+  line-height: 1.24;
+  white-space: nowrap;
+}
+
+.sizeValue,
+.sizeName {
+  font: 500 12px/16px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.sizeName {
+  opacity: 0.58;
+}
+
+.textTile {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: var(--sp-ground);
+  color: var(--sp-ink);
+}
+
+.textTile .caption,
+.measureTile .caption {
+  padding-inline: 16px;
+}
+
+.leadingSample {
+  padding: 16px 16px 6px;
+  font-size: 15px;
+}
+
+.trackingSample {
+  overflow: hidden;
+  padding: 20px 16px 10px;
+  font-size: 30px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* Spacing */
+.spacing {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--st-gap);
+}
+
+.spaceRow {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+}
+
+.spaceName,
+.spaceValue {
+  font: 500 12px/16px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.spaceName {
+  color: var(--ink-faint);
+}
+
+.spaceValue {
+  color: var(--ink);
+}
+
+/* The label rides the end of the bar, so the ladder reads as one staircase. */
+.spaceTrack {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  min-width: 0;
+  height: 20px;
+  border-radius: 4px;
+  background-color: color-mix(in srgb, var(--paper-deep) 45%, transparent);
+}
+
+.spaceBar {
+  display: block;
+  flex: none;
+  max-width: calc(100% - 56px);
+  height: 100%;
+  border-radius: 4px 0 0 4px;
+  background-color: var(--ink);
+}
+
+.rhythm {
+  display: none;
+  padding: 16px 44px 16px 16px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--st-radius-small);
+  background-color: var(--sp-ground);
+  color: var(--sp-ink);
+}
+
+.rhythmBlock {
+  display: block;
+  height: 14px;
+  border-radius: 4px;
+  background-color: color-mix(in srgb, currentcolor 12%, transparent);
+}
+
+.rhythmStep {
+  display: block;
+}
+
+.rhythmGap {
+  position: relative;
+  display: block;
+  background-color: transparent;
+  transition: background-color var(--st-dur-micro) var(--st-ease-ui);
+}
+
+.rhythmGap[data-active] {
+  background-color: var(--sp-ink);
+}
+
+.rhythmLabel {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 10px);
+  font: 500 11px/14px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.58;
+  transform: translateY(-50%);
+}
+
+/* Radius */
+.radii {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 132px), 1fr));
+  gap: var(--st-gap);
+}
+
+.radiusStage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  height: 96px;
+  border-radius: calc(var(--st-radius-small) - 1px) calc(var(--st-radius-small) - 1px) 0 0;
+  background-color: var(--sp-ground);
+}
+
+.radiusQuarter {
+  position: absolute;
+  top: 28px;
+  left: 28px;
+  width: 200%;
+  height: 200%;
+  background-color: var(--sp-ink);
+}
+
+.radiusPill {
+  display: block;
+  width: 84px;
+  height: 36px;
+  background-color: var(--sp-ink);
+}
+
+/* Shadows */
+.shadows {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: var(--st-gap);
+}
+
+.shadowStage {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  height: 148px;
+  border-radius: calc(var(--st-radius-small) - 1px) calc(var(--st-radius-small) - 1px) 0 0;
+  background-color: var(--sp-stage);
+}
+
+.shadowCard {
+  display: block;
+  width: 60%;
+  height: 76px;
+  border-radius: 12px;
+  background-color: var(--sp-ground);
+}
+
+/* Motion */
+.motion {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--st-gap);
+}
+
+.durations {
+  display: grid;
+  align-content: start;
+  gap: var(--st-gap);
+  min-width: 0;
+}
+
+.durationTile {
+  padding-bottom: 16px;
+}
+
+.durationTrack {
+  position: relative;
+  display: block;
+  height: 12px;
+  margin-inline: 12px;
+}
+
+.durationTrack::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background-color: var(--line);
+}
+
+.durationTrack::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 0;
+  width: 1px;
+  height: 8px;
+  background-color: var(--ink-faint);
+}
+
+.durationDot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--ink);
+}
+
+.curveTile {
+  display: flex;
+  flex-direction: column;
+}
+
+.curve {
+  display: block;
+  flex: 1;
+  width: 100%;
+  max-height: 200px;
+  overflow: visible;
+  padding: 8px 12px 0;
+}
+
+.curveFrame {
+  fill: none;
+  stroke: var(--line-soft);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.curveHandle {
+  fill: none;
+  stroke: var(--ink-faint);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.curvePoint {
+  fill: var(--paper);
+  stroke: var(--ink-faint);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.curveLine {
+  fill: none;
+  stroke: var(--ink);
+  stroke-linecap: round;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.curveDot {
+  fill: var(--ink);
+}
+
+/* Layout */
+.containers {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.screen {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  height: 28px;
+  padding-inline: 12px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  color: var(--ink-faint);
+  font: 500 11px/16px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.containerBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 44px;
+  padding-inline: 12px;
+  border: 0;
+  border-radius: 8px;
+  background-color: var(--ink);
+  color: var(--paper);
+  white-space: nowrap;
+}
+
+.containerLabel {
+  overflow: hidden;
+  font: 500 12px/16px var(--font-ui);
+  text-overflow: ellipsis;
+}
+
+.containerBar .mono {
+  font-size: 12px;
+}
+
+.gapTile {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.gutterStage,
+.sectionStage {
+  display: flex;
+  padding: 16px;
+}
+
+.gutterStage {
+  align-items: stretch;
+  height: 96px;
+}
+
+.sectionStage {
+  flex-direction: column;
+  min-height: 184px;
+  padding-block: 12px;
+}
+
+.gridStage {
+  display: flex;
+  gap: 4px;
+  height: 96px;
+  padding: 16px;
+}
+
+.gridStage .gapBlock {
+  min-width: 0;
+  border-radius: 2px;
+}
+
+.gapBlock {
+  display: block;
+  flex: 1 1 0;
+  min-width: 12px;
+  min-height: 12px;
+  border-radius: 4px;
+  background-color: var(--paper-deep);
+}
+
+.dimension {
+  position: relative;
+  display: block;
+  flex: none;
+}
+
+.dimensionLine {
+  position: absolute;
+  background-color: var(--ink);
+}
+
+.dimensionLine::before,
+.dimensionLine::after {
+  content: '';
+  position: absolute;
+  background-color: var(--ink);
+}
+
+.dimension[data-axis='x'] .dimensionLine {
+  top: 50%;
+  right: 1px;
+  left: 1px;
+  height: 1px;
+}
+
+.dimension[data-axis='x'] .dimensionLine::before,
+.dimension[data-axis='x'] .dimensionLine::after {
+  top: -4px;
+  width: 1px;
+  height: 9px;
+}
+
+.dimension[data-axis='x'] .dimensionLine::before {
+  left: 0;
+}
+
+.dimension[data-axis='x'] .dimensionLine::after {
+  right: 0;
+}
+
+.dimension[data-axis='y'] .dimensionLine {
+  top: 1px;
+  bottom: 1px;
+  left: 50%;
+  width: 1px;
+}
+
+.dimension[data-axis='y'] .dimensionLine::before,
+.dimension[data-axis='y'] .dimensionLine::after {
+  left: -4px;
+  width: 9px;
+  height: 1px;
+}
+
+.dimension[data-axis='y'] .dimensionLine::before {
+  top: 0;
+}
+
+.dimension[data-axis='y'] .dimensionLine::after {
+  bottom: 0;
+}
+
+.ruler {
+  display: grid;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--st-radius-small);
+}
+
+.ruler > .tile {
+  border: 0;
+  border-radius: 10px;
+  background-color: transparent;
+}
+
+.rulerScale {
+  display: flex;
+  justify-content: space-between;
+  margin-inline: 96px 84px;
+  padding-block: 8px 2px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-faint);
+  font: 500 11px/16px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.rulerRow {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 60px;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 12px;
+}
+
+.rulerName,
+.rulerValue {
+  overflow: hidden;
+  font: 500 12px/16px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rulerName {
+  color: var(--ink-faint);
+}
+
+.rulerValue {
+  color: var(--ink);
+  text-align: right;
+}
+
+.rulerTrack {
+  display: block;
+  height: 14px;
+}
+
+.rulerBar {
+  display: block;
+  height: 100%;
+  border-right: 2px solid var(--ink);
+  background-color: var(--paper-deep);
+}
+
+/* Measure */
+.measures {
+  display: grid;
+  gap: var(--st-gap);
+}
+
+.measureTile {
+  background-color: var(--sp-ground);
+  color: var(--sp-ink);
+}
+
+.measureFrame {
+  display: block;
+  overflow: hidden;
+  margin: 16px 16px 0;
+}
+
+.measureSheet {
+  display: grid;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.measureRule {
+  position: relative;
+  display: block;
+  height: 9px;
+}
+
+.measureRule::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background-color: currentcolor;
+}
+
+.measureRule::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-inline: 1px solid currentcolor;
+}
+
+/* Sizing: every step stands on the same floor at its true size, so the row reads as a staircase. */
+.sizes {
+  --reach: 48px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 136px), 1fr));
+  gap: var(--st-gap);
+}
+
+.sizeStage {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+  height: max(96px, calc(var(--reach) + 40px));
+  padding: 20px 16px;
+  border-radius: calc(var(--st-radius-small) - 1px) calc(var(--st-radius-small) - 1px) 0 0;
+  background-color: var(--sp-ground);
+  color: var(--sp-ink);
+}
+
+.sizeSquare,
+.sizeIcon,
+.sizeTarget,
+.sizeControl {
+  display: grid;
+  flex: none;
+  place-items: center;
+  max-width: 100%;
+}
+
+.sizeSquare {
+  border-radius: 2px;
+  background-color: color-mix(in srgb, currentcolor 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentcolor 34%, transparent);
+}
+
+/* The icon's own box stays faint; the glyph's stroke scales with it, as a drawn icon does. */
+.sizeIcon {
+  border-radius: 2px;
+  background-color: color-mix(in srgb, currentcolor 6%, transparent);
+}
+
+.sizeIcon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-width: 1.75;
+}
+
+/* A hit area is felt, not seen: a dashed boundary around the small mark a pointer aims at. */
+.sizeTarget {
+  border: 1px dashed color-mix(in srgb, currentcolor 52%, transparent);
+  border-radius: 6px;
+}
+
+.sizeTargetDot {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentcolor;
+}
+
+.sizeControl {
+  border-radius: 6px;
+  background-color: currentcolor;
+}
+
+.sizeControlLabel {
+  display: block;
+  width: 40%;
+  height: 2px;
+  border-radius: 1px;
+  background-color: var(--sp-ground);
+  opacity: 0.72;
+}
+
+.ratios {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 168px), 1fr));
+  gap: var(--st-gap);
+}
+
+.ratioStage {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  height: 112px;
+  padding-inline: 16px;
+  border-radius: calc(var(--st-radius-small) - 1px) calc(var(--st-radius-small) - 1px) 0 0;
+  background-color: var(--sp-ground);
+  color: var(--sp-ink);
+}
+
+/* Width comes inline; a frame too wide for the tile shrinks and keeps its ratio. */
+.ratioFrame {
+  position: relative;
+  display: block;
+  max-width: 100%;
+  border-radius: 3px;
+  background-color: color-mix(in srgb, currentcolor 8%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentcolor 42%, transparent);
+}
+
+.ratioFrame svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.ratioDiagonal {
+  fill: none;
+  stroke: color-mix(in srgb, currentcolor 26%, transparent);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Layers: planes cascade down and right, so every top strip stays readable. */
+.planes {
+  --step-y: 44px;
+  --step-x: min(32px, calc((100cqw - 200px) / max(var(--count) - 1, 1)));
+  position: relative;
+  height: calc((var(--count) - 1) * var(--step-y) + 96px);
+}
+
+.plane {
+  position: absolute;
+  top: calc(var(--index) * var(--step-y));
+  left: calc(var(--index) * var(--step-x));
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  width: calc(100cqw - (var(--count) - 1) * var(--step-x));
+  height: 96px;
+  border-color: var(--sp-line);
+  background-color: var(--sp-surface);
+  box-shadow: 0 -6px 18px -14px color-mix(in srgb, var(--sp-ink) 45%, transparent);
+  color: var(--sp-ink);
+}
+
+.planeHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  font: 500 12px/16px var(--font-ui);
+}
+
+.planeValue {
+  font: 600 14px/16px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Everything else */
+.compact {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: 8px;
+}
+
+.compactTile {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+}
+
+.compactName {
+  font: 500 12px/16px var(--font-ui);
+}
+
+.compactValue {
+  overflow: hidden;
+  color: var(--ink-faint);
+  font: 500 11px/16px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The dock's small drawing of one token. */
+.mini {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  overflow: hidden;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.miniGlyph {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.miniLines {
+  font-size: 11px;
+  text-align: center;
+}
+
+.miniCorner {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 200%;
+  height: 200%;
+  background-color: currentcolor;
+}
+
+.miniCard {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+}
+
+.miniBar {
+  height: 8px;
+  background-color: currentcolor;
+}
+
+.miniDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: currentcolor;
+}
+
+.miniFrame {
+  width: 26px;
+  height: 20px;
+  border: 1.5px solid currentcolor;
+  border-radius: 4px;
+}
+
+.miniSquare {
+  display: block;
+  border-radius: 2px;
+  background-color: currentcolor;
+}
+
+.miniRatio {
+  display: block;
+  border: 1.5px solid currentcolor;
+  border-radius: 3px;
+}
+
+/* A theme switch recolours specimen fills at the colour board's pace instead of in one frame.
+   Tiles keep their own lift transition alongside it. */
+.panel,
+.rhythm,
+.radiusStage,
+.radiusQuarter,
+.radiusPill,
+.shadowStage,
+.shadowCard,
+.sizeControlLabel {
+  transition: background-color 320ms var(--st-ease-ui);
+}
+
+/* Sizing marks are drawn in currentcolor, so the stage's ink carries them through a theme switch. */
+.sizeStage,
+.ratioStage {
+  transition:
+    background-color 320ms var(--st-ease-ui),
+    color 320ms var(--st-ease-ui);
+}
+
+.family,
+.textTile,
+.measureTile,
+.plane {
+  transition:
+    transform var(--st-dur-micro) var(--st-ease-ui),
+    background-color 320ms var(--st-ease-ui);
+}
+
+@container specimens (min-width: 600px) {
+  .families {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+@container specimens (min-width: 720px) {
+  .spacing {
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 0.46fr);
+  }
+
+  .rhythm {
+    display: block;
+  }
+
+  .motion {
+    grid-template-columns: minmax(0, 1fr) 232px;
+  }
+}
+
+@container specimens (max-width: 519px) {
+  .sizeRow {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 12px;
+  }
+
+  .sizeSample {
+    grid-column: 1 / -1;
+  }
+
+  .sizeValue {
+    text-align: left;
+  }
+
+  .spaceRow {
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .rulerRow {
+    grid-template-columns: 56px minmax(0, 1fr) 52px;
+    gap: 8px;
+  }
+
+  .rulerScale {
+    margin-inline: 76px 72px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile,
+  .tile::after,
+  .rhythmGap,
+  .panel,
+  .rhythm,
+  .radiusStage,
+  .radiusQuarter,
+  .radiusPill,
+  .shadowStage,
+  .shadowCard,
+  .sizeStage,
+  .sizeControlLabel,
+  .ratioStage,
+  .family,
+  .textTile,
+  .measureTile,
+  .plane {
+    transition: none;
+  }
+
+  .tile:hover,
+  .tile[aria-pressed='true'] {
+    transform: none;
+  }
+}

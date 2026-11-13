@@ -1,0 +1,267 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Activity: a heading with its metric switch over one card holding Codex's stat strip and magpie's 53-week grid. Five
+   ink steps (--usage-level-*), no hue. */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--usage-heading-gap, 12px);
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  padding: 16px;
+  border: var(--settings-hairline);
+  border-radius: var(--settings-radius);
+  background: var(--surface);
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+.titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--settings-type-section);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.4;
+}
+
+.caption {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--settings-type-meta);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* The metric switch sits on the heading's line, like the trend's; a narrow column gives it a row of its own. */
+.fill[data-slot='segmented'] {
+  display: flex;
+  flex: none;
+}
+
+.fill [data-slot='segmented-item'] {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+@container (max-width: 520px) {
+  .fill[data-slot='segmented'] {
+    flex: 1 1 100%;
+  }
+}
+
+/* ── Strip: five figures on the card itself, hairlines between them ───────────────────────── */
+.strip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+}
+
+/* Figure over label in every column, so both rows line up; the peak's day is a third line under its label. */
+.strip > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 0 14px;
+}
+
+.strip dt {
+  order: 2;
+}
+
+.strip .stripNote {
+  order: 3;
+  color: var(--ink-faint);
+  font-size: var(--settings-type-meta);
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.5;
+}
+
+.strip > div:first-child {
+  padding-left: 0;
+}
+
+.strip > div + div {
+  box-shadow: inset 1px 0 0 var(--line-soft);
+}
+
+.strip dt {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: var(--settings-type-meta);
+  font-weight: 500;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.strip dd {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 6px;
+  margin: 0;
+  color: var(--ink);
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+}
+
+/* ── Grid ────────────────────────────────────────────────────────────────────────────────── */
+.map {
+  position: relative;
+  min-width: 0;
+  border-radius: 6px;
+  outline: none;
+}
+
+.map:focus-visible {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--focus-ring-color, var(--info));
+}
+
+.map svg {
+  display: block;
+  overflow: visible;
+}
+
+.label {
+  fill: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.cell {
+  cursor: pointer;
+  transition: fill 120ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.cell[data-level='0'], .scale i[data-level='0'] { fill: var(--usage-level-0); background: var(--usage-level-0); }
+.cell[data-level='1'], .scale i[data-level='1'] { fill: var(--usage-level-1); background: var(--usage-level-1); }
+.cell[data-level='2'], .scale i[data-level='2'] { fill: var(--usage-level-2); background: var(--usage-level-2); }
+.cell[data-level='3'], .scale i[data-level='3'] { fill: var(--usage-level-3); background: var(--usage-level-3); }
+.cell[data-level='4'], .scale i[data-level='4'] { fill: var(--usage-level-4); background: var(--usage-level-4); }
+
+.cell[data-active] {
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+
+.cell[data-selected] {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+
+.tooltip {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  line-height: 1.45;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 6px));
+}
+
+.tooltip strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.tooltip[data-align='start'] {
+  transform: translate(-14px, calc(-100% - 6px));
+}
+
+.tooltip[data-align='end'] {
+  transform: translate(calc(-100% + 14px), calc(-100% - 6px));
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  color: var(--ink-faint);
+  font-size: var(--settings-type-meta);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.scale {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.scale i {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.scale i:first-of-type {
+  margin-left: 3px;
+}
+
+.scale i:last-of-type {
+  margin-right: 3px;
+}
+
+@container (max-width: 560px) {
+  .strip {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    row-gap: 14px;
+  }
+
+  .strip > div {
+    grid-column: span 2;
+  }
+
+  .strip > div:nth-child(n + 4) {
+    grid-column: span 3;
+  }
+
+  .strip > div:nth-child(4) {
+    padding-left: 0;
+    box-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell {
+    transition: none;
+  }
+}

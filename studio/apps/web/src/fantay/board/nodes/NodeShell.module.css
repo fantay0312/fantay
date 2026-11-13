@@ -1,0 +1,56 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * Fantay — derived from Doop (https://github.com/kgoedecke/doop)
+ *   source: src/components/FrameView.tsx (shield L1232-1234, surface L1159-1178) @ d261a85d3f9d87ac0653bb8512915f4e5bdff2b9
+ *   Copyright (c) the Doop contributors. Licensed under the GNU Affero General Public License v3.0
+ *   (see licenses/doop-AGPL-3.0.txt and THIRD_PARTY_NOTICES.md). "Doop" is a trademark of its
+ *   owner and is not used to brand Fantay.
+ * Modifications Copyright (c) 2026 Fantay contributors, AGPL-3.0-only: positioned node wrapper with the
+ *   pointer shield and the LOD rect (spec 03 §4.0); Fantay tokens.
+ */
+
+.node {
+  position: absolute;
+  contain: layout style;
+  box-sizing: border-box;
+}
+
+/* a group's body is canvas for the pointer (spec 03 §3.7): presses fall through to the stage, and the labels of
+   its children (label layer, under the world) stay reachable; the group's own label selects it */
+.node[data-kind="group"] {
+  pointer-events: none;
+}
+
+.node[data-kind="group"] [data-board-interactive] {
+  pointer-events: auto;
+}
+
+/* a dragged or resized node rises above its neighbours; z itself is unchanged */
+.node[data-previewing] {
+  z-index: 1;
+}
+
+.node[data-hidden-face] > .face {
+  visibility: hidden;
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+}
+
+/* keeps pointer events on the board, not inside a live iframe (lifted for Navigate / Edit / Capture pick) */
+.shield {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  z-index: 2;
+}
+
+.lod {
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  opacity: 0.85;
+}

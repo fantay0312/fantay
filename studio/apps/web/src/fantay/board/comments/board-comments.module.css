@@ -1,0 +1,423 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * Board comment layer (first slice): the target highlight (amber outline, warm-yellow fill 20 % / 45 % active),
+ * 24 px numbered pins, the comment card and the new-comment composer (300 px surface card, hairline border,
+ * radius 12), and the Comment tool's hint bar. Placed in screen space through the camera variables
+ * (`calc(var(--vx) + x * var(--zoom))`), so pan and zoom never re-render. Popovers stay mounted and animate on
+ * `data-state` (enter 200 ms / exit 140 ms, ease-out, from scale .96).
+ */
+
+.layer,
+.hintBar {
+  --comment-amber: #e8a33d;
+  --comment-fill: #ffd84d;
+  --comment-pin: #1f1e1c;
+  --comment-pin-ring: #ffffff;
+  --comment-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --comment-enter: var(--motion-enter, 200ms);
+  --comment-exit: var(--motion-exit, 140ms);
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ── target highlight ─────────────────────────────────────────────────────────────────── */
+
+.clip {
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.target {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1.5px solid var(--comment-amber);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--comment-fill) 20%, transparent);
+  transition: background-color var(--comment-enter) var(--comment-ease);
+}
+
+.target[data-active] {
+  background: color-mix(in srgb, var(--comment-fill) 45%, transparent);
+}
+
+/* ── pins ─────────────────────────────────────────────────────────────────────────────── */
+
+.pin {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  padding: 0;
+  border: 1.5px solid var(--comment-pin-ring);
+  border-radius: 50%;
+  background: var(--comment-pin);
+  color: #ffffff;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    transform var(--motion-micro, 100ms) var(--comment-ease),
+    box-shadow var(--motion-micro, 100ms) var(--comment-ease),
+    background-color var(--motion-micro, 100ms) var(--comment-ease);
+}
+
+.pin:hover {
+  transform: scale(1.08);
+}
+
+.pin:focus-visible {
+  outline: 2px solid var(--comment-amber);
+  outline-offset: 2px;
+}
+
+.pin[data-active] {
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--comment-fill) 60%, transparent),
+    0 1px 4px rgb(0 0 0 / 0.3);
+}
+
+.pin[data-status='working'] {
+  background: color-mix(in srgb, var(--comment-pin) 78%, var(--comment-amber));
+}
+
+.pin[data-status='review'] {
+  background: var(--comment-amber);
+  color: var(--comment-pin);
+}
+
+.pin[data-status='failed'] {
+  background: var(--danger, #d0341f);
+}
+
+.pin[data-status='resolved'] {
+  background: #8a8884;
+}
+
+/* lost anchor: a ghost at the last known-good position */
+.pin[data-ghost] {
+  border-style: dashed;
+  background: color-mix(in srgb, var(--comment-pin) 45%, transparent);
+  box-shadow: none;
+}
+
+/* the provisional pin of the comment being written */
+.pin[data-draft] {
+  background: var(--comment-amber);
+  color: var(--comment-pin);
+  cursor: default;
+}
+
+span.pin {
+  cursor: default;
+}
+
+/* ── popovers (card, composer) ────────────────────────────────────────────────────────── */
+
+.popover {
+  --pop-dx: 16px;
+  --pop-dy: -12px;
+  position: absolute;
+  z-index: 3;
+  width: 300px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate(var(--pop-dx), var(--pop-dy)) scale(0.96);
+  transform-origin: left top;
+  transition:
+    opacity var(--comment-exit) var(--comment-ease),
+    transform var(--comment-exit) var(--comment-ease),
+    visibility 0s linear var(--comment-exit);
+}
+
+.popover[data-side-x='left'] {
+  --pop-dx: calc(-100% - 16px);
+  transform-origin: right top;
+}
+
+.popover[data-side-y='up'] {
+  --pop-dy: calc(-100% + 12px);
+  transform-origin: left bottom;
+}
+
+.popover[data-side-x='left'][data-side-y='up'] {
+  transform-origin: right bottom;
+}
+
+.popover[data-state='open'] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translate(var(--pop-dx), var(--pop-dy)) scale(1);
+  transition:
+    opacity var(--comment-enter) var(--comment-ease),
+    transform var(--comment-enter) var(--comment-ease),
+    visibility 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popover,
+  .popover[data-state='open'],
+  .hintBar,
+  .hintBar[data-state='open'] {
+    transition-duration: 0s;
+  }
+}
+
+.card {
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow:
+    0 12px 32px -8px rgb(0 0 0 / 0.18),
+    0 2px 6px rgb(0 0 0 / 0.08);
+  font-family: var(--font-ui);
+  font-size: var(--type-body);
+  line-height: var(--type-body-lh);
+  cursor: auto;
+  user-select: text;
+  -webkit-user-select: text;
+  outline: none;
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.cardNumber {
+  display: grid;
+  flex: none;
+  place-items: center;
+  box-sizing: border-box;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--comment-pin);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.cardNumber[data-status='review'] {
+  background: var(--comment-amber);
+  color: var(--comment-pin);
+}
+
+.cardNumber[data-status='resolved'] {
+  background: #8a8884;
+}
+
+.cardNumber[data-status='failed'] {
+  background: var(--danger, #d0341f);
+}
+
+.cardStatus {
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+  line-height: var(--type-label-lh);
+}
+
+.cardLost {
+  padding: 1px 6px;
+  border: 1px dashed color-mix(in srgb, var(--comment-amber) 70%, transparent);
+  border-radius: var(--radius-tag, 4px);
+  color: var(--ink-soft);
+  font-size: var(--type-caption);
+  line-height: var(--type-caption-lh);
+}
+
+.cardClose {
+  margin-left: auto;
+}
+
+.cardTarget {
+  margin-top: 6px;
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: var(--type-caption);
+  line-height: var(--type-caption-lh);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardBody {
+  max-height: 168px;
+  margin: 8px 0 0;
+  overflow: auto;
+  color: var(--ink);
+  font-size: var(--type-copy);
+  line-height: var(--type-copy-lh);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.cardImages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.cardImage {
+  display: block;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+}
+
+.cardImage img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.cardActionsStart,
+.cardActionsEnd {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cardActionsEnd {
+  gap: 6px;
+}
+
+/* the composer reuses BoardComposerPopover (docked): the card here is the frame, its own chrome goes */
+.composer {
+  padding: 10px;
+}
+
+.composer :global(.comment-popover) {
+  position: static;
+  inset: auto;
+  width: auto;
+  max-height: min(440px, 60vh);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+/* ── Comment tool hint bar (in the toolbar dock) ──────────────────────────────────────── */
+
+.hintBar {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 4px 4px 10px;
+  border-radius: var(--radius-chip);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: var(--type-label);
+  line-height: var(--type-label-lh);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity var(--comment-exit) var(--comment-ease),
+    transform var(--comment-exit) var(--comment-ease),
+    visibility 0s linear var(--comment-exit);
+}
+
+.hintBar[data-state='open'] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+  transition:
+    opacity var(--comment-enter) var(--comment-ease),
+    transform var(--comment-enter) var(--comment-ease),
+    visibility 0s;
+}
+
+.hintDot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--comment-amber);
+}
+
+.hintToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: calc(var(--radius-chip) - 4px);
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background-color var(--motion-micro, 100ms) var(--comment-ease),
+    color var(--motion-micro, 100ms) var(--comment-ease);
+}
+
+.hintToggle:hover {
+  background: var(--paper-deep);
+  color: var(--ink);
+}
+
+.hintToggle:focus-visible {
+  outline: 2px solid var(--comment-amber);
+  outline-offset: 1px;
+}
+
+.hintToggle[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--comment-fill) 35%, transparent);
+  color: var(--ink);
+}
+
+.hintToggle svg {
+  width: 14px;
+  height: 14px;
+}

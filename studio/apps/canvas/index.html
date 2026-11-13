@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en" class="fx" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark light"><title>Fantay</title>
+<!-- Boot theme from the host's query before CSS loads; mirrors --paper (dark/light). -->
+<script>(function(){try{var q=new URLSearchParams(location.search),r=document.documentElement,t=q.get('theme')==='light'?'light':'dark';r.dataset.theme=t;r.classList.toggle('dark',t==='dark');r.style.colorScheme=t;var l=q.get('locale');if(l&&/^[A-Za-z]{2,3}(-[A-Za-z]{2,4})?$/.test(l))r.lang=l;}catch(e){}})();</script>
+<style>html,body{margin:0;height:100%;background:#141414}html[data-theme=light],html[data-theme=light] body{background:#fdfdfd}</style>
+</head>
+<body><div id="app"></div><script type="module" src="/src/main.ts"></script></body>
+</html>

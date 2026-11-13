@@ -1,0 +1,255 @@
+/* The shell sets --st-* on its root; the editor dialog is portaled out and gets them from .dialog. */
+.root {
+  --preview-height: 340px;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.root[data-catalog="blocks"] { --preview-height: 380px; }
+.root[data-catalog="patterns"] { --preview-height: 420px; }
+.root[data-catalog="templates"] { --preview-height: 540px; }
+.root :focus-visible, .editor :focus-visible { outline: 2px solid var(--info); outline-offset: 2px; }
+
+/* Toolbar */
+.toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+.search { flex: 1 1 auto; min-width: 0; max-width: 320px; }
+.add { flex-shrink: 0; margin-inline-start: auto; }
+/* Adding alone hangs from the grid's top edge into the gap under the shell's section header, right
+   aligned, so it costs no row. Where the header stacks, the hint can run under it, so it drops back in. */
+.addRow { position: relative; height: 0; }
+.addRow > .add { position: absolute; right: 0; bottom: 8px; }
+.addTools { position: absolute; right: 0; bottom: 8px; display: flex; align-items: center; gap: 4px; }
+.addTools > .add { margin-inline-start: 0; }
+@container (max-width: 640px) {
+  .addRow { display: flex; height: auto; margin-bottom: 16px; }
+  .addRow > .add, .addTools { position: static; }
+}
+.toolbar :global(.od-select-trigger), .stageControls :global(.od-select-trigger), .exampleTools :global(.od-select-trigger) {
+  display: inline-grid;
+  flex: none;
+  align-content: center;
+  align-items: center;
+  width: auto;
+  max-width: 220px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--ink-soft);
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.stageControls :global(.od-select-trigger) { height: 28px; min-height: 28px; max-width: 200px; box-shadow: none; }
+
+/* A gallery of tiles; the open entry takes a whole row so its stage and details have room. */
+.entries { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px 16px; align-items: start; }
+.card { position: relative; display: flex; flex-direction: column; min-width: 0; scroll-margin-top: 72px; }
+.card[data-open] { grid-column: 1 / -1; padding-block-end: 16px; }
+
+/* Closed, the header is static and the button stretches over the whole tile; open, the header holds
+   it, so the title row collapses the entry and the stage below stays interactive. */
+.hit { position: absolute; inset: 0; z-index: 1; display: block; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: var(--st-radius-small, 14px); background: transparent; box-shadow: none; color: inherit; cursor: pointer; }
+.hit:hover, .hit:active { background: transparent; transform: none; }
+.card[data-open] .hit { border-radius: var(--radius-row); }
+
+.cardHeader { display: flex; align-items: center; gap: 12px; min-width: 0; padding-block: 10px 0; }
+.card[data-open] .cardHeader { position: relative; min-height: 32px; padding-block: 0 8px; }
+.cardTitle { display: flex; flex: 1 1 auto; align-items: center; gap: 2px 10px; min-width: 0; min-height: 20px; }
+.cardTitle :is(h3, h4) { min-width: 0; margin: 0; overflow: hidden; color: var(--ink); font-size: 14px; font-weight: 600; line-height: 20px; letter-spacing: 0; text-overflow: ellipsis; white-space: nowrap; }
+.chevron { flex: none; margin-inline-start: auto; color: var(--ink-faint); transition: transform var(--st-dur-enter, 220ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)), color var(--st-dur-micro, 120ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)); }
+.card:has(.hit:hover) .chevron { color: var(--ink); }
+.card[data-open] .chevron { margin-inline-start: 0; transform: rotate(180deg); }
+.cardDescription { max-width: 68ch; margin: 0 0 12px; color: var(--ink-soft); font-size: 13px; line-height: 20px; }
+.cardActions { position: relative; z-index: 2; display: flex; flex: none; align-items: center; gap: 2px; margin-inline-end: -4px; }
+
+/* Hollow, filled, struck through: the three maturities still read apart without colour. */
+.status { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-faint); font-size: 12px; font-weight: 500; line-height: 16px; white-space: nowrap; }
+.status i { width: 7px; height: 7px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--ink-faint); }
+.status[data-status="stable"] { color: var(--ink-soft); }
+.status[data-status="stable"] i { background-color: var(--ink); box-shadow: none; }
+.status[data-status="deprecated"] { color: var(--accent-ink); text-decoration: line-through; }
+.status[data-status="deprecated"] i { box-shadow: inset 0 0 0 1.5px var(--accent-ink); }
+
+/* Stage */
+.stage { container: catalog-stage / inline-size; display: flex; flex-direction: column; min-width: 0; padding: 8px; border-radius: var(--st-radius-small, 14px); background-color: var(--sub); box-shadow: inset 0 0 0 1px var(--line-soft); transition: background-color var(--st-dur-micro, 120ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)); }
+/* A tile is a picture of the entry: preview first, name under it, the whole frame scaled into a
+   fixed-height thumbnail (StudioEntryPreview sizes it) and untouchable. */
+.card:not([data-open]) .stage { order: -1; pointer-events: none; }
+.card:not([data-open]):has(.hit:hover) .stage { background-color: var(--paper-deep); }
+/* One row at one height whatever the entry declares: the picker never turns into chips or wraps. */
+.stageControls { display: flex; flex-wrap: nowrap; align-items: center; justify-content: flex-end; gap: 8px; height: 28px; margin-block-end: 8px; }
+.exampleSelect { min-width: 0; margin-inline-end: auto; }
+.stageReset { color: var(--ink-soft); }
+.stageReset:hover { background-color: var(--surface); }
+
+.stageViewport { flex: 1 1 auto; display: flex; justify-content: safe center; overflow-x: auto; overflow-y: hidden; border-radius: 10px; scrollbar-width: thin; scrollbar-color: var(--ink-faint) transparent; }
+/* flex-basis rather than width: it tweens between 100% and a pixel value without a layout hack. */
+.stageFrame { flex: 0 0 100%; min-width: 0; transition: flex-basis 320ms var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)); }
+
+.previewBox { position: relative; height: 100%; min-height: var(--preview-height, 340px); overflow: hidden; border-radius: 10px; background: var(--surface); }
+/* The frame reports its content height, so the stage hugs a button instead of framing a void. */
+.previewBox[data-fit] { min-height: 0; box-shadow: inset 0 0 0 1px var(--line-soft); }
+.previewBox[data-fit] iframe { bottom: auto; }
+.previewBox iframe { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border: 0; opacity: 0; }
+.previewBox[data-state="ready"] iframe { opacity: 1; transition: opacity var(--st-dur-enter, 220ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)); }
+/* Quick loads should not flash a label, so it only arrives once the wait is noticeable. */
+.previewLoading { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; color: var(--ink-faint); font-size: 12px; font-weight: 500; opacity: 0; }
+.previewBox[data-state="loading"] .previewLoading { animation: previewWait 220ms var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)) 400ms forwards; }
+.previewError { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: 24px; color: var(--accent-ink); font-size: 13px; text-align: center; }
+.previewNote { position: absolute; left: 8px; right: 8px; bottom: 8px; width: fit-content; max-width: calc(100% - 16px); margin: 0; padding: 4px 8px; border-radius: var(--radius-row); background: var(--paper-deep); color: var(--ink-soft); font-size: 11px; line-height: 16px; pointer-events: none; }
+@keyframes previewWait { to { opacity: 1; } }
+
+/* The product's one-of-N row with a travelling thumb; the items stop drawing their own fill. */
+.picker { position: relative; isolation: isolate; height: 28px; padding: 3px; background: transparent; }
+.picker button { position: relative; z-index: 1; height: 22px; padding-inline: 10px; background: transparent; box-shadow: none; color: var(--ink-soft); font-size: 12px; font-weight: 500; line-height: 16px; transition: color var(--st-dur-micro, 120ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)); }
+.picker button:hover { color: var(--ink); }
+.picker button[data-state="on"] { background: transparent; box-shadow: none; color: var(--ink); }
+.pickerThumb { position: absolute; top: 3px; bottom: 3px; left: 0; z-index: 0; border-radius: var(--radius-row); background-color: var(--surface); transition: transform 320ms var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)), width 320ms var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)); }
+.widthPicker { flex: none; }
+
+/* Line tabs: the same object as the chapter tabs. */
+.lineTabs { position: relative; display: flex; align-items: stretch; gap: 20px; height: 40px; border-bottom: 1px solid var(--line); }
+.lineTabs button { height: auto; min-height: 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; color: var(--ink-faint); font: inherit; font-size: 13px; font-weight: 500; line-height: 20px; white-space: nowrap; cursor: pointer; transition: color var(--st-dur-micro, 120ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)); }
+.lineTabs button:hover, .lineTabs button[aria-selected="true"] { color: var(--ink); }
+.lineTabsUnderline { position: absolute; left: 0; bottom: -1px; height: 1.5px; background-color: var(--ink); transition: transform 320ms var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)), width 320ms var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)); }
+
+/* Disclosure */
+.disclosure { min-width: 0; padding-block-start: 2px; }
+.disclosure .lineTabs { height: 36px; border-bottom-color: var(--line-soft); }
+.detailPanel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-rows var(--st-dur-exit, 140ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)),
+    opacity var(--st-dur-exit, 140ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)),
+    visibility 0s linear var(--st-dur-exit, 140ms);
+}
+.disclosure[data-open] .detailPanel {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    grid-template-rows var(--st-dur-enter, 220ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)),
+    opacity var(--st-dur-enter, 220ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1));
+}
+.detailClip { min-height: 0; overflow: hidden; }
+.detailBody { padding-block: 20px 4px; color: var(--ink-soft); font-size: 13px; line-height: 1.65; }
+.detailBody :is(h4, h5) { margin: 0 0 8px; color: var(--ink); font-size: 12px; font-weight: 600; line-height: 16px; }
+.detailBody p { margin: 0 0 8px; font-size: 13px; line-height: 1.65; }
+.detailBody p:last-child { margin-bottom: 0; }
+.detailBody ul, .detailBody ol { margin: 0; padding-inline-start: 18px; list-style: revert; }
+.detailBody li { font-size: 13px; line-height: 1.65; }
+.detailBody :global(.md-inline-code) { padding: 1px 4px; border-radius: var(--radius-tag, 4px); background: var(--sub); color: var(--ink); font-family: var(--font-mono); font-size: 11.5px; }
+.specGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 32px; }
+.detailBody .tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.detailBody .tags li { padding: 2px 7px; border-radius: var(--radius-tag, 4px); background: var(--sub); color: var(--ink-soft); font-family: var(--font-mono); font-size: 11px; line-height: 16px; }
+.detailBody .tags li[data-missing] { padding: 1px 6px; border: 1px dashed var(--line); background: none; color: var(--ink-faint); }
+/* The default leads the list as the one outlined tag, named after a hairline rather than coloured. */
+.detailBody .tags li[data-default] { display: inline-flex; align-items: center; gap: 6px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); color: var(--ink); }
+.defaultBadge { padding-inline-start: 6px; border-inline-start: 1px solid var(--line); color: var(--ink-faint); font-family: var(--font-ui); font-size: 11px; font-weight: 500; line-height: 16px; }
+
+/* Good and bad sit on the spec grid's two columns. The panels are the same code block and differ
+   only in their mark: filled for the good one, a hollow ring for the bad one, as the maturity dots. */
+.pair { margin-block-start: 24px; }
+.pairGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 32px; }
+.pairLabel { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.pairMark { display: inline-grid; flex: none; place-items: center; width: 16px; height: 16px; border-radius: 50%; }
+.codeBlock[data-tone="good"] .pairMark { background-color: var(--ink); color: var(--paper); }
+.codeBlock[data-tone="bad"] .pairMark { box-shadow: inset 0 0 0 1.5px var(--accent-ink); color: var(--accent-ink); }
+.pair .codeBlock pre { max-height: 240px; }
+
+.api h3 { margin: 20px 0 8px; color: var(--ink); font-size: 12px; font-weight: 600; line-height: 16px; }
+.api :global(.md-table-wrap) { margin: 4px 0 12px; overflow-x: auto; border: 0; border-radius: 0; background: none; scrollbar-width: thin; }
+.api table { width: 100%; border: 0; border-collapse: collapse; font-size: 12px; line-height: 18px; }
+.api th { padding: 6px 16px 6px 0; border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--ink-faint); font-size: 11px; font-weight: 500; text-align: left; white-space: nowrap; }
+.api td { padding: 8px 16px 8px 0; border: 0; border-bottom: 1px solid var(--line-soft); color: var(--ink-soft); text-align: left; vertical-align: top; }
+.api tr:last-child td { border-bottom: 0; }
+.api td:first-child { color: var(--ink); font-family: var(--font-mono); font-size: 11.5px; white-space: nowrap; }
+
+.codeBlock { overflow: hidden; border-radius: var(--radius-control); background: var(--sub); }
+.codeBlock header { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 32px; padding-inline: 12px 4px; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-size: 12px; font-weight: 500; }
+.codeBlock pre { max-height: 320px; margin: 0; padding: 12px; overflow: auto; color: var(--ink-soft); font-family: var(--font-mono); font-size: 11.5px; line-height: 1.7; font-variant-numeric: tabular-nums; white-space: pre-wrap; overflow-wrap: anywhere; scrollbar-width: thin; }
+
+.footnote { margin: 16px 0 0; color: var(--ink-faint); font-size: 12px; line-height: 16px; }
+
+/* Feedback rides the bottom of the scroller without taking a row, so results never shift the list. */
+.feedbackDock { position: sticky; bottom: 16px; z-index: 6; display: flex; justify-content: center; height: 0; pointer-events: none; }
+.feedback { display: inline-flex; align-items: center; gap: 6px; height: fit-content; margin: 0; padding: 7px 12px 7px 10px; border-radius: var(--radius-pill, 999px); background: var(--ink); color: var(--paper); font-size: 12px; font-weight: 500; line-height: 16px; white-space: nowrap; opacity: 0; transform: translateY(calc(-100% + 6px)); transition: opacity var(--st-dur-exit, 140ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)), transform var(--st-dur-exit, 140ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)); }
+.feedback[data-shown] { opacity: 1; transform: translateY(-100%); transition-duration: var(--st-dur-enter, 220ms); }
+
+.error { margin: 0 0 16px; padding: 10px 12px; border-radius: var(--radius-control); background: color-mix(in srgb, var(--accent-ink) 8%, var(--surface)); color: var(--accent-ink); font-size: 13px; line-height: 20px; white-space: pre-wrap; }
+
+/* Editor */
+.editor { width: min(1120px, calc(100vw - 32px)); height: min(860px, 92dvh); max-height: 92dvh; }
+.editor .lineTabs { flex: none; margin-block-end: 20px; }
+.editorGrid { flex: 1 1 auto; display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 0.9fr); gap: 24px; min-height: 0; }
+.editorFields { min-width: 0; min-height: 0; margin: 0; padding: 2px 10px 12px 2px; overflow: auto; border: 0; scrollbar-width: thin; }
+.editorFields:disabled { opacity: 0.7; }
+.editorFields > p { margin: 0 0 16px; color: var(--ink-soft); font-size: 12px; line-height: 18px; }
+.editorFields[data-editor-tab="source"] textarea { min-height: 46dvh; }
+/* The examples are snippets, not the implementation: they stay short under it. */
+.editorFields[data-editor-tab="source"] .pairFields textarea { min-height: 128px; }
+.fieldPair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.field { display: grid; gap: 6px; margin-bottom: 16px; color: var(--ink-soft); font-size: 12px; font-weight: 500; line-height: 16px; }
+.field :global(.od-select-trigger) { display: grid; align-content: center; align-items: center; text-align: start; }
+.field input, .field textarea, .field :global(.od-select-trigger) {
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+}
+.field textarea { min-height: 112px; resize: vertical; font-family: var(--font-mono); font-size: 12px; line-height: 1.65; }
+.draftPreview { --preview-height: 320px; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.draftPreview > strong { flex: none; margin-bottom: 8px; color: var(--ink-faint); font-size: 12px; font-weight: 500; line-height: 16px; }
+.draftPreview .previewBox { flex: 1 1 auto; border: 1px solid var(--line); }
+.exampleTools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; }
+.editorFooter { flex: none; display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--line-soft); }
+.editorFooter > span { margin-inline-end: auto; color: var(--ink-faint); font-size: 12px; line-height: 16px; }
+.confirm { width: min(440px, calc(100vw - 32px)); }
+.confirmText { margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.65; }
+
+@container (max-width: 560px) {
+  .specGrid, .pairGrid { grid-template-columns: minmax(0, 1fr); }
+}
+@container catalog-stage (max-width: 520px) {
+  .widthPicker { display: none; }
+}
+/* What only the open entry shows arrives with it rather than snapping in. */
+.card[data-open] .cardActions, .card[data-open] .cardDescription, .card[data-open] .stageControls, .card[data-open] .disclosure { animation: entryReveal var(--st-dur-enter, 220ms) var(--st-ease-ui, cubic-bezier(0.23, 1, 0.32, 1)); }
+@keyframes entryReveal { from { opacity: 0; transform: translateY(4px); } }
+@media (max-width: 800px) {
+  .editor { height: auto; }
+  .editorGrid { grid-template-columns: minmax(0, 1fr); }
+  .editorFields { max-height: 48dvh; }
+  .draftPreview { --preview-height: 260px; }
+  .editorFooter { flex-wrap: wrap; }
+  .editorFooter > span { flex-basis: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stage, .chevron, .stageFrame, .previewBox[data-state="ready"] iframe, .picker button, .pickerThumb, .lineTabs button, .lineTabsUnderline, .detailPanel, .disclosure[data-open] .detailPanel, .feedback { transition: none; }
+  .card[data-open] .cardActions, .card[data-open] .cardDescription, .card[data-open] .stageControls, .card[data-open] .disclosure { animation: none; }
+  .previewBox[data-state="loading"] .previewLoading { animation: none; opacity: 1; }
+}
+
+/* The user's groups: each heads its own grid with its name, a count and its tools. */
+.group + .group { margin-top: 36px; }
+.groupHead { display: flex; align-items: center; gap: 8px; min-height: 28px; margin-bottom: 14px; }
+.groupHead h3 { margin: 0; color: var(--ink); font-size: 13px; font-weight: 600; line-height: 20px; letter-spacing: 0.01em; }
+.groupCount { color: var(--ink-faint); font-size: 12px; font-variant-numeric: tabular-nums; }
+.groupTools { display: flex; align-items: center; gap: 2px; margin-inline-start: auto; opacity: 0.72; transition: opacity var(--st-dur-micro, 140ms) cubic-bezier(0.23, 1, 0.32, 1); }
+.groupHead:hover .groupTools, .groupTools:focus-within { opacity: 1; }
+.groupEmpty { margin: 0; padding: 18px 16px; border: 1px dashed var(--line); border-radius: 12px; color: var(--ink-faint); font-size: 13px; line-height: 1.6; }
+.groupForm { display: grid; gap: 14px; }
+@media (prefers-reduced-motion: reduce) { .groupTools { transition: none; } }

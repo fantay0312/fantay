@@ -1,0 +1,48 @@
+/* 吉祥物在对话里的落点。只管位置和字,吉祥物本身的动效在 fantay/brand。 */
+.centered {
+  margin-block: auto;
+}
+
+.empty {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.mascotStage {
+  display: block;
+  flex: none;
+  width: 56px;
+  height: 56px;
+  margin-block: -8px;
+  margin-inline: -6px -8px;
+  transform: translateY(-2px);
+}
+
+.greeting {
+  margin: 0;
+  color: var(--chat-text-strong);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: start;
+  text-wrap: balance;
+}
+
+.loading {
+  display: block;
+  flex: none;
+  width: 28px;
+  height: 28px;
+}
+
+/* 负边距抵掉图形自身的留白,让它和正文左缘对齐 */
+.turn {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin: 10px 0 0 -3px;
+}

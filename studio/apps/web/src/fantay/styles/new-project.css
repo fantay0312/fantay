@@ -1,0 +1,25 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* New project modal shell (NewProjectModal). Unlayered, so it sits above the upstream base rules in
+   styles/home/new-project-modal.css. Only the scrim and the card live here; the free-form form inside owns its
+   layout and width through components/NewProjectModal.module.css. */
+
+.new-project-modal-backdrop {
+  align-items: center;
+  padding: 32px;
+}
+.new-project-modal {
+  max-height: min(880px, calc(100vh - 64px));
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  border-radius: var(--radius-modal);
+  box-shadow:
+    0 32px 80px -24px rgba(0, 0, 0, 0.28),
+    0 10px 28px -10px rgba(0, 0, 0, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 640px) {
+  .new-project-modal-backdrop {
+    padding: 16px;
+  }
+}

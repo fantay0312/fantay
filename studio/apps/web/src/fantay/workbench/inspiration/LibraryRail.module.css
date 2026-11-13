@@ -1,0 +1,225 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Library rail: glides 0 ↔ 232px like the inspector; one hover grammar (sub on hover, paper-deep when active). */
+
+.dock {
+  position: relative;
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  width: 0;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  transition: width var(--motion-exit) var(--ease-out-quint);
+}
+.dock[data-open] {
+  width: 232px;
+  transition-duration: 240ms;
+}
+.inner {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 232px;
+  height: 100%;
+  min-height: 0;
+  border-inline-end: 1px solid var(--line-soft);
+  background: var(--sidebar);
+  opacity: 0;
+  transition: opacity var(--motion-exit) var(--ease-out-quint);
+}
+.dock[data-open] .inner {
+  opacity: 1;
+  transition-duration: var(--motion-enter);
+}
+
+.head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  padding: 0 8px 0 16px;
+}
+.headTitle {
+  color: var(--ink);
+  font-size: var(--type-body);
+  font-weight: 600;
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 2px 8px 12px;
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: 9px;
+  transition:
+    background-color var(--motion-micro) linear,
+    box-shadow var(--motion-fast) var(--ease-out-quint);
+}
+.row:not([data-active]):hover {
+  background: var(--sub);
+}
+.row[data-active] {
+  background: var(--paper-deep);
+}
+.row[data-over] {
+  background: var(--info-soft);
+  box-shadow: inset 0 0 0 1.5px var(--info);
+}
+.rowButton {
+  flex: 1;
+  justify-content: flex-start;
+  min-width: 0;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 9px;
+  background: none;
+  color: var(--ink);
+  font-size: var(--type-copy);
+  font-weight: 400;
+  text-align: start;
+}
+.rowButton:hover {
+  background: none;
+  color: var(--ink);
+}
+.rowButton > [data-slot='button-label'] {
+  flex: 1;
+  gap: 10px;
+}
+.rowIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  color: var(--ink-soft);
+}
+.row[data-active] .rowIcon {
+  color: var(--ink);
+}
+.rowLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row[data-active] .rowLabel {
+  font-weight: 550;
+}
+.rowCount {
+  flex: none;
+  color: var(--ink-faint);
+  font-size: var(--type-label);
+  font-variant-numeric: tabular-nums;
+  transition: opacity var(--motion-fast) var(--ease-out-quint);
+}
+.rowMore {
+  position: absolute;
+  right: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--motion-fast) var(--ease-out-quint);
+}
+.row:hover .rowMore,
+.row:focus-within .rowMore,
+.row:has([aria-expanded='true']) .rowMore {
+  opacity: 1;
+  pointer-events: auto;
+}
+.row:has(.rowMore):hover .rowCount,
+.row:has(.rowMore):focus-within .rowCount,
+.row:has([aria-expanded='true']) .rowCount {
+  opacity: 0;
+}
+
+.subRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  margin: 0 0 2px 30px;
+  padding: 0 10px;
+  border-radius: 7px;
+  background: var(--sub);
+  color: var(--ink);
+  font-size: var(--type-body);
+  font-weight: 550;
+}
+.subRow span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 32px;
+  margin-top: 16px;
+  padding: 0 4px 0 10px;
+  color: var(--ink-faint);
+  font-size: var(--type-label);
+  font-weight: 500;
+}
+
+.spaceEmpty {
+  justify-content: flex-start;
+  height: auto;
+  padding: 8px 10px;
+  border: 1px dashed var(--line);
+  border-radius: 9px;
+  background: none;
+  color: var(--ink-faint);
+  font-size: var(--type-label);
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: start;
+  white-space: normal;
+}
+.spaceEmpty > [data-slot='button-label'] {
+  align-items: flex-start;
+  gap: 8px;
+}
+.spaceEmpty svg {
+  margin-top: 2px;
+}
+.spaceEmpty:hover {
+  border-color: var(--ink-ghost);
+  background: none;
+  color: var(--ink-soft);
+}
+
+.foot {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 10px 12px;
+  border-top: 1px solid var(--line-soft);
+}
+.captureButton {
+  flex: 1;
+  justify-content: flex-start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock,
+  .inner {
+    transition: none;
+  }
+}

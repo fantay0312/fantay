@@ -1,0 +1,315 @@
+/* Session execution permission control, sharing the 32px composer toolbar family
+   (fantay/styles/composer.css, MovieChannelSwitcher.module.css). */
+.trigger {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 6px;
+  height: var(--composer-control, 32px);
+  min-block-size: var(--composer-control, 32px);
+  min-inline-size: var(--composer-control, 32px);
+  max-inline-size: 100%;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--composer-control-radius, 9px);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--ink-soft);
+  background: transparent;
+  box-shadow: none;
+  transition:
+    background-color 120ms var(--ease-out-quint),
+    color 120ms var(--ease-out-quint),
+    transform var(--motion-fast) var(--ease-out-quint);
+}
+
+.trigger[data-state='open'],
+.trigger[aria-expanded='true'] {
+  color: var(--ink);
+  background: var(--sub);
+  box-shadow: none;
+}
+
+@media (hover: hover) {
+  .trigger:hover:not(:disabled) {
+    color: var(--ink);
+    background: var(--sub);
+    box-shadow: none;
+  }
+}
+
+.trigger:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 1px;
+}
+
+.glyph {
+  flex: none;
+  color: var(--ink-faint);
+  transition: color 120ms var(--ease-out-quint);
+}
+
+.trigger[data-state='open'] .glyph,
+.trigger[aria-expanded='true'] .glyph {
+  color: var(--ink);
+}
+
+@media (hover: hover) {
+  .trigger:hover:not(:disabled) .glyph {
+    color: var(--ink);
+  }
+}
+
+/* Explicit session overrides keep a ghost resting surface next to "+", coloring
+   only the shield glyph + label until hovered or expanded. */
+.trigger[data-permission='read-only'] {
+  color: var(--info-ink);
+  background: transparent;
+}
+.trigger[data-permission='read-only'] .glyph {
+  color: var(--info);
+}
+.trigger[data-permission='read-only'][data-state='open'],
+.trigger[data-permission='read-only'][aria-expanded='true'] {
+  color: var(--info-ink);
+  background: color-mix(in srgb, var(--info) 14%, transparent);
+}
+.trigger[data-permission='read-only'][data-state='open'] .glyph,
+.trigger[data-permission='read-only'][aria-expanded='true'] .glyph {
+  color: var(--info);
+}
+
+.trigger[data-permission='workspace-write'] {
+  color: var(--ink);
+  background: transparent;
+}
+.trigger[data-permission='workspace-write'] .glyph {
+  color: var(--ink);
+}
+.trigger[data-permission='workspace-write'][data-state='open'],
+.trigger[data-permission='workspace-write'][aria-expanded='true'] {
+  color: var(--ink);
+  background: var(--sub);
+}
+
+.trigger[data-permission='danger-full-access'] {
+  color: var(--warning-ink);
+  background: transparent;
+}
+.trigger[data-permission='danger-full-access'] .glyph {
+  color: var(--warning);
+}
+.trigger[data-permission='danger-full-access'][data-state='open'],
+.trigger[data-permission='danger-full-access'][aria-expanded='true'] {
+  color: var(--warning-ink);
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+}
+.trigger[data-permission='danger-full-access'][data-state='open'] .glyph,
+.trigger[data-permission='danger-full-access'][aria-expanded='true'] .glyph {
+  color: var(--warning);
+}
+
+@media (hover: hover) {
+  .trigger[data-permission='read-only']:hover:not(:disabled) {
+    color: var(--info-ink);
+    background: color-mix(in srgb, var(--info) 14%, transparent);
+  }
+  .trigger[data-permission='read-only']:hover:not(:disabled) .glyph {
+    color: var(--info);
+  }
+  .trigger[data-permission='workspace-write']:hover:not(:disabled) {
+    color: var(--ink);
+    background: var(--sub);
+  }
+  .trigger[data-permission='danger-full-access']:hover:not(:disabled) {
+    color: var(--warning-ink);
+    background: color-mix(in srgb, var(--warning) 14%, transparent);
+  }
+  .trigger[data-permission='danger-full-access']:hover:not(:disabled) .glyph {
+    color: var(--warning);
+  }
+}
+
+.label {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Menu surface: unified with composer toolbar menus (1px --line + --float-shadow + directional pop) ── */
+.menu {
+  --permission-pop-x: 0px;
+  --permission-pop-y: 0px;
+  width: min(224px, calc(100vw - 24px));
+  min-inline-size: 0;
+  padding: var(--composer-menu-pad, 6px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card, 12px);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--float-shadow, var(--shadow-float));
+  transform-origin: var(--radix-dropdown-menu-content-transform-origin);
+}
+
+.menu[data-side='top'] {
+  --permission-pop-y: 4px;
+}
+.menu[data-side='bottom'] {
+  --permission-pop-y: -4px;
+}
+.menu[data-side='left'] {
+  --permission-pop-x: 4px;
+}
+.menu[data-side='right'] {
+  --permission-pop-x: -4px;
+}
+
+.menu[data-state='open'] {
+  animation: permissionMenuPopIn var(--motion-enter) var(--ease-out-quint);
+}
+
+.menu[data-state='closed'] {
+  animation: permissionMenuFadeOut var(--motion-exit) var(--ease-out-quint) forwards;
+}
+
+@keyframes permissionMenuPopIn {
+  0% {
+    opacity: 0;
+    transform: translate(var(--permission-pop-x), var(--permission-pop-y)) scale(0.97);
+  }
+}
+
+@keyframes permissionMenuFadeOut {
+  100% {
+    opacity: 0;
+  }
+}
+
+.item {
+  gap: 8px;
+  min-height: var(--composer-menu-row, 32px);
+  padding: 4px 8px;
+  border-radius: var(--composer-menu-row-radius, 8px);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  transition:
+    background-color 120ms var(--ease-out-quint),
+    color 120ms var(--ease-out-quint);
+}
+
+.item[data-highlighted] {
+  color: var(--ink);
+  background: var(--sub);
+}
+
+.item[data-state='checked'] {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.itemIcon {
+  display: inline-flex;
+  flex: 0 0 16px;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: var(--ink-faint);
+  transition: color 120ms var(--ease-out-quint);
+}
+
+.item[data-highlighted] .itemIcon,
+.item[data-state='checked'] .itemIcon {
+  color: var(--ink);
+}
+
+.item[data-permission='read-only'][data-state='checked'] .itemIcon {
+  color: var(--info);
+}
+
+.item[data-permission='danger-full-access'][data-state='checked'] .itemIcon,
+.item[data-permission='danger-full-access'][data-highlighted] .itemIcon {
+  color: var(--warning);
+}
+
+.itemLabel {
+  min-inline-size: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item > [data-state='checked'] {
+  animation: permissionCheckSettle var(--motion-enter) var(--ease-out-quint) backwards;
+}
+
+@keyframes permissionCheckSettle {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+.separator {
+  margin: 5px 6px;
+}
+
+.resetItem {
+  color: var(--ink-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trigger,
+  .glyph,
+  .item,
+  .itemIcon {
+    transition: none;
+  }
+  .trigger:active:not(:disabled) {
+    transform: none;
+  }
+  .menu[data-state],
+  .item > [data-state='checked'] {
+    animation: none;
+  }
+}
+
+/* ── Composer toolbar responsive collapse ─────────────────────────────────────────────────── */
+@container composer-toolbar (max-width: 480px) {
+  .label {
+    max-inline-size: 84px;
+  }
+}
+
+@container composer-toolbar (max-width: 400px) {
+  .label {
+    display: none;
+  }
+  .trigger {
+    justify-content: center;
+    gap: 0;
+    width: var(--composer-control, 32px);
+    min-inline-size: var(--composer-control, 32px);
+    padding: 0;
+  }
+}
+
+@container composer-toolbar (max-width: 215px) {
+  .trigger[data-permission='default'] {
+    display: none;
+  }
+}
+
+@container composer-toolbar (max-width: 175px) {
+  .trigger {
+    display: none;
+  }
+}

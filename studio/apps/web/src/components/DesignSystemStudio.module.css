@@ -1,0 +1,541 @@
+/* The studio pane. `.root` is the size container of every Studio module and the one place the
+   shared --st-* motion and shape values are set. */
+.root {
+  --st-ease: cubic-bezier(0.22, 0.9, 0.24, 1);
+  --st-ease-ui: cubic-bezier(0.23, 1, 0.32, 1);
+  --st-dur-layout: 640ms;
+  --st-dur-enter: 220ms;
+  --st-dur-exit: 140ms;
+  --st-dur-micro: 120ms;
+  --st-gap: 12px;
+  --st-radius-card: 16px;
+  --st-radius-small: 14px;
+  /* Resolved where it is used, so cqw reads this container and not the one above it. */
+  --st-gutter: clamp(16px, 4cqw, 40px);
+  /* Claude Design's page: a quiet grey canvas, each chapter on one white sheet. */
+  --st-canvas: color-mix(in srgb, var(--ink) 4%, var(--paper));
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  isolation: isolate;
+  container-type: inline-size;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+.root *, .root *::before, .root *::after { box-sizing: border-box; }
+.root ::selection { background: var(--sub); color: var(--ink); }
+.root :focus-visible { outline: 2px solid var(--info); outline-offset: 2px; }
+.root button, .root input, .root textarea, .root :global(.od-select-trigger) { font: inherit; }
+.root input, .root textarea { caret-color: var(--ink); }
+
+/* Named only while a transition runs: a name always in place would hold a stacking context open on
+   the pane, and a second studio on the page would make the browser refuse every transition. */
+:global(:root[data-studio-vt]:not([data-studio-vt='expand'])) .pageName { view-transition-name: studio-page; }
+:global(:root[data-studio-vt='expand']) .root { view-transition-name: studio-root; }
+
+/* With no list beside it, the starter hangs from the page's own left edge, under the title. */
+.rootStarter { background: transparent; overflow: visible; }
+.rootStarter .column { width: 100%; max-width: none; margin: 0; padding-inline: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.root.expanded { position: fixed; inset: 0; z-index: 1800; height: 100dvh; }
+/* Full screen lies over the window's title bar, and in the desktop app the shell's drag strips under
+   it still claim presses there, so the collapse button never received its click. The header takes
+   the title bar's job (it drags the window), and every control in it is cut out of the drag region. */
+.root.expanded .header { -webkit-app-region: drag; }
+.root.expanded .header :is(button, a, input, select, textarea, [role='button'], [tabindex]) { -webkit-app-region: no-drag; }
+/* The identity row is now the title bar's row. The shell's insets (78px of traffic lights on macOS
+   desktop, 0 in native full screen and on the web; the window controls on Windows) push its ends
+   clear. Once the window is wide enough that the centred 1120px row already starts past them, the
+   row keeps its usual gutter and stays on the content column. */
+.root.expanded .identity {
+  padding-inline-start: max(var(--st-gutter), calc(var(--fx-traffic-inset, 0px) + 12px - max(0px, (100% - 1120px) / 2)));
+  padding-inline-end: max(var(--st-gutter), calc(var(--fx-titlebar-inset-right, 0px) + 12px - max(0px, (100% - 1120px) / 2)));
+}
+/* Full screen stays in place in the tree, so nothing remounts. The app's entrance fade on `.app` and
+   `.entry-shell` (styles/entrance.css) keeps filling after it has played, and a filling opacity
+   animation makes a stacking context: the sidebar (z-index 3) would paint over the studio inside it
+   at any z-index. While the studio is expanded that fill is dropped. The fade finished long ago, so
+   nothing moves, and it does not replay when the fill comes back. */
+:global(:is(.app, .entry-shell)):has(.expanded) { animation-fill-mode: none; }
+
+/* Identity bar and chapter tabs: one header, 92px, with every left edge on the content column. */
+.header { flex: none; background: var(--paper); box-shadow: inset 0 -1px 0 var(--line-soft); }
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 1120px;
+  height: 52px;
+  margin-inline: auto;
+  padding-inline: var(--st-gutter);
+}
+.lead {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  overflow: hidden;
+}
+.lead > * { flex-shrink: 0; white-space: nowrap; }
+/* The one child that gives way, so a long name cannot push the actions out of the pane. */
+.lead > .name {
+  flex: 0 1 auto;
+  min-width: 48px;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 20px;
+  text-overflow: ellipsis;
+}
+.state {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+.stateText { display: inline-block; animation: fadeIn var(--st-dur-enter) var(--st-ease-ui) backwards; }
+.toolbarActions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.toolbarActions > * { flex-shrink: 0; }
+/* Hosts hand in legacy buttons. FileWorkspace's publish action is a bare `button.primary` that is
+   36px tall and free to fold its icon and label onto two lines. */
+.toolbarActions :global(.ds-project-publish-trigger) { display: inline-flex; flex: none; align-items: center; }
+.toolbarActions :global(.ds-project-publish-trigger) > button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  width: max-content;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 0;
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background-color var(--st-dur-micro) var(--st-ease-ui);
+}
+/* Inside `.fx` the preflight strips the legacy button skins, so the action brings its own. */
+.toolbarActions :global(.ds-project-publish-trigger) > button:global(.primary) { background: var(--ink); color: var(--paper); }
+.toolbarActions :global(.ds-project-publish-trigger) > button:global(.primary):hover:not(:disabled) { background: color-mix(in srgb, var(--ink) 85%, var(--paper)); }
+.toolbarActions :global(.ds-project-publish-trigger) > button:global(.ghost) { background: transparent; box-shadow: inset 0 0 0 1px var(--line); color: var(--ink-soft); }
+.toolbarActions :global(.ds-project-publish-trigger) > button:global(.ghost):hover:not(:disabled) { background: var(--paper-deep); color: var(--ink); }
+.toolbarActions :global(.ds-project-publish-trigger) > button:disabled { opacity: 0.45; }
+/* The ⋯ menu wears the same bare 28px skin as the export and full-screen buttons beside it. */
+.toolbarActions [data-testid='design-kit-more-actions'] {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--radius-control);
+  box-shadow: none;
+  background: transparent;
+  color: var(--ink-soft);
+  transition: background-color var(--st-dur-micro) var(--st-ease-ui);
+}
+.toolbarActions [data-testid='design-kit-more-actions']:hover,
+.toolbarActions [data-testid='design-kit-more-actions'][aria-expanded='true'] { background: var(--paper-deep); color: var(--ink); }
+
+/* The scroller is the page. It keeps its gutter stable so the column does not shift between a short
+   chapter and a long one. */
+.scroll {
+  flex: 1;
+  background: var(--st-canvas);
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.scrollStarter { overflow: visible; scrollbar-gutter: auto; background: transparent; }
+/* Focus lands on the page after a jump from inside it; a ring around the whole pane would say nothing. */
+.scroll:focus { outline: none; }
+.chapter { display: flex; flex-direction: column; min-height: 100%; }
+/* Every chapter on one page, one sheet each, read top to bottom under a single sticky bar. The last
+   sheet takes the leftover height so a short page still ends at the bottom of the pane. */
+.chapterBlock { display: flex; flex: 0 0 auto; flex-direction: column; }
+.chapterBlock:last-child { flex-grow: 1; }
+.column {
+  flex: 1 0 auto;
+  width: calc(100% - 2 * var(--st-gutter));
+  max-width: 1120px;
+  margin: 0 auto 40px;
+  padding: 36px clamp(20px, 4cqw, 48px) 80px;
+  border-radius: 20px;
+  background: var(--paper);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--ink) 7%, transparent),
+    0 1px 2px color-mix(in srgb, var(--ink) 4%, transparent);
+}
+.columnPlain { margin-top: 20px; }
+/* The overview's cover runs edge to edge, so its sheet has no padding and clips the cover's corners. */
+.columnFlush { padding: 0; overflow: clip; }
+/* An open token dock hangs over the bottom of the scroller; the sheet makes room so the last row can
+   scroll clear of it instead of sitting under it. */
+.column:has([data-studio-dock][data-open]) { padding-bottom: calc(min(46vh, 340px) + 40px); }
+.rootStarter .columnPlain { margin-top: 0; padding-top: 0; padding-bottom: 0; }
+.notice { width: 100%; max-width: 1120px; margin-inline: auto; padding: 16px var(--st-gutter) 0; }
+
+/* Section frame. The stagger runs only on a page that arrived without a view transition (see
+   ChapterPage): inside one it would drift within the captured picture. */
+.chapter[data-studio-enter] .section,
+.chapter[data-studio-enter] .libraryTools {
+  animation: enter var(--st-dur-enter) var(--st-ease-ui) backwards;
+  animation-delay: calc(min(var(--i, 0), 8) * 30ms);
+}
+.section + .section { margin-top: 72px; }
+.sectionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.sectionTitle { min-width: 0; max-width: 68ch; }
+.sectionTitle h2 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 28px;
+  text-wrap: balance;
+}
+.sectionTitle p {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.65;
+}
+.sectionActions { display: flex; flex: none; align-items: center; gap: 8px; padding-top: 2px; }
+.typeStyles { margin-bottom: 32px; }
+.empty { margin: 8px 0 0; color: var(--ink-faint); font-size: 14px; line-height: 1.65; }
+.section .empty { margin-top: 24px; font-size: 13px; }
+/* A section the system leaves undefined keeps its heading and one line, set tighter than a full one. */
+.section .empty[data-section-empty] { margin-top: -8px; }
+.section:has(> [data-section-empty]) + .section { margin-top: 48px; }
+
+@keyframes enter { from { opacity: 0; transform: translateY(10px); } }
+@keyframes fadeIn { from { opacity: 0; } }
+@keyframes fadeOut { to { opacity: 0; } }
+@keyframes dialogIn { from { opacity: 0; transform: scale(0.97); } }
+@keyframes dialogOut { to { opacity: 0; transform: scale(0.98); } }
+
+/* 组件: one search and one theme for every catalogue in the chapter. A section the search leaves
+   empty steps aside; the line below speaks only when every section has. */
+.libraryTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin-bottom: 40px;
+}
+.search { width: 100%; max-width: 320px; }
+.libraryTools .search { flex: 1 1 220px; }
+.section:has([data-no-match]) { display: none; }
+.libraryEmpty { margin: 0; color: var(--ink-faint); font-size: 14px; line-height: 1.65; }
+.section:not(:has([data-no-match])) ~ .libraryEmpty { display: none; }
+/* A section the search empties leaves the chip row with it; the row's thumb re-measures on render. */
+.root:has([data-section='components'] [data-no-match]) [data-indicator-item='components'],
+.root:has([data-section='patterns'] [data-no-match]) [data-indicator-item='patterns'],
+.root:has([data-section='templates'] [data-no-match]) [data-indicator-item='templates'] { display: none; }
+/* The sticky bar is shared with up to nine section chips, so the theme there is a compact list. */
+.themePicker { max-width: 168px; }
+
+/* Getting started: three compact sources. */
+.startTitle { margin: 0 0 12px; color: var(--ink); font-size: 14px; font-weight: 600; line-height: 20px; }
+.sources {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--st-gap);
+}
+.sources > button {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 2px 10px;
+  align-content: start;
+  align-items: center;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: var(--st-radius-card);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  white-space: normal;
+  transition: background-color var(--st-dur-micro) var(--st-ease-ui);
+}
+.sources > button:hover:not(:disabled) { background: var(--paper-deep); }
+.sources > button:disabled { cursor: default; opacity: 0.5; }
+.sourceIcon { display: flex; color: var(--ink-soft); }
+.sources strong { font-size: 13px; font-weight: 600; line-height: 20px; }
+.sources p { grid-column: 2; margin: 0; color: var(--ink-soft); font-size: 12px; font-weight: 400; line-height: 1.55; }
+
+/* Component package preview: a disclosure that stays mounted so it can close as it opened. */
+.packagePreview { margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
+.packageToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+}
+.packageToggle:hover { color: var(--ink); }
+.packageToggle svg { transform: rotate(-90deg); transition: transform var(--st-dur-enter) var(--st-ease-ui); }
+.packageToggle[aria-expanded='true'] svg { transform: none; }
+.disclosure {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition: grid-template-rows var(--st-dur-exit) var(--st-ease-ui), opacity var(--st-dur-exit) var(--st-ease-ui), visibility 0s linear var(--st-dur-exit);
+}
+.disclosure[data-open] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition: grid-template-rows var(--st-dur-enter) var(--st-ease-ui), opacity var(--st-dur-enter) var(--st-ease-ui), visibility 0s;
+}
+.disclosureInner { min-height: 0; overflow: hidden; }
+.componentFrame { overflow: hidden; border-radius: var(--st-radius-card); box-shadow: inset 0 0 0 1px var(--line-soft); background: var(--paper); }
+.disclosureInner .componentFrame { margin-top: 12px; }
+.componentFrame iframe { display: block; width: 100%; height: 640px; border: 0; background: #fff; color-scheme: light; }
+
+/* Assets. */
+.assets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--st-gap);
+  margin-top: 24px;
+}
+.assets a { min-width: 0; color: var(--ink-soft); font-size: 12px; font-weight: 500; text-decoration: none; }
+.assets a > div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 150px;
+  padding: 20px;
+  border-radius: var(--st-radius-card);
+  background: var(--paper-deep);
+  transition: background-color var(--st-dur-micro) var(--st-ease-ui);
+}
+.assets a:hover > div { background: var(--sub); }
+.assets img, .assets video { width: 100%; height: 100%; object-fit: contain; }
+.assets a > div > svg { color: var(--ink-faint); }
+/* Icons are small marks: a tighter grid on a shorter stage, so they read at their own size. */
+.assets[data-size='s'] { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); }
+.assets[data-size='s'] a > div { height: 96px; padding: 28px; }
+/* One group per folder under assets/, headed by its name and count. */
+.assetGroup { margin-top: 40px; }
+.assetGroup h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+.assetGroup h3 span { color: var(--ink-faint); font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.assetGroup .assets { margin-top: 16px; }
+.assets span { display: block; padding-top: 8px; font-family: var(--font-mono); font-size: 11px; overflow-wrap: anywhere; }
+
+/* Files. */
+.section .search { margin-bottom: 12px; }
+.files { display: grid; }
+.files > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--ink-faint);
+}
+.files > div:last-child { border-bottom: 0; }
+.files button {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+  text-align: left;
+  white-space: normal;
+}
+.files button:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; }
+.files button:disabled { color: var(--ink-soft); cursor: default; }
+.files a { display: flex; flex: none; margin-inline-start: auto; padding: 4px; border-radius: var(--radius-row); color: var(--ink-faint); }
+.files a:hover { color: var(--ink); }
+
+/* Error banner: outside the scroller, so a failed save is seen from anywhere in a long chapter. */
+.errorBar { flex: none; width: 100%; max-width: 1120px; margin-inline: auto; padding: 12px var(--st-gutter) 0; }
+.error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--accent-ink) 10%, var(--paper));
+  color: var(--accent-ink);
+  font-size: 13px;
+}
+.errorBar .error { justify-content: space-between; }
+
+/* Skeleton: the poster and tiles of the overview, held back for a beat so a fast load never sees it. */
+.skeleton {
+  display: grid;
+  gap: var(--st-gap);
+  animation: fadeIn var(--st-dur-enter) var(--st-ease-ui) 120ms backwards;
+}
+/* Mounted inside a transition: the transition brings it in, and it must carry ink from its first frame. */
+.skeleton[data-instant] { animation: none; }
+.skeletonPoster {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  padding: 24px;
+  border-radius: var(--st-radius-card);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+.skeletonCaption { width: 72px; }
+.skeletonTitle { width: min(340px, 72%); height: 44px; margin-block: 36px 8px; border-radius: 8px; }
+.skeletonLine { width: min(520px, 88%); }
+.skeletonLineShort { width: min(360px, 62%); }
+.skeletonStrip { width: 100%; height: 64px; margin-top: 20px; border-radius: var(--st-radius-small); }
+.skeletonTiles {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: var(--st-gap);
+  height: 200px;
+}
+.skeletonTiles > * { border-radius: var(--st-radius-card); }
+
+/* Dialogs. The scrim is frosted paper, as PROJECT.md asks of every modal: the app's --scrim is a dark
+   wash, and this one sits on a page of colour that a dark wash would turn to mud. */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--paper) 60%, transparent);
+  backdrop-filter: blur(50px) saturate(180%);
+  -webkit-backdrop-filter: blur(50px) saturate(180%);
+  animation: fadeIn var(--st-dur-enter) var(--st-ease-ui) backwards;
+}
+.dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 600px;
+  max-width: 100%;
+  max-height: 90%;
+  padding: 24px;
+  overflow: auto;
+  border-radius: 18px;
+  background: var(--paper);
+  box-shadow: var(--shadow-lg), inset 0 0 0 1px var(--line-soft);
+  animation: dialogIn var(--st-dur-enter) var(--st-ease-ui) backwards;
+}
+/* The exit: the dialog stays mounted for it, and takes no clicks on the way out. */
+.overlay[data-closing] { pointer-events: none; animation: fadeOut var(--st-dur-exit) var(--st-ease-ui) both; }
+.overlay[data-closing] .dialog { animation: dialogOut var(--st-dur-exit) var(--st-ease-ui) both; }
+.dialog header, .dialog footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dialog footer { justify-content: flex-end; }
+.dialog h3 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; line-height: 26px; overflow-wrap: anywhere; }
+.dialog p { margin: 0; color: var(--ink-soft); line-height: 1.65; }
+.fields { display: grid; gap: 18px; }
+.fields label { display: flex; flex-direction: column; gap: 7px; font-size: 13px; font-weight: 500; }
+.fields input:not([type='color']) {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 400;
+}
+.fields input[type='color'] { display: block; width: 100%; height: 36px; padding: 0; border: 0; border-radius: var(--radius-control); background: transparent; cursor: pointer; }
+.fields input[type='color']::-webkit-color-swatch-wrapper { padding: 0; }
+.fields input[type='color']::-webkit-color-swatch { border: 0; border-radius: var(--radius-control); box-shadow: inset 0 0 0 1px var(--line-soft); }
+.fields :global(.od-select-trigger) {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 13px;
+}
+.textEditor { width: 100%; min-height: 320px; resize: vertical; font-family: var(--font-mono); font-size: 12px; line-height: 1.6; }
+.sourceText { max-height: 50dvh; overflow: auto; font-family: var(--font-mono); font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; white-space: pre-wrap; }
+
+@container (max-width: 760px) {
+  .sources { grid-template-columns: 1fr; }
+  .section + .section { margin-top: 56px; }
+}
+@container (max-width: 640px) {
+  /* The read-only note goes first; a save in progress still has to be seen. */
+  .state > :nth-child(2) { display: none; }
+}
+@container (max-width: 480px) {
+  .sectionHeader { flex-direction: column; gap: 12px; margin-bottom: 20px; }
+  .sectionActions { padding-top: 0; }
+  .assets { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .skeletonTiles { grid-template-columns: 1fr; height: 160px; }
+  .skeletonTiles > :nth-child(n + 2) { display: none; }
+  .dialog { padding: 18px; }
+  .overlay { padding: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapter[data-studio-enter] .section, .chapter[data-studio-enter] .libraryTools,
+  .stateText, .skeleton, .overlay, .dialog, .overlay[data-closing], .overlay[data-closing] .dialog { animation: none; }
+  .toolbarActions [data-testid='design-kit-more-actions'] { transition: none; }
+  .packageToggle svg, .disclosure, .disclosure[data-open] { transition: none; }
+}

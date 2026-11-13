@@ -1,0 +1,10 @@
+.tools { display: flex; align-items: center; gap: 2px; }
+.panel { display: flex; flex-direction: column; gap: 12px; max-height: 34vh; overflow: auto; padding: 12px; }
+.panel > strong { font-size: 14px; }
+.hint { color: var(--ink-soft); font-size: 12px; line-height: 1.6; margin: 0; }
+.actions { display: flex; justify-content: flex-end; gap: 8px; }
+.brand { display: flex; flex-direction: column; gap: 10px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 12px; }
+.markers { display: flex; flex-shrink: 0; gap: 4px; overflow-x: auto; padding: 3px 8px; border-bottom: 1px solid var(--line); }
+.markers button { max-width: 260px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.markers span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.markers small { color: var(--ink-soft); white-space: nowrap; }

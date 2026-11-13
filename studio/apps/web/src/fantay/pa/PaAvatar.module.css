@@ -1,0 +1,107 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* PaAvatar / PaGroupAvatar (spec §5.5). The hue pair arrives inline as --pa-hue / --pa-hue-ink, pointing at the
+   PA identity palette in fantay/styles/pa.css. */
+
+.face {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 999px;
+  line-height: 1;
+  user-select: none;
+}
+
+.face[data-fantay]:not([data-disc]) {
+  overflow: visible;
+  border-radius: 0;
+}
+
+.face[data-dim] {
+  opacity: 0.5;
+}
+
+.disc {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.tinted {
+  background: color-mix(in srgb, var(--pa-hue) 18%, var(--surface));
+  color: var(--pa-hue-ink);
+}
+
+.unknown {
+  background: var(--sub);
+  color: var(--ink-faint);
+}
+
+/* Glyph sizes by disc size: ≤24 → 11 px Latin, 12 px CJK (the floor); 28–32 → 12.5; 40–48 → 15; 64 → 22. */
+.disc[data-step='xs'] {
+  font-size: 11px;
+}
+.disc[data-step='xs'][data-cjk] {
+  font-size: 12px;
+}
+.disc[data-step='sm'] {
+  font-size: 12.5px;
+}
+.disc[data-step='md'] {
+  font-size: 15px;
+}
+.disc[data-step='lg'] {
+  font-size: 22px;
+}
+
+.paperFace {
+  width: 86%;
+  height: 86%;
+}
+
+.paperEye {
+  fill: var(--surface);
+}
+
+.paperFold {
+  fill: var(--pa-hue);
+}
+
+/* Fantay inside a cluster: the still on a disc tinted from the mascot's own body colour, so the face reads as a
+   member beside the monogram discs (a --surface disc vanished on the paper ground and left the mascot floating). */
+.mascotDisc {
+  background: var(--pa-fantay-disc);
+  box-shadow: 0 0 0 2px var(--pa-avatar-collar, var(--paper));
+}
+
+/* ── group cluster ──
+   Collars take the colour of whatever the cluster sits on (--pa-avatar-collar, set by the roster row on hover and
+   selection, and by the floating inspector), so each face reads as cut out of the ground. */
+
+.cluster {
+  position: relative;
+  display: inline-block;
+  flex: none;
+}
+
+.contents {
+  position: absolute;
+  inset: 0;
+}
+
+.slot {
+  position: absolute;
+  display: block;
+}
+
+.collar {
+  box-shadow: 0 0 0 2px var(--pa-avatar-collar, var(--paper));
+}
+
+.more {
+  background: var(--sub);
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}

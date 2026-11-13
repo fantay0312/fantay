@@ -1,0 +1,273 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Details: a heading over one hairline card of line tabs with counts, a tool row, and full-bleed tables. */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--usage-heading-gap, 12px);
+  min-width: 0;
+}
+
+.heading {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--settings-type-section);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.4;
+}
+
+.card {
+  min-width: 0;
+  border: var(--settings-hairline);
+  border-radius: var(--settings-radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.tabs {
+  display: flex;
+  gap: 20px;
+  padding: 4px 16px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs [data-slot='tabs-trigger'] {
+  height: 44px;
+  gap: 6px;
+  font-size: var(--settings-type-label);
+}
+
+.count {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--sub);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+}
+
+.search {
+  flex: 1 1 180px;
+  min-width: 0;
+  height: var(--settings-control-h, 32px);
+  border-radius: var(--settings-control-radius, 8px);
+}
+
+.panel {
+  min-width: 0;
+}
+
+/* ── Tables ──────────────────────────────────────────────────────────────────────────────── */
+.tableWrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 540px;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: var(--settings-type-control);
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+}
+
+.table th {
+  padding: 8px 0;
+  border-top: var(--settings-hairline);
+  border-bottom: var(--settings-hairline);
+  background: var(--sub);
+  color: var(--ink-soft);
+  font-size: var(--settings-type-meta);
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.table td {
+  height: 52px;
+  padding: 6px 0;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--ink);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table tbody tr:hover td {
+  background: color-mix(in srgb, var(--sub) 60%, transparent);
+}
+
+.table th:first-child,
+.table td:first-child {
+  padding-left: 16px;
+}
+
+.table th:last-child,
+.table td:last-child {
+  padding-right: 16px;
+}
+
+/* Figures right-aligned in fixed columns; the name takes what is left. */
+.table th:not(:first-child),
+.table td:not(:first-child) {
+  width: 104px;
+  padding-left: 8px;
+  text-align: right;
+}
+
+.table th:last-child,
+.table td:last-child {
+  width: 120px;
+}
+
+.table strong,
+.table small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table strong {
+  font-size: var(--settings-type-label);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.table small {
+  color: var(--ink-faint);
+  font-size: var(--settings-type-meta);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.table small.failed {
+  color: var(--ink-soft);
+}
+
+.table small.failed::before {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--danger);
+  content: '';
+  vertical-align: 1px;
+}
+
+/* 请求日志: time, then the model as text, three figures. */
+.log th:nth-child(1),
+.log td:nth-child(1) {
+  width: 148px;
+}
+
+.log th:nth-child(2),
+.log td:nth-child(2) {
+  width: auto;
+  text-align: left;
+}
+
+.log th:nth-child(3),
+.log td:nth-child(3),
+.log th:nth-child(4),
+.log td:nth-child(4) {
+  width: 96px;
+}
+
+.log th:last-child,
+.log td:last-child {
+  width: 92px;
+}
+
+.log td:nth-child(1) strong {
+  font-weight: 500;
+}
+
+.source {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-soft);
+  font-size: var(--settings-type-meta);
+  font-weight: 600;
+}
+
+.status::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--line);
+  content: '';
+}
+
+.status[data-tone='done']::before {
+  background: var(--ink-ghost);
+}
+
+.status[data-tone='failed'] {
+  color: var(--ink);
+}
+
+.status[data-tone='failed']::before {
+  background: var(--danger);
+}
+
+.status[data-tone='pending']::before {
+  background: var(--warning);
+}
+
+.status[data-tone='muted'] {
+  color: var(--ink-faint);
+}
+
+.more {
+  display: flex;
+  margin: 12px auto;
+}
+
+.empty {
+  margin: 0;
+  padding: 28px 16px 32px;
+  border-top: var(--settings-hairline);
+  color: var(--ink-faint);
+  font-size: var(--settings-type-hint);
+  font-weight: 500;
+  text-align: center;
+}
+
+.note {
+  margin: 0;
+  padding: 10px 16px 12px;
+  border-top: 1px solid var(--line-soft);
+  color: var(--ink-faint);
+  font-size: var(--settings-type-meta);
+  font-weight: 500;
+  line-height: 1.5;
+}

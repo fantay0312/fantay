@@ -1,0 +1,200 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * The design-system demo. The chooser is the app's own, in app tokens; the page is content, so it holds its own
+ * colours in both themes. The systems' values are copied from design-systems/warm-editorial, neobrutalism and kami.
+ */
+.sd {
+  .ss-stage { font-family: var(--font-ui); color: var(--ink); }
+
+  .sd-label {
+    position: absolute;
+    left: 16px;
+    top: 2px;
+    color: var(--ink);
+    font: 600 12px/16px var(--font-ui);
+  }
+
+  .sd-page {
+    --sd-ink: #3c3c3c;
+    --sd-ground: #f1f1f1;
+    --sd-panel: #e7e7e7;
+    --sd-ring: inset 0 0 0 0 transparent;
+    --sd-hard: 0 0 0 0 transparent;
+    --sd-cta: #4a4a4a;
+    --sd-cta-ink: #f4f4f4;
+    --sd-radius: 6px;
+    --ss-ink-3: rgba(0, 0, 0, 0.12);
+    --ss-ink-4: rgba(0, 0, 0, 0.18);
+    position: absolute;
+    left: 16px;
+    top: 24px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 296px;
+    height: 240px;
+    padding: 0 34px 12px 12px;
+    overflow: hidden;
+    background-color: var(--sd-ground);
+    box-shadow: 0 0 0 1px var(--line), var(--shadow-float);
+    color: var(--sd-ink);
+    transition: background-color 420ms var(--ease-out-quint), color 200ms var(--ease-out-quint);
+  }
+  .sd-page[data-look='editorial'] {
+    --sd-ink: #1c1a17;
+    --sd-ground: #faf7f2;
+    --sd-panel: #ffffff;
+    --sd-ring: inset 0 0 0 1px #e6dfd5;
+    --sd-cta: #c0512f;
+    --sd-cta-ink: #faf7f2;
+    --sd-radius: 2px;
+  }
+  .sd-page[data-look='brutal'] {
+    --sd-ink: #1c293c;
+    --sd-ground: #fbfbf9;
+    --sd-panel: #fdc800;
+    --sd-ring: inset 0 0 0 2px #1c293c;
+    --sd-cta: #432dd7;
+    --sd-cta-ink: #fbfbf9;
+    --sd-radius: 4px;
+    --sd-hard: 3px 3px 0 #1c293c;
+  }
+
+  .sd-nav { flex: none; display: flex; align-items: center; justify-content: space-between; height: 36px; margin-bottom: -8px; }
+  .sd-links { display: flex; gap: 10px; }
+  .sd-brand { font: 600 11px/1.3 var(--font-ui); }
+
+  .sd-hero,
+  .sd-card {
+    box-sizing: border-box;
+    border-radius: var(--sd-radius);
+    background-color: var(--sd-panel);
+    box-shadow: var(--sd-ring), var(--sd-hard);
+    transition:
+      background-color 420ms var(--ease-out-quint),
+      border-radius 420ms var(--ease-out-quint),
+      box-shadow 420ms var(--ease-out-quint);
+  }
+  .sd-hero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 12px;
+    transition-delay: 60ms;
+  }
+  .sd-headline { max-width: 100%; font-size: 19px; line-height: 1.25; }
+  .sd-headline [data-face='plain'] { font: 600 19px/1.25 var(--font-ui); letter-spacing: -0.01em; }
+  .sd-headline [data-face='editorial'] { font: 400 21px/1.2 'Iowan Old Style', 'Songti SC', 'Noto Serif CJK SC', Georgia, serif; }
+  .sd-headline [data-face='brutal'] { font: 800 20px/1.2 var(--font-ui); letter-spacing: -0.02em; }
+
+  .sd-cta {
+    display: inline-flex;
+    align-items: center;
+    height: 26px;
+    margin-top: 2px;
+    padding: 0 12px;
+    border-radius: var(--sd-radius);
+    background-color: var(--sd-cta);
+    box-shadow: var(--sd-ring), var(--sd-hard);
+    color: var(--sd-cta-ink);
+    font: 600 11px/1 var(--font-ui);
+    white-space: nowrap;
+    transition:
+      background-color 200ms var(--ease-out-quint) 120ms,
+      border-radius 420ms var(--ease-out-quint) 120ms,
+      box-shadow 420ms var(--ease-out-quint) 120ms;
+  }
+
+  .sd-cards {
+    flex: none;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    height: 52px;
+  }
+  .sd-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 8px;
+    transition-delay: 180ms;
+  }
+  .sd-page[data-look='brutal'] .sd-card { background-color: var(--sd-ground); }
+  .sd-page[data-look='brutal'] .sd-hero { background-color: var(--sd-panel); }
+
+  .sd-side {
+    position: absolute;
+    left: 288px;
+    top: 56px;
+    width: 200px;
+  }
+  .sd-menu {
+    padding: 4px;
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    box-shadow: var(--shadow-float);
+  }
+  .sd-row {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 8px 0 6px;
+    border-radius: var(--radius-row);
+    color: var(--ink);
+    font: 500 12.5px/1 var(--font-ui);
+    transition: background-color 100ms var(--ease-out-quint);
+  }
+  .sd-row[data-hover] { background: var(--sub); }
+  .sd-tick { display: grid; place-items: center; color: var(--ink); opacity: 0; transition: opacity 120ms var(--ease-out-quint); }
+  .sd-row[data-on] .sd-tick { opacity: 1; }
+  .sd-name { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .sd-swatches { display: flex; gap: 2px; }
+  .sd-swatches i { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 1px var(--line); }
+  [data-c='ed-paper'] { background: #faf7f2; }
+  [data-c='ed-accent'] { background: #c0512f; }
+  [data-c='ed-forest'] { background: #2f5b4f; }
+  [data-c='nb-primary'] { background: #fdc800; }
+  [data-c='nb-secondary'] { background: #432dd7; }
+  [data-c='nb-text'] { background: #1c293c; }
+  [data-c='ka-paper'] { background: #f5f4ed; }
+  [data-c='ka-ink'] { background: #1b365d; }
+  [data-c='ka-text'] { background: #141413; }
+
+  .sd-tool {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 200px;
+    height: 34px;
+    margin-top: 8px;
+    padding: 0 8px;
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    box-shadow: var(--shadow-float);
+    color: var(--ink-soft);
+    font: 500 12px/1.3 var(--font-ui);
+    white-space: nowrap;
+  }
+  .sd-tool svg { flex: none; }
+  .sd-tool > span:not(.sd-tool__stat) { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .sd-tool code { flex: none; font: 500 11.5px/1.3 var(--font-mono); color: var(--ink); }
+  .sd-tool__stat { flex: none; margin-left: auto; }
+  .sd-tool__diff { color: var(--ink-faint); font: 500 11px/1.3 var(--font-mono); }
+
+  /* Narrow workspace: the chooser stacks under the page, so it never covers the headline. */
+  .ss-stage[data-layout='compact'] {
+    .sd-label { left: 12px; }
+    .sd-page { left: 12px; width: 320px; height: 164px; padding-right: 12px; }
+    .sd-cards { display: none; }
+    .sd-side { left: 12px; top: 196px; width: 320px; }
+    .sd-tool { width: 320px; }
+  }
+}

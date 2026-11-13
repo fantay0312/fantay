@@ -1,0 +1,57 @@
+/* Welcome / sign-in gate (EntryShell onboarding step 0), left column.
+   The global `.onboarding-cloud__*` rules in styles/home/entry-layout.css own the two-column frame, the
+   title, body and footer; this module owns what sits between them. The right column is
+   `WelcomeShowcase.module.css`; the sign-in block is the `gate` variant of TokenToSeaAccount. */
+
+/* The living body stands in the middle of its box with about a sixth of the box empty to either side of it: the box
+   is drawn out to the left by that much, so the body's own edge, not the box's, lines up with the title's. */
+.mascot {
+  display: inline-flex;
+  width: 64px;
+  height: 64px;
+  margin: 0 0 22px -8px;
+}
+
+.gate {
+  width: 100%;
+  margin-top: 32px;
+}
+
+.perks {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  width: 100%;
+  margin: 30px 0 0;
+  padding: 22px 0 0 6px;
+  border-top: 1px solid var(--line-soft);
+  list-style: none;
+}
+
+.perks li {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.perks li svg {
+  flex: 0 0 auto;
+  color: var(--ink-faint);
+}
+
+/* Stacked layout (the showcase is hidden): the column centers, the list stays a left-aligned block. */
+@media (max-width: 1136px) {
+  .mascot {
+    margin-inline: auto;
+  }
+
+  .perks {
+    width: auto;
+    align-self: center;
+    padding-inline: 0;
+    border-top: 0;
+  }
+}

@@ -1,0 +1,1114 @@
+/*
+ * Resource card of the video editor (design brief §4.2): a 52px tab strip, a 36px title row and
+ * one scrolling body. The chrome is ink on the card; colour comes only from content (footage,
+ * the audio tint). "Stage" frames stand in for footage and stay dark in both themes, like the
+ * video they preview; schematic frames follow the theme. Editor tokens (--movie-*) come from the
+ * workspace root.
+ */
+.panel {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-rows: 52px 36px minmax(0, 1fr);
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  background: var(--movie-card);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 12px;
+}
+
+/* ─── Tab strip ────────────────────────────────────────────────────────────────────────────── */
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  min-width: 0;
+  padding: 6px 6px 4px;
+}
+
+.tab {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  cursor: pointer;
+  transition: background-color var(--motion-micro) var(--ease-out-quint), color var(--motion-micro) var(--ease-out-quint);
+}
+
+.tab:hover {
+  background: var(--movie-hover);
+  color: var(--ink);
+}
+
+.tab[aria-selected='true'] {
+  background: var(--movie-active);
+  color: var(--ink);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: -2px;
+}
+
+.tabLabel {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: var(--type-caption);
+  font-weight: 500;
+  line-height: 14px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tab[aria-selected='true'] .tabLabel {
+  font-weight: 600;
+}
+
+/* ─── Title row and body ───────────────────────────────────────────────────────────────────── */
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.title {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--type-body);
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.count {
+  color: var(--ink-faint);
+  font-size: var(--type-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.titleActions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sectionHeading {
+  margin: 0;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.hint,
+.error {
+  margin: 0;
+  font-size: var(--type-caption);
+  line-height: 16px;
+}
+
+.hint {
+  color: var(--ink-faint);
+}
+
+.error {
+  color: var(--accent-ink);
+}
+
+.footnote {
+  margin: auto 0 0;
+  padding-top: 4px;
+  color: var(--ink-faint);
+  font-size: var(--type-caption);
+  line-height: 16px;
+  text-align: center;
+}
+
+.applyRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.target {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: var(--radius-control);
+  background: var(--movie-hover);
+  font-size: var(--type-caption);
+  line-height: 16px;
+}
+
+.targetLabel {
+  flex: none;
+  color: var(--ink-faint);
+}
+
+.targetName {
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ─── Search and type filter ───────────────────────────────────────────────────────────────── */
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--radius-control);
+  background: var(--movie-hover);
+  color: var(--ink-faint);
+  cursor: text;
+  transition: background-color var(--motion-micro) var(--ease-out-quint), box-shadow var(--motion-micro) var(--ease-out-quint);
+}
+
+.search:focus-within {
+  background: var(--paper);
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.searchInput {
+  height: 100%;
+  font-size: 12px;
+}
+
+.segmented {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+}
+
+.segmentedItem {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 6px;
+  font-size: var(--type-caption);
+}
+
+/* ─── Media cards ──────────────────────────────────────────────────────────────────────────── */
+
+.mediaGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.mediaCard {
+  position: relative;
+  min-width: 0;
+}
+
+.mediaButton {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: grab;
+}
+
+.mediaButton:active {
+  cursor: grabbing;
+}
+
+.mediaButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.mediaButton:focus-visible {
+  outline: none;
+}
+
+.mediaButton:focus-visible .thumb {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+.thumb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--movie-video-strip);
+  color: var(--ink-faint);
+}
+
+.thumb[data-kind='audio'] {
+  background: var(--movie-audio);
+  color: var(--success-ink);
+}
+
+.thumb::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
+  pointer-events: none;
+  transition: box-shadow var(--motion-micro) var(--ease-out-quint);
+}
+
+.mediaButton:hover:not(:disabled) .thumb::after {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 28%, transparent);
+}
+
+.thumbImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbWave {
+  width: 76%;
+  height: 44%;
+}
+
+.usedBadge,
+.durationBadge {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 16px;
+  padding: 0 5px;
+  border-radius: var(--radius-tag);
+  background: color-mix(in srgb, var(--ink) 62%, transparent);
+  color: var(--paper);
+  font-size: var(--type-micro);
+  font-weight: 500;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.usedBadge {
+  top: 5px;
+  left: 5px;
+}
+
+.durationBadge {
+  right: 5px;
+  bottom: 5px;
+  transition: opacity var(--motion-exit) var(--ease-out-quint);
+}
+
+.cardName {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: var(--type-caption);
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* The "+" takes the duration badge's corner on hover: 4px inside the thumb, above the 6px gap and 16px name. */
+.cardAdd {
+  position: absolute;
+  right: 4px;
+  bottom: calc(6px + 16px + 4px);
+  opacity: 0;
+  transition: opacity var(--motion-exit) var(--ease-out-quint);
+}
+
+.cardAddButton {
+  width: 22px;
+  height: 22px;
+}
+
+.mediaCard:hover .cardAdd,
+.mediaCard:focus-within .cardAdd {
+  opacity: 1;
+  transition-duration: var(--motion-enter);
+}
+
+.mediaCard:hover .durationBadge,
+.mediaCard:focus-within .durationBadge {
+  opacity: 0;
+}
+
+@media (hover: none) {
+  .cardAdd {
+    opacity: 1;
+  }
+
+  .durationBadge {
+    display: none;
+  }
+}
+
+/* ─── Empty states ─────────────────────────────────────────────────────────────────────────── */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 32px 12px 24px;
+  text-align: center;
+}
+
+.emptyIcon {
+  margin-bottom: 6px;
+  color: var(--ink-faint);
+}
+
+.emptyTitle {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.emptyDetail {
+  max-width: 260px;
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--type-caption);
+  line-height: 16px;
+}
+
+.emptyActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+/* ─── Audio rows ───────────────────────────────────────────────────────────────────────────── */
+
+.audioList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.audioRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 48px;
+  padding-right: 6px;
+  border-radius: var(--radius-control);
+  transition: background-color var(--motion-micro) var(--ease-out-quint);
+}
+
+.audioRow:hover {
+  background: var(--movie-hover);
+}
+
+.audioMain {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 32px minmax(0, 1fr) 64px;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  height: 100%;
+  padding: 0 4px 0 6px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: grab;
+}
+
+.audioMain:active {
+  cursor: grabbing;
+}
+
+.audioMain:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.audioMain:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: -2px;
+}
+
+.audioGlyph {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--movie-audio);
+  color: var(--success-ink);
+}
+
+.audioText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.audioName {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.audioMeta {
+  color: var(--ink-faint);
+  font-size: var(--type-caption);
+  line-height: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.audioWave {
+  width: 64px;
+  height: 24px;
+}
+
+.waveform {
+  display: block;
+  fill: var(--movie-wave);
+}
+
+.waveformFlat {
+  display: block;
+  background: linear-gradient(var(--movie-wave), var(--movie-wave)) center / 100% 1px no-repeat;
+}
+
+/* ─── Tiles ────────────────────────────────────────────────────────────────────────────────── */
+
+.tileGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tileGrid[data-columns='3'] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 8px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+.tile:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.tile:focus-visible {
+  outline: none;
+}
+
+.frame {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 8px;
+  isolation: isolate;
+  transition: box-shadow var(--motion-micro) var(--ease-out-quint);
+}
+
+.frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
+  pointer-events: none;
+}
+
+.frame[data-surface='stage'] {
+  background: linear-gradient(160deg, rgba(70, 72, 78, 1), rgba(24, 25, 28, 1));
+}
+
+.frame[data-surface='schematic'] {
+  background: var(--movie-video-strip);
+}
+
+.tile:hover:not(:disabled) .frame {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 28%, transparent);
+}
+
+.tile[aria-pressed='true'] .frame {
+  box-shadow: 0 0 0 2px var(--movie-select);
+}
+
+.tile:focus-visible .frame {
+  box-shadow: 0 0 0 2px var(--focus-ring-color);
+}
+
+.tileLabel {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: var(--type-caption);
+  line-height: 14px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tile[aria-pressed='true'] .tileLabel {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* What the selected clip has now. */
+.check {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: 0 0 0 1.5px var(--surface);
+}
+
+.stageImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.stageScrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.filterSwatch {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--info) 70%, var(--surface)) 0%,
+    color-mix(in srgb, var(--warning) 65%, var(--surface)) 55%,
+    color-mix(in srgb, var(--success) 60%, var(--surface)) 100%
+  );
+}
+
+/* Text and caption samples, placed like the renderer places them (inline variables per preset). */
+.textSample {
+  --sample-x: 10%;
+  --sample-y: 40%;
+  --sample-w: 80%;
+  --sample-size: 4;
+  position: absolute;
+  z-index: 1;
+  top: min(var(--sample-y), calc(100% - 1.3em));
+  left: var(--sample-x);
+  width: var(--sample-w);
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.96);
+  font-size: calc(6px + var(--sample-size) * 1.6px);
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.captionSample {
+  position: absolute;
+  z-index: 1;
+  bottom: 12%;
+  left: 50%;
+  max-width: 88%;
+  padding: 1px 5px;
+  overflow: hidden;
+  border-radius: 3px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  paint-order: stroke fill;
+  transform: translateX(-50%);
+}
+
+/* Transition previews: shot A under shot B, frozen mid-transition until hovered. */
+.transition,
+.paneA,
+.paneB {
+  position: absolute;
+  inset: 0;
+}
+
+.paneA {
+  background: color-mix(in srgb, var(--ink) 10%, var(--surface));
+}
+
+.paneB {
+  background: color-mix(in srgb, var(--ink) 42%, var(--surface));
+}
+
+.paneB[data-mirror] .stageImage {
+  filter: brightness(0.6) saturate(0.8);
+  transform: scaleX(-1);
+}
+
+.transition[data-transition='cut'] .paneB {
+  clip-path: inset(0 0 0 50%);
+}
+
+.transition[data-transition='crossfade'] .paneB {
+  opacity: 0.5;
+}
+
+.transition[data-transition='wipe'] .paneB {
+  clip-path: inset(0 45% 0 0);
+}
+
+.transition[data-transition='iris'] .paneB {
+  clip-path: circle(28% at 50% 50%);
+}
+
+/* Clip motion previews: the footage itself moves inside the dark frame. */
+.motionPicture {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--movie-video-strip-on);
+}
+
+.motionGlyph {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 62%, transparent);
+  color: var(--paper);
+}
+
+/* ─── Slider (inspector row grammar: label, 3px track, value) ──────────────────────────────── */
+
+.slider {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 52px;
+  align-items: center;
+  gap: 10px;
+  min-height: 28px;
+}
+
+.sliderLabel {
+  color: var(--ink-soft);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.sliderValue {
+  color: var(--ink);
+  font-size: 12px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.range {
+  --slider-fill: 0%;
+  width: 100%;
+  height: 16px;
+  margin: 0;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.range:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.range:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.range::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--ink) var(--slider-fill), var(--line) var(--slider-fill));
+}
+
+.range::-webkit-slider-thumb {
+  width: 12px;
+  height: 12px;
+  margin-top: -4.5px;
+  appearance: none;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 24%, transparent), 0 1px 2px rgba(0, 0, 0, 0.12);
+  transition: box-shadow var(--motion-micro) var(--ease-out-quint);
+}
+
+.range:hover:not(:disabled)::-webkit-slider-thumb {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 40%, transparent), 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.range::-moz-range-track {
+  height: 3px;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.range::-moz-range-progress {
+  height: 3px;
+  border-radius: 999px;
+  background: var(--ink);
+}
+
+.range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 24%, transparent), 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+/* ─── Captions ─────────────────────────────────────────────────────────────────────────────── */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--movie-hover);
+}
+
+.cardHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cardHead > .sectionHeading {
+  flex: none;
+  white-space: nowrap;
+}
+
+.cardTarget {
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: var(--type-caption);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.captionList {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 360px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+
+.captionRow,
+.captionEdit {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+}
+
+.captionRow {
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--radius-row);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--motion-micro) var(--ease-out-quint);
+}
+
+.captionRow:hover {
+  background: var(--movie-hover);
+}
+
+.captionRow[aria-current='true'] {
+  border-radius: 2px var(--radius-row) var(--radius-row) 2px;
+  background: color-mix(in srgb, var(--info) 10%, transparent);
+  box-shadow: inset 3px 0 0 var(--info);
+}
+
+.captionRow:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: -2px;
+}
+
+.captionEdit {
+  align-items: center;
+  padding: 2px 8px;
+}
+
+.captionTime {
+  color: var(--ink-faint);
+  font-size: var(--type-micro);
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.captionRow[aria-current='true'] .captionTime {
+  color: var(--info-ink);
+}
+
+.captionText {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* ─── Hover previews (motion only when the person allows it) ───────────────────────────────── */
+
+@media (prefers-reduced-motion: no-preference) {
+  .tile:hover .textSample[data-animation='fade'],
+  .tile:focus-visible .textSample[data-animation='fade'] {
+    animation: sampleFade 1.6s var(--ease-out-quint) infinite;
+  }
+
+  .tile:hover .textSample[data-animation='rise'],
+  .tile:focus-visible .textSample[data-animation='rise'] {
+    animation: sampleRise 1.6s var(--ease-out-quint) infinite;
+  }
+
+  .tile:hover .textSample[data-animation='slide'],
+  .tile:focus-visible .textSample[data-animation='slide'] {
+    animation: sampleSlide 1.6s var(--ease-out-quint) infinite;
+  }
+
+  .tile:hover .textSample[data-animation='typewriter'],
+  .tile:focus-visible .textSample[data-animation='typewriter'] {
+    animation: sampleType 1.8s steps(10, end) infinite;
+  }
+
+  .tile:hover .transition[data-transition='cut'] .paneB,
+  .tile:focus-visible .transition[data-transition='cut'] .paneB {
+    animation: paneCut 1.6s steps(1, end) infinite;
+  }
+
+  .tile:hover .transition[data-transition='crossfade'] .paneB,
+  .tile:focus-visible .transition[data-transition='crossfade'] .paneB {
+    animation: paneCrossfade 1.6s var(--ease-out-quint) infinite;
+  }
+
+  .tile:hover .transition[data-transition='wipe'] .paneB,
+  .tile:focus-visible .transition[data-transition='wipe'] .paneB {
+    animation: paneWipe 1.6s var(--ease-out-quint) infinite;
+  }
+
+  .tile:hover .transition[data-transition='iris'] .paneB,
+  .tile:focus-visible .transition[data-transition='iris'] .paneB {
+    animation: paneIris 1.6s var(--ease-out-quint) infinite;
+  }
+
+  .tile:hover .motionPicture[data-motion='zoom-in'],
+  .tile:focus-visible .motionPicture[data-motion='zoom-in'] {
+    animation: motionZoomIn 1.8s var(--ease-out-quint) infinite;
+  }
+
+  .tile:hover .motionPicture[data-motion='zoom-out'],
+  .tile:focus-visible .motionPicture[data-motion='zoom-out'] {
+    animation: motionZoomOut 1.8s var(--ease-out-quint) infinite;
+  }
+
+  .tile:hover .motionPicture[data-motion='slide-left'],
+  .tile:focus-visible .motionPicture[data-motion='slide-left'] {
+    animation: motionSlideLeft 1.8s var(--ease-out-quint) infinite;
+  }
+
+  .tile:hover .motionPicture[data-motion='slide-right'],
+  .tile:focus-visible .motionPicture[data-motion='slide-right'] {
+    animation: motionSlideRight 1.8s var(--ease-out-quint) infinite;
+  }
+
+  .tile:hover .motionPicture[data-motion='fade-in'],
+  .tile:focus-visible .motionPicture[data-motion='fade-in'] {
+    animation: motionFadeIn 1.8s var(--ease-out-quint) infinite;
+  }
+
+  .tile:hover .motionPicture[data-motion='fade-out'],
+  .tile:focus-visible .motionPicture[data-motion='fade-out'] {
+    animation: motionFadeOut 1.8s var(--ease-out-quint) infinite;
+  }
+}
+
+@keyframes sampleFade {
+  0% { opacity: 0; }
+  45%,
+  100% { opacity: 1; }
+}
+
+@keyframes sampleRise {
+  0% { opacity: 0; transform: translateY(40%); }
+  45%,
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes sampleSlide {
+  0% { opacity: 0; transform: translateX(-24%); }
+  45%,
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes sampleType {
+  0% { clip-path: inset(0 100% 0 0); }
+  60%,
+  100% { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes paneCut {
+  0% { clip-path: inset(0 0 0 0); opacity: 0; }
+  50%,
+  100% { clip-path: inset(0 0 0 0); opacity: 1; }
+}
+
+@keyframes paneCrossfade {
+  0% { opacity: 0; }
+  60%,
+  100% { opacity: 1; }
+}
+
+@keyframes paneWipe {
+  0% { clip-path: inset(0 100% 0 0); }
+  60%,
+  100% { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes paneIris {
+  0% { clip-path: circle(0% at 50% 50%); }
+  60%,
+  100% { clip-path: circle(75% at 50% 50%); }
+}
+
+@keyframes motionZoomIn {
+  0% { transform: scale(1); }
+  70%,
+  100% { transform: scale(1.3); }
+}
+
+@keyframes motionZoomOut {
+  0% { transform: scale(1.3); }
+  70%,
+  100% { transform: scale(1); }
+}
+
+@keyframes motionSlideLeft {
+  0% { transform: translateX(-100%); }
+  40%,
+  100% { transform: none; }
+}
+
+@keyframes motionSlideRight {
+  0% { transform: translateX(100%); }
+  40%,
+  100% { transform: none; }
+}
+
+@keyframes motionFadeIn {
+  0% { opacity: 0; }
+  40%,
+  100% { opacity: 1; }
+}
+
+@keyframes motionFadeOut {
+  0%,
+  55% { opacity: 1; }
+  100% { opacity: 0; }
+}

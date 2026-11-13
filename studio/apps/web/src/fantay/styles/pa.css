@@ -1,0 +1,129 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/*
+ * Fantay workspace (PA) globals: the full-bleed host rules, the PA identity palette and the PA motion tokens
+ * (spec §4.1, §5.5, §16). Unlayered, imported by app.css right after resource-pages.css. PA CSS modules read
+ * these `--pa-*` properties instead of the chat seam's `--chat-*` (governance rule B1).
+ */
+
+/* ── §4.1 Full-bleed host: the PA view fills the main column instead of sitting in the padded page measure. ── */
+[data-fantay-shell] .entry-main__inner--wide:has(> [data-testid='entry-view-pa'][data-active='true']) {
+  height: 100%;
+  max-width: none;
+  padding: 0;
+}
+[data-fantay-shell] [data-testid='entry-view-pa'][data-active='true'] {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+[data-fantay-shell] .entry-main--scroll:has([data-testid='entry-view-pa'][data-active='true']) {
+  overflow: hidden;
+  scrollbar-gutter: auto;
+}
+[data-fantay-shell] .entry-main--scroll:has([data-testid='entry-view-pa'][data-active='true'])::before {
+  display: none;
+}
+
+/* ── §16 Motion: one grammar for the whole workspace (quint ease-out; enter 240, exit 160). ── */
+:root {
+  --pa-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --pa-ease-fold: cubic-bezier(0.32, 0.72, 0, 1);
+  --pa-ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --pa-dur-quick: 120ms;
+  --pa-dur-enter: 240ms;
+  --pa-dur-exit: 160ms;
+  --pa-dur-fold: 280ms;
+  --pa-dur-swap: 300ms;
+  --pa-loop-shimmer: 1.8s;
+}
+
+/*
+ * ── §5.5 PA identity palette + §16 needs-you tints ──
+ * Five hues for agent avatar discs only (sender names, bubbles and rows stay ink). No blue or indigo (the
+ * mascot, --info), no orange (needs you), no red (failed). Each `-ink` is the glyph colour on the disc tint
+ * `color-mix(in srgb, hue 18%, var(--surface))`; contrast measured on 2026-11-10:
+ *   light (on #fff surface):   sage 4.95 · teal 4.93 · ochre 4.93 · rose 5.27 · slate 6.06
+ *   dark  (on #232323 surface): sage 6.90 · teal 6.88 · ochre 6.91 · rose 6.29 · slate 6.75
+ * --pa-fantay-disc is the disc behind the mascot inside group clusters: a tint of the mascot's body colour (#494bdc,
+ * FantayMascot.module.css), so Fantay reads as one more tinted face and never as an agent hue.
+ * The derived tints are declared per theme so a theme island resolves its own --warning/--surface.
+ */
+:root,
+[data-theme='light'] {
+  --pa-id-1: #3f9a62;
+  --pa-id-1-ink: #23704a;
+  --pa-id-2: #1f97a6;
+  --pa-id-2-ink: #0d6d79;
+  --pa-id-3: #c08a1e;
+  --pa-id-3-ink: #875c06;
+  --pa-id-4: #cf4f7d;
+  --pa-id-4-ink: #a3325c;
+  --pa-id-5: #6f7a8c;
+  --pa-id-5-ink: #4c5566;
+  --pa-fantay-disc: color-mix(in srgb, #494bdc 13%, var(--surface));
+  --pa-needs-bg: color-mix(in srgb, var(--warning) 8%, var(--surface));
+  --pa-needs-ring: color-mix(in srgb, var(--warning) 22%, transparent);
+  --pa-inspector-bg: var(--sidebar);
+  --pa-inspector-card: var(--surface);
+  --pa-inspector-card-border: color-mix(in srgb, var(--line) 72%, var(--line-soft));
+  --pa-inspector-trough: color-mix(in srgb, var(--ink) 5.5%, transparent);
+  --pa-inspector-hero-fantay: color-mix(in srgb, #494bdc 8%, transparent);
+  --pa-inspector-hero-agent: color-mix(in srgb, var(--pa-hue, var(--ink-faint)) 10%, transparent);
+  --pa-inspector-hero-group: color-mix(in srgb, var(--ink) 3.5%, transparent);
+  --pa-composer-bg: var(--surface);
+  --pa-composer-border: color-mix(in srgb, var(--line) 88%, var(--ink-ghost));
+  --pa-composer-border-focus: color-mix(in srgb, var(--line) 58%, var(--ink-ghost));
+  --pa-composer-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.035), 0 8px 24px -8px rgba(0, 0, 0, 0.055);
+  --pa-composer-shadow-focus: 0 4px 14px -3px rgba(0, 0, 0, 0.05), 0 12px 32px -8px rgba(0, 0, 0, 0.08);
+  --pa-composer-btn-bg: color-mix(in srgb, var(--ink) 5%, var(--surface));
+  --pa-composer-btn-hover: color-mix(in srgb, var(--ink) 9.5%, var(--surface));
+  --pa-send-bg: #494bdc;
+  --pa-send-hover: #3d3fc9;
+  --pa-send-fg: #ffffff;
+  --pa-send-shadow: 0 2px 8px rgba(73, 75, 220, 0.28);
+  --pa-send-idle-bg: color-mix(in srgb, #494bdc 34%, var(--surface));
+  --pa-send-idle-fg: #ffffff;
+  --pa-scrollbar-thumb: #8c8c8c;
+  --pa-scrollbar-track: transparent;
+  --pa-pane-x: 0px;
+}
+
+[data-theme='dark'] {
+  --pa-id-1: #5cc184;
+  --pa-id-1-ink: #8fdcad;
+  --pa-id-2: #3cb7c6;
+  --pa-id-2-ink: #86d6df;
+  --pa-id-3: #e0ad45;
+  --pa-id-3-ink: #f0c978;
+  --pa-id-4: #e7709b;
+  --pa-id-4-ink: #f3a6c3;
+  --pa-id-5: #9aa4b5;
+  --pa-id-5-ink: #c1c8d3;
+  --pa-fantay-disc: color-mix(in srgb, #494bdc 30%, var(--surface));
+  /* Lighter than light mode: 8% orange over the dark surface reads as muddy brown, so fill and ring step down. */
+  --pa-needs-bg: color-mix(in srgb, var(--warning) 6%, var(--surface));
+  --pa-needs-ring: color-mix(in srgb, var(--warning) 18%, transparent);
+  --pa-inspector-bg: color-mix(in srgb, var(--surface) 45%, var(--paper));
+  --pa-inspector-card: var(--surface);
+  --pa-inspector-card-border: var(--line);
+  --pa-inspector-trough: color-mix(in srgb, var(--ink) 7%, transparent);
+  --pa-inspector-hero-fantay: color-mix(in srgb, #494bdc 18%, transparent);
+  --pa-inspector-hero-agent: color-mix(in srgb, var(--pa-hue, var(--ink-faint)) 14%, transparent);
+  --pa-inspector-hero-group: color-mix(in srgb, var(--ink) 5%, transparent);
+  --pa-composer-bg: var(--surface);
+  --pa-composer-border: var(--line);
+  --pa-composer-border-focus: color-mix(in srgb, var(--line) 60%, var(--ink-ghost));
+  --pa-composer-shadow: 0 2px 6px rgba(0, 0, 0, 0.28), 0 10px 26px -8px rgba(0, 0, 0, 0.44);
+  --pa-composer-shadow-focus: 0 4px 12px -2px rgba(0, 0, 0, 0.36), 0 14px 34px -8px rgba(0, 0, 0, 0.54);
+  --pa-composer-btn-bg: color-mix(in srgb, var(--ink) 8%, var(--surface));
+  --pa-composer-btn-hover: color-mix(in srgb, var(--ink) 14%, var(--surface));
+  --pa-send-bg: #5c5ff2;
+  --pa-send-hover: #6d70f7;
+  --pa-send-fg: #ffffff;
+  --pa-send-shadow: 0 2px 10px rgba(92, 95, 242, 0.34);
+  --pa-send-idle-bg: color-mix(in srgb, #5c5ff2 32%, var(--surface));
+  --pa-send-idle-fg: rgba(255, 255, 255, 0.86);
+  --pa-scrollbar-thumb: #787878;
+  --pa-scrollbar-track: transparent;
+  --pa-pane-x: 0px;
+}

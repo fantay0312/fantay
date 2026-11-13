@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fantay spacing, radius and elevation</title>
+    <link rel="stylesheet" href="../tokens.css" />
+    <!-- Studio serves package files from /api/design-systems/<id>/static?path=…, where ../tokens.css misses; this link is that route's form. -->
+    <link rel="stylesheet" href="static?path=tokens.css" />
+    <style>
+      @font-face { font-family: "Albert Sans"; src: url("../fonts/AlbertSans-VariableFont_wght.ttf") format("truetype"); font-weight: 100 900; font-style: normal; font-display: swap; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--fg-2); font: 600 var(--text-base)/var(--leading-tight) var(--font-body); -webkit-font-smoothing: antialiased; }
+      main { max-width: 1232px; margin: 0 auto; padding: var(--space-12) var(--container-gutter-desktop); display: grid; gap: var(--space-8); }
+      h1 { margin: 0; color: var(--fg); font-size: var(--text-2xl); }
+      h2 { margin: 0 0 var(--space-3); color: var(--fg); font-size: var(--text-lg); }
+      p { margin: 0; }
+      code { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--muted); font-weight: 500; }
+      .intro { margin-top: var(--space-2); max-width: 72ch; color: var(--muted); font-weight: 500; line-height: var(--leading-body); }
+      .panel { padding: var(--space-5); border-radius: 16px; background: var(--surface); }
+      .space-row { display: grid; grid-template-columns: 150px 56px 1fr; align-items: center; gap: var(--space-3); padding: 6px 0; }
+      .space-row .bar { height: 12px; border-radius: 2px; background: var(--fg); }
+      .space-row.literal .bar { background: #bdbdbd; }
+      .space-row span:nth-child(2) { color: var(--meta); font-size: var(--text-xs); font-weight: 500; }
+      .radii { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+      .radius { display: grid; gap: var(--space-2); justify-items: center; color: var(--muted); font-size: var(--text-xs); font-weight: 500; text-align: center; }
+      .radius div { width: 96px; height: 72px; background: var(--surface-warm); }
+      .elev { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-5); padding: var(--space-6); border-radius: 16px; background: var(--bg); }
+      .elev article { display: grid; gap: 4px; min-height: 96px; align-content: end; padding: var(--space-4); border-radius: 16px; background: var(--bg); }
+      .elev strong { color: var(--fg); font-size: var(--text-sm); }
+      .glass-stage { position: relative; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-5); padding: var(--space-6); border-radius: 16px; overflow: hidden;
+        background:
+          radial-gradient(circle at 18% 30%, #bdbdbd 0 46px, transparent 47px),
+          radial-gradient(circle at 70% 70%, #202020 0 58px, transparent 59px),
+          repeating-linear-gradient(90deg, var(--surface-warm) 0 18px, var(--bg) 18px 36px); }
+      .glass-stage article { display: grid; gap: 4px; min-height: 120px; align-content: end; padding: var(--space-4); border-radius: 16px; }
+      .glass-stage strong { color: var(--fg); font-size: var(--text-sm); }
+      .glass-stage span { color: var(--muted); font-size: var(--text-xs); font-weight: 500; }
+      .concentric { padding: 4px 4px 8px; border-radius: 20px; background: var(--surface-warm); max-width: 520px; }
+      .concentric div { min-height: 84px; padding: 15px; border-radius: 16px; background: var(--bg); color: var(--muted); font-weight: 500; }
+      .motion { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+      .motion span { padding: 6px 12px; border-radius: var(--radius-pill); background: var(--surface-warm); color: var(--fg-2); font-size: var(--text-xs); }
+      .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-3); }
+      .metrics div { padding: var(--space-4); border-radius: var(--radius-lg); background: var(--bg); }
+      .metrics strong { display: block; color: var(--fg); font-size: var(--text-xl); }
+      .metrics span { color: var(--muted); font-size: var(--text-xs); font-weight: 500; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Spacing, radius and elevation</h1>
+        <p class="intro">A 4px-based ladder with the product's in-between steps, the product's own radius names, warm-black shadows and liquid-glass materials.</p>
+      </header>
+
+      <section aria-labelledby="s-space">
+        <h2 id="s-space">Spacing</h2>
+        <div class="panel">
+          <div class="space-row literal"><code>literal</code><span>2px</span><div class="bar" style="width: 2px"></div></div>
+          <div class="space-row"><code>--space-1</code><span>4px</span><div class="bar" style="width: var(--space-1)"></div></div>
+          <div class="space-row literal"><code>literal</code><span>6px</span><div class="bar" style="width: 6px"></div></div>
+          <div class="space-row"><code>--space-2</code><span>8px</span><div class="bar" style="width: var(--space-2)"></div></div>
+          <div class="space-row literal"><code>literal</code><span>10px</span><div class="bar" style="width: 10px"></div></div>
+          <div class="space-row"><code>--space-3</code><span>12px</span><div class="bar" style="width: var(--space-3)"></div></div>
+          <div class="space-row"><code>--space-4</code><span>16px</span><div class="bar" style="width: var(--space-4)"></div></div>
+          <div class="space-row"><code>--space-5</code><span>20px</span><div class="bar" style="width: var(--space-5)"></div></div>
+          <div class="space-row literal"><code>literal</code><span>22px</span><div class="bar" style="width: 22px"></div></div>
+          <div class="space-row"><code>--space-6</code><span>24px</span><div class="bar" style="width: var(--space-6)"></div></div>
+          <div class="space-row"><code>--space-8</code><span>32px</span><div class="bar" style="width: var(--space-8)"></div></div>
+          <div class="space-row"><code>--space-12</code><span>48px</span><div class="bar" style="width: var(--space-12)"></div></div>
+          <div class="space-row"><code>--container-max</code><span>1648px</span><div class="bar" style="width: 100%"></div></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="s-radius">
+        <h2 id="s-radius">Radius</h2>
+        <div class="panel radii">
+          <div class="radius"><div style="border-radius: 2px"></div>2px · inline code</div>
+          <div class="radius"><div style="border-radius: var(--radius-sm)"></div><code>--radius-sm</code> 4px · controls</div>
+          <div class="radius"><div style="border-radius: var(--radius-md)"></div><code>--radius-md</code> 8px · menus</div>
+          <div class="radius"><div style="border-radius: var(--radius-lg)"></div><code>--radius-lg</code> 12px · dialogs</div>
+          <div class="radius"><div style="border-radius: 16px"></div>16px · cards</div>
+          <div class="radius"><div style="border-radius: 20px"></div>20px · trays</div>
+          <div class="radius"><div style="border-radius: var(--radius-pill)"></div><code>--radius-pill</code> · pills</div>
+        </div>
+      </section>
+
+      <section aria-labelledby="s-concentric">
+        <h2 id="s-concentric">Concentric tray</h2>
+        <div class="concentric"><div>A 20px tray with 4px padding holds a 16px card: outer radius = inner radius + gap.</div></div>
+      </section>
+
+      <section aria-labelledby="s-elev">
+        <h2 id="s-elev">Elevation (warm black)</h2>
+        <div class="elev">
+          <article style="box-shadow: var(--elev-flat)"><strong>Flat</strong><code>--elev-flat</code></article>
+          <article style="box-shadow: var(--elev-ring)"><strong>Ring</strong><code>--elev-ring</code></article>
+          <article style="box-shadow: 0 1px 2px rgba(28, 27, 26, 0.05), 0 1px 3px rgba(28, 27, 26, 0.04)"><strong>Card whisper</strong><code>shadow-sm literal</code></article>
+          <article style="box-shadow: var(--elev-raised)"><strong>Raised</strong><code>--elev-raised</code></article>
+          <article style="box-shadow: 0 24px 60px rgba(28, 27, 26, 0.16), 0 8px 16px rgba(28, 27, 26, 0.07)"><strong>Modal</strong><code>shadow-lg literal</code></article>
+          <article style="box-shadow: var(--elev-raised), var(--focus-ring)"><strong>Focus</strong><code>--focus-ring</code></article>
+        </div>
+      </section>
+
+      <section aria-labelledby="s-glass">
+        <h2 id="s-glass">Liquid glass and scrim</h2>
+        <div class="glass-stage">
+          <article style="background: rgba(250, 250, 250, 0.66); -webkit-backdrop-filter: blur(28px) saturate(1.8); backdrop-filter: blur(28px) saturate(1.8); box-shadow: inset 0 0 0 1px rgba(73, 73, 73, 0.18)"><strong>Glass regular</strong><span>rgba(250,250,250,.66) · blur 28 · saturate 1.8</span></article>
+          <article style="background: rgba(255, 255, 255, 0.85); -webkit-backdrop-filter: blur(16px) saturate(1.6); backdrop-filter: blur(16px) saturate(1.6); box-shadow: 0 1px 2px rgba(28, 27, 26, 0.05), 0 1px 3px rgba(28, 27, 26, 0.04), inset 0 0 0 1px rgba(255, 255, 255, 0.18)"><strong>Content card</strong><span>rgba(255,255,255,.85) · blur 16</span></article>
+          <article style="background: rgba(255, 255, 255, 0.6); -webkit-backdrop-filter: blur(50px); backdrop-filter: blur(50px)"><strong>Scrim</strong><span>rgba(255,255,255,.6) · blur 50 · frosted white</span></article>
+        </div>
+      </section>
+
+      <section aria-labelledby="s-motion">
+        <h2 id="s-motion">Motion</h2>
+        <div class="panel motion">
+          <span><code>--ease-standard</code> cubic-bezier(0.23, 1, 0.32, 1)</span>
+          <span><code>--motion-base</code> 200ms · enter</span>
+          <span><code>--motion-fast</code> 140ms · exit</span>
+          <span>50ms · hover colour</span>
+          <span>scale 0.93 → 1 · popover</span>
+          <span>300ms overshoot · tab glide</span>
+        </div>
+      </section>
+
+      <section aria-labelledby="s-layout">
+        <h2 id="s-layout">Layout metrics</h2>
+        <div class="panel metrics">
+          <div><strong>44px</strong><span>Top chrome and sticky bars</span></div>
+          <div><strong>236px</strong><span>Navigation rail, collapses at 1080px</span></div>
+          <div><strong>820 / 720px</strong><span>Composer tray / card max width</span></div>
+          <div><strong>460px</strong><span>Chat panel default (345–720)</span></div>
+          <div><strong>24 → 16px</strong><span>Side gutters, below 900px</span></div>
+          <div><strong>36px</strong><span>Control height</span></div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

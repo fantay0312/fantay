@@ -1,0 +1,66 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Generation failure card (spec 05 §5.7): the message, its next-step action, retry, error details. */
+.card {
+  --gen-failed: var(--accent-ink);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-card);
+  background: color-mix(in oklab, var(--accent-ink) 8%, var(--surface));
+  color: var(--gen-failed);
+  font-family: var(--font-ui);
+  font-size: var(--type-body);
+  line-height: var(--type-body-lh);
+}
+
+.card[data-compact] {
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: var(--radius-control);
+  font-size: var(--type-label);
+  line-height: var(--type-label-lh);
+}
+
+.message {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.message svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.details {
+  margin: 0;
+  max-height: 120px;
+  overflow: auto;
+  padding: 8px;
+  border-radius: var(--radius-row);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+  line-height: var(--type-caption-lh);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.detailsFooter {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}

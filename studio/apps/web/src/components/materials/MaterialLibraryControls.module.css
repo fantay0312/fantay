@@ -1,0 +1,15 @@
+.root, .page { min-width: 0; }
+:global([data-mode='drawer']) > .root { padding: 10px 12px 0; }
+:global([data-mode='pick']) > .root { padding: 0 18px 10px 22px; }
+.toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.selector { display: flex; align-items: center; gap: 8px; min-width: 180px; max-width: 100%; margin-right: auto; }
+.selector :global(.od-select-trigger) { min-width: 0; max-width: 360px; }
+/* On the 素材库 page the controls share the title line, so they stay compact. */
+.page .toolbar { gap: 6px; }
+.page .selector { gap: 0; min-width: 0; margin-inline-end: 2px; }
+.page .selector > svg { display: none; }
+.page .selector :global(.od-select-trigger) { max-width: 160px; height: 32px; min-height: 32px; border-color: transparent; border-radius: var(--radius-control); background-color: var(--sub); color: var(--ink-soft); font-size: 13px; }
+.page .toolbar button { height: 32px; min-height: 32px; padding: 0 12px; border-radius: var(--radius-control); font-size: 13px; font-weight: 500; white-space: nowrap; }
+.hint { margin: 6px 0 0; font-size: var(--font-size-12, 12px); color: var(--text-muted); line-height: 1.5; }
+.error { margin: 8px 0 0; overflow-wrap: anywhere; color: var(--text); font-size: var(--font-size-13, 13px); }
+@media (max-width: 560px) { .root .selector { flex-basis: 100%; } .root .selector :global(.od-select-trigger) { flex: 1; max-width: none; } }

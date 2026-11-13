@@ -1,0 +1,230 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Sidebar chrome the utilities cannot express (spec 02 §10.1, §11.3): desktop drag regions, the macOS
+   traffic-light inset, the relocated upstream account cluster (it portals into the account-actions host)
+   and the account row's per-mode layout. The shell root carries the mode attributes; the variables come
+   from FantayShell.module.css (fallbacks cover the overlay sheet, which is portalled out of the root). */
+
+.header {
+  position: relative;
+  height: var(--fx-top-row-h, 44px);
+  padding-inline-start: max(12px, var(--fx-traffic-inset, 0px));
+}
+
+:global([data-fantay-shell][data-client-type='desktop']) .header,
+:global([data-fantay-shell][data-client-type='desktop']) .railTop {
+  position: relative;
+  -webkit-app-region: drag;
+}
+
+/* Preserve an 8px non-drag resize margin along the top and left window edges so native macOS edge/corner resizing always wins. */
+:global([data-fantay-shell][data-client-type='desktop']) .header::before,
+:global([data-fantay-shell][data-client-type='desktop']) .railTop::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 8px;
+  pointer-events: none;
+  -webkit-app-region: no-drag;
+}
+
+:global([data-fantay-shell][data-client-type='desktop']) .header::after,
+:global([data-fantay-shell][data-client-type='desktop']) .railTop::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 8px;
+  pointer-events: none;
+  -webkit-app-region: no-drag;
+}
+
+:global([data-fantay-shell][data-client-type='desktop']) .header :is(button, a, input, [role='button']) {
+  -webkit-app-region: no-drag;
+}
+
+/* The traffic lights own the header's leading 78 px on macOS desktop; hide the brand mark and wordmark in the traffic-light row (both docked and inside the portalled overlay sheet). */
+:global(html:not(.is-window-fullscreen):has([data-fantay-shell][data-client-type='desktop'][data-host-platform='darwin'])) .header,
+:global(html:not(.is-window-fullscreen) [data-fantay-shell][data-client-type='desktop'][data-host-platform='darwin']) .header {
+  --fx-traffic-inset: 78px;
+  gap: 4px;
+  padding-inline-end: 6px;
+}
+
+:global(html:not(.is-window-fullscreen):has([data-fantay-shell][data-client-type='desktop'][data-host-platform='darwin'])) .brand,
+:global(html:not(.is-window-fullscreen) [data-fantay-shell][data-client-type='desktop'][data-host-platform='darwin']) .brand,
+:global([data-fantay-shell][data-client-type='desktop']) .brand span {
+  display: none;
+}
+
+/* Compact horizontal top-left control bar when the docked sidebar is collapsed to 0 px width. */
+.railBar {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: var(--fx-top-row-h, 44px);
+  padding-inline-start: max(10px, var(--fx-traffic-inset, 0px));
+  padding-inline-end: 6px;
+  -webkit-app-region: no-drag;
+}
+
+:global(html:not(.is-window-fullscreen):has([data-fantay-shell][data-client-type='desktop'][data-host-platform='darwin'])) .railBar,
+:global(html:not(.is-window-fullscreen) [data-fantay-shell][data-client-type='desktop'][data-host-platform='darwin']) .railBar {
+  --fx-traffic-inset: 78px;
+}
+
+:global([data-fantay-shell][data-client-type='desktop']) .railBar :is(button, a, input, [role='button']) {
+  -webkit-app-region: no-drag;
+}
+
+/* ── account dock: the persistent upstream actions host + the identity row ───────────────────────── */
+
+.accountActionsHost {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.accountActionsHost:not(:has(:global(.entry-top-right-cluster))) {
+  display: none;
+}
+
+.accountActionsHost :global(.entry-top-right-cluster) {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+}
+
+:global([data-fantay-shell][data-sidebar-mode='docked'])
+  .accountActionsHost
+  :global(.entry-top-right-cluster > .entry-nav-rail__account-updater .entry-updater-menu .updater-popup) {
+  top: auto;
+  right: auto;
+  bottom: 0;
+  left: calc(100% + 12px);
+}
+
+/* The rail is 56/76 px: stack the cluster so its pills centre instead of overflowing sideways. */
+:global([data-fantay-shell][data-sidebar-mode='docked'][data-sidebar='collapsed']) .accountActionsHost,
+:global([data-fantay-shell][data-sidebar-mode='docked'][data-sidebar='collapsed']) .accountActionsHost :global(.entry-top-right-cluster) {
+  flex-direction: column;
+  justify-content: center;
+}
+
+.identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+:global([data-fantay-shell][data-sidebar-mode='docked'][data-sidebar='collapsed']) .identity {
+  flex-direction: column;
+  gap: 4px;
+}
+
+:global([data-fantay-shell][data-sidebar-mode='docked'][data-sidebar='collapsed']) .accountName,
+:global([data-fantay-shell][data-sidebar-mode='overlay']) .accountName {
+  display: none;
+}
+
+/* ── account menu: the balance tile and the appearance switch, one matched pair ──────────────────────
+   Same height and corner radius, no label and no hairlines. Both sit flush with the menu rows' edges;
+   the tile's text starts on the row icons' left edge. The tile is a `bare` Button (it opens Settings ▸
+   账户); these unlayered rules replace that variant's box, fill and hover, which live in @layer utilities. The row is a size container: the popover is as
+   wide as the sidebar's identity row (195px on desktop, 223px on the web), and the amount scales with
+   it so a four-figure balance fits beside the switch at either width. A balance still too long sends
+   the switch to a second row, right-aligned, instead of truncating the amount. */
+
+.accountHero {
+  container-type: inline-size;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.accountBalance {
+  display: flex;
+  min-width: 0;
+  height: auto;
+  min-height: 44px;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0;
+  padding-inline: 12px 8px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--sub);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  text-align: start;
+}
+
+.accountBalance:hover {
+  background: color-mix(in srgb, var(--paper-deep) 50%, var(--sub));
+}
+
+/* Button wraps its children in one label span; stack the caption over the amount inside it. */
+.accountBalance > :global([data-slot='button-label']) {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+
+/* The caption carries a small chevron: the tile goes somewhere. */
+.accountBalanceLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  color: var(--ink-faint);
+  font-size: var(--type-caption);
+  font-weight: 400;
+  line-height: 14px;
+  white-space: nowrap;
+}
+
+.accountBalance:hover .accountBalanceLabel {
+  color: var(--ink-soft);
+}
+
+.accountBalanceAmount {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: clamp(13.5px, 7.6cqi, 16px);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Long amounts (¥12,800.50, ₩170,000.00) step down a size before the row has to wrap. */
+.accountBalanceAmount[data-long] {
+  font-size: clamp(12px, 6.7cqi, 14px);
+}
+
+.accountBalanceAmount[data-unavailable] {
+  color: var(--ink-faint);
+}
+
+.accountBalanceSkeleton {
+  display: block;
+  width: 56px;
+  height: 11px;
+  margin-block: 4px;
+  border-radius: 4px;
+}

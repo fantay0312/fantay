@@ -1,0 +1,1334 @@
+/* Multi-track timeline (design brief §2.4, §3, §4.5). Chrome stays ink on the card; colour marks content
+   identity (clip tints, thumbnails) and the playhead. Lanes, clip boxes and drop targets are positioned
+   from TIMELINE_GEOMETRY in MovieTrackTimeline.tsx (one table per layout); this module only defaults the
+   ruler height, the header width, the time origin and the lane inset, which the component sets inline. The --movie-*
+   editor tokens are declared once on the workspace (MovieEditingWorkspace.module.css). */
+
+.timeline {
+  --ruler-height: 28px;
+  --track-header-width: 120px;
+  --timeline-origin: 12px;
+  --lane-inset: 4px;
+  container: movie-timeline / inline-size;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  background: var(--movie-card);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  outline: none;
+}
+
+.timeline[data-variant='compact'] {
+  --ruler-height: 24px;
+  --lane-inset: 3px;
+}
+
+/* ---- Toolbar ---- */
+
+.toolbar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  height: 40px;
+  /* 4 px + the 32 px button's 8 px glyph inset puts the first glyph on the card's 12 px content line. */
+  padding: 0 4px;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--line-soft);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.timeline[data-variant='compact'] .toolbar {
+  height: 36px;
+  /* The first 28 px button centres over the 36 px track-header column. */
+  padding: 0 6px 0 4px;
+}
+
+.toolGroup {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+.divider {
+  flex: none;
+  width: 1px;
+  height: 16px;
+  margin: 0 6px;
+  background: var(--line);
+}
+
+.spacer {
+  flex: 1 0 8px;
+}
+
+/* 主轨磁吸 / 吸附 / 预览轴: icon-only, with their text label from 1280 px. */
+.modeToggle {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-row);
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 100ms var(--ease-out-quint),
+    color 100ms var(--ease-out-quint);
+}
+
+.timeline[data-variant='compact'] .modeToggle {
+  width: 28px;
+  height: 28px;
+}
+
+/* Same fill as the toolbar's IconButtons (hover and on), so every pressed tool in the row reads alike. */
+.modeToggle:hover,
+.modeToggle[aria-pressed='true'] {
+  background: var(--paper-deep);
+  color: var(--ink);
+}
+
+.modeToggle:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+.modeText {
+  display: none;
+}
+
+@container movie-timeline (min-width: 1120px) {
+  .modeToggle {
+    width: auto;
+    padding: 0 10px 0 8px;
+  }
+
+  .modeText {
+    display: inline;
+  }
+}
+
+/* COMPACT drops the zoom slider, then 预览轴, as the pane narrows; their keys keep working. */
+@container movie-timeline (max-width: 599px) {
+  .timeline[data-variant='compact'] [data-hide-below='600'] {
+    display: none;
+  }
+}
+
+@container movie-timeline (max-width: 439px) {
+  .timeline[data-variant='compact'] [data-hide-below='440'] {
+    display: none;
+  }
+}
+
+.zoom {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+.zoomSlider {
+  width: 96px;
+  height: 16px;
+  margin: 0 4px;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.timeline[data-variant='compact'] .zoomSlider {
+  width: 64px;
+}
+
+.zoomSlider::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.zoomSlider::-webkit-slider-thumb {
+  width: 12px;
+  height: 12px;
+  margin-top: -4.5px;
+  appearance: none;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--ink) 24%, transparent),
+    0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.zoomSlider:hover::-webkit-slider-thumb {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--ink) 40%, transparent),
+    0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.zoomSlider:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---- Overview strip (hidden while the whole film fits) ---- */
+
+.overview {
+  position: relative;
+  flex: none;
+  margin-left: var(--track-header-width);
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--movie-lane-main);
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+}
+
+.overviewBars {
+  position: absolute;
+  top: 2px;
+  left: 0;
+  display: block;
+  width: 100%;
+  pointer-events: none;
+}
+
+.overviewBar {
+  fill: color-mix(in srgb, var(--ink-soft) 60%, transparent);
+}
+
+.overviewBar[data-kind='text'] {
+  fill: color-mix(in srgb, var(--warning) 60%, transparent);
+}
+
+.overviewBar[data-kind='audio'] {
+  fill: color-mix(in srgb, var(--success) 60%, transparent);
+}
+
+.overviewBar[data-kind='caption'] {
+  fill: color-mix(in srgb, var(--info) 60%, transparent);
+}
+
+.overviewPlayhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--movie-playhead);
+  pointer-events: none;
+}
+
+.overviewWindow {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  min-width: 6px;
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, var(--ink) 35%, transparent);
+  border-radius: var(--radius-tag);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  cursor: grab;
+}
+
+.overviewWindow:active {
+  cursor: grabbing;
+}
+
+.overviewEdge {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  width: 6px;
+  cursor: ew-resize;
+}
+
+.overviewEdge[data-edge='start'] {
+  left: -4px;
+}
+
+.overviewEdge[data-edge='end'] {
+  right: -4px;
+}
+
+/* ---- Scroll sheet: sticky headers on the left, sticky ruler on top ---- */
+
+.scroll {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.sheet {
+  display: flex;
+  min-width: 100%;
+  min-height: 100%;
+}
+
+.headers {
+  position: sticky;
+  left: 0;
+  z-index: 7;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: var(--track-header-width);
+  box-sizing: border-box;
+  border-right: 1px solid var(--line-soft);
+  background: var(--movie-card);
+}
+
+.corner {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  flex: none;
+  height: var(--ruler-height);
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--movie-card);
+}
+
+/* ---- Track headers: FULL 120 (tile, name, hover tools), COMPACT 36 (tile with menu, state dot) ---- */
+
+.header {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 0 4px 0 12px;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--ink-soft);
+}
+
+.header[data-main='true'] {
+  background: var(--movie-lane-main);
+}
+
+.headerTile {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--movie-video-strip);
+  color: var(--ink-soft);
+}
+
+.headerTile[data-kind='text'] {
+  background: var(--movie-text);
+  color: var(--warning-ink);
+}
+
+.headerTile[data-kind='audio'] {
+  background: var(--movie-audio);
+  color: var(--success-ink);
+}
+
+.headerTile[data-kind='caption'] {
+  background: var(--movie-caption);
+  color: var(--info-ink);
+}
+
+.header[data-role='ghost'] .headerTile,
+.header[data-role='drop'] .headerTile {
+  border: 1px dashed var(--line);
+  background: transparent;
+  color: var(--ink-faint);
+}
+
+.headerName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header[data-main='true'] .headerName {
+  font-weight: 600;
+}
+
+.header[data-locked='true'] .headerName,
+.header[data-muted='true'] .headerName,
+.header[data-role='ghost'] .headerName,
+.header[data-role='drop'] .headerName {
+  color: var(--ink-faint);
+}
+
+/* The name keeps the full width; tools float over its end only while shown. */
+.headerTools {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-row);
+  background: var(--movie-card);
+  transform: translateY(-50%);
+}
+
+.header[data-main='true'] .headerTools {
+  background: color-mix(in srgb, var(--ink) 3%, var(--movie-card));
+}
+
+.headerTools:not(:has([aria-pressed='true'])) {
+  opacity: 0;
+  transition: opacity 100ms var(--ease-out-quint);
+}
+
+.header:hover .headerTools,
+.header:focus-within .headerTools {
+  opacity: 1;
+}
+
+/* Lock and mute show on row hover or focus, and stay while they are on. */
+.headerTools > [aria-pressed='false'] {
+  opacity: 0;
+  transition: opacity 100ms var(--ease-out-quint);
+}
+
+.header:hover .headerTools > [aria-pressed='false'],
+.header:focus-within .headerTools > [aria-pressed='false'] {
+  opacity: 1;
+}
+
+.timeline[data-variant='compact'] .header {
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+}
+
+.timeline[data-variant='compact'] .headerTile {
+  background: transparent;
+}
+
+.timeline[data-variant='compact'] .headerTile:hover {
+  background: var(--movie-hover);
+}
+
+.headerDot {
+  flex: none;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+/* COMPACT: the lock / mute state is a badge on the tile's corner, so the tile stays centred on its lane. */
+.headerDot:not([data-state]) {
+  display: none;
+}
+
+.timeline[data-variant='compact'] .headerDot {
+  position: absolute;
+  top: calc(50% - 13px);
+  left: calc(50% + 7px);
+  box-shadow: 0 0 0 1.5px var(--movie-card);
+}
+
+.headerDot[data-state='locked'] {
+  background: var(--ink);
+}
+
+.headerDot[data-state='muted'] {
+  background: var(--ink-faint);
+}
+
+.canvas {
+  position: relative;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+}
+
+/* ---- Ruler: labels in the upper half, the playhead pin in the lower half, so neither hides the other ---- */
+
+.ruler {
+  --ruler-minor: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  flex: none;
+  height: var(--ruler-height);
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--line-soft);
+  background:
+    repeating-linear-gradient(
+        to right,
+        color-mix(in srgb, var(--ink) 12%, transparent) 0 1px,
+        transparent 1px var(--ruler-minor)
+      )
+      calc(var(--timeline-origin) - 0.5px) bottom / 100% 4px no-repeat,
+    var(--movie-card);
+  cursor: ew-resize;
+  outline: none;
+  touch-action: none;
+  user-select: none;
+}
+
+.ruler:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--focus-ring-color);
+}
+
+.tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  pointer-events: none;
+}
+
+.tick::before {
+  position: absolute;
+  bottom: 0;
+  left: -0.5px;
+  width: 1px;
+  height: 8px;
+  background: color-mix(in srgb, var(--ink) 24%, transparent);
+  content: '';
+}
+
+.tickLabel {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  color: var(--ink-faint);
+  font-size: var(--type-micro);
+  font-weight: 500;
+  line-height: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rulerChange {
+  position: absolute;
+  bottom: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--info);
+  pointer-events: none;
+}
+
+.snapDot {
+  position: absolute;
+  bottom: -3px;
+  z-index: 3;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: var(--info);
+  pointer-events: none;
+  animation: snap-pulse 200ms var(--ease-out-quint);
+}
+
+@keyframes snap-pulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes snap-fade {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.hoverBadge {
+  position: absolute;
+  top: 50%;
+  z-index: 4;
+  width: 56px;
+  height: 18px;
+  margin: -9px 0 0 -28px;
+  border-radius: 9px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: var(--type-micro);
+  font-weight: 500;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  pointer-events: none;
+}
+
+.playheadHead {
+  position: absolute;
+  bottom: -1px;
+  z-index: 2;
+  width: 11px;
+  height: 14px;
+  margin-left: -5.5px;
+  border-radius: 3px 3px 5.5px 5.5px;
+  background: var(--movie-playhead);
+  box-shadow: 0 0 0 1.5px var(--surface);
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+
+.timeline[data-variant='compact'] .playheadHead {
+  height: 12px;
+}
+
+.ruler[data-scrubbing='true'] .playheadHead {
+  transform: scale(1.15);
+}
+
+/* ---- Lines through the lanes: playhead, snap guide, 预览轴 hover guide ---- */
+
+.playheadLine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 5;
+  width: 1px;
+  margin-left: -0.5px;
+  background: var(--movie-playhead);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface) 55%, transparent);
+  pointer-events: none;
+}
+
+.snapGuide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 5;
+  width: 1px;
+  margin-left: -0.5px;
+  background: var(--movie-snap);
+  pointer-events: none;
+}
+
+.hoverGuide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 4;
+  width: 1px;
+  margin-left: -0.5px;
+  background: repeating-linear-gradient(to bottom, var(--movie-guide) 0 3px, transparent 3px 7px);
+  pointer-events: none;
+}
+
+.gestureBubble {
+  position: absolute;
+  z-index: 6;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: var(--type-micro);
+  font-weight: 500;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transform: translate(-50%, calc(-100% - 4px));
+  pointer-events: none;
+}
+
+/* ---- Lanes ---- */
+
+.lanes {
+  position: relative;
+  flex: 1 0 auto;
+}
+
+.lane {
+  position: absolute;
+  right: 0;
+  left: 0;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--line-soft);
+  pointer-events: none;
+  transition: background-color 100ms var(--ease-out-quint);
+}
+
+.lane[data-main='true'] {
+  background: var(--movie-lane-main);
+}
+
+.lane[data-role='ghost'] {
+  border-bottom: 0;
+}
+
+.lane[data-role='ghost']::before {
+  position: absolute;
+  inset: 2px 8px 2px var(--timeline-origin);
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  content: '';
+}
+
+/* The empty audio lane: a dashed box exactly where the first sound clip will sit. */
+.lane[data-role='drop']::before {
+  position: absolute;
+  inset: var(--lane-inset) 12px var(--lane-inset) var(--timeline-origin);
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  content: '';
+}
+
+.lane[data-role='drop'][data-drop='accept']::before {
+  border-color: color-mix(in srgb, var(--info) 55%, transparent);
+}
+
+.lane[data-drop='accept'] {
+  background: color-mix(in srgb, var(--info) 10%, transparent);
+}
+
+.lane[data-drop='reject'] {
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+}
+
+/* Lane captions (新轨道, the empty audio lane, a rejected drop) stay in view while scrolling. */
+.laneLabel {
+  position: sticky;
+  left: calc(var(--track-header-width) + var(--timeline-origin) + 8px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: max-content;
+  height: 100%;
+  margin-left: calc(var(--timeline-origin) + 8px);
+  color: var(--ink-faint);
+  font-size: var(--type-caption);
+  white-space: nowrap;
+}
+
+.lane[data-drop='reject'] .laneLabel {
+  color: var(--accent-ink);
+}
+
+.emptyDrop {
+  position: absolute;
+  right: 12px;
+  left: var(--timeline-origin);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-control);
+  color: var(--ink-faint);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.caption {
+  position: absolute;
+  z-index: 1;
+  margin: 0;
+  padding: 0 6px;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid var(--movie-caption-edge);
+  border-radius: var(--radius-tag);
+  background: var(--movie-caption);
+  color: var(--info-ink);
+  font: inherit;
+  font-size: var(--type-caption);
+  line-height: 1;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 100ms var(--ease-out-quint);
+}
+
+.caption:hover {
+  border-color: color-mix(in srgb, var(--info) 60%, transparent);
+}
+
+.caption:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+/* Transition badge centred on a cut; a faint "+" appears on hover where a cut has none. */
+.junction {
+  position: absolute;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--line);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    opacity 100ms var(--ease-out-quint),
+    color 100ms var(--ease-out-quint);
+}
+
+.junction:hover {
+  color: var(--ink);
+}
+
+.junction:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+.junction[data-add='true'] {
+  opacity: 0;
+}
+
+.junction[data-add='true']:hover,
+.junction[data-add='true']:focus-visible {
+  opacity: 0.85;
+}
+
+/* ---- Clips ---- */
+
+.clip {
+  position: absolute;
+  z-index: 1;
+  box-sizing: border-box;
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+  transition: outline-color 300ms var(--ease-out-quint);
+}
+
+.clip:hover {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 28%, transparent);
+  transition:
+    box-shadow 100ms var(--ease-out-quint),
+    outline-color 300ms var(--ease-out-quint);
+}
+
+/* Selection is instant: no box-shadow transition on the way in or out. */
+.clip[data-selected='true'] {
+  z-index: 2;
+  box-shadow: 0 0 0 2px var(--movie-select);
+  transition: outline-color 300ms var(--ease-out-quint);
+}
+
+.clip[data-moving='true'] {
+  z-index: 3;
+  opacity: 0.9;
+  box-shadow: var(--shadow-float);
+}
+
+/* Changed from the project chat: outline plus a dot, fading out when cleared. */
+.clip[data-changed='true'] {
+  outline-color: var(--movie-changed);
+}
+
+.clip::after {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  z-index: 4;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--info);
+  box-shadow: 0 0 0 1.5px var(--surface);
+  content: '';
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms var(--ease-out-quint);
+}
+
+.clip[data-changed='true']::after {
+  opacity: 1;
+}
+
+.clipBody {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  border-radius: inherit;
+  background: var(--movie-video-strip);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: grab;
+  touch-action: none;
+}
+
+.clipBody:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+.clip[data-selected='true'] .clipBody {
+  border-color: transparent;
+}
+
+.clip[data-missing='true'] .clipBody {
+  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+}
+
+.clip[data-kind='text'] .clipBody {
+  border-color: var(--movie-text-edge);
+  background: var(--movie-text);
+  color: var(--warning-ink);
+}
+
+.clip[data-kind='text'][data-selected='true'] .clipBody {
+  background: var(--movie-text-on);
+}
+
+.clip[data-kind='audio'] .clipBody {
+  border-color: var(--movie-audio-edge);
+  background: var(--movie-audio);
+  color: var(--success-ink);
+}
+
+.clip[data-kind='audio'][data-selected='true'] .clipBody {
+  background: var(--movie-audio-on);
+}
+
+.clip[data-locked='true'] .clipBody {
+  cursor: default;
+}
+
+/* The lock hatch covers the whole clip, its audio row included (the lock blocks sound edits too). */
+.clip[data-locked='true']::before {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ink) 7%, transparent) 0 1px, transparent 1px 6px);
+  content: '';
+  pointer-events: none;
+}
+
+.lanes[data-blade='true'] .clipBody,
+.lanes[data-blade='true'] .band {
+  cursor: crosshair;
+}
+
+/* Strip: the name on the left, badges on the right. */
+.strip {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 6px;
+  box-sizing: border-box;
+  background: var(--movie-video-strip);
+  color: var(--ink);
+}
+
+.clip[data-selected='true'] .strip {
+  background: var(--movie-video-strip-on);
+}
+
+.clip[data-missing='true'] .strip {
+  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+}
+
+.clip[data-kind='audio'] .strip {
+  border-bottom: 1px solid var(--movie-audio-edge);
+  background: var(--movie-audio);
+  color: var(--success-ink);
+}
+
+.clip[data-kind='audio'][data-selected='true'] .strip {
+  background: var(--movie-audio-on);
+}
+
+/* COMPACT: no strip; the name floats over the frames (chips) or the waveform (plain). */
+.clip .strip[data-overlay='true'] {
+  top: 3px;
+  right: 3px;
+  left: 3px;
+  gap: 3px;
+  padding: 0;
+  border-bottom: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+.clipName {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--type-caption);
+  font-weight: 600;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badges {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--ink-soft);
+  font-size: var(--type-micro);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge[data-danger='true'] {
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.clip[data-kind='text'] .badge {
+  color: var(--warning-ink);
+}
+
+.clip[data-kind='audio'] .badge {
+  color: var(--success-ink);
+}
+
+.duration {
+  display: none;
+  align-items: center;
+  color: var(--ink-soft);
+  font-size: var(--type-micro);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.clip:hover .duration,
+.clip[data-selected='true'] .duration {
+  display: inline-flex;
+}
+
+.clip[data-kind='video'] .strip[data-overlay='true'] .clipName,
+.clip[data-kind='video'] .strip[data-overlay='true'] .badge,
+.clip[data-kind='video'] .strip[data-overlay='true'] .duration {
+  height: 16px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 62%, transparent);
+  color: var(--paper);
+}
+
+.textLabel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 0 8px;
+  box-sizing: border-box;
+}
+
+/* Frames fill the content area above the linked-audio row; top and height are set from the clip geometry. */
+.film {
+  position: absolute;
+  right: 0;
+  left: 0;
+  overflow: hidden;
+}
+
+.filmstrip {
+  position: absolute;
+  inset: 0;
+}
+
+.filmstrip img {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+}
+
+.noFrame {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--ink-faint);
+}
+
+/* Waveform boxes are placed inline over the visible part of their row; paths are drawn in their pixels. */
+.wave {
+  position: absolute;
+  display: block;
+  fill: var(--movie-wave);
+  pointer-events: none;
+}
+
+.clip[data-muted='true'] .wave,
+.clip[data-muted='true'] .band {
+  opacity: 0.35;
+}
+
+/*
+ * Linked audio: a selectable row across the bottom of the clip, inside the body border, under the frames. It
+ * shares the frames' left and right edges and time scale, so a sound lines up with its picture and the ruler.
+ * Height and corner radius come from the clip geometry.
+ */
+.band {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  left: 1px;
+  z-index: 2;
+  display: block;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 0;
+  border-top: 1px solid var(--movie-audio-edge);
+  background: var(--movie-audio);
+  color: inherit;
+  font: inherit;
+  cursor: grab;
+  touch-action: none;
+}
+
+.band[data-flush='true'] {
+  border-top: 0;
+}
+
+.band:hover {
+  background: color-mix(in srgb, var(--success) calc(var(--movie-tint) + 5%), var(--surface));
+}
+
+.band[aria-pressed='true'] {
+  background: var(--movie-audio-on);
+}
+
+/* The selection ring is an overlay so the waveform and fade ramps never paint over it. */
+.band[aria-pressed='true']::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1.5px var(--movie-select);
+  content: '';
+  pointer-events: none;
+}
+
+.band[data-inert='true'] {
+  pointer-events: none;
+}
+
+.band:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: -2px;
+}
+
+.bandWave {
+  position: absolute;
+  display: block;
+  fill: var(--movie-wave);
+  pointer-events: none;
+}
+
+/* Fades: a shaded corner triangle on pictures (both themes), a ramp line on audio. */
+.fade {
+  position: absolute;
+  z-index: 1;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.fade[data-edge='start'] {
+  left: 0;
+}
+
+.fade[data-edge='end'] {
+  right: 0;
+}
+
+.fadeShade {
+  fill: rgba(0, 0, 0, 0.32);
+}
+
+.fadeEdge {
+  stroke: rgba(255, 255, 255, 0.6);
+  stroke-width: 1;
+}
+
+.fadeRamp {
+  stroke: color-mix(in srgb, var(--success-ink) 55%, transparent);
+  stroke-width: 1;
+}
+
+/* Keyframes on the selected clip's bottom edge; the key under the playhead is larger. */
+.keyframe {
+  position: absolute;
+  bottom: -3.5px;
+  z-index: 3;
+  width: 7px;
+  height: 7px;
+  margin: 0 0 0 -3.5px;
+  padding: 0;
+  border: 0;
+  background: var(--ink);
+  box-shadow: 0 0 0 1px var(--surface);
+  transform: rotate(45deg);
+  cursor: pointer;
+}
+
+.keyframe[data-current='true'] {
+  bottom: -4.5px;
+  width: 9px;
+  height: 9px;
+  margin-left: -4.5px;
+}
+
+/* Trim handles: a 10 px hit area at each edge, drawn as an ink pill with a light grip when the
+   clip is selected. */
+.trimHandle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 3;
+  width: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.trimHandle[data-edge='start'] {
+  left: -2px;
+}
+
+.trimHandle[data-edge='end'] {
+  right: -2px;
+}
+
+.trimHandle::before,
+.trimHandle::after {
+  position: absolute;
+  opacity: 0;
+  content: '';
+}
+
+.trimHandle::before {
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: var(--ink);
+}
+
+.trimHandle::after {
+  top: 50%;
+  width: 2px;
+  height: 12px;
+  margin-top: -6px;
+  border-radius: 1px;
+  background: var(--paper);
+}
+
+.trimHandle[data-edge='start']::before {
+  left: 2px;
+  border-radius: 6px 2px 2px 6px;
+}
+
+.trimHandle[data-edge='end']::before {
+  right: 2px;
+  border-radius: 2px 6px 6px 2px;
+}
+
+.trimHandle[data-edge='start']::after {
+  left: 4px;
+}
+
+.trimHandle[data-edge='end']::after {
+  right: 4px;
+}
+
+.clip:hover .trimHandle:hover::before {
+  opacity: 0.55;
+}
+
+.clip[data-selected='true'] .trimHandle::before,
+.clip[data-selected='true'] .trimHandle::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .snapDot {
+    animation-name: snap-fade;
+  }
+}
+
+/* Compact audio-only clips have no strip: the name sits on a tint chip so fade ramps pass under it. */
+.clip[data-kind='audio'] .strip[data-overlay='true'] {
+  z-index: 2;
+}
+
+.clip[data-kind='audio'] .strip[data-overlay='true'] .clipName {
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--movie-audio);
+  color: var(--success-ink);
+}

@@ -1,0 +1,1169 @@
+{
+  "upstream": "https://github.com/open-pencil/open-pencil",
+  "tag": "v0.16.0",
+  "commit": "ffe2fc5798468988a5943c5f5737905c3c7a28b5",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 Danila Poyarkov and OpenPencil contributors",
+  "patches": {
+    "P1": {
+      "path": "theme/button/button.ts",
+      "description": "P1 - the filled primary button is ink (bg-surface text-panel), not the accent"
+    },
+    "P2": {
+      "path": "theme/overlay.ts",
+      "description": "P2 - floating and tooltip surfaces use the --shadow-pop token"
+    },
+    "P3": {
+      "path": "components/toolbar/DesktopToolbar.vue",
+      "description": "P3 - the toolbar shadow uses the --shadow-float token"
+    },
+    "P4": {
+      "path": "theme/dialog/index.ts",
+      "description": "P4 - the dialog shadow uses the --shadow-modal token"
+    },
+    "P5": {
+      "path": "components/editor/ZoomDropdown.vue",
+      "description": "P5 - removes the multiplayer cursors, design issues and comments items"
+    },
+    "P6": {
+      "path": "app/editor/toolbar/layout.ts",
+      "description": "P6 - adds the 'place-image' toolbar action"
+    }
+  },
+  "files": [
+    {
+      "path": "app/editor/canvas/context-selection.ts",
+      "upstreamSha256": "0d55aa70acb6bda2af4f818c6baa5fd956fd00b5af207e28203c7b68d35ba766",
+      "vendoredSha256": "0d55aa70acb6bda2af4f818c6baa5fd956fd00b5af207e28203c7b68d35ba766",
+      "patch": null
+    },
+    {
+      "path": "app/editor/canvas/menu/context.ts",
+      "upstreamSha256": "7469acc2692439211e013ad21b7c5e44eeecb1ab14237e31af0224ddfa0d1821",
+      "vendoredSha256": "7469acc2692439211e013ad21b7c5e44eeecb1ab14237e31af0224ddfa0d1821",
+      "patch": null
+    },
+    {
+      "path": "app/editor/canvas/menu/model.ts",
+      "upstreamSha256": "16c80275f5517ee62252601eb90cbd7ad7e853f4dcc55ad45487ab659726330e",
+      "vendoredSha256": "16c80275f5517ee62252601eb90cbd7ad7e853f4dcc55ad45487ab659726330e",
+      "patch": null
+    },
+    {
+      "path": "app/editor/canvas/menu/registry.ts",
+      "upstreamSha256": "73fc0785f5a2dc535bd5764542dc32e43f86aaaee67faeb8eb66f342311e1ca4",
+      "vendoredSha256": "73fc0785f5a2dc535bd5764542dc32e43f86aaaee67faeb8eb66f342311e1ca4",
+      "patch": null
+    },
+    {
+      "path": "app/editor/canvas/obstacles.ts",
+      "upstreamSha256": "bf5b0d4227cbe901c41113047611f10f05bb75b71c821c1c881bcfa9f53a03b4",
+      "vendoredSha256": "bf5b0d4227cbe901c41113047611f10f05bb75b71c821c1c881bcfa9f53a03b4",
+      "patch": null
+    },
+    {
+      "path": "app/editor/icons.ts",
+      "upstreamSha256": "37c96fbdebf76e896c16e0b8a200f78e59e9bd83d6d21afa6f9a4b738cd90ea4",
+      "vendoredSha256": "37c96fbdebf76e896c16e0b8a200f78e59e9bd83d6d21afa6f9a4b738cd90ea4",
+      "patch": null
+    },
+    {
+      "path": "app/editor/toolbar/layout.ts",
+      "upstreamSha256": "4f2777cd78c43116c25b4d6c78666ac604f6b167da988f7dfcea9c43df515b46",
+      "vendoredSha256": "37725dc447e70c0766aa053adc661d733c75666936f1c04c8fd63212278cc804",
+      "patch": "P6"
+    },
+    {
+      "path": "app/editor/toolbar/shortcuts.ts",
+      "upstreamSha256": "f44d709682306b39642fbdb4673b9f2b67846248adefa8cd8c47777a861a7545",
+      "vendoredSha256": "f44d709682306b39642fbdb4673b9f2b67846248adefa8cd8c47777a861a7545",
+      "patch": null
+    },
+    {
+      "path": "components/ColorPicker/ColorInput.vue",
+      "upstreamSha256": "439a1b5fd825ad2ee655cb34cbedcc60ed80a84166ef12b7fb4ea4ef29125689",
+      "vendoredSha256": "439a1b5fd825ad2ee655cb34cbedcc60ed80a84166ef12b7fb4ea4ef29125689",
+      "patch": null
+    },
+    {
+      "path": "components/ColorPicker/ColorPicker.vue",
+      "upstreamSha256": "f98db514baa126fbc71c6f6a6ddbb5f81bf31a0d83cb74f571e93dd30e94061f",
+      "vendoredSha256": "f98db514baa126fbc71c6f6a6ddbb5f81bf31a0d83cb74f571e93dd30e94061f",
+      "patch": null
+    },
+    {
+      "path": "components/LayerTree/LayerTree.vue",
+      "upstreamSha256": "f89a0c4bc50d02bab74e82317c14f1b04bbceb586724b45f94e547b647030694",
+      "vendoredSha256": "f89a0c4bc50d02bab74e82317c14f1b04bbceb586724b45f94e547b647030694",
+      "patch": null
+    },
+    {
+      "path": "components/LayerTree/LayerTreeActions.vue",
+      "upstreamSha256": "1f667ca42e3ae071659c50b02df23135871693c2412ca702a935df6fddb57eb7",
+      "vendoredSha256": "1f667ca42e3ae071659c50b02df23135871693c2412ca702a935df6fddb57eb7",
+      "patch": null
+    },
+    {
+      "path": "components/LayerTree/LayerTreeDisclosure.vue",
+      "upstreamSha256": "fc1f2047d7f41d2a9aafe7dcee6348a4f433f3dce4c6aa235d9088ad170760b1",
+      "vendoredSha256": "fc1f2047d7f41d2a9aafe7dcee6348a4f433f3dce4c6aa235d9088ad170760b1",
+      "patch": null
+    },
+    {
+      "path": "components/LayerTree/LayerTreeDropIndicator.vue",
+      "upstreamSha256": "c3ce68284f398b39378a6f43154ddd399fa5fb316a1980d51bd9c1729cc80e7c",
+      "vendoredSha256": "c3ce68284f398b39378a6f43154ddd399fa5fb316a1980d51bd9c1729cc80e7c",
+      "patch": null
+    },
+    {
+      "path": "components/LayerTree/LayerTreeNodeRow.vue",
+      "upstreamSha256": "003fdc4971c034e4a15c7062506889415eeddf0df683af72b27ec4a97ae5ec97",
+      "vendoredSha256": "003fdc4971c034e4a15c7062506889415eeddf0df683af72b27ec4a97ae5ec97",
+      "patch": null
+    },
+    {
+      "path": "components/LayerTree/LayerTreeRenameRow.vue",
+      "upstreamSha256": "a1981fcc6ba141216ec06b9f2e6d8c738b9a46dbfc3e3d5fd7330943891cdf8b",
+      "vendoredSha256": "a1981fcc6ba141216ec06b9f2e6d8c738b9a46dbfc3e3d5fd7330943891cdf8b",
+      "patch": null
+    },
+    {
+      "path": "components/LayerTree/LayerTreeRowShell.vue",
+      "upstreamSha256": "fc2c98e0ad22e9dca8ca972fb1283a89df0f2b657ce051a04a91ae8f5011635d",
+      "vendoredSha256": "fc2c98e0ad22e9dca8ca972fb1283a89df0f2b657ce051a04a91ae8f5011635d",
+      "patch": null
+    },
+    {
+      "path": "components/LayerTree/geometry.ts",
+      "upstreamSha256": "dfe443f519bf90dca5bdb32bbbd9e164bb5bcae59d447115eb20d1f962a73d97",
+      "vendoredSha256": "dfe443f519bf90dca5bdb32bbbd9e164bb5bcae59d447115eb20d1f962a73d97",
+      "patch": null
+    },
+    {
+      "path": "components/LayerTree/types.ts",
+      "upstreamSha256": "28deccbe0e20c74dfd2c5dc252c0b9b4cb9b96145f3431e8358d34d20deb7e9f",
+      "vendoredSha256": "28deccbe0e20c74dfd2c5dc252c0b9b4cb9b96145f3431e8358d34d20deb7e9f",
+      "patch": null
+    },
+    {
+      "path": "components/LayerTree/ui.ts",
+      "upstreamSha256": "5dbae1726b3f49619af78e324ce3f677303eb74c3d6bc3c5b1d9ab4611cf393d",
+      "vendoredSha256": "5dbae1726b3f49619af78e324ce3f677303eb74c3d6bc3c5b1d9ab4611cf393d",
+      "patch": null
+    },
+    {
+      "path": "components/canvas/CanvasMenu.vue",
+      "upstreamSha256": "60f5e3ec71f5d9a33baf967a63b34b5431038fd82a36b895e34d20b579c93157",
+      "vendoredSha256": "60f5e3ec71f5d9a33baf967a63b34b5431038fd82a36b895e34d20b579c93157",
+      "patch": null
+    },
+    {
+      "path": "components/canvas/labels/CanvasLabelEditor.vue",
+      "upstreamSha256": "ae637eebfeb6564cc2efc2f8f70c1cf763478818092a35a66dbc12a8155523ae",
+      "vendoredSha256": "ae637eebfeb6564cc2efc2f8f70c1cf763478818092a35a66dbc12a8155523ae",
+      "patch": null
+    },
+    {
+      "path": "components/canvas/labels/presentation.ts",
+      "upstreamSha256": "3f67d1f25d9d51e9278d9dddbaa059671bd339c705dbba1c20ce3d6a3f048a93",
+      "vendoredSha256": "3f67d1f25d9d51e9278d9dddbaa059671bd339c705dbba1c20ce3d6a3f048a93",
+      "patch": null
+    },
+    {
+      "path": "components/color-picker-panel/ColorAreaControl.vue",
+      "upstreamSha256": "efdf8b928725097ee36d2714adaa84858f7d3a02758a5e797a4c8578a3b8580e",
+      "vendoredSha256": "efdf8b928725097ee36d2714adaa84858f7d3a02758a5e797a4c8578a3b8580e",
+      "patch": null
+    },
+    {
+      "path": "components/color-picker-panel/ColorPickerPanel.vue",
+      "upstreamSha256": "a035757a1e484e8c45e50091e303f9202eb4aa0d1377c9989ba1113efbeb36c2",
+      "vendoredSha256": "a035757a1e484e8c45e50091e303f9202eb4aa0d1377c9989ba1113efbeb36c2",
+      "patch": null
+    },
+    {
+      "path": "components/color-picker-panel/FormatControls.vue",
+      "upstreamSha256": "58e08908ac0619e934f49603367cfac4cfe982f7dd3db5782a5efe4a61a11b7d",
+      "vendoredSha256": "58e08908ac0619e934f49603367cfac4cfe982f7dd3db5782a5efe4a61a11b7d",
+      "patch": null
+    },
+    {
+      "path": "components/color-picker-panel/HsbFields.vue",
+      "upstreamSha256": "60af49a4085f996800e471ed5430974aaebd84be7acb209f1ac06db2935d3721",
+      "vendoredSha256": "60af49a4085f996800e471ed5430974aaebd84be7acb209f1ac06db2935d3721",
+      "patch": null
+    },
+    {
+      "path": "components/color-picker-panel/HslFields.vue",
+      "upstreamSha256": "401bde6cfc620d8ea61d3f2ea06a0f53318d4e84b4cf0a38e82d1c2408a5bd77",
+      "vendoredSha256": "401bde6cfc620d8ea61d3f2ea06a0f53318d4e84b4cf0a38e82d1c2408a5bd77",
+      "patch": null
+    },
+    {
+      "path": "components/color-picker-panel/HueAlphaSliders.vue",
+      "upstreamSha256": "90cc60df7e4d53546052593e526578b107483fe5bf92d625595458c012ec4036",
+      "vendoredSha256": "90cc60df7e4d53546052593e526578b107483fe5bf92d625595458c012ec4036",
+      "patch": null
+    },
+    {
+      "path": "components/color-picker-panel/OkhclChannelSlider.vue",
+      "upstreamSha256": "15f05e8a801157c2929963c24639bb16ce289ebcdbdc98e20ea166ef8203c10b",
+      "vendoredSha256": "15f05e8a801157c2929963c24639bb16ce289ebcdbdc98e20ea166ef8203c10b",
+      "patch": null
+    },
+    {
+      "path": "components/color-picker-panel/OkhclFields.vue",
+      "upstreamSha256": "e0d79dd0232a9877479f54de422e2186279bbef26be598ae580af28692ab0c97",
+      "vendoredSha256": "e0d79dd0232a9877479f54de422e2186279bbef26be598ae580af28692ab0c97",
+      "patch": null
+    },
+    {
+      "path": "components/color-picker-panel/RGBFields.vue",
+      "upstreamSha256": "710ec49cbe9a684bbca333b6bdabce893438cb2fd8c7f5874036dd4194e8c36f",
+      "vendoredSha256": "710ec49cbe9a684bbca333b6bdabce893438cb2fd8c7f5874036dd4194e8c36f",
+      "patch": null
+    },
+    {
+      "path": "components/color-picker-panel/StandardColorSlider.vue",
+      "upstreamSha256": "b1ed33323001feecd83e607a441d386b8c787fd49ab263ec8475187516f470ed",
+      "vendoredSha256": "b1ed33323001feecd83e607a441d386b8c787fd49ab263ec8475187516f470ed",
+      "patch": null
+    },
+    {
+      "path": "components/color-picker-panel/context.ts",
+      "upstreamSha256": "169c908a187a55dc25fc7523e967c36d32776a63aed532f6628d6e52352185f0",
+      "vendoredSha256": "169c908a187a55dc25fc7523e967c36d32776a63aed532f6628d6e52352185f0",
+      "patch": null
+    },
+    {
+      "path": "components/color-picker-panel/ui.ts",
+      "upstreamSha256": "22791eeb11bf605f88a61a0a7fa68fdc808c05ed7e27fc2791e0c8fb6b82ad32",
+      "vendoredSha256": "22791eeb11bf605f88a61a0a7fa68fdc808c05ed7e27fc2791e0c8fb6b82ad32",
+      "patch": null
+    },
+    {
+      "path": "components/design-check/LayerIssueMark.vue",
+      "upstreamSha256": "d438df88a9ba21ab2e72082f7188e4b5b7fbfbcab152185dd9f830e6a42304da",
+      "vendoredSha256": "d438df88a9ba21ab2e72082f7188e4b5b7fbfbcab152185dd9f830e6a42304da",
+      "patch": null
+    },
+    {
+      "path": "components/editor/ZoomDropdown.vue",
+      "upstreamSha256": "09a8689d08df36208d3a9633a62fb1d553b847b1aab0a06ac8d5a45cf93a5843",
+      "vendoredSha256": "f7d84f0056464fcca40241e9714e9df5190a7b95d7d3a9451ab4b6644a630d9c",
+      "patch": "P5"
+    },
+    {
+      "path": "components/fill-picker/FillPicker.vue",
+      "upstreamSha256": "6df589de666fdffcb5eaf82bfdf0a0b6e30c4a972d49d9c5406dad81696eb2da",
+      "vendoredSha256": "6df589de666fdffcb5eaf82bfdf0a0b6e30c4a972d49d9c5406dad81696eb2da",
+      "patch": null
+    },
+    {
+      "path": "components/fill-picker/GradientEditor.vue",
+      "upstreamSha256": "53e87a89c67e9b5069f96f55bd388e705706495636bb9e2a9197623b2c798723",
+      "vendoredSha256": "53e87a89c67e9b5069f96f55bd388e705706495636bb9e2a9197623b2c798723",
+      "patch": null
+    },
+    {
+      "path": "components/fill-picker/ImageFillPicker.vue",
+      "upstreamSha256": "ab4086970b7c80f2ddd0568f528abd8250a3b61760d40682746077e3f8b32577",
+      "vendoredSha256": "ab4086970b7c80f2ddd0568f528abd8250a3b61760d40682746077e3f8b32577",
+      "patch": null
+    },
+    {
+      "path": "components/fill-picker/shader/ShaderEffectControls.vue",
+      "upstreamSha256": "a03a5220bd160186ee06d4dc6d011943aac594c902be68f3e57315b30232ef4f",
+      "vendoredSha256": "a03a5220bd160186ee06d4dc6d011943aac594c902be68f3e57315b30232ef4f",
+      "patch": null
+    },
+    {
+      "path": "components/fill-picker/shader/ShaderEffectThumb.vue",
+      "upstreamSha256": "647cd7e2224a4621b31ce4cef0312600f4c6101f3fd966e9f3bb94bfcbaabbfe",
+      "vendoredSha256": "647cd7e2224a4621b31ce4cef0312600f4c6101f3fd966e9f3bb94bfcbaabbfe",
+      "patch": null
+    },
+    {
+      "path": "components/fill-picker/shader/ShaderFillPicker.vue",
+      "upstreamSha256": "fe7055899ff24df3dc96e87172fceb4cd65fd003528e07fd909c004e32c354f6",
+      "vendoredSha256": "fe7055899ff24df3dc96e87172fceb4cd65fd003528e07fd909c004e32c354f6",
+      "patch": null
+    },
+    {
+      "path": "components/font-picker/FontPicker.vue",
+      "upstreamSha256": "ecac95a92aa389a7d824a4594f13dd05b0a471fd0940079df5b855ebe62bfd75",
+      "vendoredSha256": "ecac95a92aa389a7d824a4594f13dd05b0a471fd0940079df5b855ebe62bfd75",
+      "patch": null
+    },
+    {
+      "path": "components/font-settings/FontSettingsPopover.vue",
+      "upstreamSha256": "3d9b06a3cea517ece1d26660c08cc3b177b6e29348ec26ef0a30b9fa8e92633f",
+      "vendoredSha256": "3d9b06a3cea517ece1d26660c08cc3b177b6e29348ec26ef0a30b9fa8e92633f",
+      "patch": null
+    },
+    {
+      "path": "components/font-settings/use.ts",
+      "upstreamSha256": "85ef8abe5de3c0966210078075c6355349b4ff7040fccf74442ac615fe3c341b",
+      "vendoredSha256": "85ef8abe5de3c0966210078075c6355349b4ff7040fccf74442ac615fe3c341b",
+      "patch": null
+    },
+    {
+      "path": "components/inputs/NumberField.vue",
+      "upstreamSha256": "595cd795774c17fa1b3150acff5bf8b778827631d4bfc9d7fe3ecc4bc3ae44d9",
+      "vendoredSha256": "595cd795774c17fa1b3150acff5bf8b778827631d4bfc9d7fe3ecc4bc3ae44d9",
+      "patch": null
+    },
+    {
+      "path": "components/inputs/PaintField.vue",
+      "upstreamSha256": "c216d8944830f9bc3fe98d33bb3d7eee41b3a48b21d5b30a3dd2e748e4913b48",
+      "vendoredSha256": "c216d8944830f9bc3fe98d33bb3d7eee41b3a48b21d5b30a3dd2e748e4913b48",
+      "patch": null
+    },
+    {
+      "path": "components/properties/AppearanceSection.vue",
+      "upstreamSha256": "b09f506c7c1f71ce04e2a0c96ae5b80b5b21eed2a3f5d4cbadd41307829c4e04",
+      "vendoredSha256": "b09f506c7c1f71ce04e2a0c96ae5b80b5b21eed2a3f5d4cbadd41307829c4e04",
+      "patch": null
+    },
+    {
+      "path": "components/properties/EffectsSection.vue",
+      "upstreamSha256": "db5eba3be9b112c58f02f165a689f2999d1ad70eb0521e0751d9be955b31e536",
+      "vendoredSha256": "db5eba3be9b112c58f02f165a689f2999d1ad70eb0521e0751d9be955b31e536",
+      "patch": null
+    },
+    {
+      "path": "components/properties/ExportScaleInput.vue",
+      "upstreamSha256": "77ba2283119b41e00460a2b2b60cfa644df9505fb8a2c492dc9ce352c9635d46",
+      "vendoredSha256": "77ba2283119b41e00460a2b2b60cfa644df9505fb8a2c492dc9ce352c9635d46",
+      "patch": null
+    },
+    {
+      "path": "components/properties/ExportSection.vue",
+      "upstreamSha256": "46c12190c47d79f958500f7699bfd160c3c8229a274ada713a17b12f1b89e9fd",
+      "vendoredSha256": "46c12190c47d79f958500f7699bfd160c3c8229a274ada713a17b12f1b89e9fd",
+      "patch": null
+    },
+    {
+      "path": "components/properties/FillSection.vue",
+      "upstreamSha256": "3be77a8c0199b90b1b30c9a2eaec8b76413380ceed7c2f5b441c71b8d2fd0fb0",
+      "vendoredSha256": "3be77a8c0199b90b1b30c9a2eaec8b76413380ceed7c2f5b441c71b8d2fd0fb0",
+      "patch": null
+    },
+    {
+      "path": "components/properties/PageSection.vue",
+      "upstreamSha256": "6a4397ff403109e475d2edcca174741a56c7da7f85d551770baf95a99ad20de0",
+      "vendoredSha256": "6a4397ff403109e475d2edcca174741a56c7da7f85d551770baf95a99ad20de0",
+      "patch": null
+    },
+    {
+      "path": "components/properties/PositionSection.vue",
+      "upstreamSha256": "d0484028a258e748ea6c4713ac8bb3efc08edf568f3258f0ec4a6c841bcbef5b",
+      "vendoredSha256": "d0484028a258e748ea6c4713ac8bb3efc08edf568f3258f0ec4a6c841bcbef5b",
+      "patch": null
+    },
+    {
+      "path": "components/properties/PropertyListRoot.vue",
+      "upstreamSha256": "2c6780f555a8f7b95ce728984de62803e0fdb2bb33edff0b4ad32196c88511bc",
+      "vendoredSha256": "2c6780f555a8f7b95ce728984de62803e0fdb2bb33edff0b4ad32196c88511bc",
+      "patch": null
+    },
+    {
+      "path": "components/properties/TypographySection.vue",
+      "upstreamSha256": "a2d65034be969850b379234fe1a3a96ff1812dd1bb9eb9ab3a087326d1adf37d",
+      "vendoredSha256": "a2d65034be969850b379234fe1a3a96ff1812dd1bb9eb9ab3a087326d1adf37d",
+      "patch": null
+    },
+    {
+      "path": "components/properties/VariableNumberField.vue",
+      "upstreamSha256": "c5b3f0afdd0705702916d5e383aaf9e114011d37d837e220a0d7df013adda92e",
+      "vendoredSha256": "c5b3f0afdd0705702916d5e383aaf9e114011d37d837e220a0d7df013adda92e",
+      "patch": null
+    },
+    {
+      "path": "components/properties/binding/VariableBindingPicker.vue",
+      "upstreamSha256": "dc9f3671e7e4fde2af8a17484bcee0fc7af4808536dae54e4fd01b3085556623",
+      "vendoredSha256": "dc9f3671e7e4fde2af8a17484bcee0fc7af4808536dae54e4fd01b3085556623",
+      "patch": null
+    },
+    {
+      "path": "components/properties/blend-mode/use.ts",
+      "upstreamSha256": "319f401a38def3c548cadb5c0f2bcb097383c7c7ff48c6a02c955ce0c1f8887b",
+      "vendoredSha256": "319f401a38def3c548cadb5c0f2bcb097383c7c7ff48c6a02c955ce0c1f8887b",
+      "patch": null
+    },
+    {
+      "path": "components/properties/component-properties/PropertyBindButton.vue",
+      "upstreamSha256": "5734a8a003f94d798f5c88a352415584f239f04e389265d7a9a45464e2b28a60",
+      "vendoredSha256": "5734a8a003f94d798f5c88a352415584f239f04e389265d7a9a45464e2b28a60",
+      "patch": null
+    },
+    {
+      "path": "components/properties/component-properties/PropertyBoundField.vue",
+      "upstreamSha256": "ba617c53f4329181808ed486f9555b2b8e7a196d7c8c4ad95f0e6eca56e25e83",
+      "vendoredSha256": "ba617c53f4329181808ed486f9555b2b8e7a196d7c8c4ad95f0e6eca56e25e83",
+      "patch": null
+    },
+    {
+      "path": "components/properties/component-properties/PropertyTypeIcon.vue",
+      "upstreamSha256": "743a915e2e48b5eea909c5f3dd7934fd10257069556ac74a5abb95a58238a6e8",
+      "vendoredSha256": "743a915e2e48b5eea909c5f3dd7934fd10257069556ac74a5abb95a58238a6e8",
+      "patch": null
+    },
+    {
+      "path": "components/properties/component-properties/usePropertyBinding.ts",
+      "upstreamSha256": "785cd56ac2ac0afcbb54e20988a9dd46fa20c0c5fdeace770dff53dc73891413",
+      "vendoredSha256": "785cd56ac2ac0afcbb54e20988a9dd46fa20c0c5fdeace770dff53dc73891413",
+      "patch": null
+    },
+    {
+      "path": "components/properties/constraints/ConstraintsPinControl.vue",
+      "upstreamSha256": "9d36705a6b70d933d223721c279ee88e39a40467fe4c33bf624c144ad3ea9f51",
+      "vendoredSha256": "9d36705a6b70d933d223721c279ee88e39a40467fe4c33bf624c144ad3ea9f51",
+      "patch": null
+    },
+    {
+      "path": "components/properties/constraints/ConstraintsSection.vue",
+      "upstreamSha256": "d7ff8499e9b5990b68903943c97e755d3750b155555837cc9a8589bd1ee776b1",
+      "vendoredSha256": "d7ff8499e9b5990b68903943c97e755d3750b155555837cc9a8589bd1ee776b1",
+      "patch": null
+    },
+    {
+      "path": "components/properties/fill-label.ts",
+      "upstreamSha256": "0ed219bb028758ad138952fe56abd8d35465c1a3f0e4fb9823e42f6cf6af731c",
+      "vendoredSha256": "0ed219bb028758ad138952fe56abd8d35465c1a3f0e4fb9823e42f6cf6af731c",
+      "patch": null
+    },
+    {
+      "path": "components/properties/item-list/PropertyItemRow.vue",
+      "upstreamSha256": "27b206451fa64abdd96cbeb59b0ebf99e0e94d20c46913020053c33d7923add3",
+      "vendoredSha256": "27b206451fa64abdd96cbeb59b0ebf99e0e94d20c46913020053c33d7923add3",
+      "patch": null
+    },
+    {
+      "path": "components/properties/layout/ClipContentControl.vue",
+      "upstreamSha256": "1c3cf4b662ba8bf06e32f66f04184d69b68744a49e49fb79b542f47c3b72b3e6",
+      "vendoredSha256": "1c3cf4b662ba8bf06e32f66f04184d69b68744a49e49fb79b542f47c3b72b3e6",
+      "patch": null
+    },
+    {
+      "path": "components/properties/layout/LayoutFlowControl.vue",
+      "upstreamSha256": "6843ac10ef504f223bc80b37dba6985a1d926fd0117a9298005850ae352ee7c4",
+      "vendoredSha256": "6843ac10ef504f223bc80b37dba6985a1d926fd0117a9298005850ae352ee7c4",
+      "patch": null
+    },
+    {
+      "path": "components/properties/layout/LayoutSection.vue",
+      "upstreamSha256": "ed21f3bf83e6b5530e73b34523dcff32cd733d685db17bee0b19065e9e275250",
+      "vendoredSha256": "ed21f3bf83e6b5530e73b34523dcff32cd733d685db17bee0b19065e9e275250",
+      "patch": null
+    },
+    {
+      "path": "components/properties/layout/LayoutWrapToggle.vue",
+      "upstreamSha256": "e59b2497592c711c6dcfd7c323f52cf3862a08f7b243ed00f93a64e2ddd59386",
+      "vendoredSha256": "e59b2497592c711c6dcfd7c323f52cf3862a08f7b243ed00f93a64e2ddd59386",
+      "patch": null
+    },
+    {
+      "path": "components/properties/layout/TextResizingControl.vue",
+      "upstreamSha256": "2eec1e5194e0a17bed250f66f216f6fe1e43c8ce1dda279392460c7474086550",
+      "vendoredSha256": "2eec1e5194e0a17bed250f66f216f6fe1e43c8ce1dda279392460c7474086550",
+      "patch": null
+    },
+    {
+      "path": "components/properties/layout/alignment/LayoutAlignmentControl.vue",
+      "upstreamSha256": "c32e5d963951ef0e3d9d3affc4cb7b1b72908ec44f6ff924d3fa6922f3012f10",
+      "vendoredSha256": "c32e5d963951ef0e3d9d3affc4cb7b1b72908ec44f6ff924d3fa6922f3012f10",
+      "patch": null
+    },
+    {
+      "path": "components/properties/layout/flex/FlexControls.vue",
+      "upstreamSha256": "fcf8d29362183b478b3dfa68839675c3c3324da8a2778cb98c1630fb106df651",
+      "vendoredSha256": "fcf8d29362183b478b3dfa68839675c3c3324da8a2778cb98c1630fb106df651",
+      "patch": null
+    },
+    {
+      "path": "components/properties/layout/flex/FlexGapField.vue",
+      "upstreamSha256": "801f91b0df8d7e4a6d6d3e2cad2845c37b050122aca0a1d05bd395e0ddde603b",
+      "vendoredSha256": "801f91b0df8d7e4a6d6d3e2cad2845c37b050122aca0a1d05bd395e0ddde603b",
+      "patch": null
+    },
+    {
+      "path": "components/properties/layout/grid/GridControls.vue",
+      "upstreamSha256": "e638df26985031d21369885d3c298d65eaa58ad7d49335085605e965f7c32e8f",
+      "vendoredSha256": "e638df26985031d21369885d3c298d65eaa58ad7d49335085605e965f7c32e8f",
+      "patch": null
+    },
+    {
+      "path": "components/properties/layout/padding/PaddingControls.vue",
+      "upstreamSha256": "1c1ecbbefe3d22e3f777b6a2476a987f7a3d2c2744a4bf01d829c7e629d5c618",
+      "vendoredSha256": "1c1ecbbefe3d22e3f777b6a2476a987f7a3d2c2744a4bf01d829c7e629d5c618",
+      "patch": null
+    },
+    {
+      "path": "components/properties/layout/size/SizeAxisField.vue",
+      "upstreamSha256": "b2368b3855b2c56c34df31cc441c47f3f482869a5bd0ad91f8a00ce2c882f52a",
+      "vendoredSha256": "b2368b3855b2c56c34df31cc441c47f3f482869a5bd0ad91f8a00ce2c882f52a",
+      "patch": null
+    },
+    {
+      "path": "components/properties/layout/size/SizeControls.vue",
+      "upstreamSha256": "901ad1e097302362afb9637d902cd90e22463514de48536d5e188af688c9d329",
+      "vendoredSha256": "901ad1e097302362afb9637d902cd90e22463514de48536d5e188af688c9d329",
+      "patch": null
+    },
+    {
+      "path": "components/properties/layout/size/SizeLimitField.vue",
+      "upstreamSha256": "8b63370a581dbd315851ac42fc1fe58d32d01197a80d72cc3fc06c136b90fcd4",
+      "vendoredSha256": "8b63370a581dbd315851ac42fc1fe58d32d01197a80d72cc3fc06c136b90fcd4",
+      "patch": null
+    },
+    {
+      "path": "components/properties/layout/size/types.ts",
+      "upstreamSha256": "6466ead2aa8f4f0c35b6c60b4c8b47fc6ae7a7bd0a9d6a6fef8154d39672d178",
+      "vendoredSha256": "6466ead2aa8f4f0c35b6c60b4c8b47fc6ae7a7bd0a9d6a6fef8154d39672d178",
+      "patch": null
+    },
+    {
+      "path": "components/properties/layout/types.ts",
+      "upstreamSha256": "974fefd3a23c2ee1d58664891dfee84e991acd1178bd1e36d5849659c9f844a5",
+      "vendoredSha256": "974fefd3a23c2ee1d58664891dfee84e991acd1178bd1e36d5849659c9f844a5",
+      "patch": null
+    },
+    {
+      "path": "components/properties/paint/PaintValue.vue",
+      "upstreamSha256": "1f2558b8cda95713bf351c843a72ed315dc6ca1a5b8477660157ca3873a386ef",
+      "vendoredSha256": "1f2558b8cda95713bf351c843a72ed315dc6ca1a5b8477660157ca3873a386ef",
+      "patch": null
+    },
+    {
+      "path": "components/properties/paint/binding.ts",
+      "upstreamSha256": "8968b7b0c55e581e638d8e5f03b9abbcdb322ac4014aa1eecbe848acc1835943",
+      "vendoredSha256": "8968b7b0c55e581e638d8e5f03b9abbcdb322ac4014aa1eecbe848acc1835943",
+      "patch": null
+    },
+    {
+      "path": "components/properties/paint/gradient-edit.ts",
+      "upstreamSha256": "992c44d2d51b8d9ba92c4e5e60bf50a75e5196e8456373afab46f18074943d49",
+      "vendoredSha256": "992c44d2d51b8d9ba92c4e5e60bf50a75e5196e8456373afab46f18074943d49",
+      "patch": null
+    },
+    {
+      "path": "components/properties/paint/okhcl.ts",
+      "upstreamSha256": "8c80293352a34e2090ec7b2de4a16c91d7a4e90349259ffd073389cdb8a4df49",
+      "vendoredSha256": "8c80293352a34e2090ec7b2de4a16c91d7a4e90349259ffd073389cdb8a4df49",
+      "patch": null
+    },
+    {
+      "path": "components/properties/selection/SelectionColorsSection.vue",
+      "upstreamSha256": "16eb5f376e912f2e22c194ffb59018f5ba334057ab1210b3ba34676a2d0f5b8a",
+      "vendoredSha256": "16eb5f376e912f2e22c194ffb59018f5ba334057ab1210b3ba34676a2d0f5b8a",
+      "patch": null
+    },
+    {
+      "path": "components/properties/shared-style/SharedStyleField.vue",
+      "upstreamSha256": "14c96a973f3507a9c23126d671143a6999285aefd6b5022e89760df6e1e85f52",
+      "vendoredSha256": "14c96a973f3507a9c23126d671143a6999285aefd6b5022e89760df6e1e85f52",
+      "patch": null
+    },
+    {
+      "path": "components/properties/shared-style/useSharedStylePicker.ts",
+      "upstreamSha256": "262ab68199be84fea4f0fe474a0ddbddf5598ea0526ffa969fd0276f1ccb220d",
+      "vendoredSha256": "262ab68199be84fea4f0fe474a0ddbddf5598ea0526ffa969fd0276f1ccb220d",
+      "patch": null
+    },
+    {
+      "path": "components/properties/stroke/StrokeDashControls.vue",
+      "upstreamSha256": "2545d04065378552411a8a113bbbfb69cabc911ebd09a269add2da5ec3a4c1b2",
+      "vendoredSha256": "2545d04065378552411a8a113bbbfb69cabc911ebd09a269add2da5ec3a4c1b2",
+      "patch": null
+    },
+    {
+      "path": "components/properties/stroke/StrokeGeometryControls.vue",
+      "upstreamSha256": "6ae32768496623590fff31ee5366394f3aa61e0b6c46694c34b71058beb8eccf",
+      "vendoredSha256": "6ae32768496623590fff31ee5366394f3aa61e0b6c46694c34b71058beb8eccf",
+      "patch": null
+    },
+    {
+      "path": "components/properties/stroke/StrokeSection.vue",
+      "upstreamSha256": "a60de4b00687ce3f2b25ee6e5b4948945f14699f7b4e18541bccccc73a4be26b",
+      "vendoredSha256": "a60de4b00687ce3f2b25ee6e5b4948945f14699f7b4e18541bccccc73a4be26b",
+      "patch": null
+    },
+    {
+      "path": "components/properties/stroke/StrokeSettingsPopover.vue",
+      "upstreamSha256": "1977842c4d465f9397aa73276391e7b0d7cc2b3ae6367e5b84a6667519116db2",
+      "vendoredSha256": "1977842c4d465f9397aa73276391e7b0d7cc2b3ae6367e5b84a6667519116db2",
+      "patch": null
+    },
+    {
+      "path": "components/properties/typography/LineHeightField.vue",
+      "upstreamSha256": "00df20a7c13698318950daef88b8b65b2582c261cc2401be9d936768a7e43329",
+      "vendoredSha256": "00df20a7c13698318950daef88b8b65b2582c261cc2401be9d936768a7e43329",
+      "patch": null
+    },
+    {
+      "path": "components/properties/variable-modes/VariableModeMenu.vue",
+      "upstreamSha256": "0df7b55c3e60633dfdb0a0a29f5395ca29c53900b7b42aaa9137f4be4b3625e1",
+      "vendoredSha256": "0df7b55c3e60633dfdb0a0a29f5395ca29c53900b7b42aaa9137f4be4b3625e1",
+      "patch": null
+    },
+    {
+      "path": "components/properties/variable-modes/VariableModeRows.vue",
+      "upstreamSha256": "efef40d5164e16741a68c97fa71600f17998d90f61801c52bd6a4d08cb32ac98",
+      "vendoredSha256": "efef40d5164e16741a68c97fa71600f17998d90f61801c52bd6a4d08cb32ac98",
+      "patch": null
+    },
+    {
+      "path": "components/properties/variable-modes/labels.ts",
+      "upstreamSha256": "286edd985fd1fe096715a34849e880faea36bbe000bbef6dc9204120c7f48e08",
+      "vendoredSha256": "286edd985fd1fe096715a34849e880faea36bbe000bbef6dc9204120c7f48e08",
+      "patch": null
+    },
+    {
+      "path": "components/toolbar/DesktopToolbar.vue",
+      "upstreamSha256": "daa80bbf16a6dcde3812cd05ecc3f5a648bc7a1c344bfe92afdc61a04bf68c2c",
+      "vendoredSha256": "2cebe7bccf04c768ec6fd24b6c46e8de0b542e3f5d3ac6d227dbce691f193b3d",
+      "patch": "P3"
+    },
+    {
+      "path": "components/toolbar/ToolButton.vue",
+      "upstreamSha256": "dcee7a20cfd97bfc2258fa194b567e3c745845a776c60ae35ce7c84ff618aa07",
+      "vendoredSha256": "dcee7a20cfd97bfc2258fa194b567e3c745845a776c60ae35ce7c84ff618aa07",
+      "patch": null
+    },
+    {
+      "path": "components/toolbar/ToolFlyout.vue",
+      "upstreamSha256": "1e08db2af22d88c4f0c066db44efc2b9b3e411ca93ea4639f76690607ff272e1",
+      "vendoredSha256": "1e08db2af22d88c4f0c066db44efc2b9b3e411ca93ea4639f76690607ff272e1",
+      "patch": null
+    },
+    {
+      "path": "components/toolbar/types.ts",
+      "upstreamSha256": "18859824679cf245d21e1c4bc057a09737e22e5c321c332bef5a9ccc8f50977a",
+      "vendoredSha256": "18859824679cf245d21e1c4bc057a09737e22e5c321c332bef5a9ccc8f50977a",
+      "patch": null
+    },
+    {
+      "path": "components/ui/binding/BindingPill.vue",
+      "upstreamSha256": "8c1eec102bb5bd14917798c6709fade78bd835f415cf78a741cb341954676c93",
+      "vendoredSha256": "8c1eec102bb5bd14917798c6709fade78bd835f415cf78a741cb341954676c93",
+      "patch": null
+    },
+    {
+      "path": "components/ui/binding/BindingTrigger.vue",
+      "upstreamSha256": "fcb38d9798f1be5b44390088fe81640455076bb32e6060f5c6a56a940df9e4c8",
+      "vendoredSha256": "fcb38d9798f1be5b44390088fe81640455076bb32e6060f5c6a56a940df9e4c8",
+      "patch": null
+    },
+    {
+      "path": "components/ui/binding/VariablePicker.vue",
+      "upstreamSha256": "fc792cd5c0259fa89ce8be8f3f1ffd1c15fd5ca1a0fe78927c5795d07f17001e",
+      "vendoredSha256": "fc792cd5c0259fa89ce8be8f3f1ffd1c15fd5ca1a0fe78927c5795d07f17001e",
+      "patch": null
+    },
+    {
+      "path": "components/ui/binding/index.ts",
+      "upstreamSha256": "05187ac3edbaa8af1d0a4083579031dc60b32cdefaa2b38b83b61ae54679442b",
+      "vendoredSha256": "05187ac3edbaa8af1d0a4083579031dc60b32cdefaa2b38b83b61ae54679442b",
+      "patch": null
+    },
+    {
+      "path": "components/ui/binding/picker.ts",
+      "upstreamSha256": "bc0477d265f02bd2a3d20e2d74a03738751e00df91c8e20cec21c2af8e326b0c",
+      "vendoredSha256": "bc0477d265f02bd2a3d20e2d74a03738751e00df91c8e20cec21c2af8e326b0c",
+      "patch": null
+    },
+    {
+      "path": "components/ui/binding/ui.ts",
+      "upstreamSha256": "6dbdd5efaf75cff1ab2335b70f7e468b43771be6045bd382e5fc846d40f5e560",
+      "vendoredSha256": "6dbdd5efaf75cff1ab2335b70f7e468b43771be6045bd382e5fc846d40f5e560",
+      "patch": null
+    },
+    {
+      "path": "components/ui/button/AppButton.vue",
+      "upstreamSha256": "b49275816344b2a96123709ffe3e54cd08104cad37f260cc45a5e19a9b7a1ce6",
+      "vendoredSha256": "b49275816344b2a96123709ffe3e54cd08104cad37f260cc45a5e19a9b7a1ce6",
+      "patch": null
+    },
+    {
+      "path": "components/ui/button/IconButton.vue",
+      "upstreamSha256": "aa166c45d08fe09f4f1a69da173affbaf555f3b4822209d783031e8143bb4d4c",
+      "vendoredSha256": "aa166c45d08fe09f4f1a69da173affbaf555f3b4822209d783031e8143bb4d4c",
+      "patch": null
+    },
+    {
+      "path": "components/ui/dialog/AppDialog.vue",
+      "upstreamSha256": "13e2dbf0fc967a922e8d631da2a5940bd806629c7b0fc813796269a9f31c23ff",
+      "vendoredSha256": "13e2dbf0fc967a922e8d631da2a5940bd806629c7b0fc813796269a9f31c23ff",
+      "patch": null
+    },
+    {
+      "path": "components/ui/dialog/AppDialogBody.vue",
+      "upstreamSha256": "cbbbd03458ef9be9271ae9d60b161ab3fc9912085d7654b185d850a50f90fc40",
+      "vendoredSha256": "cbbbd03458ef9be9271ae9d60b161ab3fc9912085d7654b185d850a50f90fc40",
+      "patch": null
+    },
+    {
+      "path": "components/ui/dialog/AppDialogFooter.vue",
+      "upstreamSha256": "3e3654295afabb4592918048e665fed63976a564f8ea5349625d5f7b09225c7b",
+      "vendoredSha256": "3e3654295afabb4592918048e665fed63976a564f8ea5349625d5f7b09225c7b",
+      "patch": null
+    },
+    {
+      "path": "components/ui/dialog/AppDialogHeader.vue",
+      "upstreamSha256": "317063f66e21aa67911222a6400729421e98dbedca7d5ef90554697884a18c45",
+      "vendoredSha256": "317063f66e21aa67911222a6400729421e98dbedca7d5ef90554697884a18c45",
+      "patch": null
+    },
+    {
+      "path": "components/ui/dialog/AppDialogRoot.vue",
+      "upstreamSha256": "4ae14e21ce2447e19d7cd787130d2eb668539dc6c5bcbdc20a799ce061554a0f",
+      "vendoredSha256": "4ae14e21ce2447e19d7cd787130d2eb668539dc6c5bcbdc20a799ce061554a0f",
+      "patch": null
+    },
+    {
+      "path": "components/ui/dialog/ui.ts",
+      "upstreamSha256": "6053d39d4b0cfc1701845f1ce63bc316076a916fa3585c6cb173c1b1adee92b5",
+      "vendoredSha256": "6053d39d4b0cfc1701845f1ce63bc316076a916fa3585c6cb173c1b1adee92b5",
+      "patch": null
+    },
+    {
+      "path": "components/ui/feedback/AppAlert.vue",
+      "upstreamSha256": "067803e60140091be5ca0713e0cf1d1a6488b689d513004550442549eb2d314a",
+      "vendoredSha256": "067803e60140091be5ca0713e0cf1d1a6488b689d513004550442549eb2d314a",
+      "patch": null
+    },
+    {
+      "path": "components/ui/feedback/AppDropOverlay.vue",
+      "upstreamSha256": "a753572f457e1c44a19721b1649426ed86ef5b8e020319860c25aeee4e81c60b",
+      "vendoredSha256": "a753572f457e1c44a19721b1649426ed86ef5b8e020319860c25aeee4e81c60b",
+      "patch": null
+    },
+    {
+      "path": "components/ui/feedback/AppProgress.vue",
+      "upstreamSha256": "d2cc33c496867f1479ff90e5cf3f09a38f7da4ed035b2a100c0375c236aca510",
+      "vendoredSha256": "d2cc33c496867f1479ff90e5cf3f09a38f7da4ed035b2a100c0375c236aca510",
+      "patch": null
+    },
+    {
+      "path": "components/ui/feedback/AppToast.vue",
+      "upstreamSha256": "60841f86451cb2280c4fddf755b07e7c516ab9bb53c12fe7f2d039c9c91452bb",
+      "vendoredSha256": "60841f86451cb2280c4fddf755b07e7c516ab9bb53c12fe7f2d039c9c91452bb",
+      "patch": null
+    },
+    {
+      "path": "components/ui/feedback/SeverityIcon.vue",
+      "upstreamSha256": "db8cd925f9184edbb71229a1579b65aa3d93ff5450368f02b844308624a298f7",
+      "vendoredSha256": "db8cd925f9184edbb71229a1579b65aa3d93ff5450368f02b844308624a298f7",
+      "patch": null
+    },
+    {
+      "path": "components/ui/feedback/alert.ts",
+      "upstreamSha256": "35fb17440da919a440c046934b797dee264c688a17f95a63e036d793e8c04cfb",
+      "vendoredSha256": "35fb17440da919a440c046934b797dee264c688a17f95a63e036d793e8c04cfb",
+      "patch": null
+    },
+    {
+      "path": "components/ui/feedback/drop-overlay.ts",
+      "upstreamSha256": "cfa6ad49182d4e7ac295bfbe56af214714220741fe6b1fee0acad905250a1071",
+      "vendoredSha256": "cfa6ad49182d4e7ac295bfbe56af214714220741fe6b1fee0acad905250a1071",
+      "patch": null
+    },
+    {
+      "path": "components/ui/feedback/progress.ts",
+      "upstreamSha256": "8998dd5d7aadfe29785f64efa1459b66a589f9d8e41cbb248e5d8587f7a61bfd",
+      "vendoredSha256": "8998dd5d7aadfe29785f64efa1459b66a589f9d8e41cbb248e5d8587f7a61bfd",
+      "patch": null
+    },
+    {
+      "path": "components/ui/feedback/toast.ts",
+      "upstreamSha256": "8c40a9cfd3dcb4023f54e1ffe90d88411b5cd93bd059de62bcd55eca52b34dc4",
+      "vendoredSha256": "8c40a9cfd3dcb4023f54e1ffe90d88411b5cd93bd059de62bcd55eca52b34dc4",
+      "patch": null
+    },
+    {
+      "path": "components/ui/input/AppTextarea.vue",
+      "upstreamSha256": "0073eb5d2654d1957dad8fbddc6bb82a371dc5c6b24f25d0e0f7da226b77420f",
+      "vendoredSha256": "0073eb5d2654d1957dad8fbddc6bb82a371dc5c6b24f25d0e0f7da226b77420f",
+      "patch": null
+    },
+    {
+      "path": "components/ui/input/InlineLabelEditor.vue",
+      "upstreamSha256": "0b2b17e409b4680d0f6d2c2c898d4e99de8c805042f3811fc0921574d6805c9d",
+      "vendoredSha256": "0b2b17e409b4680d0f6d2c2c898d4e99de8c805042f3811fc0921574d6805c9d",
+      "patch": null
+    },
+    {
+      "path": "components/ui/input/input.ts",
+      "upstreamSha256": "6a730efa303cbb5df4ae9c01d16d23d964aa2b4f2b665735f86dcc8eed218d23",
+      "vendoredSha256": "6a730efa303cbb5df4ae9c01d16d23d964aa2b4f2b665735f86dcc8eed218d23",
+      "patch": null
+    },
+    {
+      "path": "components/ui/menu/AppShortcutText.vue",
+      "upstreamSha256": "cc081039c79d46396d6eccd51a3dafeade1cd2854ddfa17c4c1dd931f2ec625d",
+      "vendoredSha256": "cc081039c79d46396d6eccd51a3dafeade1cd2854ddfa17c4c1dd931f2ec625d",
+      "patch": null
+    },
+    {
+      "path": "components/ui/menu/MenuScrollArea.vue",
+      "upstreamSha256": "ff82a2124a1c306ee4dbcaf4d5a0d29f9420445ce316d93a13e7c7131ee2674f",
+      "vendoredSha256": "ff82a2124a1c306ee4dbcaf4d5a0d29f9420445ce316d93a13e7c7131ee2674f",
+      "patch": null
+    },
+    {
+      "path": "components/ui/menu/menu.ts",
+      "upstreamSha256": "01e2db8bf70ed0497f35c9188dd166af5da26c2b9ad205bd8105d54094b06a40",
+      "vendoredSha256": "01e2db8bf70ed0497f35c9188dd166af5da26c2b9ad205bd8105d54094b06a40",
+      "patch": null
+    },
+    {
+      "path": "components/ui/overlay/Tip.vue",
+      "upstreamSha256": "3cd152ebaf46a9492e41bd219c76de399e6f855fb5df60ef29354a000a834435",
+      "vendoredSha256": "3cd152ebaf46a9492e41bd219c76de399e6f855fb5df60ef29354a000a834435",
+      "patch": null
+    },
+    {
+      "path": "components/ui/overlay/popover.ts",
+      "upstreamSha256": "e4e1e7576ede5bee0f25023eeaaa09b562c1ffc7e674a870ebea587f4bd383b9",
+      "vendoredSha256": "e4e1e7576ede5bee0f25023eeaaa09b562c1ffc7e674a870ebea587f4bd383b9",
+      "patch": null
+    },
+    {
+      "path": "components/ui/overlay/tooltip.ts",
+      "upstreamSha256": "db0a34a68fa53432716602cffb93366b07f0649537aaadd5e3925ddcf5ecb7fc",
+      "vendoredSha256": "db0a34a68fa53432716602cffb93366b07f0649537aaadd5e3925ddcf5ecb7fc",
+      "patch": null
+    },
+    {
+      "path": "components/ui/paint/FillSwatch.vue",
+      "upstreamSha256": "833db2e9e7c3b603c185e195c0f66b7f9f6b75afe47bf7e34f841e3a565e96c4",
+      "vendoredSha256": "833db2e9e7c3b603c185e195c0f66b7f9f6b75afe47bf7e34f841e3a565e96c4",
+      "patch": null
+    },
+    {
+      "path": "components/ui/panel/PanelFieldGroup.vue",
+      "upstreamSha256": "6db5d442ddeb744aaad69ce730509442699127be3545aa596eed689ff4980417",
+      "vendoredSha256": "6db5d442ddeb744aaad69ce730509442699127be3545aa596eed689ff4980417",
+      "patch": null
+    },
+    {
+      "path": "components/ui/panel/PanelGrid.vue",
+      "upstreamSha256": "171e4e46c624f599d960b528998eadbda5521ac67dbe198dae6a0a5fb1aeed7a",
+      "vendoredSha256": "171e4e46c624f599d960b528998eadbda5521ac67dbe198dae6a0a5fb1aeed7a",
+      "patch": null
+    },
+    {
+      "path": "components/ui/panel/PanelHeader.vue",
+      "upstreamSha256": "5b44bdf51f60c2a1cf4d114335d0892ee2ab54bfa3cc325d5d6691e67080ae03",
+      "vendoredSha256": "5b44bdf51f60c2a1cf4d114335d0892ee2ab54bfa3cc325d5d6691e67080ae03",
+      "patch": null
+    },
+    {
+      "path": "components/ui/panel/PanelItemRow.vue",
+      "upstreamSha256": "4fa51ed2cd53f16ac49548e1923447cd159c0d86a050f6ff12c5917c8a65437a",
+      "vendoredSha256": "4fa51ed2cd53f16ac49548e1923447cd159c0d86a050f6ff12c5917c8a65437a",
+      "patch": null
+    },
+    {
+      "path": "components/ui/panel/PanelSection.vue",
+      "upstreamSha256": "d3b07761c43790ad6d052f5d09882be99011eee947a5982dcc984473f94e4dbf",
+      "vendoredSha256": "d3b07761c43790ad6d052f5d09882be99011eee947a5982dcc984473f94e4dbf",
+      "patch": null
+    },
+    {
+      "path": "components/ui/select/AppCombobox.vue",
+      "upstreamSha256": "aff5de28aedb60718e4846413048ab8ec3b0629791d787669f739e315574e4d0",
+      "vendoredSha256": "aff5de28aedb60718e4846413048ab8ec3b0629791d787669f739e315574e4d0",
+      "patch": null
+    },
+    {
+      "path": "components/ui/select/AppPicker.vue",
+      "upstreamSha256": "183f9bdf0f5e2ea282bb29cc88a9bbfed740ab4438d535aa58b3824a800ac153",
+      "vendoredSha256": "183f9bdf0f5e2ea282bb29cc88a9bbfed740ab4438d535aa58b3824a800ac153",
+      "patch": null
+    },
+    {
+      "path": "components/ui/select/AppPickerField.vue",
+      "upstreamSha256": "42613ac1904cc0ccf90e5a2300b6b3ff32fd988f651adbdb272f8c3cc0bcd2cc",
+      "vendoredSha256": "42613ac1904cc0ccf90e5a2300b6b3ff32fd988f651adbdb272f8c3cc0bcd2cc",
+      "patch": null
+    },
+    {
+      "path": "components/ui/select/AppSelect.vue",
+      "upstreamSha256": "abea69d23c31219f3528cab4009fd478e13d0807bed073c4e9fa3defdd4f329d",
+      "vendoredSha256": "abea69d23c31219f3528cab4009fd478e13d0807bed073c4e9fa3defdd4f329d",
+      "patch": null
+    },
+    {
+      "path": "components/ui/select/AppSelectContent.vue",
+      "upstreamSha256": "8de65641ce51a6bb5084f1331c2813b76208664928e78c3a9b28d4fac569e50a",
+      "vendoredSha256": "8de65641ce51a6bb5084f1331c2813b76208664928e78c3a9b28d4fac569e50a",
+      "patch": null
+    },
+    {
+      "path": "components/ui/select/AppSelectItem.vue",
+      "upstreamSha256": "f01441166cde529269a67e77ea9f3ac635f515d64bf8672550c90c6893621c5d",
+      "vendoredSha256": "f01441166cde529269a67e77ea9f3ac635f515d64bf8672550c90c6893621c5d",
+      "patch": null
+    },
+    {
+      "path": "components/ui/select/SegmentedControl.vue",
+      "upstreamSha256": "c45ff4435519ae7b1c218ce1e6ae675d3c3f3ff83b1e8448e143db0aafc01f94",
+      "vendoredSha256": "c45ff4435519ae7b1c218ce1e6ae675d3c3f3ff83b1e8448e143db0aafc01f94",
+      "patch": null
+    },
+    {
+      "path": "components/ui/select/select.ts",
+      "upstreamSha256": "cea75c9186c04502374fef63dbf93740d894155e0173d8493d0fa2c7c834c6d0",
+      "vendoredSha256": "cea75c9186c04502374fef63dbf93740d894155e0173d8493d0fa2c7c834c6d0",
+      "patch": null
+    },
+    {
+      "path": "components/ui/toggle/AppSwitch.vue",
+      "upstreamSha256": "b9484c22109665f3ff7e2a743db2fe25c53dc66ef027f711fb7ca37c58efeb8a",
+      "vendoredSha256": "b9484c22109665f3ff7e2a743db2fe25c53dc66ef027f711fb7ca37c58efeb8a",
+      "patch": null
+    },
+    {
+      "path": "components/ui/types.ts",
+      "upstreamSha256": "220ca711c00b1ecaa179feb52c31d2ff7e41a17ec6f8bec10d10cc1b4f360fd0",
+      "vendoredSha256": "220ca711c00b1ecaa179feb52c31d2ff7e41a17ec6f8bec10d10cc1b4f360fd0",
+      "patch": null
+    },
+    {
+      "path": "theme/binding/field.ts",
+      "upstreamSha256": "0752eb0611486ae5c48a6104ef1925f05850e918786a5b018250ff35fd7b02f6",
+      "vendoredSha256": "0752eb0611486ae5c48a6104ef1925f05850e918786a5b018250ff35fd7b02f6",
+      "patch": null
+    },
+    {
+      "path": "theme/button/button.ts",
+      "upstreamSha256": "10c13a3a9f6a39aabd5ae3d0a0ecb9f92bc34f7840aea2a05a9fa8d292e15d99",
+      "vendoredSha256": "be498dae34a06ff8b6df1e662a8c0f908c63ee3b5b6c3e4f67cff0629f21b11b",
+      "patch": "P1"
+    },
+    {
+      "path": "theme/button/icon-button.ts",
+      "upstreamSha256": "6867ff448c0c17fc569bd296dcdb060e754773239ab402fd2a7357536decc28f",
+      "vendoredSha256": "6867ff448c0c17fc569bd296dcdb060e754773239ab402fd2a7357536decc28f",
+      "patch": null
+    },
+    {
+      "path": "theme/color-slider.ts",
+      "upstreamSha256": "07e086054973c9b822ef70f0796a0a4453080d79b31e62c379c5dd5902deb303",
+      "vendoredSha256": "07e086054973c9b822ef70f0796a0a4453080d79b31e62c379c5dd5902deb303",
+      "patch": null
+    },
+    {
+      "path": "theme/constraints.ts",
+      "upstreamSha256": "d56c1494c38c6616fb9bde783c0df81cfa4793e2f61dd13655f95a6fff8ee8fe",
+      "vendoredSha256": "d56c1494c38c6616fb9bde783c0df81cfa4793e2f61dd13655f95a6fff8ee8fe",
+      "patch": null
+    },
+    {
+      "path": "theme/control.ts",
+      "upstreamSha256": "f0c69730f13a7cd40f7c33ff319d59bb2558e51d4316372a17aa3777b5a6a42e",
+      "vendoredSha256": "f0c69730f13a7cd40f7c33ff319d59bb2558e51d4316372a17aa3777b5a6a42e",
+      "patch": null
+    },
+    {
+      "path": "theme/design-check.ts",
+      "upstreamSha256": "8ea80f6d808ee93e090df3552db5631eaa652e01b3abf2122f2e44c799da976f",
+      "vendoredSha256": "8ea80f6d808ee93e090df3552db5631eaa652e01b3abf2122f2e44c799da976f",
+      "patch": null
+    },
+    {
+      "path": "theme/dialog/index.ts",
+      "upstreamSha256": "ad7be4a5a2bbeaec50e16c1020237c397d3d4c7bbd055b3c1ad7fc76d90931c2",
+      "vendoredSha256": "a656be6c3dbc9d394b60737545a99aa8279fd1b188a2bec0f353f90b455f9338",
+      "patch": "P4"
+    },
+    {
+      "path": "theme/feedback/alert.ts",
+      "upstreamSha256": "3c9fed38bf811dbd586d5f196be41a0e9bbee71eee1072668f9b0b26fc41501e",
+      "vendoredSha256": "3c9fed38bf811dbd586d5f196be41a0e9bbee71eee1072668f9b0b26fc41501e",
+      "patch": null
+    },
+    {
+      "path": "theme/feedback/drop-overlay.ts",
+      "upstreamSha256": "23f075ec415726599299d4b57450903ae9ea032dee3bcc0465d4a9bc35aea7ae",
+      "vendoredSha256": "23f075ec415726599299d4b57450903ae9ea032dee3bcc0465d4a9bc35aea7ae",
+      "patch": null
+    },
+    {
+      "path": "theme/feedback/progress.ts",
+      "upstreamSha256": "b3fb4750d2e39f8673c8e3d2fc4a81c79a142d60f6b64f275ad9decb22aad67a",
+      "vendoredSha256": "b3fb4750d2e39f8673c8e3d2fc4a81c79a142d60f6b64f275ad9decb22aad67a",
+      "patch": null
+    },
+    {
+      "path": "theme/feedback/severity.ts",
+      "upstreamSha256": "fdaba60d8ca085eb196149b1df4ae63ceb5ade52c404750329a606c93d7e8cdb",
+      "vendoredSha256": "fdaba60d8ca085eb196149b1df4ae63ceb5ade52c404750329a606c93d7e8cdb",
+      "patch": null
+    },
+    {
+      "path": "theme/feedback/toast.ts",
+      "upstreamSha256": "ad0ebfa2f1dd14da8d9f30ec3979899d776fbf679a52b1923b20341c9b30a69e",
+      "vendoredSha256": "ad0ebfa2f1dd14da8d9f30ec3979899d776fbf679a52b1923b20341c9b30a69e",
+      "patch": null
+    },
+    {
+      "path": "theme/fill-picker.ts",
+      "upstreamSha256": "1e099c2d94bed1ae7f234a2ec258967cb4a8d8fe467015fec0bfc76eb684976f",
+      "vendoredSha256": "1e099c2d94bed1ae7f234a2ec258967cb4a8d8fe467015fec0bfc76eb684976f",
+      "patch": null
+    },
+    {
+      "path": "theme/input/input.ts",
+      "upstreamSha256": "4bb57e578ca47bc57822821ed969b4cefb2e4bb15f1fd99d4e0d6f738d0a7f0f",
+      "vendoredSha256": "4bb57e578ca47bc57822821ed969b4cefb2e4bb15f1fd99d4e0d6f738d0a7f0f",
+      "patch": null
+    },
+    {
+      "path": "theme/input/number-field.ts",
+      "upstreamSha256": "5541a085537765bc9f4853c01f520cec5988c5b1394566c9674e8b62e1ece428",
+      "vendoredSha256": "5541a085537765bc9f4853c01f520cec5988c5b1394566c9674e8b62e1ece428",
+      "patch": null
+    },
+    {
+      "path": "theme/input/textarea.ts",
+      "upstreamSha256": "5d298b116bc589062307ce6b161d50c6734c09e74e132dca077c9b9bead84e6a",
+      "vendoredSha256": "5d298b116bc589062307ce6b161d50c6734c09e74e132dca077c9b9bead84e6a",
+      "patch": null
+    },
+    {
+      "path": "theme/layer-tree.ts",
+      "upstreamSha256": "6ba07efc38d45332e07c104337ca2dad6ea7daacc358821ee76a70de76b04ef0",
+      "vendoredSha256": "6ba07efc38d45332e07c104337ca2dad6ea7daacc358821ee76a70de76b04ef0",
+      "patch": null
+    },
+    {
+      "path": "theme/layout-alignment.ts",
+      "upstreamSha256": "036337cd8726c157c475b2d83f22e0509e032e460b03fa7447c5adf2a95ce80c",
+      "vendoredSha256": "036337cd8726c157c475b2d83f22e0509e032e460b03fa7447c5adf2a95ce80c",
+      "patch": null
+    },
+    {
+      "path": "theme/motion/styles.ts",
+      "upstreamSha256": "980313fc1b12b36157f81b0de1fc2fc7ec206d67c64762a690686a8c2ff89630",
+      "vendoredSha256": "980313fc1b12b36157f81b0de1fc2fc7ec206d67c64762a690686a8c2ff89630",
+      "patch": null
+    },
+    {
+      "path": "theme/overlay.ts",
+      "upstreamSha256": "5b664dc0ea5323e01e86329d102999ec18b6ec573e08c19f9166a348d918f799",
+      "vendoredSha256": "49efa7d45bf4762f0bdd448bb2154dc3e96dd5fe429d8258be82018da38eb4a1",
+      "patch": "P2"
+    },
+    {
+      "path": "theme/page-list.ts",
+      "upstreamSha256": "2bf64484f66e4c4968b224154c6bfa1304ad2fd9dbabe1025ab1c3f7d71ef31d",
+      "vendoredSha256": "2bf64484f66e4c4968b224154c6bfa1304ad2fd9dbabe1025ab1c3f7d71ef31d",
+      "patch": null
+    },
+    {
+      "path": "theme/paint/checkerboard.ts",
+      "upstreamSha256": "f2ddd02d5ae842757af9ef5b4cf7d722629f468c6a71a1acb23c2d073bae2163",
+      "vendoredSha256": "f2ddd02d5ae842757af9ef5b4cf7d722629f468c6a71a1acb23c2d073bae2163",
+      "patch": null
+    },
+    {
+      "path": "theme/paint/field.ts",
+      "upstreamSha256": "b944ce9031660c7b258e9fa18e051707ca22632495f4a8f28dedebce52b2ad24",
+      "vendoredSha256": "b944ce9031660c7b258e9fa18e051707ca22632495f4a8f28dedebce52b2ad24",
+      "patch": null
+    },
+    {
+      "path": "theme/paint/fill-swatch.ts",
+      "upstreamSha256": "b2c4402e132fa544e6942a52eaa1fd1029bf4059028c52e4ffb9b68f09c96f44",
+      "vendoredSha256": "b2c4402e132fa544e6942a52eaa1fd1029bf4059028c52e4ffb9b68f09c96f44",
+      "patch": null
+    },
+    {
+      "path": "theme/panel/field-group.ts",
+      "upstreamSha256": "02b4b481c701033abb8115021e1f1acfb0920472caf73d29ccf981c53776ccf8",
+      "vendoredSha256": "02b4b481c701033abb8115021e1f1acfb0920472caf73d29ccf981c53776ccf8",
+      "patch": null
+    },
+    {
+      "path": "theme/panel/field.ts",
+      "upstreamSha256": "faec60505ab7e54dfe07e87a741b3183a37dfecb96f825de60016aacba918cdf",
+      "vendoredSha256": "faec60505ab7e54dfe07e87a741b3183a37dfecb96f825de60016aacba918cdf",
+      "patch": null
+    },
+    {
+      "path": "theme/panel/grid.ts",
+      "upstreamSha256": "7a935593ff0f1c746b9b9c9db27ac9303e2dc8bace5a700fc6809e013aeab842",
+      "vendoredSha256": "7a935593ff0f1c746b9b9c9db27ac9303e2dc8bace5a700fc6809e013aeab842",
+      "patch": null
+    },
+    {
+      "path": "theme/panel/header.ts",
+      "upstreamSha256": "a88b832ca9466536995c015bfa8799b989006b7a58b1c37d285338bad9dda2ef",
+      "vendoredSha256": "a88b832ca9466536995c015bfa8799b989006b7a58b1c37d285338bad9dda2ef",
+      "patch": null
+    },
+    {
+      "path": "theme/panel/item-row.ts",
+      "upstreamSha256": "6660480a6a3adc5a4e191d3b57b1aea5f98e3d3b31f0dfdd2333e99f606fa221",
+      "vendoredSha256": "6660480a6a3adc5a4e191d3b57b1aea5f98e3d3b31f0dfdd2333e99f606fa221",
+      "patch": null
+    },
+    {
+      "path": "theme/panel/section.ts",
+      "upstreamSha256": "4d69ca423149e8d0f8c9b12e091094627868e05d3ff9dcb1617a9e4acfe69923",
+      "vendoredSha256": "4d69ca423149e8d0f8c9b12e091094627868e05d3ff9dcb1617a9e4acfe69923",
+      "patch": null
+    },
+    {
+      "path": "theme/select/app.ts",
+      "upstreamSha256": "360d8059ca8556b7950e911238352a2c8b09aa24b9c11b69ab844a275c0735ef",
+      "vendoredSha256": "360d8059ca8556b7950e911238352a2c8b09aa24b9c11b69ab844a275c0735ef",
+      "patch": null
+    },
+    {
+      "path": "theme/select/combobox.ts",
+      "upstreamSha256": "3200f0ea8ab1cb7e3e7a67c6fbd8739136fb2d5ee9c665a8e3fb887ef1eb211b",
+      "vendoredSha256": "3200f0ea8ab1cb7e3e7a67c6fbd8739136fb2d5ee9c665a8e3fb887ef1eb211b",
+      "patch": null
+    },
+    {
+      "path": "theme/select/picker.ts",
+      "upstreamSha256": "44982abe3e2ac45d4d6dae0bfa24847e9afd1e70cb14ec2ab6374e640a3e8fb3",
+      "vendoredSha256": "44982abe3e2ac45d4d6dae0bfa24847e9afd1e70cb14ec2ab6374e640a3e8fb3",
+      "patch": null
+    },
+    {
+      "path": "theme/select/segmented-control.ts",
+      "upstreamSha256": "19e767a759116fb17a5e03b550cca3fb0bf43d478fd330ac1332fed14cbdfcbe",
+      "vendoredSha256": "19e767a759116fb17a5e03b550cca3fb0bf43d478fd330ac1332fed14cbdfcbe",
+      "patch": null
+    },
+    {
+      "path": "theme/select/select.ts",
+      "upstreamSha256": "03dfef824bd289a4741e9c3a9c6aaddbc67aedc0c52c27a91aeac08c69bfe72a",
+      "vendoredSha256": "03dfef824bd289a4741e9c3a9c6aaddbc67aedc0c52c27a91aeac08c69bfe72a",
+      "patch": null
+    },
+    {
+      "path": "theme/splitter.ts",
+      "upstreamSha256": "6c0a236d7d9da210db524bc6f209dff1156dbca0a78aea5349eb6b430c4ad4c1",
+      "vendoredSha256": "6c0a236d7d9da210db524bc6f209dff1156dbca0a78aea5349eb6b430c4ad4c1",
+      "patch": null
+    },
+    {
+      "path": "theme/toggle/switch.ts",
+      "upstreamSha256": "1dfc0ae1c1f2a1ee4a97b7449e286d6941a58e35c342af3dcf2009236e2d5d86",
+      "vendoredSha256": "1dfc0ae1c1f2a1ee4a97b7449e286d6941a58e35c342af3dcf2009236e2d5d86",
+      "patch": null
+    },
+    {
+      "path": "theme/toolbar.ts",
+      "upstreamSha256": "67ae945d22cac2fbdec392f7ed598d3b2b40926981baebbb819b7cc84e17ef1c",
+      "vendoredSha256": "67ae945d22cac2fbdec392f7ed598d3b2b40926981baebbb819b7cc84e17ef1c",
+      "patch": null
+    }
+  ]
+}

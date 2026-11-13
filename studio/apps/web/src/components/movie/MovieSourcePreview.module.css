@@ -1,0 +1,37 @@
+/* Source monitor inside the editor viewer. */
+.preview { display: flex; flex: 1; flex-direction: column; min-height: 0; overflow: hidden; background: var(--surface); color: var(--ink); }
+.head { display: flex; flex: none; align-items: center; gap: 8px; height: 40px; padding: 0 10px 0 6px; border-bottom: 1px solid var(--line-soft); }
+.title { flex: 1; min-width: 0; overflow: hidden; font-size: 12px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+.meta { flex: none; color: var(--ink-faint); font-size: 11px; font-variant-numeric: tabular-nums; }
+.stage { display: grid; flex: 1; place-items: center; min-height: 100px; padding: 12px; overflow: hidden; background: color-mix(in srgb, var(--ink) 4%, var(--paper)); }
+.media { width: 100%; height: 100%; min-height: 0; object-fit: contain; border-radius: 8px; background: #000; }
+.audio { width: min(90%, 420px); }
+.range { display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; border-top: 1px solid var(--line-soft); font-size: 12px; }
+.field { display: inline-flex; align-items: center; gap: 4px; color: var(--ink-soft); }
+.number {
+  width: 76px;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 12px var(--font-ui);
+  font-variant-numeric: tabular-nums;
+}
+.number:focus { border-color: var(--ink-faint); outline: none; }
+.mark {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  color: var(--ink);
+  font: 600 12px var(--font-ui);
+  cursor: pointer;
+}
+.mark:hover { background: color-mix(in srgb, var(--ink) 10%, transparent); }
+.length { color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.spacer { flex: 1; }
+.mode { height: 28px; padding: 0 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--ink); font: 12px var(--font-ui); }
+.error { margin: 0; padding: 6px 10px; color: var(--accent-ink); font-size: 11px; }

@@ -1,0 +1,76 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The chrome-free MCP Apps surface (spec 07 §4.4): one viewport-high column. The film editor fills it;
+   the films home is a header with the two tabs over a scrolling library or the create panel. */
+.app {
+  container: fx-movie-app / inline-size;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.home {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.header {
+  display: flex;
+  flex: none;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 12px;
+  height: 48px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--paper);
+}
+
+:global(html:not(.is-window-fullscreen) [data-client-type='desktop'][data-host-platform='darwin']) .header {
+  padding-inline-start: 88px;
+  -webkit-app-region: drag;
+}
+
+:global([data-client-type='desktop'][data-host-platform='darwin']) .header :is(button, a, [role='tab']) {
+  -webkit-app-region: no-drag;
+}
+
+.headerAction {
+  align-self: center;
+}
+
+/* The tab underline sits on the header's own hairline. */
+.tabsList {
+  align-self: stretch;
+  border-bottom-width: 0;
+}
+
+.filmsPanel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.newPanel {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding: 16px 20px;
+}
+
+@container fx-movie-app (max-width: 599px) {
+  .header {
+    padding: 0 12px;
+  }
+
+  .newPanel {
+    padding: 12px;
+  }
+}

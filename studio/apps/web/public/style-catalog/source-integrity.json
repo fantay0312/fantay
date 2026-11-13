@@ -1,0 +1,486 @@
+{
+  "source": "https://repo-assets.open-design.ai/",
+  "mirroredAt": "2026-11-06",
+  "files": [
+    {
+      "path": "style-catalog/v1/deck-academic-research-v1.webp",
+      "bytes": 51412,
+      "sha256": "1989ca548dbc079462640566db636d6a8a06d42a71a8cc7811c917539be8b522"
+    },
+    {
+      "path": "style-catalog/v1/deck-bento-v1.webp",
+      "bytes": 27630,
+      "sha256": "98f98020cb992a6bc1649ac25d6b13730b33b2dab82cc8e91f6d28e4ff354544"
+    },
+    {
+      "path": "style-catalog/v1/deck-bold-storytelling-v1.webp",
+      "bytes": 53964,
+      "sha256": "827490403f931d76f62b1448b5d83d5097cad0b7964c30b0ead8c5ebb59b0de5"
+    },
+    {
+      "path": "style-catalog/v1/deck-cinematic-dark-v1.webp",
+      "bytes": 28980,
+      "sha256": "a52d9841bfacb5b9c9b5c17247702e1a5acfa15915f6007565f36d38e1db432e"
+    },
+    {
+      "path": "style-catalog/v1/deck-clay-3d-v1.webp",
+      "bytes": 44176,
+      "sha256": "2f7036e28098c483d03f667c185ba237a13ae1168a68555d43ad2a36b30ef579"
+    },
+    {
+      "path": "style-catalog/v1/deck-data-briefing-v1.webp",
+      "bytes": 49916,
+      "sha256": "c5f3fb92c9d3bfe6f3ff068201ac81ba0979a4731512bb4236919dde77b28ada"
+    },
+    {
+      "path": "style-catalog/v1/deck-editorial-narrative-v1.webp",
+      "bytes": 32674,
+      "sha256": "5eb41b43ffe5b422c670f7398fd64ad49aee2f47a157e0fc6c3a5036809d49bb"
+    },
+    {
+      "path": "style-catalog/v1/deck-education-lesson-v1.webp",
+      "bytes": 76652,
+      "sha256": "c504ed285d93f9e564764a784eefaee7d8629d7cb6592900cb3b051ecbd466eb"
+    },
+    {
+      "path": "style-catalog/v1/deck-experimental-grid-v1.webp",
+      "bytes": 69188,
+      "sha256": "c400ad5fad940d8c81a3777d5a9770218ea9631c28c3deaa952959902a3d3cd2"
+    },
+    {
+      "path": "style-catalog/v1/deck-formal-corporate-v1.webp",
+      "bytes": 32276,
+      "sha256": "43cda99790f4ed2f8a756cceb5373f1af911c10fd44c9fab68c693799f1f5b9c"
+    },
+    {
+      "path": "style-catalog/v1/deck-mono-terminal-v1.webp",
+      "bytes": 19372,
+      "sha256": "b7e7d326b5f9156cf55b51776cd766564f90952d4906ba1dc1cab3385686f24a"
+    },
+    {
+      "path": "style-catalog/v1/deck-neon-cyber-v1.webp",
+      "bytes": 52962,
+      "sha256": "d8ced3bbddd3aa62aa53e3d47cfbd15893e5154a552512bd13dafe200731dd18"
+    },
+    {
+      "path": "style-catalog/v1/deck-organic-natural-v1.webp",
+      "bytes": 86780,
+      "sha256": "aee4db5246ff06049b1963c432c9ad4ef94aae9b3967d2a0346a43fb2aff6aab"
+    },
+    {
+      "path": "style-catalog/v1/deck-photojournal-v1.webp",
+      "bytes": 76496,
+      "sha256": "1cf5cc0a42c0a2bcc6598fe354ac62e18d1a771015f91cac10ecab80a2448f58"
+    },
+    {
+      "path": "style-catalog/v1/deck-pixel-arcade-v1.webp",
+      "bytes": 36988,
+      "sha256": "0f485c9ccd3958bb25460c434c2cc71475dd7f895028fb7691adc1a2e8b3424c"
+    },
+    {
+      "path": "style-catalog/v1/deck-premium-pitch-v1.webp",
+      "bytes": 21528,
+      "sha256": "9266bfb61349c778544e0ba5f949ed9cf307941b57c3b93716598a6925ae721b"
+    },
+    {
+      "path": "style-catalog/v1/deck-product-keynote-v1.webp",
+      "bytes": 27698,
+      "sha256": "257895e51ec18f82134e465c329d25f6d550e2b68a9f0877552c743bd48e424b"
+    },
+    {
+      "path": "style-catalog/v1/deck-retro-pop-v1.webp",
+      "bytes": 36278,
+      "sha256": "69be86feef17b2e746e72dcdd3d4eb031b82946d8145f65572419353d846ebe3"
+    },
+    {
+      "path": "style-catalog/v1/deck-sketchbook-v1.webp",
+      "bytes": 200462,
+      "sha256": "140ed712b1bea4ea1f21cd8224ec0fb770a45f6b9d0f5898e74e1dbb56132dae"
+    },
+    {
+      "path": "style-catalog/v1/deck-skeuomorphic-v1.webp",
+      "bytes": 99566,
+      "sha256": "cda4f085bdf04762854cbbe4e9fa5e4f35b34750e1ad40b6e24ca71d1c2f083d"
+    },
+    {
+      "path": "style-catalog/v1/deck-soft-glass-v1.webp",
+      "bytes": 23640,
+      "sha256": "3ba42aac2786463e53e1a884a4a6818fd9b2c391fc62b0cced25819eec40c785"
+    },
+    {
+      "path": "style-catalog/v1/deck-soft-gradient-v1.webp",
+      "bytes": 16212,
+      "sha256": "25de51d65e18a1bb650df01abe320b6cd1f61d6e3d0f388244664dec7dc5ec1a"
+    },
+    {
+      "path": "style-catalog/v1/deck-swiss-minimal-v1.webp",
+      "bytes": 24832,
+      "sha256": "522d40bc0dec5fb87be86d60c364538fd77a9e5817230a81bc1aa5922b9c2826"
+    },
+    {
+      "path": "style-catalog/v1/deck-tech-futurist-v1.webp",
+      "bytes": 72680,
+      "sha256": "e167b1bd3b990326497e06f545d63f76d8dd232d39abc71fc6e9733054468f37"
+    },
+    {
+      "path": "style-catalog/v1/deck-warm-workshop-v1.webp",
+      "bytes": 34682,
+      "sha256": "268f2593adf3af054b066460a894c3965fb840ee665837de43d03682beca203d"
+    },
+    {
+      "path": "style-catalog/v1/document-academic-paper-v1.webp",
+      "bytes": 75356,
+      "sha256": "a5fbf981330d58e1c767e3863553b161e613428e75998098ae7471698683a931"
+    },
+    {
+      "path": "style-catalog/v1/document-creator-eguide-v1.webp",
+      "bytes": 67212,
+      "sha256": "690e30c55796d3e56e23e600a7a82d96fdb79d4dd3da6705709ca692cfb96932"
+    },
+    {
+      "path": "style-catalog/v1/document-data-briefing-v1.webp",
+      "bytes": 57816,
+      "sha256": "88026321ccf5e7215de198bda89d3f2da98a83dd367cd3d925b564d79511d793"
+    },
+    {
+      "path": "style-catalog/v1/document-docs-reference-v1.webp",
+      "bytes": 26694,
+      "sha256": "fb26a4a0cfee09e659d7bd441370e1a460b162e6573f2f1f002b3ec3497a5e2d"
+    },
+    {
+      "path": "style-catalog/v1/document-editorial-article-v1.webp",
+      "bytes": 60656,
+      "sha256": "7a93bba02231f66e9ab8770be5598b6ca8fb7099264f9a1f88db3fe51234ef37"
+    },
+    {
+      "path": "style-catalog/v1/document-formal-report-v1.webp",
+      "bytes": 39682,
+      "sha256": "99a4e71555cea6fd8179d41de0b31593c7dcc0724a061ad01893c57dc4548ed1"
+    },
+    {
+      "path": "style-catalog/v1/document-legal-policy-v1.webp",
+      "bytes": 26510,
+      "sha256": "0a22455017b24b8d13f58044d8cf7af917ab055df05934e63b48f52faee8d333"
+    },
+    {
+      "path": "style-catalog/v1/document-lesson-workbook-v1.webp",
+      "bytes": 59442,
+      "sha256": "3010f7a285ab565c3d4e631a4bb0edd93aee9d14fe66d23a6ace1c06e4594dda"
+    },
+    {
+      "path": "style-catalog/v1/document-monochrome-manual-v1.webp",
+      "bytes": 113780,
+      "sha256": "ef83ea9f292fc23a0e18e73e7d1036c2099450fc681b4501515f4b507cf2d675"
+    },
+    {
+      "path": "style-catalog/v1/document-research-notebook-v1.webp",
+      "bytes": 124300,
+      "sha256": "1c2b9dd66a51a8cbe10b46701a81caa9fa0283fac03a4ecff8a64f4b9c48dcfb"
+    },
+    {
+      "path": "style-catalog/v1/document-swiss-minimal-v1.webp",
+      "bytes": 11894,
+      "sha256": "c38610a8d987443448606e808485d2ff5fcfb832923189ff3a200ae8fba0f1e0"
+    },
+    {
+      "path": "style-catalog/v1/image-black-white-film-v1.webp",
+      "bytes": 237162,
+      "sha256": "7965e700fecdea86519ac4e9611977df500c981c7c514d9ee5c500a110cf7b79"
+    },
+    {
+      "path": "style-catalog/v1/image-chrome-3d-v1.webp",
+      "bytes": 195362,
+      "sha256": "73d2d6a0056bd12812516ef8f3a7399cc72aa1941fe74775db515b390ef7901c"
+    },
+    {
+      "path": "style-catalog/v1/image-illustration-soft-v1.webp",
+      "bytes": 185154,
+      "sha256": "54803954e4ec77a1dbd1c450e4e5297d36381c3bb00f3f26d2fd8079eb885802"
+    },
+    {
+      "path": "style-catalog/v1/image-image-cinematic-v1.webp",
+      "bytes": 174180,
+      "sha256": "29e39d4554e591ba74c7355debb84b3ab43b72eb6a08de54e8d0d21f5e98676d"
+    },
+    {
+      "path": "style-catalog/v1/image-image-clay-3d-v1.webp",
+      "bytes": 90764,
+      "sha256": "3a9d95137a154d916cc4efa61c109f06f786ec76dece8de68fb81b094bcde82a"
+    },
+    {
+      "path": "style-catalog/v1/image-image-neo-brutalist-v1.webp",
+      "bytes": 247082,
+      "sha256": "9c3ec444552f637c1c0de48fcb88029f971fa4d38fbcde48a6d063cc21a81fa3"
+    },
+    {
+      "path": "style-catalog/v1/image-image-organic-natural-v1.webp",
+      "bytes": 202698,
+      "sha256": "0a49302330d954b6a3ebeb59deb70e4c52dce3184d99a6d9227dc49af34c14d7"
+    },
+    {
+      "path": "style-catalog/v1/image-image-pixel-arcade-v1.webp",
+      "bytes": 206186,
+      "sha256": "aa1a02c5140b263ac4fc2c43f0d352d37683916878fabae34131d4218dafd707"
+    },
+    {
+      "path": "style-catalog/v1/image-image-surreal-collage-v1.webp",
+      "bytes": 115036,
+      "sha256": "1dcb72e9294dfa2ed9f745a8560852c957fe9cfc1f8d751c1275dd69212760e3"
+    },
+    {
+      "path": "style-catalog/v1/image-ink-line-v1.webp",
+      "bytes": 208654,
+      "sha256": "6e154c67c1955b2e7bb019f5d8824c465bee574831ce53e42f2c284ff5217e2f"
+    },
+    {
+      "path": "style-catalog/v1/image-photo-editorial-v1.webp",
+      "bytes": 130966,
+      "sha256": "975c5c3f30c98d6ffb1bd69b63b6de200be875b011e2fa4c62465a4ff8a7927b"
+    },
+    {
+      "path": "style-catalog/v1/image-poster-bold-typography-v1.webp",
+      "bytes": 268998,
+      "sha256": "04912b4a731c0fb6e849aff98e526b7331bc0994fb4dd7cf580e19e58b587bd9"
+    },
+    {
+      "path": "style-catalog/v1/image-poster-cinematic-dark-v1.webp",
+      "bytes": 123832,
+      "sha256": "e296e9f855df41023bc433d9b0c908aa4cd70102b6f6d700f7245f9058494478"
+    },
+    {
+      "path": "style-catalog/v1/image-poster-clay-3d-v1.webp",
+      "bytes": 97712,
+      "sha256": "ab48bb22d4ffcb0be7ca4906ed8ce696b634b58d1c856965c3f0d6326f2d9d2a"
+    },
+    {
+      "path": "style-catalog/v1/image-poster-editorial-newsprint-v1.webp",
+      "bytes": 267872,
+      "sha256": "f37db465ae9de8bd31a4fca728571f8e8a016fd70e0d8b092f770419dd29481c"
+    },
+    {
+      "path": "style-catalog/v1/image-poster-neon-cyber-v1.webp",
+      "bytes": 268856,
+      "sha256": "f8cf5afda7270c6018903253b2871dca7f6a0d39baf9bd3bd5fb266bfbfe06d5"
+    },
+    {
+      "path": "style-catalog/v1/image-poster-organic-natural-v1.webp",
+      "bytes": 286372,
+      "sha256": "b308216aad0f481a0616e69d56a06e9822addcb2beaa0dfbd4bdc8c1f0b53e43"
+    },
+    {
+      "path": "style-catalog/v1/image-poster-retro-pop-v1.webp",
+      "bytes": 330358,
+      "sha256": "9cbfd663b344581cdb4c3117a11129b12731c6a606a9447634dbb849f3b45194"
+    },
+    {
+      "path": "style-catalog/v1/image-poster-swiss-minimal-v1.webp",
+      "bytes": 23926,
+      "sha256": "42ab49378090b585f1f64eaee5643b88c708b028b64bcf9e9aeffd9dc7d23c91"
+    },
+    {
+      "path": "style-catalog/v1/image-product-photography-v1.webp",
+      "bytes": 93858,
+      "sha256": "4ce617c7d8f128b16a941fe9af6e9db1a2f8e8919c980bdf518bee76b8e74647"
+    },
+    {
+      "path": "style-catalog/v1/image-risograph-print-v1.webp",
+      "bytes": 517932,
+      "sha256": "97d0f9c52fcd6858c5f60590aadda1fe702f0b712de39bf39e23cb8a5a59b930"
+    },
+    {
+      "path": "style-catalog/v1/image-watercolor-v1.webp",
+      "bytes": 306358,
+      "sha256": "ff6d6b751b21888f51f3efca52866bfa5622ad3ce47851ac3dfa2fb0b358be8c"
+    },
+    {
+      "path": "style-catalog/v1/prototype-aurora-dark-v1.webp",
+      "bytes": 34140,
+      "sha256": "e6de9e9e16e09e7535d5543f95a4bc8eb7fdbdc7731ec961af65058269e6ad09"
+    },
+    {
+      "path": "style-catalog/v1/prototype-brand-landing-v1.webp",
+      "bytes": 77282,
+      "sha256": "af73489c11d98695d9248ac0e7c69c287dfb6a932158ca131e7b7ccfa5c4c229"
+    },
+    {
+      "path": "style-catalog/v1/prototype-cinematic-dark-v1.webp",
+      "bytes": 45828,
+      "sha256": "2ccc9c50da2533ebdcfa83aed711b7f1ad3a9c813e8ca1fd209116319cfa873a"
+    },
+    {
+      "path": "style-catalog/v1/prototype-content-led-product-v1.webp",
+      "bytes": 81194,
+      "sha256": "d5d0fc8b2505e5782a83eb2da88a79c468e6076db69b21b5c78cc4a269451fb7"
+    },
+    {
+      "path": "style-catalog/v1/prototype-dense-utility-v1.webp",
+      "bytes": 46470,
+      "sha256": "e9737fc2ae5d9c853582d87bb2d92b90134a4517e4b1316ab9ce7af1f5d688df"
+    },
+    {
+      "path": "style-catalog/v1/prototype-editorial-print-v1.webp",
+      "bytes": 60736,
+      "sha256": "b18395469cc7de446f694b601facc6c4fb5908a1ef366f297cb402bb6b5a05fd"
+    },
+    {
+      "path": "style-catalog/v1/prototype-experimental-interface-v1.webp",
+      "bytes": 60064,
+      "sha256": "202621c5ab0b7c802cf2a3bfce5f0464099ed74a87fd6da77f42d02efbfd1140"
+    },
+    {
+      "path": "style-catalog/v1/prototype-expressive-consumer-v1.webp",
+      "bytes": 61906,
+      "sha256": "ae84b18693545a167345ff4488e4231dcdb530e5ba25d4012e3c2f680620531b"
+    },
+    {
+      "path": "style-catalog/v1/prototype-friendly-service-v1.webp",
+      "bytes": 20832,
+      "sha256": "ed662b786becdd8efeca3f2fa1e22050d32af3c17aa21f69eb518f3027b1ae78"
+    },
+    {
+      "path": "style-catalog/v1/prototype-isometric-v1.webp",
+      "bytes": 121154,
+      "sha256": "45f0efc6dc4fa231b1264001bc8c490ae0d89451b236b10cfc7fc5dddd8b36b1"
+    },
+    {
+      "path": "style-catalog/v1/prototype-marketplace-v1.webp",
+      "bytes": 70308,
+      "sha256": "a723401749f18ac67ba1bdd1bfdbbd4d2c455f173a8a767eb75419ab2a16f7c5"
+    },
+    {
+      "path": "style-catalog/v1/prototype-mobile-native-v1.webp",
+      "bytes": 56268,
+      "sha256": "2be4358f5367177d93666cfa6cbe6f0a5ea78e46768d5ad7d75dcd3e7c505c8b"
+    },
+    {
+      "path": "style-catalog/v1/prototype-monochrome-terminal-v1.webp",
+      "bytes": 117568,
+      "sha256": "9622ab355c144af8f833043f1f186a737c2d0f6730835898e9db6ffb2ac27d9f"
+    },
+    {
+      "path": "style-catalog/v1/prototype-neo-brutalist-v1.webp",
+      "bytes": 52972,
+      "sha256": "14a2ad960aedea219f69451be107928ab01c7e806a5d2faf373072bb032916c2"
+    },
+    {
+      "path": "style-catalog/v1/prototype-organic-natural-v1.webp",
+      "bytes": 112026,
+      "sha256": "bdf02616ff36cbc767c04bd42d2076ec0851c166d5b6284fbe13c689f923d7f6"
+    },
+    {
+      "path": "style-catalog/v1/prototype-paper-craft-v1.webp",
+      "bytes": 213664,
+      "sha256": "1744a57655eef63ceac13783bf68fdd83ce2a34f15d61d805015be8cab4aa40c"
+    },
+    {
+      "path": "style-catalog/v1/prototype-photojournal-v1.webp",
+      "bytes": 89532,
+      "sha256": "cd82af097b281a78f4d4b8ae07b7f44e413e307d8b7340a3a2b5204218012cea"
+    },
+    {
+      "path": "style-catalog/v1/prototype-premium-commerce-v1.webp",
+      "bytes": 66478,
+      "sha256": "a35aba58d560fcb1f9568fd55a8dfc434d93385150169894781ed688351a6c40"
+    },
+    {
+      "path": "style-catalog/v1/prototype-quiet-saas-v1.webp",
+      "bytes": 25478,
+      "sha256": "7a0cf9dc88fa4e8a84cae3a9c33db48360433d37e2444da61c9c99555da90a15"
+    },
+    {
+      "path": "style-catalog/v1/prototype-retro-pop-v1.webp",
+      "bytes": 74694,
+      "sha256": "9fce2f9b0476c2152aa3feaac2f8dd041b15d6f1240fa74377ec053633bb07ca"
+    },
+    {
+      "path": "style-catalog/v1/prototype-social-community-v1.webp",
+      "bytes": 70212,
+      "sha256": "49b796b91d384b3483cbcff79c3b267f076cef7d03056977d799b0d60774c12a"
+    },
+    {
+      "path": "style-catalog/v1/prototype-soft-glass-v1.webp",
+      "bytes": 34384,
+      "sha256": "cdaefc3cf459c3050b8c4218193be713c6c3385ea5ec85e2d95579ee49a96572"
+    },
+    {
+      "path": "style-catalog/v1/prototype-spatial-3d-v1.webp",
+      "bytes": 48584,
+      "sha256": "7e8884e8b14e3dfb41b51f8a291c2b4b11f6f65d11d96b11d74cc20caa2919cd"
+    },
+    {
+      "path": "style-catalog/v1/prototype-swiss-minimal-v1.webp",
+      "bytes": 16958,
+      "sha256": "1da19a39203a503a3e9045c6e200e757bcff860d4dce5ed3ee253ba068c36ad0"
+    },
+    {
+      "path": "style-catalog/v1/prototype-tech-futurist-v1.webp",
+      "bytes": 80938,
+      "sha256": "5409592f03aa6bc6fde522bfd2594be8a380aa6fd4e805e411524f00c8cf93d7"
+    },
+    {
+      "path": "style-catalog/v1/prototype-y2k-chrome-v1.webp",
+      "bytes": 152168,
+      "sha256": "f077632dc3eed00c5824696f53da4295a31d92e6bf768e7c836c15251b8c9fcf"
+    },
+    {
+      "path": "style-catalog/v1/video-chrome-3d-v1.webp",
+      "bytes": 256354,
+      "sha256": "c1be8cac9b63938bc1bebe7359f5e665445937d5a17f570908ad635ce32f850b"
+    },
+    {
+      "path": "style-catalog/v1/video-data-drift-v1.webp",
+      "bytes": 170636,
+      "sha256": "23338f787c71a5af7ef39d01fdd4907273fe0bc9b4f5d29cb345ebe4b21e5362"
+    },
+    {
+      "path": "style-catalog/v1/video-deconstructed-v1.webp",
+      "bytes": 290652,
+      "sha256": "dfe2bff89ef2ce624b3f32804b0bfc4032bdc55781c13e57dc4293c3e94d1a34"
+    },
+    {
+      "path": "style-catalog/v1/video-folk-frequency-v1.webp",
+      "bytes": 485248,
+      "sha256": "f0c19f3a6915441f96ff6172c97c84a97fc808d8447d1e4afe420bcd7b8e1ef9"
+    },
+    {
+      "path": "style-catalog/v1/video-kinetic-type-v1.webp",
+      "bytes": 82774,
+      "sha256": "3dbe1790d1e67fec8882e501838195aaaf4284e9eadeeda191e336c6764a7d38"
+    },
+    {
+      "path": "style-catalog/v1/video-maximalist-type-v1.webp",
+      "bytes": 431244,
+      "sha256": "f24cd891483e43b40a691dea0d85931fb46a9211a0cfb87d269fca2b8a086af7"
+    },
+    {
+      "path": "style-catalog/v1/video-paper-stopmotion-v1.webp",
+      "bytes": 198790,
+      "sha256": "b03efc39ce2506fa18f8975ca43c674681c340b26a4fbca066a044df11295d2d"
+    },
+    {
+      "path": "style-catalog/v1/video-product-demo-v1.webp",
+      "bytes": 53332,
+      "sha256": "503fb3651d199c790fbed31a7ff2ef8f550ac89b1b883c8689c765362cc01e6b"
+    },
+    {
+      "path": "style-catalog/v1/video-shadow-cut-v1.webp",
+      "bytes": 58752,
+      "sha256": "8dc4e1d72e09853ad1f6d564ed491dbdc5eea231800d639becfa45aa13f604db"
+    },
+    {
+      "path": "style-catalog/v1/video-soft-signal-v1.webp",
+      "bytes": 54268,
+      "sha256": "33e582f95df6ac4a2b125cc5a9f100b73f0d2a65fb58bc976752d220af17e434"
+    },
+    {
+      "path": "style-catalog/v1/video-swiss-pulse-v1.webp",
+      "bytes": 41624,
+      "sha256": "65763aa0c24f0c744d493604ca87b8ea74e3837be366238f0055da30e4cdfa3d"
+    },
+    {
+      "path": "style-catalog/v1/video-velvet-standard-v1.webp",
+      "bytes": 62230,
+      "sha256": "7e2fa7055dac44cd9380233ddf6e9cbbec8b98c48750d2fb9adfee6f3b958b98"
+    }
+  ]
+}

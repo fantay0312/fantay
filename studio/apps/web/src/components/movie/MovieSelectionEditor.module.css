@@ -1,0 +1,90 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/* Localized shot editor (spec 07 §6.3), inside the inspector's 编辑 tab. Tokens only. */
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.title {
+  color: var(--ink);
+  font-size: var(--type-copy);
+  font-weight: 600;
+  line-height: var(--type-copy-lh);
+}
+
+.subheading {
+  color: var(--ink);
+  font-size: var(--type-body);
+  font-weight: 600;
+}
+
+.state {
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.select {
+  width: 100%;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.numbers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.caption {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.captionLabel {
+  color: var(--ink);
+  font-size: var(--type-label);
+  font-weight: 600;
+}
+
+.empty {
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.help {
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+  line-height: 1.6;
+}

@@ -1,0 +1,171 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * The empty-library demo. It sits inside the empty card, so the card's surface is its ground. The selected shot wears
+ * the studio's 2px brand ring and the action sits in the field the way a nested pill does: 4px from every edge.
+ */
+.md {
+  .ss-stage { font-family: var(--font-ui); color: var(--ink); }
+
+  .md-field {
+    position: absolute;
+    left: 0;
+    top: 0;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 504px;
+    height: 36px;
+    padding: 4px 4px 4px 12px;
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+  .md-field__text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--ink);
+    font: 500 13px/18px var(--font-ui);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .md-field__hint { color: var(--ink-faint); font-weight: 400; }
+  .md-caret {
+    display: inline-block;
+    width: 1px;
+    height: 14px;
+    margin-left: 1px;
+    vertical-align: -2px;
+    background: var(--ink);
+  }
+  .md-field__action { flex: none; }
+  .md-send {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--paper-deep);
+    color: var(--ink-faint);
+    transition: background-color 150ms var(--ease-out-quint), color 150ms var(--ease-out-quint);
+  }
+  .md-send[data-ready] { background: var(--ink); color: var(--paper); }
+  .md-approve {
+    display: inline-flex;
+    align-items: center;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 8px;
+    background: var(--ink);
+    color: var(--paper);
+    font: 500 12.5px/1 var(--font-ui);
+    white-space: nowrap;
+  }
+  .md-delivered {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 12px 0 8px;
+    color: var(--ink);
+    font: 500 12.5px/1 var(--font-ui);
+    white-space: nowrap;
+  }
+  .md-delivered svg { color: var(--success); }
+
+  /* The film's own colours, in both themes. */
+  .md-frame {
+    position: absolute;
+    left: 0;
+    top: 46px;
+    width: 504px;
+    height: 188px;
+    overflow: hidden;
+    border-radius: 10px;
+    background: var(--sub);
+  }
+  .md-frame img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 30%;
+    opacity: 0;
+    transition: opacity 360ms var(--ease-out-quint);
+  }
+  .md-frame img[data-on] { opacity: 1; }
+
+  .md-strip {
+    position: absolute;
+    left: 0;
+    top: 244px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    width: 504px;
+    height: 52px;
+  }
+  .md-shot {
+    position: relative;
+    overflow: hidden;
+    border-radius: 6px;
+    background: var(--sub);
+  }
+  .md-shot img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 300ms var(--ease-out-quint);
+  }
+  .md-shot[data-ready] img { opacity: 1; }
+  .md-shot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 6px;
+    box-shadow: inset 0 0 0 2px var(--brand);
+    opacity: 0;
+    transition: opacity 150ms var(--ease-out-quint);
+  }
+  .md-shot[data-active]::after { opacity: 1; }
+  .md-shot__n,
+  .md-shot__s {
+    position: absolute;
+    bottom: 4px;
+    display: grid;
+    place-items: center;
+    height: 16px;
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--ink-soft);
+    font: 500 10px/1 var(--font-mono);
+    opacity: 0;
+    transition: opacity 240ms var(--ease-out-quint);
+  }
+  .md-shot__n { left: 4px; width: 16px; }
+  .md-shot__s { right: 4px; padding: 0 4px; }
+  .md-shot[data-ready] .md-shot__n,
+  .md-shot[data-ready] .md-shot__s { opacity: 1; }
+
+  .md-playhead {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    border-radius: 1px;
+    background: var(--brand);
+    opacity: 0;
+    transition: opacity 200ms var(--ease-out-quint);
+  }
+  .md-playhead[data-on] { opacity: 1; }
+  .md-playhead[data-run] {
+    transform: translateX(502px);
+    transition: opacity 200ms var(--ease-out-quint), transform 2800ms linear;
+  }
+  .md-playhead[data-gone] { opacity: 0; }
+}

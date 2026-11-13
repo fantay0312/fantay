@@ -1,0 +1,48 @@
+{
+  "name": "@fantay/canvas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch --mode development",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "vitest run -c vitest.config.ts"
+  },
+  "dependencies": {
+    "@open-pencil/core": "0.16.0",
+    "@open-pencil/dom-css": "0.16.0",
+    "@open-pencil/scene-graph": "0.16.0",
+    "@open-pencil/vue": "0.16.0",
+    "@zseven-w/op-web-sdk": "0.8.0",
+    "canvaskit-wasm": "0.41.1",
+    "vue": "3.5.44",
+    "@open-design/contracts": "workspace:*",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "@fantay/tokens": "workspace:*",
+    "@floating-ui/vue": "1.1.11",
+    "@vueuse/core": "14.4.0",
+    "es-toolkit": "1.53.0",
+    "fflate": "0.8.3",
+    "reka-ui": "2.11.0",
+    "tailwind-merge": "3.7.0",
+    "tailwind-variants": "3.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.7",
+    "typescript": "6.0.2",
+    "vite": "8.3.5",
+    "vue-tsc": "3.2.6",
+    "@types/react": "18.3.28",
+    "@types/react-dom": "18.3.7",
+    "@iconify-json/lucide": "1.2.144",
+    "@tailwindcss/vite": "4.3.3",
+    "jsdom": "29.1.1",
+    "tailwindcss": "4.3.3",
+    "tw-animate-css": "1.4.0",
+    "unplugin-icons": "23.0.1",
+    "unplugin-vue-components": "31.1.0",
+    "vitest": "4.1.6"
+  }
+}

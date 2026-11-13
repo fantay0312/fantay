@@ -1,0 +1,451 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Fantay shell layout (spec 02 §11.2 with amendment B6). Fantay mode only: everything is scoped under the
+   shell root. Module CSS is unlayered, so it beats upstream's `@layer legacy` rules without !important.
+
+   Grid areas keep one DOM order in every mode (the account dock and the main column are never remounted):
+     docked    'sidebar main' / 'dock main'        — sidebar column 248 px, or the 56/76 px rail
+     overlay   'open bar dock' / 'main main main'  — web below 900 px: a 44 px bar, the sidebar is a sheet
+     chromeless 'main'                             — onboarding; the dock stays mounted, hidden */
+
+.root {
+  --fx-sidebar-expanded-w: 248px;
+  --fx-sidebar-collapsed-w: 0px;
+  --fx-top-row-h: 44px;
+  --fx-traffic-inset: 0px;
+  --fx-titlebar-inset-right: 0px;
+  --fx-sidebar-current-w: var(--fx-sidebar-expanded-w);
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--fx-sidebar-current-w) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'sidebar main'
+    'dock main';
+  width: 100vw;
+  max-width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+  transition: grid-template-columns var(--motion-enter) var(--ease-out-quint);
+}
+
+.root[data-sidebar='collapsed'] {
+  --fx-sidebar-current-w: var(--fx-sidebar-collapsed-w);
+  transition-duration: var(--motion-exit);
+}
+
+/* App's root div has no class in Fantay mode, but upstream chrome still renders in place next to the shell
+   (the project route's account cluster mounts MessageCenter's empty inline-flex root there). In a block that
+   leaves a 17.5 px line box above the 100vh shell: the shell slid down and the window scrolled. A flex
+   column turns every such sibling into a 0-height item, the way `.workspace-shell`'s grid rows do upstream. */
+:global([data-client-type]):has(> .root) {
+  display: flex;
+  flex-direction: column;
+}
+
+.root[data-client-type='desktop'][data-host-platform='darwin'] {
+  --fx-traffic-inset: 78px;
+  --fx-sidebar-collapsed-w: 0px;
+  --fx-sidebar-expanded-w: 248px;
+  --fx-top-row-h: 44px;
+}
+
+.root[data-client-type='desktop']:not([data-host-platform='darwin']) {
+  --fx-sidebar-expanded-w: 248px;
+  --fx-top-row-h: 36px;
+}
+
+.root[data-viewport-tier='compact'] {
+  --fx-sidebar-expanded-w: 220px;
+}
+
+:global(html.is-window-fullscreen) .root[data-host-platform='darwin'] {
+  --fx-traffic-inset: 0px;
+  --fx-sidebar-collapsed-w: 0px;
+}
+
+.root[data-client-type='desktop'][data-host-platform='win32'] {
+  --fx-titlebar-inset-right: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw));
+}
+
+.root[data-sidebar-mode='overlay'] {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: var(--fx-top-row-h) minmax(0, 1fr);
+  grid-template-areas:
+    'open bar dock'
+    'main main main';
+  transition: none;
+}
+
+/* The full-page Settings has its own full-height navigation sidebar (`← 返回首页` + section list), so the outer
+   sidebar and top bar give way and two navigation bars never stack. The Settings dialog shares that class but floats
+   over the app, so it must leave the shell exactly as it found it: `--overlay` is excluded on every rule here. */
+.root:has(:global(.settings-page-shell:not(.settings-page-shell--overlay))) {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-areas: 'main';
+  transition: none;
+}
+
+.root:has(:global(.settings-page-shell:not(.settings-page-shell--overlay))) .sidebar,
+.root:has(:global(.settings-page-shell:not(.settings-page-shell--overlay))) .rail,
+.root:has(:global(.settings-page-shell:not(.settings-page-shell--overlay))) .dock,
+.root:has(:global(.settings-page-shell:not(.settings-page-shell--overlay))) .overlayOpen,
+.root:has(:global(.settings-page-shell:not(.settings-page-shell--overlay))) .overlayBar {
+  display: none;
+}
+
+.root[data-chromeless] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-areas: 'main';
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    transition: none;
+  }
+}
+
+/* ── sidebar column and the persistent account dock ───────────────────────────────────────────── */
+
+.sidebar {
+  grid-area: sidebar;
+  min-height: 0;
+  border-inline-end: 1px solid var(--line-soft);
+}
+
+.root[data-sidebar-mode='docked'][data-sidebar='collapsed'] .sidebar {
+  width: 0;
+  min-width: 0;
+  border-inline-end: 0;
+  overflow: visible;
+}
+
+.dock {
+  grid-area: dock;
+  position: relative;
+  z-index: 3;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 12px 12px;
+  background: var(--sidebar);
+  border-inline-end: 1px solid var(--line-soft);
+}
+
+.root[data-sidebar-mode='docked'][data-sidebar='collapsed'] .dock {
+  width: 0;
+  height: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.root[data-sidebar-mode='overlay'] .dock {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 8px 0 0;
+  background: var(--paper);
+  border-inline-end: 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.root[data-chromeless] .dock {
+  display: none;
+}
+
+/* 最大化: the workspace takes the window, and the traffic lights now sit over its header row. */
+.root[data-workspace-maximized] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-areas: 'main';
+  transition: none;
+}
+
+.root[data-workspace-maximized] .sidebar,
+.root[data-workspace-maximized] .rail,
+.root[data-workspace-maximized] .dock,
+.root[data-workspace-maximized] .overlayOpen,
+.root[data-workspace-maximized] .overlayBar,
+.root[data-workspace-maximized] .main :global(.ws-focus-expand) {
+  display: none;
+}
+
+.root[data-workspace-maximized] .main :global(.ws-tabs-shell) {
+  padding-inline-start: max(10px, calc(var(--fx-traffic-inset) + 8px));
+}
+
+.overlayOpen {
+  grid-area: open;
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-inline-start: max(8px, var(--fx-traffic-inset));
+  background: var(--paper);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.overlayBar {
+  grid-area: bar;
+  position: relative;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  padding-inline: 6px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+:global(html:not(.is-window-fullscreen))
+  .root[data-client-type='desktop'][data-host-platform='darwin']
+  .overlayBar
+  > *,
+.root[data-client-type='desktop'] .overlayBar span {
+  display: none;
+}
+
+.root[data-client-type='desktop'][data-sidebar-mode='overlay'] :is(.overlayOpen, .overlayBar, .dock) {
+  position: relative;
+  -webkit-app-region: drag;
+}
+
+.root[data-client-type='desktop'][data-sidebar-mode='overlay'] :is(.overlayOpen, .overlayBar, .dock)::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 8px;
+  pointer-events: none;
+  -webkit-app-region: no-drag;
+}
+
+.root[data-client-type='desktop'][data-sidebar-mode='overlay'] .overlayOpen::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 8px;
+  pointer-events: none;
+  -webkit-app-region: no-drag;
+}
+
+.root[data-client-type='desktop'][data-sidebar-mode='overlay'] .dock::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 12px;
+  pointer-events: none;
+  -webkit-app-region: no-drag;
+}
+
+.root[data-client-type='desktop'][data-sidebar-mode='overlay']
+  :is(.overlayOpen, .overlayBar, .dock)
+  :is(button, a, input, [role='button']) {
+  -webkit-app-region: no-drag;
+}
+
+/* ── main column ─────────────────────────────────────────────────────────────────────────────── */
+
+.main {
+  grid-area: main;
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--paper);
+  container-type: inline-size;
+  container-name: fantay-main;
+}
+
+.main > * {
+  flex: 1 1 0%;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Modals rendered inside the main column (new project, automations, design-system pickers …) paint inside its
+   stacking layer, which sits below the account dock (z-index 3). While one is open, lift the whole column above the
+   dock so the scrim covers the sidebar foot too instead of leaving it lit. */
+.main:has([aria-modal='true']) {
+  z-index: 4;
+}
+
+.root[data-client-type='desktop']:not([data-sidebar-mode='overlay']):not([data-route-kind='project']):not([data-chromeless]):not(:has(:global(.settings-page-shell:not(.settings-page-shell--overlay)))) .main,
+.root[data-sidebar-mode='docked'][data-sidebar='collapsed']:not([data-route-kind='project']):not([data-chromeless]):not(:has(:global(.settings-page-shell:not(.settings-page-shell--overlay)))) .main {
+  padding-top: var(--fx-top-row-h);
+}
+
+.mainDragStrip {
+  position: absolute;
+  z-index: 10;
+  inset: 8px 16px auto 8px;
+  height: calc(var(--fx-top-row-h) - 8px);
+  padding-inline-end: var(--fx-titlebar-inset-right);
+  -webkit-app-region: drag;
+}
+
+.root[data-client-type='desktop'][data-host-platform='darwin']:is([data-chromeless], :has(:global(.settings-page-shell:not(.settings-page-shell--overlay)))) .mainDragStrip {
+  inset: 8px 16px auto 76px;
+}
+
+/* ── upstream integration (the shell column replaces .workspace-shell__body) ───────────────────── */
+
+.main > :global(.app),
+.main > :global(.entry-shell) {
+  height: auto;
+}
+
+/* EntryShell keeps its rail mounted (its modals, search palette and account cluster logic stay alive) but the
+   rail column is held at 0 and the rail is never painted or focusable: the Fantay sidebar replaces it. */
+.main :global(.entry-shell--no-header .entry),
+.main :global(.entry-shell--no-header .entry.entry--rail-open) {
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+
+.main :global(.entry-nav-rail) {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.main :global(.entry-main--scroll) {
+  --entry-content-surface: var(--paper);
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.main :global(.split-chat-tabs-dock) {
+  display: flex;
+  align-items: center;
+  height: var(--fx-top-row-h);
+  min-height: var(--fx-top-row-h);
+  background: var(--paper);
+  /* Only the workspace's header rows are ruled, so the right panel reads as its own column. The transparent
+     stroke keeps this row's box identical to .ws-tabs-shell, which centres the toggle on the same line. */
+  border-bottom: 1px solid transparent;
+}
+
+.main :global(.split-chat-tabs-dock .split-workspace-toggle) {
+  margin-inline-start: auto;
+  /* The workspace header's end padding, so the toggle does not move when it switches. */
+  margin-inline-end: calc(16px + var(--fx-titlebar-inset-right));
+}
+
+.root[data-sidebar-mode='docked'][data-sidebar='collapsed'] .main :global(.split-chat-tabs-dock) {
+  padding-inline-start: calc(max(10px, var(--fx-traffic-inset)) + 154px);
+}
+
+.main :global(.ws-tabs-shell) {
+  height: var(--fx-top-row-h);
+  min-height: var(--fx-top-row-h);
+  padding-inline-end: calc(16px + var(--fx-titlebar-inset-right));
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+
+/* The right panel is a column of the window, not a card floating on a wash: it runs edge to edge, so its header
+   rules reach the window's edge and end on the divider. */
+.main :global(.split > .workspace) {
+  margin: 0;
+  border-radius: 0;
+}
+
+/* The chat | workspace divider. Upstream paints nothing here (its cards float apart); on one flat surface that
+   leaves no edge at all, so the line is always on, at any resize-handle state. It sits on the workspace side of
+   the 4 px handle, where the header rules meet it. */
+.main :global(.split-resize-handle)::after {
+  display: block;
+  inset-inline: auto 0;
+  background: var(--line);
+  opacity: 1;
+}
+
+.main :global(.split-resize-handle:hover)::after,
+.main :global(.split-resize-handle:focus-visible)::after,
+.main :global(.split.is-resizing-chat .split-resize-handle)::after {
+  background: var(--ink-ghost);
+}
+
+.root[data-sidebar-mode='docked'][data-sidebar='collapsed'] .main :global(.split-layout:not(:has(.split-chat-tabs-dock)) .ws-tabs-shell) {
+  padding-inline-start: calc(max(10px, var(--fx-traffic-inset)) + 154px);
+}
+
+.main :global(.ws-board-toolbar) {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-height: 34px;
+  padding-inline: 6px 10px;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.root .main :global(.ws-tab) {
+  height: 28px;
+  min-height: 28px;
+  max-width: 200px;
+  padding-inline: 8px;
+  border-radius: 8px;
+}
+
+.root .main :global(.ws-tab.active) {
+  background: var(--paper-deep);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.root .main :global(.ws-tab-label) {
+  max-width: none;
+}
+
+.root .main :global(.ws-tab-close) {
+  opacity: 0;
+}
+
+.root .main :global(.ws-tab:hover .ws-tab-close),
+.root .main :global(.ws-tab:focus-within .ws-tab-close) {
+  opacity: 1;
+}
+
+/* ── desktop drag regions ───────────────────────────────────────────────────────────────────── */
+
+.root[data-client-type='desktop'] .main :global(.split-chat-tabs-dock),
+.root[data-client-type='desktop'] .main :global(.ws-tabs-shell) {
+  position: relative;
+  -webkit-app-region: drag;
+}
+
+.root[data-client-type='desktop'] .main :global(.split-chat-tabs-dock)::before,
+.root[data-client-type='desktop'] .main :global(.ws-tabs-shell)::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 8px;
+  pointer-events: none;
+  -webkit-app-region: no-drag;
+}
+
+.root[data-client-type='desktop'] .main :global(.ws-tabs-shell)::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 16px;
+  pointer-events: none;
+  -webkit-app-region: no-drag;
+}
+
+.root[data-client-type='desktop'] .main :global(.split-chat-tabs-dock) :is(button, a, input, [role='button'], [role='tab']),
+.root[data-client-type='desktop'] .main :global(.ws-tabs-shell) :is(button, a, input, [role='button'], [role='tab']) {
+  -webkit-app-region: no-drag;
+}

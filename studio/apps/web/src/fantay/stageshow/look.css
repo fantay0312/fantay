@@ -1,0 +1,38 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * Fantay's look for the Stageshow kit (src/vendor/stageshow): every kit token is one of the app's live tokens,
+ * so a demo follows light and dark without a second set of values. `.fd-demo` is on the Stage's outer wrapper.
+ */
+.fd-demo .ss-stage {
+  --ss-font: var(--font-ui);
+  --ss-mono: var(--font-mono);
+  --ss-canvas: var(--paper);
+  --ss-surface: var(--surface);
+  --ss-chrome: var(--sub);
+  --ss-well: var(--paper-deep);
+  --ss-raised: var(--sub);
+  --ss-line: var(--line);
+  --ss-line-faint: var(--line-soft);
+  --ss-text-strong: var(--ink);
+  --ss-text: var(--ink-soft);
+  --ss-text-faint: var(--ink-faint);
+  --ss-icon: var(--ink-soft);
+  --ss-icon-faint: var(--ink-faint);
+  --ss-accent: var(--brand);
+  --ss-accent-soft: var(--brand-soft);
+  --ss-accent-text: var(--brand-ink);
+  --ss-success: var(--success);
+  --ss-success-text: var(--success-ink);
+  --ss-danger: var(--danger);
+  --ss-warning: var(--warning);
+  --ss-radius-sm: var(--radius-row);
+  --ss-radius-md: var(--radius-control);
+  --ss-radius-lg: var(--radius-card);
+  --ss-radius-window: var(--radius-panel);
+  --ss-control: var(--control-md);
+  --ss-shadow-card: var(--shadow-ring);
+  --ss-shadow-float: var(--shadow-float);
+  --ss-shadow-satellite: var(--shadow-float);
+  --ss-shadow-hero: var(--shadow-pop);
+  background: transparent;
+}

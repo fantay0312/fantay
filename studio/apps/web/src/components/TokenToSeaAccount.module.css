@@ -1,0 +1,570 @@
+.root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.signInBtn {
+  width: 100%;
+  justify-content: flex-start;
+  border: 0;
+  background: transparent;
+}
+
+.menu {
+  min-width: 248px;
+}
+
+.menuHint,
+.hint {
+  margin: 8px 0 0;
+  font-size: var(--type-label);
+  line-height: var(--type-label-lh);
+  color: var(--ink-soft);
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+}
+
+.railPendingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hint code {
+  word-break: break-all;
+  font-family: var(--font-mono);
+}
+
+.link {
+  font-size: var(--type-label);
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.error {
+  margin: 0;
+  font-size: var(--type-label);
+  color: var(--danger);
+}
+
+/* ============================================================
+   Inline Variant (Settings ▸ 账户 & Services)
+   ============================================================ */
+.inlineRoot {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.inlineCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px 18px;
+  border-radius: var(--radius-card);
+  background: var(--sub);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+.inlineIdentity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 1 1 240px;
+}
+
+.inlineAvatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-chip);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--type-lead);
+  font-weight: 600;
+  box-shadow: var(--shadow-ring);
+}
+
+.inlineAvatar[data-tone="connected"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.inlineAvatar[data-tone="pending"] {
+  background: var(--amber-bg);
+  color: var(--amber);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning) 35%, transparent);
+}
+
+.inlineCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.inlineTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.inlineTitle {
+  font-family: var(--font-ui);
+  font-size: var(--type-copy);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.inlineBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 20px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: var(--type-caption);
+  font-weight: 500;
+  line-height: 1.2;
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+.inlineBadge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.75;
+}
+
+.inlineBadge[data-tone="connected"] {
+  background: var(--green-bg);
+  color: var(--green);
+  box-shadow: inset 0 0 0 1px var(--green-border);
+}
+
+.inlineBadge[data-tone="pending"] {
+  background: var(--amber-bg);
+  color: var(--amber);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning) 35%, transparent);
+}
+
+.inlineBadge[data-tone="warning"] {
+  background: var(--amber-bg);
+  color: var(--amber);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning) 35%, transparent);
+}
+
+.inlineSubtitle {
+  font-family: var(--font-ui);
+  font-size: var(--type-label);
+  line-height: var(--type-label-lh);
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inlineActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.inlineActionLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--control-sm);
+  padding: 0 12px;
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--type-label);
+  font-weight: 500;
+  text-decoration: none;
+  box-shadow: var(--shadow-ring);
+  transition: background-color var(--motion-fast) var(--ease-out-cubic), box-shadow var(--motion-fast) var(--ease-out-cubic);
+}
+
+.inlineActionLink:hover {
+  background: var(--paper-deep);
+  box-shadow: var(--shadow-ring-hover);
+}
+
+.configCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+}
+
+.configHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.configTitle {
+  font-family: var(--font-ui);
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.configHint {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--type-label);
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.configHint code {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: var(--radius-tag);
+  background: var(--sub);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+  word-break: break-all;
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+.configFormRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.configInputWrap {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.errorBanner {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-control);
+  background: var(--red-bg);
+  color: var(--red);
+  font-family: var(--font-ui);
+  font-size: var(--type-label);
+  line-height: 1.45;
+  box-shadow: inset 0 0 0 1px var(--red-border);
+}
+
+/* ── Gate: the welcome page's sign-in block ──
+   One ink button as the only primary action on the page (Fantay: the main action is the darkest mass): the
+   provider's own mark on a white tile, the label, and a bare arrow that leans forward under the pointer. The
+   tile is concentric with the button (radius 16 = tile 7 + inset 9). The account row sits above it once signed
+   in, one quiet line of guidance below, and a failed sign-in is said in one tinted line, not a bordered banner. */
+
+.gateRoot {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+}
+
+.gatePrimary {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 52px;
+  margin: 0;
+  padding: 0 18px 0 9px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--brand);
+  color: var(--on-brand);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-align: left;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--on-brand) 16%, transparent),
+    0 1px 2px rgba(0, 0, 0, 0.18),
+    0 10px 22px -14px rgba(0, 0, 0, 0.5);
+  transition:
+    background-color 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    box-shadow 200ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Signed in: no provider mark, so the label takes the button's own inset. */
+.gatePrimary:not(:has(.gatePrimaryMark)) {
+  padding-left: 20px;
+}
+
+.gatePrimary:hover:not(:disabled) {
+  background: var(--brand-hover);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--on-brand) 20%, transparent),
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    0 14px 26px -14px rgba(0, 0, 0, 0.56);
+}
+
+.gatePrimary:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.gatePrimary:focus-visible {
+  outline: 2px solid var(--focus-ring-color, var(--info));
+  outline-offset: 3px;
+}
+
+.gatePrimary:disabled {
+  cursor: default;
+  background: color-mix(in srgb, var(--brand) 88%, var(--paper));
+}
+
+.gatePrimaryMark {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 7px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.gatePrimaryMark img {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.gatePrimaryLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gatePrimaryTail {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+}
+
+.gatePrimaryArrow {
+  opacity: 0.62;
+  transition:
+    opacity 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.gatePrimary:hover:not(:disabled) .gatePrimaryArrow {
+  opacity: 1;
+  transform: translateX(3px);
+}
+
+.gateSpinner {
+  opacity: 0.8;
+  animation: gateSpin 900ms linear infinite;
+}
+
+@keyframes gateSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.gateHint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 6px;
+  margin: 0;
+  padding: 0 2px;
+  color: var(--ink-faint);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.gateLink {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 30%, transparent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: text-decoration-color 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.gateLink:hover {
+  background: none;
+  text-decoration-color: currentColor;
+}
+
+.gateLink:focus-visible {
+  outline: 2px solid var(--focus-ring-color, var(--info));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.gateError {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 2px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--danger) 7%, transparent);
+  color: var(--accent-ink);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 20px;
+  text-wrap: pretty;
+}
+
+.gateError svg {
+  flex: 0 0 auto;
+  margin-top: 2.5px;
+}
+
+.gateIdentity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px 12px 14px;
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+}
+
+.gateAvatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: var(--sub);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.gateIdentityCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.gateIdentityName,
+.gateIdentityMeta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gateIdentityName {
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.gateIdentityMeta {
+  color: var(--ink-faint);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+}
+
+.gateTextButton {
+  flex: 0 0 auto;
+  height: 30px;
+  margin: 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--sub);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 140ms cubic-bezier(0.23, 1, 0.32, 1),
+    color 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.gateTextButton:hover:not(:disabled) {
+  background: var(--paper-deep);
+  color: var(--ink);
+}
+
+.gateTextButton:focus-visible {
+  outline: 2px solid var(--focus-ring-color, var(--info));
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gateSpinner {
+    animation-duration: 2400ms;
+  }
+
+  .gatePrimary,
+  .gatePrimaryArrow {
+    transition: none;
+  }
+}

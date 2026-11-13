@@ -1,0 +1,388 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* One dropdown. The app has three implementations (CustomSelect `.od-select-*`, SearchableModelSelect
+   `.model-select-searchable__*` and the older `.ds-picker-*`), and to a person they are one control, so they share one
+   closed state and one open list here: a 32 px field on the surface with a hairline, and a list on the same surface with
+   a soft shadow, 32 px rows and a check for the selected row. Selection is tone and a check, never colour. */
+:root {
+  --dropdown-radius: 10px;
+  --dropdown-row: 32px;
+  --dropdown-row-radius: 7px;
+  /* The one shadow of anything floating over the app. It carries no ring, so it can sit on a 1 px border. */
+  --float-shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.16), 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+[data-theme='dark'] {
+  --float-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* The list */
+:is(.od-select-menu, .model-select-searchable__popover, .ds-picker-popover) {
+  border: 1px solid var(--line);
+  border-radius: var(--dropdown-radius);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--float-shadow);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.od-select-menu {
+  padding: 4px;
+}
+.ds-picker-popover .ds-picker-list {
+  padding: 4px;
+}
+.model-select-searchable__list {
+  padding: 4px;
+}
+/* The popover is capped to the room it has and clips, so the options must be what gives way: the search row and the
+   footer stay whole and the list scrolls, however little room there is. */
+.model-select-searchable__popover {
+  display: flex;
+  flex-direction: column;
+}
+.model-select-searchable__popover > :is(.model-select-searchable__list, .model-select-searchable__body) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.model-select-searchable__popover > :is(.model-select-searchable__search-row, .model-select-searchable__footer) {
+  flex: none;
+}
+
+/* The rows */
+:is(.od-select-option, .model-select-searchable__option, .ds-picker-item) {
+  min-height: var(--dropdown-row);
+  border: 0;
+  border-radius: var(--dropdown-row-radius);
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+:is(
+  .od-select-option:hover:not(:disabled),
+  .od-select-option.active:not(:disabled),
+  .model-select-searchable__option:hover:not(.is-disabled),
+  .model-select-searchable__option.is-active:not(.is-disabled),
+  .ds-picker-item:hover,
+  .ds-picker-item.active
+) {
+  background: var(--sub);
+  color: var(--ink);
+}
+.model-select-searchable__option[aria-selected='true'] {
+  font-weight: 500;
+}
+.model-select-searchable__search-row {
+  padding: 8px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.model-select-searchable__popover--catalog .model-select-searchable__search-row {
+  padding: 0;
+}
+.od-select-option-check,
+.model-select-searchable__option-check {
+  color: var(--ink);
+}
+.od-select-group-label {
+  color: var(--ink-faint);
+}
+
+/* The closed field, wherever it sits */
+:is(.od-select-trigger, .ds-picker-trigger) {
+  min-height: 32px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+}
+:is(.od-select-trigger, .ds-picker-trigger):hover:not(:disabled),
+.od-select-trigger[aria-expanded='true'],
+.ds-picker-trigger.open {
+  border-color: var(--ink-ghost);
+}
+.ds-picker-title {
+  color: var(--ink);
+  font-weight: 500;
+}
+.ds-picker-sub {
+  color: var(--ink-faint);
+}
+
+/* Language switcher (`LanguageMenu` on onboarding/entry footers + rail language submenu).
+   Replaces the legacy `#b0b0b0` wireframe border, global `600` button weight, and `#e5e5e5`
+   wash with Fantay's concentric paper-and-ink floating menu surface. */
+.lang-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0 10px 0 9px;
+  border: 0;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: var(--type-body);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.005em;
+  font-variant-numeric: tabular-nums;
+  opacity: 1;
+  box-shadow: var(--shadow-ring);
+  cursor: pointer;
+  user-select: none;
+  transform: none;
+  transition:
+    background-color var(--motion-fast) var(--ease-out-quint),
+    color var(--motion-fast) var(--ease-out-quint),
+    box-shadow var(--motion-fast) var(--ease-out-quint),
+    scale var(--motion-micro) var(--ease-out-quint);
+}
+.lang-pill--compact {
+  width: 30px;
+  padding: 0;
+  justify-content: center;
+}
+.lang-pill svg {
+  flex: none;
+  opacity: 1;
+}
+.lang-pill .lang-pill__icon {
+  width: 14px;
+  height: 14px;
+  color: var(--ink-faint);
+  transition: color var(--motion-fast) var(--ease-out-quint);
+}
+.lang-pill--compact .lang-pill__icon {
+  width: 16px;
+  height: 16px;
+}
+.lang-pill .lang-pill__label {
+  line-height: 1.2;
+}
+.lang-pill .lang-pill__chevron {
+  width: 12px;
+  height: 12px;
+  color: var(--ink-faint);
+  transition:
+    transform var(--motion-enter) var(--ease-out-quint),
+    color var(--motion-fast) var(--ease-out-quint);
+}
+.lang-pill:hover {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-ring-hover);
+}
+.lang-pill:hover :is(.lang-pill__icon, .lang-pill__chevron) {
+  color: var(--ink-soft);
+}
+.lang-pill[aria-expanded='true'] {
+  background: var(--sub);
+  color: var(--ink);
+  box-shadow: var(--shadow-ring-hover);
+}
+.lang-pill[aria-expanded='true'] .lang-pill__icon {
+  color: var(--ink);
+}
+.lang-pill[aria-expanded='true'] .lang-pill__chevron {
+  color: var(--ink-soft);
+  transform: rotate(180deg);
+}
+.lang-pill:active {
+  transform: none;
+  scale: 0.985;
+}
+.lang-pill:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.lang-menu-popover,
+.entry-nav-rail__language-menu {
+  padding: 5px;
+  gap: 1px;
+  border: 0;
+  border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  color: var(--ink);
+  box-shadow: var(--shadow-ring), var(--float-shadow);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  backdrop-filter: blur(20px) saturate(1.2);
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.lang-menu-popover {
+  z-index: var(--z-fx-floating);
+  min-width: 232px;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 32px));
+  /* Exactly 8 whole 32px rows + seven 1px gaps + 10px vertical padding = 273px,
+     avoiding horizontally sliced glyphs along the bottom edge at scrollTop 0. */
+  max-height: min(273px, calc(100vh - 96px));
+}
+.lang-menu-popover::-webkit-scrollbar,
+.entry-nav-rail__language-menu::-webkit-scrollbar {
+  width: 6px;
+}
+.lang-menu-popover::-webkit-scrollbar-track,
+.entry-nav-rail__language-menu::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 6px;
+}
+.lang-menu-popover::-webkit-scrollbar-thumb,
+.entry-nav-rail__language-menu::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 999px;
+}
+.lang-menu-popover--up {
+  bottom: calc(100% + 8px);
+  top: auto;
+}
+.lang-menu-popover--down {
+  top: calc(100% + 8px);
+  bottom: auto;
+}
+.lang-menu-popover--align-start {
+  left: auto;
+  right: auto;
+  inset-inline-start: 0;
+  inset-inline-end: auto;
+}
+.lang-menu-popover--align-end {
+  left: auto;
+  right: auto;
+  inset-inline-end: 0;
+  inset-inline-start: auto;
+}
+.lang-menu-popover--up.lang-menu-popover--align-start {
+  transform-origin: bottom left;
+}
+.lang-menu-popover--up.lang-menu-popover--align-end {
+  transform-origin: bottom right;
+}
+.lang-menu-popover--down.lang-menu-popover--align-start {
+  transform-origin: top left;
+}
+.lang-menu-popover--down.lang-menu-popover--align-end {
+  transform-origin: top right;
+}
+.lang-menu-popover--up.lang-menu-popover--align-start:dir(rtl) {
+  transform-origin: bottom right;
+}
+.lang-menu-popover--up.lang-menu-popover--align-end:dir(rtl) {
+  transform-origin: bottom left;
+}
+.lang-menu-popover--down.lang-menu-popover--align-start:dir(rtl) {
+  transform-origin: top right;
+}
+.lang-menu-popover--down.lang-menu-popover--align-end:dir(rtl) {
+  transform-origin: top left;
+}
+
+.lang-menu-item,
+.entry-nav-rail__language-option {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px 14px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: auto;
+  min-height: var(--dropdown-row);
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--dropdown-row-radius);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: -0.006em;
+  text-align: start;
+  cursor: pointer;
+  transform: none;
+  transition:
+    background-color var(--motion-micro) var(--ease-out-quint),
+    color var(--motion-micro) var(--ease-out-quint);
+}
+.lang-menu-label {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lang-menu-item:hover,
+.entry-nav-rail__language-option:hover {
+  background: var(--sub);
+  color: var(--ink);
+}
+.lang-menu-item.active,
+.entry-nav-rail__language-option.is-active {
+  background: color-mix(in srgb, var(--ink) 4.5%, transparent);
+  color: var(--ink);
+  font-weight: 500;
+}
+.lang-menu-item.active:hover,
+.entry-nav-rail__language-option.is-active:hover {
+  background: color-mix(in srgb, var(--ink) 7.5%, transparent);
+}
+.lang-menu-item:active,
+.entry-nav-rail__language-option:active {
+  transform: none;
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+}
+.lang-menu-item:focus-visible,
+.entry-nav-rail__language-option:focus-visible {
+  outline: none;
+  background: var(--sub);
+  box-shadow: inset 0 0 0 1.5px var(--focus-ring-color);
+}
+.lang-menu-item .lang-menu-code,
+.entry-nav-rail__language-code {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-ghost);
+  text-align: right;
+  white-space: nowrap;
+  transition: color var(--motion-micro) var(--ease-out-quint);
+}
+.lang-menu-item:dir(rtl) .lang-menu-code,
+.entry-nav-rail__language-option:dir(rtl) .entry-nav-rail__language-code {
+  text-align: left;
+}
+:is(.lang-menu-item:hover, .lang-menu-item.active) .lang-menu-code,
+:is(.entry-nav-rail__language-option:hover, .entry-nav-rail__language-option.is-active) .entry-nav-rail__language-code {
+  color: var(--ink-faint);
+}
+.lang-menu-item .lang-menu-check,
+.entry-nav-rail__language-option svg {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lang-pill,
+  .lang-pill .lang-pill__icon,
+  .lang-pill .lang-pill__chevron,
+  .lang-menu-item,
+  .entry-nav-rail__language-option {
+    transition: none;
+  }
+  .lang-pill:active {
+    scale: 1;
+  }
+}

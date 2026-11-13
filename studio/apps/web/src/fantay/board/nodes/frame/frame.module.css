@@ -1,0 +1,103 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Frame face (spec 03 §4.1): a white document with a hairline and a soft drop at every zoom; the cover stays
+   mounted under the live iframe and fades out once the document rendered; a reload loads under the current
+   iframe. Face controls that must stay clickable over a live surface sit above the shield (z-index ≥ 3). */
+
+.frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--board-frame-bg);
+  box-shadow:
+    0 0 0 calc(1px * var(--inv-zoom, 1)) var(--board-frame-border),
+    0 calc(2px * var(--inv-zoom, 1)) calc(10px * var(--inv-zoom, 1)) rgba(28, 27, 26, 0.07);
+}
+
+.frame[data-selected] {
+  box-shadow:
+    0 0 0 calc(1px * var(--inv-zoom, 1)) var(--board-frame-border),
+    0 calc(6px * var(--inv-zoom, 1)) calc(24px * var(--inv-zoom, 1)) rgba(28, 27, 26, 0.12);
+}
+
+.surface {
+  position: absolute;
+  inset: 0;
+}
+
+.underlay {
+  position: absolute;
+  inset: 0;
+  opacity: 1;
+  transition: opacity var(--motion-exit) var(--ease-out-quint);
+}
+
+.underlay[data-hidden] {
+  opacity: 0;
+}
+
+.iframe {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  border: 0;
+  background: var(--board-frame-bg);
+  z-index: 1;
+}
+
+/* a reload loads invisibly under the current document */
+.iframe[data-role="pending"] {
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* status chip in the frame's top-right corner, counter-scaled to screen px */
+.status {
+  position: absolute;
+  top: calc(8px * var(--inv-zoom, 1));
+  right: calc(8px * var(--inv-zoom, 1));
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: var(--radius-chip);
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 0 0 1px rgba(28, 27, 26, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  color: var(--ink-soft);
+  font: 600 var(--type-caption) / 1.25 var(--font-ui);
+  transform: scale(var(--inv-zoom, 1));
+  transform-origin: top right;
+  pointer-events: none;
+}
+
+.blank {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font: 500 var(--type-copy) / var(--type-copy-lh) var(--font-ui);
+  text-align: center;
+}
+
+.blankActions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.blankGlyph {
+  display: inline-flex;
+  color: var(--accent-ink);
+}

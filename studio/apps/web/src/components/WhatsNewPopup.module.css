@@ -1,0 +1,127 @@
+/* Post-update "what's new" dialog: cover art inset at the top, the running
+   version as the title, then the release headline and its bullet list. Layout
+   carried over from the accepted #6156 design; the data behind it is real. */
+.panel {
+  width: min(460px, calc(100vw - 40px));
+  max-height: calc(100dvh - 40px);
+  padding: 24px;
+  border: 1px solid var(--line, var(--border));
+  border-radius: 16px;
+  background: var(--paper, var(--bg-panel));
+  color: var(--ink, var(--text));
+  box-shadow: 0 16px 48px color-mix(in srgb, var(--ink, var(--text)) 14%, transparent);
+  overflow: auto;
+  -webkit-app-region: no-drag;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2400;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: color-mix(in srgb, var(--ink, var(--text)) 18%, transparent);
+  -webkit-app-region: no-drag;
+}
+
+/* No scrim override: this used to wear the Liquid Glass material
+   (--glass-regular + a 28px glass blur), which is the language of PANELS, not
+   of the sheet behind them. It now takes the shared `<Dialog>` scrim like
+   every other overlay. */
+
+/* The cover sits inset as its own card, at the image's natural aspect ratio. */
+.cover {
+  display: block;
+  width: 100%;
+  max-height: 160px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.cover + .content { margin-top: 20px; }
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 0;
+}
+.header { display: flex; align-items: center; gap: 12px; }
+.mark { display: flex; align-items: center; flex: none; width: 32px; height: 32px; }
+.heading { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ink, var(--text-strong));
+  font-variant-numeric: tabular-nums;
+}
+
+.headline {
+  margin: 0;
+  font-size: var(--font-size-13, 13px);
+  color: var(--ink-soft, var(--text-muted));
+  font-weight: 400;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.notes {
+  list-style: none;
+  margin: 0;
+  padding: 20px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-top: 1px solid var(--line, var(--border));
+}
+
+.note {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  font-size: var(--font-size-13, 13px);
+  line-height: 1.65;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.noteTitle { color: var(--ink, var(--text)); font-weight: 500; }
+.noteText { color: var(--ink-soft, var(--text-muted)); font-weight: 400; }
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0;
+  margin-top: 24px;
+}
+
+/* Doubled selectors out-rank the shared Button variant classes regardless of
+   stylesheet injection order. */
+.close.close {
+  min-width: 76px;
+  height: 32px;
+  border: 1px solid var(--line, var(--border));
+  border-radius: 8px;
+  background: var(--paper, var(--bg-panel));
+  color: var(--ink, var(--text));
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Dark solid fill comes from the shared primary variant; the brand green
+   lands on the label via currentColor. */
+.cta.cta {
+  min-height: 32px;
+  border: 1px solid var(--ink, var(--text));
+  border-radius: 8px;
+  color: var(--paper, var(--bg-panel));
+  background: var(--ink, var(--text));
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}

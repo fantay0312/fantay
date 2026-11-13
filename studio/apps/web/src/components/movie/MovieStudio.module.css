@@ -1,0 +1,751 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/* Film editor (spec 07 §6.2). Toolbar 44 / stage bar 40 / messages / body: the edit pane with its 56px
+   stage footer beside a 320px inspector; on an editor narrower than 760px the inspector docks under the
+   pane (resizable 30–70%). Only semantic tokens; literal colours are the black letterbox only. No
+   element resets and no !important: controls are the Fantay primitives, scoped by the host's `.fx`. */
+
+/* ── frame ──────────────────────────────────────────────────────────────────────────────── */
+
+.editor {
+  container: fx-movie-editor / inline-size;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.toolbar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  min-width: 0;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+/* The film title is the editable heading of the toolbar. */
+.title {
+  flex: 1 1 auto;
+  min-width: 96px;
+  max-width: 420px;
+  height: 32px;
+  font-size: var(--type-lead);
+  line-height: 1.3;
+}
+
+.toolbarSpacer {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* The inspector toggle exists only while the inspector is docked under the pane. */
+.panelToggle {
+  display: inline-flex;
+}
+
+.stylePicker {
+  display: flex;
+  flex: none;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.stylePickerField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  width: min(320px, 100%);
+  font-size: var(--type-label);
+  color: var(--ink-soft);
+}
+
+/* A wrapper that carries the reason tooltip of a disabled Radix tab or segment. */
+.explained {
+  display: inline-flex;
+}
+
+/* ── stage bar ──────────────────────────────────────────────────────────────────────────── */
+
+.stageTabsRoot {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.stageBar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  height: 40px;
+  min-width: 0;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+/* The active tab's underline lands on the bar's own hairline. */
+.stageTabs {
+  flex: none;
+  align-self: stretch;
+  border-bottom-width: 0;
+}
+
+.saveState,
+.planViews {
+  flex: none;
+}
+
+.notice {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+  line-height: var(--type-label-lh);
+}
+
+.noticeText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stageMeta {
+  flex: none;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+  white-space: nowrap;
+}
+
+/* Read-only banner, errors, production / AI status and the edit receipt, under the stage bar. */
+.messages {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.messages:empty {
+  display: none;
+}
+
+.errorCallout {
+  max-width: 560px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 28px;
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+}
+
+.statusRunning {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+}
+
+/* ── body: edit pane | inspector ────────────────────────────────────────────────────────── */
+
+.body {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  min-width: 0;
+  min-height: 0;
+}
+.body[data-inspector='hidden'] { grid-template-columns: minmax(0, 1fr); }
+.body[data-inspector='hidden'] > .inspector,
+.body[data-inspector='hidden'] > .dockHandle { display: none; }
+
+/* Unnamed size container (module hashing renames container names): preview height, footer/transport width. */
+.editPane {
+  container-type: size;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.editScroll {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+}
+
+/* Review: the player takes the free height (MovieReview.module.css), so nothing is pushed below the fold. */
+.editPane[data-stage='review'] .editScroll {
+  gap: 8px;
+  padding: 12px 16px;
+}
+
+.editPane[data-stage='timeline'] .editScroll { gap: 10px; padding: 12px; }
+.editPane[data-stage='timeline'] .previewBox { height: clamp(130px, 30vh, 300px); aspect-ratio: auto; }
+
+.stageFooter {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  height: 56px;
+  padding: 0 16px;
+  border-top: 1px solid var(--line-soft);
+  background: var(--surface);
+}
+
+.stageFooter:empty {
+  display: none;
+}
+
+/* A pane too narrow for the stage's actions (e.g. the style stage beside the inspector at 1440×900 with
+   the chat open) wraps them: the primary keeps the end of the last row, nothing is clipped. Unnamed: the
+   nearest container of the footer is its pane. */
+@container (max-width: 559px) {
+  .stageFooter {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 56px;
+    padding: 10px 16px;
+  }
+}
+
+.footerProgress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(300px, 100%);
+}
+
+.footerProgressText {
+  flex: none;
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+  white-space: nowrap;
+}
+
+.dockHandle {
+  display: none;
+}
+
+.inspector {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-left: 1px solid var(--line-soft);
+  background: var(--surface);
+}
+
+.inspectorTabs {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.inspectorList {
+  flex: none;
+  align-self: stretch;
+  height: 40px;
+  padding: 0 16px;
+}
+
+/* 14px 16px on every panel (audit: the notes pane had no inline padding). */
+.inspectorPanel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px 16px;
+}
+
+.chatPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.chatHead {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+}
+
+.chatBody {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ── shared pieces ──────────────────────────────────────────────────────────────────────── */
+
+.sectionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  min-width: 0;
+}
+
+.sectionTitle {
+  color: var(--ink);
+  font-size: var(--type-copy);
+  font-weight: 600;
+  line-height: var(--type-copy-lh);
+}
+
+.sectionMeta,
+.hint {
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+  line-height: var(--type-label-lh);
+}
+
+.stageState {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* ── style stage ────────────────────────────────────────────────────────────────────────── */
+
+.preview {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* The film box: as wide as the pane allows and short enough to keep the transport and the shot
+   strip on screen (the free pane height minus ~280px of chrome, at the film's own ratio). */
+.previewBox {
+  position: relative;
+  width: min(100%, max(200px, calc((100cqh - 280px) * var(--movie-ratio, 16 / 9))));
+  aspect-ratio: var(--movie-ratio, 16 / 9);
+  overflow: hidden;
+  border-radius: var(--radius-panel);
+  background: #000;
+}
+
+.previewTransport {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.previewTime {
+  flex: none;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.previewScrubber {
+  flex: 1 1 auto;
+  min-width: 80px;
+}
+
+.samples {
+  flex: none;
+}
+
+.sampleGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.sampleImage {
+  width: 100%;
+  border-radius: var(--radius-row);
+  background: #000;
+  object-fit: contain;
+}
+
+.shotsSection {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.shots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.shot {
+  max-width: 260px;
+  gap: 6px;
+}
+
+/* The selected shot: the accent selection ring. */
+.shot[data-on] {
+  box-shadow: 0 0 0 2px var(--info);
+  color: var(--ink);
+}
+
+.shotNumber,
+.shotDuration {
+  flex: none;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+}
+
+.shotTitle {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── render and review stages ───────────────────────────────────────────────────────────── */
+
+.renderPane {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.renderList {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--line-soft);
+}
+
+.renderRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.renderVersion {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--ink);
+  font-size: var(--type-body);
+}
+
+.renderState {
+  flex: none;
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+}
+
+.renderState[data-status='done'] {
+  color: var(--success-ink);
+}
+
+.renderState[data-status='failed'] {
+  color: var(--accent-ink);
+}
+
+.reviewHead {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.versions {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.reviewVersion {
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+}
+
+/* ── inspector content ──────────────────────────────────────────────────────────────────── */
+
+.settings,
+.shotFields,
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.select {
+  width: 100%;
+}
+
+.inlineAction {
+  align-self: flex-start;
+}
+
+.reference {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: var(--radius-row);
+  background: var(--sub);
+}
+
+.referenceTitle {
+  color: var(--ink);
+  font-size: var(--type-body);
+  font-weight: 600;
+}
+
+.referenceLicense {
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+  overflow-wrap: anywhere;
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.clip {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius-card);
+  background: var(--sub);
+}
+
+.clipTitle {
+  color: var(--ink);
+  font-size: var(--type-body);
+  font-weight: 600;
+}
+
+.actionsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.summaryList {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 16px;
+}
+
+.summaryTerm {
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+}
+
+.summaryValue {
+  color: var(--ink);
+  font-size: var(--type-body);
+  overflow-wrap: anywhere;
+}
+
+/* ── loading, missing and failed films ──────────────────────────────────────────────────── */
+
+.stateToolbar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  height: 44px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.stateBody {
+  display: grid;
+  flex: 1 1 auto;
+  place-items: center;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px;
+}
+
+/* ── narrow editors ─────────────────────────────────────────────────────────────────────── */
+
+/* Docked inspector: pane over a resizable dock (the row separator sets --motion-*-fr). */
+@container fx-movie-editor (max-width: 759px) {
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, var(--motion-pane-fr, 58fr)) auto minmax(0, var(--motion-dock-fr, 42fr));
+  }
+
+  .panelToggle {
+    display: inline-grid;
+  }
+
+  .dockHandle {
+    position: relative;
+    z-index: 1;
+    display: block;
+    height: 9px;
+    margin: -4px 0;
+    cursor: row-resize;
+    touch-action: none;
+  }
+
+  .dockHandle::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--line-soft);
+    transition: background-color var(--motion-micro) var(--ease-out-quint);
+  }
+
+  .dockHandle:hover::after,
+  .dockHandle:focus-visible::after {
+    background: var(--info);
+  }
+
+  .inspector {
+    border-left: 0;
+  }
+
+  .body[data-inspector='hidden'] {
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .body[data-inspector='hidden'] .dockHandle,
+  .body[data-inspector='hidden'] .inspector {
+    display: none;
+  }
+}
+
+/* Phone widths: labels of icon+text toolbar buttons stay as accessible names only; the footer wraps. */
+@container fx-movie-editor (max-width: 639px) {
+  .collapsibleLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .toolbar {
+    gap: 4px;
+    padding: 0 8px;
+  }
+
+  .title {
+    min-width: 64px;
+  }
+
+  .stageMeta {
+    display: none;
+  }
+
+  .editScroll {
+    padding: 12px;
+  }
+
+  .stageFooter {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 56px;
+    padding: 10px 12px;
+  }
+}
+
+@container fx-movie-editor (max-width: 519px) {
+  /* Controls that do not fit (e.g. the embedded film with unsaved edits) wrap to a second row, right
+     aligned, instead of being clipped; the title stays the only growing item, so one row looks the same. */
+  .toolbar {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: 4px;
+    height: auto;
+    min-height: 44px;
+    padding: 6px 8px;
+  }
+
+  .title {
+    flex-basis: 64px;
+  }
+
+  .toolbarSpacer {
+    display: none;
+  }
+
+  .stageBar {
+    flex-wrap: wrap;
+    row-gap: 4px;
+    height: auto;
+    min-height: 40px;
+    padding: 4px 12px;
+  }
+
+  .stageTabs {
+    min-height: 32px;
+  }
+
+  /* The live region stays mounted (announcements); only a shown notice takes its own row. */
+  .notice:not(:empty) {
+    flex-basis: 100%;
+  }
+}
+.rendererSelect {
+  width: 170px;
+  max-width: 100%;
+}
+
+/* The timeline editor root takes focus so shortcuts work after clicks on non-focusable areas. */
+.editor:focus { outline: none; }

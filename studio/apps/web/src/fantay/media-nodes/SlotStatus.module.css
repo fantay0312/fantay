@@ -1,0 +1,76 @@
+/* SPDX-License-Identifier: MIT
+ * Derived from infinite-canvas (https://github.com/basketikun/infinite-canvas),
+ * commit 9cd3deacbcc598361807afc16c059a80dd18b6f9, web/src/components/canvas/canvas-node.tsx (ImageSlotStatus).
+ * Copyright (c) 2026 basketikun. Released under the MIT License; the full
+ * license text is reproduced in THIRD_PARTY_NOTICES.md.
+ * Modified for Fantay on 2026-10-29: Fantay tokens, every slot status, progress line and elapsed time.
+ */
+.root {
+  --gen-running: var(--info);
+  --gen-muted: var(--ink-faint);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 16px;
+  overflow: hidden;
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: var(--type-label);
+  line-height: var(--type-label-lh);
+  text-align: center;
+}
+
+.root[data-tone='failed'] {
+  align-items: stretch;
+  justify-content: center;
+  padding: 12px;
+}
+
+.ring {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border: 2px solid var(--line);
+  border-top-color: var(--gen-running);
+  border-radius: 50%;
+  animation: slotSpin 0.9s linear infinite;
+}
+
+.label {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gen-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.progress {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--gen-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes slotSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring {
+    animation-duration: 2.4s;
+  }
+}

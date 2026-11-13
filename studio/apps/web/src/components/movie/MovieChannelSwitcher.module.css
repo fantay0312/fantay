@@ -1,0 +1,159 @@
+/* The model chip and the effort chip sit side by side, one flex item of the composer's end cluster. */
+.cluster { display: inline-flex; flex: 0 1 auto; align-items: center; gap: 2px; min-width: 0; max-width: 100%; }
+.trigger, .effortTrigger { display: inline-flex; flex: 0 1 auto; align-items: center; gap: 6px; height: 32px; min-height: 32px; min-width: 0; max-width: 100%; padding: 0 8px; border: 0; border-radius: 9px; font-size: 13px; font-weight: 500; line-height: 20px; color: var(--ink-soft); background: transparent; box-shadow: none; }
+.trigger:hover, .trigger[data-state=open], .effortTrigger:hover, .effortTrigger[data-state=open] { color: var(--ink); background: var(--sub); box-shadow: none; }
+.trigger:focus-visible, .effortTrigger:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 1px; }
+.chevron { flex: none; color: var(--ink-faint); }
+.current { min-width: 0; overflow: hidden; max-width: 170px; text-overflow: ellipsis; white-space: nowrap; }
+.dot { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--ink-muted); }
+.dot[data-ready=true] { background: var(--success); }
+.effortTrigger { flex: none; }
+.effortChipLabel { white-space: nowrap; }
+.effortTrigger[data-level=max], .effortTrigger[data-level=ultra] { color: var(--ink); font-weight: 600; }
+/* A non-standard speed in effect leads the chip with its bolt(s); the effort label follows. */
+.effortTrigger { gap: 4px; }
+.chipGlyph { flex: none; color: var(--ink); }
+.effortTrigger[data-speed=standard] .chipGlyph { color: var(--ink-faint); }
+
+/* ── Model menu: every channel cascades into a flyout; TokenToSea groups models by supplier ── */
+.menu, .suppliers, .models { min-width: 0; max-width: calc(100vw - 24px); max-height: min(560px, var(--radix-dropdown-menu-content-available-height, calc(100dvh - 24px))); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: var(--composer-menu-pad); border: 1px solid var(--line); background: var(--surface); color: var(--ink); box-shadow: var(--float-shadow); }
+.menu { width: min(300px, calc(100vw - 24px)); }
+.suppliers { width: min(220px, calc(100vw - 24px)); }
+.models { width: min(300px, calc(100vw - 24px)); }
+.caption { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 6px 8px 4px; font-size: 12px; font-weight: 500; line-height: 16px; color: var(--ink-faint); }
+.caption .channelIcon { flex-basis: 14px; width: 14px; height: 14px; }
+.caption .channelIcon > * { width: 14px; height: 14px; }
+.separator { margin: 5px 6px; }
+.currentGroup, .group, .supplierRow { display: flex; align-items: center; gap: 8px; min-height: var(--composer-menu-row); padding: 0 8px; border-radius: var(--composer-menu-row-radius); font-size: 13px; font-weight: 500; }
+.headModel { flex: 0 1 auto; min-width: 0; max-width: 52%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 500; color: var(--ink-faint); }
+.supplierRow { color: var(--ink-soft); }
+.supplierRow[data-active], .supplierRow[data-highlighted], .supplierRow[data-state=open] { color: var(--ink); }
+.supplierRow[data-active] { font-weight: 600; }
+.supplierDot { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+.supplierCount { flex: none; font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--ink-faint); }
+.channelIcon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 16px; width: 16px; height: 16px; }
+.channelIcon > * { flex: none; width: 16px; height: 16px; }
+.channelLabel, .modelLabel { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.modelRow { gap: 8px; min-height: var(--composer-menu-row); padding: 4px 8px; border-radius: var(--composer-menu-row-radius); font-size: 13px; font-weight: 500; color: var(--ink-soft); }
+.modelRow[data-state=checked] { color: var(--ink); font-weight: 600; }
+/* A row like the others. The hairline above it is drawn outside the row, so hovering does not fill it. */
+.manage { min-height: var(--composer-menu-row); margin-top: 9px; padding: 0 8px; border-radius: var(--composer-menu-row-radius); font-size: 13px; font-weight: 500; }
+.manage::before { content: ''; position: absolute; top: -5px; right: 6px; left: 6px; height: 1px; background: var(--line); }
+.empty { padding: 12px 10px; font-size: 13px; color: var(--ink-faint); }
+
+/* ── Run panel: speed button | the effort, large, over the model it applies to | reset; then the slider ── */
+.effortPanel { --knob: 28px; --track: 24px; padding: 10px 10px 14px; }
+/* The two side cells are always 32 px, so the title stays centred whether or not reset is offered. */
+.runHead { display: grid; grid-template-columns: 32px minmax(0, 1fr) 32px; align-items: start; column-gap: 6px; }
+.speedButton { color: var(--ink); }
+.speedButton[data-speed=standard] { color: var(--ink-faint); }
+.speedButton[data-state=open] { color: var(--ink); background: var(--paper-deep); }
+.runTitle { display: flex; flex-direction: column; align-items: center; min-width: 0; padding-top: 2px; text-align: center; }
+.runValue { font-size: 19px; font-weight: 600; line-height: 26px; letter-spacing: -0.01em; color: var(--ink); }
+.runModel { display: inline-flex; align-items: center; gap: 1px; max-width: 100%; min-width: 0; height: 22px; margin-top: 1px; padding: 0 3px 0 7px; border: 0; border-radius: 7px; font: inherit; font-size: 12px; font-weight: 500; line-height: 16px; color: var(--ink-soft); background: transparent; cursor: pointer; }
+.runModel:hover { color: var(--ink); background: var(--sub); }
+.runModel:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 1px; }
+.runModelLabel { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.runModelChevron { flex: none; color: var(--ink-faint); }
+.runEnd { display: flex; justify-content: flex-end; }
+.effortReset { color: var(--ink-faint); }
+/* A 28 px knob rides a 24 px tray-tone track, so its centre runs from 14 px to (width - 14 px); stops and the
+   recommended mark share that run. The ink fill always reaches the knob's far edge, so it grows with it. */
+.slider { --effort-fill: 0; --effort-intensity: 0; --effort-flow-duration: 2.4s; position: relative; height: var(--knob); margin: 14px 4px 0; }
+.track { position: absolute; inset-inline: 0; top: calc((var(--knob) - var(--track)) / 2); height: var(--track); overflow: hidden; border-radius: 999px; background: color-mix(in srgb, var(--ink) 7%, var(--surface)); }
+.sliderFill { position: absolute; inset-block: 0; inset-inline-start: 0; width: calc(var(--knob) + var(--effort-fill) * (100% - var(--knob))); overflow: hidden; border-radius: 999px; background: var(--ink); transition: width var(--motion-enter) var(--ease-out-quint); }
+.slider[data-unset=true] .sliderFill { opacity: 0; }
+/* Multi-depth particle stream and luminous current flowing rightward into the thumb; velocity scales with effort. */
+.sliderFlow { position: absolute; inset-block: 0; left: 0; width: 65%; pointer-events: none; background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--info) 24%, transparent) 46%, color-mix(in srgb, var(--surface) 24%, transparent) 78%, transparent 100%); opacity: calc(0.1 + var(--effort-intensity) * 0.58); animation: effortCurrent var(--effort-flow-duration) linear infinite; will-change: transform; }
+.sliderGlow { position: absolute; inset-block: 0; inset-inline-end: 0; width: calc(var(--knob) * 2.2); pointer-events: none; background: radial-gradient(circle at 78% 50%, color-mix(in srgb, var(--info) 34%, var(--surface)) 0%, transparent 72%); opacity: calc(var(--effort-intensity) * 0.36); transition: opacity var(--motion-enter) var(--ease-out-quint); }
+@keyframes effortCurrent { 0% { transform: translate3d(-115%, 0, 0); } 100% { transform: translate3d(260%, 0, 0); } }
+.sparkle { --spark-dx: 44px; --spark-dy: 0px; --spark-size: 2px; --spark-stretch: 1; --spark-peak: 0.85; position: absolute; width: calc(var(--spark-size) * (1 + var(--effort-intensity) * var(--spark-stretch) * 0.42)); height: var(--spark-size); margin-top: calc(var(--spark-size) / -2); border-radius: 999px; background: var(--surface); box-shadow: 0 0 calc(var(--spark-size) * 1.5) color-mix(in srgb, var(--surface) 60%, transparent); opacity: 0; pointer-events: none; animation: sparkleDrift 2.4s linear infinite; will-change: transform, opacity; }
+.sparkle[data-streak] { width: calc(var(--spark-size) * (1.2 + var(--effort-intensity) * var(--spark-stretch))); background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--info) 28%, var(--surface)) 58%, var(--surface) 100%); box-shadow: none; }
+@keyframes sparkleDrift { 0% { opacity: 0; transform: translate3d(-6px, 0, 0) scale(0.72); } 22% { opacity: var(--spark-peak); } 76% { opacity: calc(var(--spark-peak) * 0.78); } 100% { opacity: 0; transform: translate3d(var(--spark-dx), var(--spark-dy), 0) scale(1); } }
+.slider[data-paused=true] .sliderFlow, .slider[data-paused=true] .sliderGlow, .slider[data-paused=true] .sparkle { animation: none; opacity: 0; }
+.stops { position: absolute; inset-block: 0; inset-inline: calc(var(--knob) / 2); pointer-events: none; }
+.stop { --effort-at: 0; position: absolute; top: 50%; left: calc(var(--effort-at) * 100%); width: 4px; height: 4px; border-radius: 50%; background: var(--ink-faint); opacity: 0.6; transform: translate(-50%, -50%); }
+.stop[data-filled=true] { background: var(--surface); opacity: 0.35; }
+/* The recommended step is a ring rather than a dot, so "推荐" below has something to point at. */
+.stop[data-recommended=true] { width: 7px; height: 7px; background: transparent; box-shadow: inset 0 0 0 1.5px var(--ink-faint); opacity: 0.8; }
+.stop[data-recommended=true][data-filled=true] { box-shadow: inset 0 0 0 1.5px var(--surface); opacity: 0.5; }
+.range { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border-radius: 999px; background: transparent; cursor: pointer; appearance: none; -webkit-appearance: none; }
+.range:focus { outline: none; }
+.range:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
+.range::-webkit-slider-runnable-track { height: var(--knob); background: transparent; }
+.range::-webkit-slider-thumb { width: var(--knob); height: var(--knob); border-radius: 50%; background: var(--surface); box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.16), 0 4px 10px -4px rgba(0, 0, 0, 0.2); appearance: none; -webkit-appearance: none; transition: transform var(--motion-fast) var(--ease-out-quint); }
+.range:active::-webkit-slider-thumb { transform: scale(0.94); }
+/* Dark: the fill is light ink, so the knob stays light too and a ring of the panel's own ground keeps it apart. */
+:global([data-theme=dark]) .range::-webkit-slider-thumb { background: var(--ink); box-shadow: 0 0 0 2px var(--surface), 0 2px 6px rgba(0, 0, 0, 0.45); }
+.slider[data-unset=true] .range::-webkit-slider-thumb { opacity: 0; }
+.slider[data-unset=true] .range:hover::-webkit-slider-thumb, .slider[data-unset=true] .range:focus-visible::-webkit-slider-thumb { opacity: 0.6; }
+.marks { position: relative; height: 16px; margin: 5px calc(4px + var(--knob) / 2) 0; }
+.recommended { --effort-at: 0; position: absolute; left: calc(var(--effort-at) * 100%); font-size: 11px; line-height: 16px; color: var(--ink-faint); white-space: nowrap; transform: translateX(calc(var(--effort-at) * -100%)); }
+.modeScope { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin: 8px 4px 0; padding: 2px; border-radius: 9px; background: color-mix(in srgb, var(--ink) 6%, var(--surface)); }
+.modePill { height: 24px; padding: 0 8px; border: 0; border-radius: 7px; font: inherit; font-size: 11.5px; font-weight: 500; color: var(--ink-soft); background: transparent; cursor: pointer; transition: background-color 120ms var(--ease-out-quint), color 120ms var(--ease-out-quint); }
+.modePill:hover { color: var(--ink); }
+.modePill[aria-pressed=true] { color: var(--ink); font-weight: 600; background: var(--surface); box-shadow: var(--shadow-ring); }
+.modePill:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 1px; }
+.effortHint { margin: 8px 4px 0; font-size: 12px; line-height: 18px; color: var(--ink-soft); }
+
+/* ── Speed menu (from the panel's speed button): the bolt, the name, then what the tier costs ── */
+.speedMenu { width: min(248px, calc(100vw - 24px)); padding: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); box-shadow: var(--float-shadow); }
+.speedRow { align-items: flex-start; gap: 10px; padding: 8px 10px 9px; border-radius: var(--composer-menu-row-radius); }
+.speedRowGlyph { flex: none; margin-top: 1px; color: var(--ink-faint); }
+.speedRow[data-state=checked] .speedRowGlyph { color: var(--ink); }
+.speedRowText { display: flex; flex: 1; flex-direction: column; gap: 1px; min-width: 0; }
+.speedRowName { font-size: 13px; font-weight: 600; line-height: 18px; color: var(--ink); }
+.speedRowHint { font-size: 12px; line-height: 17px; color: var(--ink-faint); overflow-wrap: anywhere; }
+.speedRow[data-disabled] .speedRowName, .speedRow[data-disabled] .speedRowGlyph { color: var(--ink-ghost); }
+.speedRow > span[data-state] { align-self: center; }
+
+/* ── Motion: the composer's grammar (fantay/styles/composer.css, after the chat turn) ──
+   The chips fill on the quick clock (120) and press to .96 (150). The menus are Radix, which keeps them
+   mounted through `data-state=closed`, so they get both halves: in = scale .97 + opacity + 4 px towards
+   the trigger from Radix's own transform origin, 200 ms; out = opacity only, 140 ms. These replace the
+   shared menu's translate-only chip-in. The picked row's check settles (.8 → 1) instead of snapping.
+   Keyframe stops are written as percentages: the module policy test reads `from` / `to` as element
+   selectors (tests/components/movie/movie-styles.test.ts). */
+.trigger, .effortTrigger { transition: background-color 120ms var(--ease-out-quint), color 120ms var(--ease-out-quint), transform var(--motion-fast) var(--ease-out-quint); }
+.trigger:active:not(:disabled), .effortTrigger:active:not(:disabled) { transform: scale(0.96); }
+.menu, .suppliers, .models, .thinkingMenu, .speedMenu { transform-origin: var(--radix-dropdown-menu-content-transform-origin); }
+.effortPanel { transform-origin: var(--radix-popover-content-transform-origin); }
+.menu, .suppliers, .models, .thinkingMenu, .speedMenu, .effortPanel { --switcher-pop-x: 0px; --switcher-pop-y: 0px; }
+:is(.menu, .suppliers, .models, .thinkingMenu, .speedMenu, .effortPanel)[data-side=top] { --switcher-pop-y: 4px; }
+:is(.menu, .suppliers, .models, .thinkingMenu, .speedMenu, .effortPanel)[data-side=bottom] { --switcher-pop-y: -4px; }
+:is(.menu, .suppliers, .models, .thinkingMenu, .speedMenu, .effortPanel)[data-side=left] { --switcher-pop-x: 4px; }
+:is(.menu, .suppliers, .models, .thinkingMenu, .speedMenu, .effortPanel)[data-side=right] { --switcher-pop-x: -4px; }
+:is(.menu, .suppliers, .models, .thinkingMenu, .speedMenu, .effortPanel)[data-state=open] { animation: switcherPopIn var(--motion-enter) var(--ease-out-quint); }
+:is(.menu, .suppliers, .models, .thinkingMenu, .speedMenu, .effortPanel)[data-state=closed] { animation: switcherFadeOut var(--motion-exit) var(--ease-out-quint) forwards; }
+@keyframes switcherPopIn { 0% { opacity: 0; transform: translate(var(--switcher-pop-x), var(--switcher-pop-y)) scale(0.97); } }
+@keyframes switcherFadeOut { 100% { opacity: 0; } }
+.currentGroup, .group, .supplierRow, .modelRow, .speedRow, .manage, .runModel { transition: background-color 120ms var(--ease-out-quint), color 120ms var(--ease-out-quint); }
+.speedButton > svg { transition: color 120ms var(--ease-out-quint); }
+/* Radix mounts a radio row's indicator only while it is checked, so its first frame is the settle. */
+.modelRow > [data-state=checked], .speedRow > [data-state=checked], .thinkingMenu [role=menuitemradio] > [data-state=checked] { animation: switcherSettle var(--motion-enter) var(--ease-out-quint) backwards; }
+@keyframes switcherSettle { 0% { opacity: 0; transform: scale(0.8); } }
+@media (prefers-reduced-motion: reduce) {
+  .trigger, .effortTrigger, .currentGroup, .group, .supplierRow, .modelRow, .speedRow, .manage, .runModel, .modePill, .sliderFill, .sliderGlow, .speedButton > svg { transition: none; }
+  .trigger:active:not(:disabled), .effortTrigger:active:not(:disabled) { transform: none; }
+  .range::-webkit-slider-thumb, .range:active::-webkit-slider-thumb { transition: none; transform: none; }
+  /* The specks hold still where they are, faint, so the fill keeps its texture without moving. */
+  .sliderFlow { animation: none; opacity: 0.16; }
+  .sparkle { animation: none; opacity: 0.4; }
+  :is(.menu, .suppliers, .models, .thinkingMenu, .speedMenu, .effortPanel)[data-state], .modelRow > [data-state=checked], .speedRow > [data-state=checked], .thinkingMenu [role=menuitemradio] > [data-state=checked] { animation: none; }
+}
+
+/* Part of the composer's collapse order (fantay/styles/composer.css). The cap at 440 leaves the design-system
+   name room to truncate gracefully, and the model name is the last label to go. Past that the row keeps only
+   the mark that says which agent will answer; the effort chip leaves before the model name does. */
+@container composer-toolbar (max-width: 440px) { .current { max-width: 110px; } }
+/* While Fast / Ultrafast is in effect the chip shrinks to its bolt(s) instead of leaving, so a costlier tier
+   never runs unseen; it goes with the model's own label at 190. */
+@container composer-toolbar (max-width: 300px) {
+  .effortTrigger:not([data-speed=fast], [data-speed=ultrafast], [data-speed=other]) { display: none; }
+  .effortTrigger .effortChipLabel { display: none; }
+  .effortTrigger { justify-content: center; width: 32px; padding: 0; }
+}
+@container composer-toolbar (max-width: 190px) { .effortTrigger { display: none; } }
+@container composer-toolbar (max-width: 240px) { .current { display: none; } }
+@container composer-toolbar (max-width: 190px) { .trigger { justify-content: center; width: 32px; padding: 0; } .chevron, .dot { display: none; } }
+@container composer-toolbar (max-width: 112px) { .cluster { display: none; } }

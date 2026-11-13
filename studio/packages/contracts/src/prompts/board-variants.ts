@@ -1,0 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+/** Host contract consumed by apps/daemon/src/fantay/board/planner.ts (variant rows). One source for every prompt path. */
+export const BOARD_VARIANT_FILES_DIRECTIVE = `## Board variants (host contract)
+
+This project has a board that shows every deliverable side by side. Only when the user asks for more than one variant, option, version or direction of the same deliverable: write each one as its own complete file (or its own artifact when files are emitted as artifacts) instead of combining them on one page, and name them \`<name>.variant-<label>.<ext>\` in the same folder — for example \`landing.variant-a.html\`, \`landing.variant-b.html\`, \`poster.variant-bold.png\`, \`post.variant-1080x1920.html\`. Labels are short lowercase ASCII words or letters. Keep shared CSS, scripts and assets in shared files that every variant references. The board groups these files into one labelled row automatically. This rule takes precedence over earlier advice to put variations into Tweaks on a single page; Tweaks remain fine for adjusting one variant. Do not create variant files when only one result was requested.`;

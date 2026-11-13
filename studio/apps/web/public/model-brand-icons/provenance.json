@@ -1,0 +1,398 @@
+{
+  "updated": "2026-10-21",
+  "note": "Brand marks remain owned by their respective trademark owners. Listing does not imply partnership. Files from LobeHub are MIT (see LICENSE); official vendor files are not covered by that licence (see NOTICE.md).",
+  "packages": [
+    {
+      "name": "@lobehub/icons-static-svg",
+      "version": "1.95.1",
+      "license": "MIT",
+      "source": "https://github.com/lobehub/lobe-icons",
+      "localCopy": ".tmp/ecosystem-20261013/package/icons"
+    }
+  ],
+  "assets": [
+    {
+      "brand": "openai",
+      "file": "openai.svg",
+      "sha256": "a595df6b423920c67a7f8f73c063e4bfb72d415948097b6cac063a2366bb5186",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/openai.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG",
+      "note": "Monochrome mark (fill=currentColor); tint it for dark backgrounds."
+    },
+    {
+      "brand": "claude",
+      "file": "claude.svg",
+      "sha256": "365a70a7eb3956d9b9a96086058ebe04e1dbd8e291a756ad964e8a283fbd6d38",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/claude.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG",
+      "note": "Monochrome mark (fill=currentColor); tint it for dark backgrounds."
+    },
+    {
+      "brand": "gemini",
+      "file": "gemini.svg",
+      "sha256": "87d5b3c4be75a66f54c1936482a263df68185545b741129badd1b7c2449c18d3",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/gemini.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG",
+      "note": "Monochrome mark (fill=currentColor); tint it for dark backgrounds."
+    },
+    {
+      "brand": "deepseek",
+      "file": "deepseek.svg",
+      "sha256": "8f9443e351b6dacce71871790201b799d92e8bf96a45ef79aeb5e9bf4db423e2",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/deepseek.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG",
+      "note": "Monochrome mark (fill=currentColor); tint it for dark backgrounds."
+    },
+    {
+      "brand": "qwen",
+      "file": "qwen.svg",
+      "sha256": "dcb3ba2f2b55ccbacbade0ca0bf98921fbaf8a07848972974b4a9bf8077376cf",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/qwen.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG",
+      "note": "Monochrome mark (fill=currentColor); tint it for dark backgrounds."
+    },
+    {
+      "brand": "kimi",
+      "file": "kimi.svg",
+      "sha256": "ed08131b46acf70e6e2144eceb775e74098b58ea65fa21eaee04be7b05cfe63b",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/kimi.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG",
+      "note": "Monochrome mark (fill=currentColor); tint it for dark backgrounds."
+    },
+    {
+      "brand": "zhipu",
+      "file": "zhipu.svg",
+      "sha256": "d4c3fe5ff92820b2ae5e3ddaaa30e6fc622cb746b75baad97f4bb2428fa25c5d",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/zhipu.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG",
+      "note": "Monochrome mark (fill=currentColor); tint it for dark backgrounds."
+    },
+    {
+      "brand": "doubao",
+      "file": "doubao.svg",
+      "sha256": "cbda61929dbe7263a969d34ca8a022226d45d20fddfe333c1608abcb52de7b52",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/doubao.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG",
+      "note": "Monochrome mark (fill=currentColor); tint it for dark backgrounds."
+    },
+    {
+      "brand": "grok",
+      "file": "grok.svg",
+      "sha256": "9175fc90c22655160231976c849f25a03b888d7cc0e04c5f1b987b659bb07c95",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/grok.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG",
+      "note": "Monochrome mark (fill=currentColor); tint it for dark backgrounds."
+    },
+    {
+      "brand": "meta",
+      "file": "meta.svg",
+      "sha256": "805ef9a35305393eb5a89be46b0708c9b119b3308ca44aaedd1457ff04857060",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/meta.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG",
+      "note": "Monochrome mark (fill=currentColor); tint it for dark backgrounds."
+    },
+    {
+      "brand": "mistral",
+      "file": "mistral.svg",
+      "sha256": "a06cfa54e7deff7f7544175b006b7f8a03fbc5624c44f7d553a44d07ea96e629",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/mistral.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG",
+      "note": "Monochrome mark (fill=currentColor); tint it for dark backgrounds."
+    },
+    {
+      "brand": "minimax",
+      "file": "minimax.svg",
+      "sha256": "bb96e2005081494716de6af5fd030701ae551ee68393ad61b325c07325607848",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/minimax.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG",
+      "note": "Monochrome mark (fill=currentColor); tint it for dark backgrounds."
+    },
+    {
+      "brand": "hunyuan",
+      "file": "hunyuan.svg",
+      "sha256": "7306a65eb71c4de61e21a637e5c4fef94afde823678e225c46f891cc783f6531",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/hunyuan.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG",
+      "note": "Monochrome mark (fill=currentColor); tint it for dark backgrounds."
+    },
+    {
+      "brand": "wenxin",
+      "file": "wenxin.svg",
+      "sha256": "3624b6084ce8ebefcbbb90ae6ab6485c4df9083187ae6e4012e1aba9a4bcea04",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/wenxin.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG",
+      "note": "Monochrome mark (fill=currentColor); tint it for dark backgrounds."
+    },
+    {
+      "brand": "yi",
+      "file": "yi.svg",
+      "sha256": "c1975458cc94ee44306336215fdf64b1a25f60d7b3f4c01aee5a720eddea0e0a",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/yi.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG",
+      "note": "Monochrome mark (fill=currentColor); tint it for dark backgrounds."
+    },
+    {
+      "brand": "siliconcloud",
+      "file": "siliconcloud.svg",
+      "sha256": "50025587d401e07f7d82a2977146176bd8c9d9f52c54c452f31bb49c16d0cf3c",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/siliconcloud.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG",
+      "note": "Monochrome mark (fill=currentColor); tint it for dark backgrounds."
+    },
+    {
+      "brand": "qwen",
+      "file": "qwen-color.svg",
+      "sha256": "77f5768c66d08ce1d3d14e73373975c1bc0454be88c81523ddd0ffd7e2974029",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/qwen-color.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG"
+    },
+    {
+      "brand": "zhipu",
+      "file": "zhipu-color.svg",
+      "sha256": "8174e65ff71647d5c705c920c953a82bd723d9e3e42887bdd4ffc9dfe51207a0",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/zhipu-color.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG"
+    },
+    {
+      "brand": "cogview",
+      "file": "cogview-color.svg",
+      "sha256": "bd8ef488dac121949f20d7525919d08b137a4962e3fd4950ed74f49e520ee866",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/cogview-color.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG"
+    },
+    {
+      "brand": "cogvideox",
+      "file": "cogvideo-color.svg",
+      "sha256": "7350b358f815414a3700bd46bb51161b160f36ff6b8e09be9cd5ff6b0a526168",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/cogvideo-color.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG"
+    },
+    {
+      "brand": "minimax",
+      "file": "minimax-color.svg",
+      "sha256": "7f7187fa6d9b341ac5f22f6c5a970523afb439dc45566d64eb4f4b9b604d6b01",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/minimax-color.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG"
+    },
+    {
+      "brand": "hailuo",
+      "file": "hailuo-color.svg",
+      "sha256": "1ada279990428155c5036ac9aea6ce430c68c79483c808ca6d0b59dc0ebf4a03",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/hailuo-color.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG"
+    },
+    {
+      "brand": "doubao",
+      "file": "doubao-color.svg",
+      "sha256": "3cd31ba03ae44b8c29561597a3b863809efecb13fcdfd08407a086df86a69b55",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/doubao-color.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG"
+    },
+    {
+      "brand": "stepfun",
+      "file": "stepfun-color.svg",
+      "sha256": "f55afc0e6004c8854f76bd5bbcc0fce9fc0ed9316691d54fb02d088c24fab40d",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/stepfun-color.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG"
+    },
+    {
+      "brand": "deepseek",
+      "file": "deepseek-color.svg",
+      "sha256": "deba5f98a5c1796e20fcac3149bcd7eb8a32f0bdd04d048819400b1f28bd1439",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/deepseek-color.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG"
+    },
+    {
+      "brand": "cloudflare",
+      "file": "cloudflare-color.svg",
+      "sha256": "cee35d3f0ecb7925ce0a89aeaff8b907cadae7c3fe44a23e4001cc8d5ee57502",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/cloudflare-color.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Unmodified SVG"
+    },
+    {
+      "brand": "happyhorse",
+      "file": "happyhorse.svg",
+      "sha256": "62692ad096c123661d56e3d24ae6bcb80d94c17d42d1bf1213556f06a3840faf",
+      "package": "@lobehub/icons-static-svg@1.95.1",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/happyhorse.svg",
+      "license": {
+        "type": "MIT",
+        "file": "LICENSE"
+      },
+      "modifications": "Title element corrected from \"Hedra\" (upstream metadata error) to \"HappyHorse\"; paths unchanged.",
+      "note": "Monochrome mark (fill=currentColor). Shape matches the official favicon of https://www.happyhorse.cn/ (white rocking horse, https://img.alicdn.com/imgextra/i1/O1CN01HtmeRD1ubFJYSMwQf_!!6000000006055-2-tps-160-160.png), checked 2026-10-21."
+    },
+    {
+      "brand": "tongyi",
+      "file": "tongyi.svg",
+      "sha256": "e7de74ce947650a5d969c87adf8f77b2a1c1cc574421f1a384039cf635fb4b22",
+      "source": "https://tongyi.aliyun.com/",
+      "asset": "https://img.alicdn.com/imgextra/i1/O1CN01TLEHbS1cyufo87FKI_!!6000000003670-55-tps-32-32.svg",
+      "retrievedAt": "2026-10-21",
+      "license": {
+        "type": "Official brand resource",
+        "notice": "Public official logo used only to identify the vendor's own models. No open reuse licence or sponsorship is asserted; trademark rights remain with the owner."
+      },
+      "modifications": "Unmodified official SVG",
+      "note": "Header logo of tongyi.aliyun.com (img alt \"通义logo\"; the site favicon of the same mark is titled \"通义实验室\"). Used for Tongyi Lab models: CosyVoice, Fun-ASR, Paraformer, Z-Image, text-embedding / multimodal-embedding / gte-rerank and tongyi-* models."
+    },
+    {
+      "brand": "wan",
+      "file": "wan.svg",
+      "sha256": "e7de74ce947650a5d969c87adf8f77b2a1c1cc574421f1a384039cf635fb4b22",
+      "source": "https://tongyi.aliyun.com/",
+      "asset": "https://img.alicdn.com/imgextra/i1/O1CN01TLEHbS1cyufo87FKI_!!6000000003670-55-tps-32-32.svg",
+      "retrievedAt": "2026-10-21",
+      "license": {
+        "type": "Official brand resource",
+        "notice": "Public official logo used only to identify the vendor's own models. No open reuse licence or sponsorship is asserted; trademark rights remain with the owner."
+      },
+      "modifications": "Unmodified official SVG",
+      "note": "Same vector as tongyi.svg. The Wan brand uses this exact mark: favicon of https://wan.video/ (https://g.alicdn.com/sail-web/wan-static-resources/0.0.30/images/favicon.ico, 64 px PNG) and the lockup in the official Wan repositories (https://github.com/Wan-Video/Wan2.2/blob/main/assets/logo.png, org site wan.video). wan.video publishes no larger standalone mark, so the official vector from tongyi.aliyun.com is used."
+    },
+    {
+      "brand": "typesafe",
+      "file": "typesafe.svg",
+      "sha256": "6b2c3a0fddb63bb39ffe67a68ceca31384326def35c6f0003ffe123a1c80a95d",
+      "source": "https://typesafe.ai/",
+      "asset": "https://framerusercontent.com/images/aNFzSFxM4fjICmnibw7npfZjcQ.png",
+      "assetSha256": "fcb8f554778c45ff62b97ca05df643588b39c8c66913736b7fe3485cedd96180",
+      "retrievedAt": "2026-10-21",
+      "license": {
+        "type": "Official brand resource",
+        "notice": "Public official logo used only to identify the vendor's own models. No open reuse licence or sponsorship is asserted; trademark rights remain with the owner."
+      },
+      "modifications": "Official 400x400 PNG favicon embedded unchanged as a data URI inside an SVG container (same bytes as tool-icons/official-typesafe.fcb8f554778c.png)."
+    }
+  ]
+}

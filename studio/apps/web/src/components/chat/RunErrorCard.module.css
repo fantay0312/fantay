@@ -1,0 +1,220 @@
+/*
+ * 报错卡(设计稿组件 19 · 第 78 / 79 格)。
+ *
+ * 稿子 `.errb`:白卡、380px 定宽,**红只留在标题那一行**,正文走 `--text-muted`,
+ * 动作靠右排成一行(`justify-content: flex-end`)。
+ *
+ * 2026-11-08 chat polish 把这张卡调安静了一档(产品:动画「垃圾、不协调」、
+ * AI 组件全面重做):
+ *   · 标题那一行从「16px 红字」换成**淡红底的卡头**:红只剩那枚八边形和一层
+ *     几乎看不出的底色,标题字回到正文最深的墨 —— 失败是事实,不是警报;
+ *     「红只留在标题那一行」这条稿子规矩仍然成立。
+ *   · 外圈仍是 1px 发丝描边,不加投影,和问答卡 / 产物卡同一种材质。
+ *   · 入场走「卡片」那一档:opacity + 6px + blur 2px、`--chat-dur-turn`(360ms)。
+ *   · 主动作(重试 / 切到云端)仍是这一排里唯一的实心墨,次要动作只描一圈发丝边。
+ *
+ * 这一层只管**长什么样**。「该出哪几颗按钮」是策略,留在 ChatPane ——
+ * 那里才知道这一轮是授权失败、余额不够、还是本地环境跑不动。
+ */
+.card {
+  /* The ChatPanel resizes independently from the viewport. Base the footer
+     transition on this card's actual content width instead of a window media
+     query so dragging the split produces one deterministic layout change. */
+  container-type: inline-size;
+  container-name: run-error-card;
+  width: 380px;
+  max-width: 100%;
+  padding: 10px 11px;
+  border: var(--chat-stroke) solid var(--chat-border);
+  /* 16px 那一档(PR #7170:`.errb` 从 `--radius-lg` 换到 `--radius-2xl`)。
+     稿子把升级卡、记忆卡、弹窗和这张报错卡一起拉到同一档 —— 这不是报错卡自己的
+     装饰,是这一屏上「大卡片」这一族共同的外形。
+     chat 组件按 `components/chat/AGENTS.md` §2 只消费 `--chat-*` 接缝层,可这一档
+     今天在 `ChatRoot.module.css` 里还没有别名(那个文件属于另一条工作线),
+     所以先落到产品 token 上;别名补上的当天这里自动接管。
+     两种写法都不是写死的 16px —— 形状刻度整体调整时,写死的那一处会静静地
+     留在旧档上,而旁边走 token 的卡全都跟着动了。 */
+  border-radius: var(--chat-radius-2xl, var(--radius-2xl));
+  background: var(--chat-bg);
+  animation: run-error-card-in var(--chat-dur-turn) var(--chat-ease-out) backwards;
+}
+
+/* 只填 backwards:落定之后卡上不留 transform / filter(`.chat-log` 的子项身上
+   留着单位矩阵,是滚动冻结 H3 那次的教训)。 */
+@keyframes run-error-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+    filter: blur(2px);
+  }
+}
+
+/* 稿子 `.errb .t { display:flex; align-items:center; gap:7px; padding-bottom:8px;
+   border-bottom: 1px solid var(--border-soft); font-size: var(--t-head);
+   font-weight:600; color: var(--red) }` —— 红只在这一行。
+   ------------------------------------------------------------
+   2026-11-08:这一行铺成卡头 —— 负外距吃掉卡自己的 10px / 11px 内距,让那层底色
+   顶到卡的发丝边;上面两个角跟着卡的圆角走(`inherit`),不另写一个数。
+   底色是 `--chat-red` 掺进卡面 4%,分隔线是它掺进 `--chat-border-soft` 12% ——
+   读得出「这是一张出事的卡」,但不再是一块红。字号降到卡片标题那一档
+   (`--chat-t-lead`,和问答卡卡头同号),颜色回到 `--chat-text-strong`;
+   红只留给那枚八边形。 */
+.title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: -10px -11px 0;
+  padding: 10px 11px 9px;
+  border-bottom: var(--chat-stroke) solid
+    color-mix(in srgb, var(--chat-red) 12%, var(--chat-border-soft));
+  border-start-start-radius: inherit;
+  border-start-end-radius: inherit;
+  background: color-mix(in srgb, var(--chat-red) 4%, var(--chat-bg));
+  font-size: var(--chat-t-lead);
+  font-weight: 600;
+  line-height: var(--chat-lh-row);
+  color: var(--chat-text-strong);
+}
+.title svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--chat-red);
+}
+
+/* 稿子 `.errb .d { margin-top: 8px; font-size: var(--t-mini);
+   line-height: var(--lh-body); color: var(--text-muted) }` */
+.description {
+  margin-top: 8px;
+  font-size: var(--chat-t-mini);
+  line-height: var(--chat-lh-body);
+  color: var(--chat-text-muted);
+}
+
+/* 稿子 `.errb .ops { display:flex; flex-wrap:wrap; justify-content:flex-end;
+   gap:6px; margin-top:9px }` —— 宽卡动作靠右；窄卡在下面显式切为单列，
+   不再让内容长度偶然决定出 2 + 1 的孤行。 */
+.ops {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  column-gap: 4px;
+  row-gap: 6px;
+  margin-top: 9px;
+}
+
+.actionGroup {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+/* 稿子 `.errb .ops .btn.mod-sm`:这一排的每一颗动作都走同一副壳。
+   仍以共享 Button 为底层原语；这里把报错卡自己的固定尺寸和两种分量收口，
+   调用方不再分别依赖全局类、共享 CSS Module 或裸 button。 */
+.action {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: auto;
+  padding: 4px 11px;
+  border: var(--chat-stroke) solid transparent;
+  border-radius: var(--chat-radius-pill);
+  font-family: inherit;
+  font-size: var(--chat-t-mini);
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+  /* 共享 Button 自带 50ms `ease` 的过渡;这一排改走聊天的手感:换底 / 换墨 /
+     描边 `--chat-dur-quick`,按下 `--chat-dur-press`。 */
+  transition:
+    background-color var(--chat-dur-quick) var(--chat-ease-out),
+    border-color var(--chat-dur-quick) var(--chat-ease-out),
+    color var(--chat-dur-quick) var(--chat-ease-out),
+    transform var(--chat-dur-press) var(--chat-ease-out);
+}
+
+/* 按下缩到 0.96。祖先 `.ops` 不是装饰:共享 Button 的
+   `.button:active:not(:disabled) { transform: translateY(1px) }` 同为 (0,3,0),
+   单写 `.action:active:not(:disabled)` 就得靠 bundle 顺序判胜负。 */
+.ops .action:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none;
+  }
+  .action {
+    transition: none;
+  }
+  .ops .action:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* 20rem is below the normal 380px card's content width but above the minimum
+   ChatPanel card width. Using rem also makes increased default font sizes
+   enter the roomy stacked layout earlier. DOM order is unchanged, so pointer
+   targets, native button semantics and keyboard focus order stay intact. */
+@container run-error-card (max-width: 20rem) {
+  .ops {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: stretch;
+  }
+
+  .actionGroup {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .action {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* 挡住的时候按钮要**看起来**也动不了 —— 单 OPEND-2821 说的正是「看起来可点、
+   点了没反应」。`:not(:disabled)` 已经把 hover 让开了,这里补上静止态的分量。 */
+.action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 「为什么现在动不了」那一句。接在说明之后、动作之前,走和说明同一档字号,
+   不抢标题那一行的红。 */
+.blockedNote {
+  margin-top: 8px;
+  font-size: var(--chat-t-mini);
+  line-height: var(--chat-lh-body);
+  color: var(--chat-text-muted);
+}
+
+.secondaryAction {
+  border-color: var(--chat-border);
+  background: var(--chat-bg);
+  color: var(--chat-text);
+}
+
+.secondaryAction:hover:not(:disabled) {
+  border-color: var(--chat-border-strong);
+  background: var(--chat-bg);
+  color: var(--chat-text-strong);
+}
+
+.primaryAction {
+  border-color: var(--chat-text-strong);
+  background: var(--chat-text-strong);
+  color: var(--chat-bg);
+}
+
+.primaryAction:hover:not(:disabled) {
+  border-color: var(--chat-text);
+  background: var(--chat-text);
+  color: var(--chat-bg);
+}

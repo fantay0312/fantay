@@ -1,0 +1,133 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/* Embedded film library (spec 07 §4.4, §6.3): header CTA, search + status filter, static cover tiles. */
+.library {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  padding: 20px;
+}
+
+.empty {
+  display: grid;
+  place-items: center;
+  padding: 48px 20px;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.heading {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.nativeCover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.emptyCover { width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:var(--paper-deep);color:var(--ink-soft);font-size:12px; }
+
+.title {
+  color: var(--ink);
+  font-size: var(--type-heading);
+  font-weight: 600;
+  line-height: var(--type-heading-lh);
+}
+
+.count {
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.search {
+  flex: 1 1 220px;
+  max-width: 320px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  min-width: 0;
+}
+
+.cover {
+  background: #000;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cardTitle {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: var(--type-copy);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status {
+  margin-left: auto;
+  color: var(--ink-soft);
+}
+
+/* Full-cover open target: the visible card text stays readable; focus draws the ring inside. */
+.cardHit {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 3;
+  width: 100%;
+  height: 68px;
+  padding: 0;
+  border-radius: inherit;
+  background: transparent;
+}
+
+.card { position:relative; }
+.fullCardHit { inset:0;height:100%; }
+.cover { position:relative; }
+.preview { width:100%;height:100%;object-fit:contain; }
+.previewButton { position:absolute;inset:0;display:grid;place-items:center;width:100%;height:100%;background:rgb(0 0 0 / 0.13);color:#fff; }
+.previewButton:hover { background:rgb(0 0 0 / 0.27); }
+
+.cardHit:hover {
+  background: transparent;
+}
+
+.cardHit:focus-visible {
+  outline-offset: calc(var(--focus-ring-width) * -1);
+}
+
+.help {
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+}

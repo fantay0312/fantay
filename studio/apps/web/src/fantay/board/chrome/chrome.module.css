@@ -1,0 +1,679 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * Board chrome layout (spec 03 §6): every island sits in the board's `pointer-events: none` chrome container
+ * (`BoardView.module.css` `.chrome`, whose direct children get `pointer-events: auto`); full-inset passive layers
+ * switch pointer events off again with a doubled selector so they beat `.chrome > *` regardless of load order.
+ * Shown/hidden islands stay mounted and toggle `data-state` (enter 200 ms, exit 140 ms, ease-out-quint).
+ */
+
+/* ── bottom toolbar ─────────────────────────────────────────────────────────────────────── */
+
+/* centred with auto margins (not left: 50%), so the islands may use the whole board width before they scroll */
+.toolbarDock {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 4;
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  margin-inline: auto;
+}
+
+.toolbarDock > [role='toolbar'] {
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  padding: 6px 10px;
+  border-radius: var(--radius-chip);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: var(--type-label);
+  line-height: var(--type-label-lh);
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--motion-exit) var(--ease-out-quint),
+    transform var(--motion-exit) var(--ease-out-quint),
+    visibility 0s linear var(--motion-exit);
+}
+
+.hint[data-state='open'] {
+  transform: translate(-50%, 0);
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity var(--motion-enter) var(--ease-out-quint),
+    transform var(--motion-enter) var(--ease-out-quint),
+    visibility 0s;
+}
+
+.toolSlot {
+  display: inline-flex;
+  flex: none;
+}
+
+/* insert menu rows: a 32 px icon tile, title and a one-line description */
+.insertRow {
+  min-height: 48px;
+  gap: 10px;
+}
+
+.insertIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-control);
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+}
+
+/* ── context bar ────────────────────────────────────────────────────────────────────────── */
+
+.contextDock {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 68px;
+  z-index: 4;
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  margin-inline: auto;
+  transform: translateY(4px);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--motion-exit) var(--ease-out-quint),
+    transform var(--motion-exit) var(--ease-out-quint),
+    visibility 0s linear var(--motion-exit);
+}
+
+.contextDock.contextDock[data-state='closed'] {
+  pointer-events: none;
+}
+
+.contextDock[data-state='open'] {
+  transform: translateY(0);
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity var(--motion-enter) var(--ease-out-quint),
+    transform var(--motion-enter) var(--ease-out-quint),
+    visibility 0s;
+}
+
+.contextBar {
+  min-height: 40px;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.barText {
+  flex: none;
+  padding: 0 8px;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: var(--type-label);
+  line-height: var(--type-label-lh);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* a mode hint gives way first (ellipsis) when the board is narrow */
+.modeHint {
+  flex: 0 1 auto;
+  min-width: 48px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.barGroup {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+.swatchRow {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 1px;
+}
+
+.swatch {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #000 24%, transparent);
+}
+
+.swatch[data-none] {
+  background: linear-gradient(
+    135deg,
+    transparent calc(50% - 0.75px),
+    var(--accent-ink) calc(50% - 0.75px),
+    var(--accent-ink) calc(50% + 0.75px),
+    transparent calc(50% + 0.75px)
+  );
+}
+
+.menuSwatch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sizeLabel {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── minimap (MIT port of the infinite-canvas mini map, spec 03 §6.5) ─────────────────── */
+
+.minimap {
+  position: absolute;
+  right: 16px;
+  bottom: 60px;
+  z-index: 3;
+  width: 200px;
+  height: 132px;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  box-shadow: var(--shadow-float);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.minimapNode {
+  position: absolute;
+  border-radius: 1px;
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.minimapViewport {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border: 1.5px solid var(--board-select);
+  border-radius: 2px;
+  background: var(--board-select-soft);
+  pointer-events: none;
+}
+
+/* ── save status ────────────────────────────────────────────────────────────────────────── */
+
+.saveStatus {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  max-width: min(360px, calc(100% - 24px));
+  padding: 0 10px;
+  border-radius: var(--radius-chip);
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: var(--type-label);
+  line-height: 1;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--motion-exit) var(--ease-out-quint),
+    visibility 0s linear var(--motion-exit);
+}
+
+.saveStatus.saveStatus[data-state='closed'] {
+  pointer-events: none;
+}
+
+.saveStatus[data-state='open'] {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity var(--motion-enter) var(--ease-out-quint),
+    visibility 0s;
+}
+
+.saveStatus[data-tone='danger'] {
+  color: var(--accent-ink);
+}
+
+.saveText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── OS drop overlay and upload ghosts ──────────────────────────────────────────────────── */
+
+.dropOverlay {
+  position: absolute;
+  inset: 8px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--board-select);
+  border-radius: 16px;
+  background: var(--board-select-soft);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--motion-exit) var(--ease-out-quint),
+    visibility 0s linear var(--motion-exit);
+}
+
+.dropOverlay.dropOverlay {
+  pointer-events: none;
+}
+
+.dropOverlay[data-state='open'] {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity var(--motion-enter) var(--ease-out-quint),
+    visibility 0s;
+}
+
+.dropHint {
+  padding: 8px 14px;
+  border-radius: var(--radius-chip);
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--type-body);
+  line-height: var(--type-body-lh);
+}
+
+.ghostLayer.ghostLayer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ghost {
+  position: absolute;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  border: 1.5px dashed var(--board-select);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--board-select-soft) 70%, transparent);
+  animation: chrome-ghost-pulse 1.6s ease-in-out infinite;
+}
+
+.ghostLabel {
+  max-width: 100%;
+  padding: 4px 8px;
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: var(--type-caption);
+  line-height: var(--type-caption-lh);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes chrome-ghost-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ── loading / error / empty board ──────────────────────────────────────────────────────── */
+
+.statusLayer.statusLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  pointer-events: none;
+  container-type: size;
+}
+
+.statusCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 340px;
+  text-align: center;
+  font-family: var(--font-ui);
+}
+
+.statusCard[data-interactive] {
+  pointer-events: auto;
+}
+
+.statusGlyph {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 4px;
+  border-radius: var(--radius-control);
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+}
+
+.statusTitle {
+  color: var(--ink);
+  font-size: var(--type-copy);
+  line-height: var(--type-copy-lh);
+  font-weight: 500;
+}
+
+.statusBody {
+  color: var(--ink-soft);
+  font-size: var(--type-body);
+  line-height: var(--type-body-lh);
+}
+
+.statusCard[data-demo] {
+  width: 100%;
+  max-width: 540px;
+}
+
+.statusCard[data-demo] .statusBody {
+  max-width: 340px;
+}
+
+.statusDemo {
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.statusGlyph[data-demo-fallback] {
+  display: none;
+}
+
+/* The toolbar docks over the foot of the canvas: a short board keeps the plain hint instead of crowding it. */
+@container (max-height: 559.99px) {
+  .statusDemo {
+    display: none;
+  }
+
+  .statusGlyph[data-demo-fallback] {
+    display: grid;
+  }
+}
+
+/* ── Edit panel, capture highlight and markup ───────────────────────────────────────────── */
+
+.editHost.editHost {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.captureLayer.captureLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.captureClip {
+  position: absolute;
+  overflow: hidden;
+}
+
+.captureBox {
+  position: absolute;
+  border: 1px solid var(--board-select);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--board-select) 8%, transparent);
+}
+
+.captureBox[data-picked] {
+  border-width: 2px;
+  background: color-mix(in srgb, var(--board-select) 12%, transparent);
+}
+
+.captureLabel {
+  position: absolute;
+  max-width: 240px;
+  padding: 2px 6px;
+  overflow: hidden;
+  border-radius: var(--radius-tag);
+  background: var(--board-select);
+  color: var(--on-info);
+  font-family: var(--font-ui);
+  font-size: var(--type-caption);
+  line-height: var(--type-caption-lh);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transform: translateY(calc(-100% - 4px));
+}
+
+.markupHost {
+  position: absolute;
+  z-index: 3;
+}
+
+.markupSpacer {
+  position: absolute;
+  inset: 0;
+}
+
+/* ── generator panel slot ───────────────────────────────────────────────────────────────── */
+
+.panelSlot {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  width: min(560px, calc(100% - 24px));
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity var(--motion-exit) var(--ease-out-quint),
+    transform var(--motion-exit) var(--ease-out-quint);
+}
+
+.panelSlot[data-state='open'] {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity var(--motion-enter) var(--ease-out-quint),
+    transform var(--motion-enter) var(--ease-out-quint);
+}
+
+.panelSlot.panelSlot[data-state='closed'] {
+  pointer-events: none;
+}
+
+/* ── menus at a point (context menu, connection menu) ───────────────────────────────────── */
+
+.menuAnchor.menuAnchor {
+  position: fixed;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* ── dialogs ────────────────────────────────────────────────────────────────────────────── */
+
+.dialogForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.fieldError {
+  color: var(--accent-ink);
+  font-family: var(--font-ui);
+  font-size: var(--type-label);
+  line-height: var(--type-label-lh);
+}
+
+.filesSearch {
+  margin-top: 16px;
+}
+
+.filesList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: min(360px, calc(100dvh - 280px));
+  margin-top: 10px;
+  overflow-y: auto;
+}
+
+.fileRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  padding: 0 8px;
+  border-radius: var(--radius-row);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--type-body);
+  line-height: var(--type-body-lh);
+  cursor: pointer;
+}
+
+.fileRow:hover {
+  background: var(--paper-deep);
+}
+
+.fileRow[data-disabled] {
+  color: var(--ink-faint);
+  cursor: default;
+}
+
+.fileRow[data-disabled]:hover {
+  background: transparent;
+}
+
+.fileIcon {
+  display: inline-flex;
+  flex: none;
+  color: var(--ink-soft);
+}
+
+.filePath {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileBadge {
+  flex: none;
+  padding: 2px 6px;
+  border-radius: var(--radius-tag);
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+  font-size: var(--type-caption);
+  line-height: var(--type-caption-lh);
+}
+
+.filesEmpty {
+  padding: 24px 8px;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: var(--type-body);
+  text-align: center;
+}
+
+.shortcutsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 24px;
+  margin-top: 16px;
+}
+
+.shortcutRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 26px;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--type-body);
+  line-height: var(--type-body-lh);
+}
+
+.shortcutTips {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 16px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--line-soft);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: var(--type-label);
+  line-height: var(--type-label-lh);
+  list-style: none;
+}
+
+@media (max-width: 560px) {
+  .shortcutsGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hint,
+  .hint[data-state='open'],
+  .contextDock,
+  .contextDock[data-state='open'],
+  .saveStatus,
+  .saveStatus[data-state='open'],
+  .dropOverlay,
+  .dropOverlay[data-state='open'],
+  .panelSlot,
+  .panelSlot[data-state='open'] {
+    transition: none;
+  }
+
+  .ghost {
+    animation: none;
+  }
+}

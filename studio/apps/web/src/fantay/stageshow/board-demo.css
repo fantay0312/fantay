@@ -1,0 +1,274 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * The empty-board demo. Nested under `.bd` so nothing reaches past the Stage. Sizes follow the real board chrome: the
+ * label is the node label's 12/600, the selection the board's 1.5px brand outline, the tool rows the chat's.
+ */
+.bd {
+  .ss-stage { font-family: var(--font-ui); color: var(--ink); }
+
+  .bd-slotframe,
+  .bd-node {
+    position: absolute;
+    left: 248px;
+    top: 34px;
+    width: 280px;
+    height: 240px;
+  }
+
+  /* Drawn once at full size and only faded: a dashed edge never resizes. */
+  .bd-slotframe {
+    box-sizing: border-box;
+    border: 1.5px dashed var(--line);
+    border-radius: 2px;
+    transition: opacity 240ms var(--ease-out-quint);
+  }
+  .bd-slotframe[data-gone] { opacity: 0; }
+
+  .bd-label {
+    position: absolute;
+    left: 248px;
+    top: 12px;
+    height: 16px;
+    color: var(--ink-soft);
+    font: 600 12px/16px var(--font-ui);
+    opacity: 0;
+    transition: opacity 240ms var(--ease-out-quint), color 150ms var(--ease-out-quint);
+  }
+  .bd-label[data-on] { opacity: 1; }
+  .bd-label[data-selected] { color: var(--ink); }
+
+  .bd-node {
+    will-change: transform;
+    background: var(--surface);
+    box-shadow: 0 0 0 1px var(--line), var(--shadow-float);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 320ms var(--ease-out-quint), transform 420ms var(--ease-out-quint);
+  }
+  .bd-node[data-on] { opacity: 1; transform: none; }
+  .bd-node::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    box-shadow: 0 0 0 1.5px var(--brand);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 120ms var(--ease-out-quint);
+  }
+  .bd-node[data-hover]::after { opacity: 0.55; }
+  .bd-node[data-selected]::after { opacity: 1; }
+
+  .bd-handles i {
+    position: absolute;
+    z-index: 1;
+    width: 8px;
+    height: 8px;
+    box-sizing: border-box;
+    border: 1.5px solid var(--brand);
+    border-radius: 2px;
+    background: var(--surface);
+    opacity: 0;
+    transition: opacity 120ms var(--ease-out-quint);
+  }
+  .bd-node[data-selected] .bd-handles i { opacity: 1; }
+  .bd-handles [data-c='tl'] { left: -4px; top: -4px; }
+  .bd-handles [data-c='tr'] { right: -4px; top: -4px; }
+  .bd-handles [data-c='bl'] { left: -4px; bottom: -4px; }
+  .bd-handles [data-c='br'] { right: -4px; bottom: -4px; }
+
+  /* The generated page. It is content, not chrome, so it keeps its own palette in both themes. */
+  .bd-page {
+    --ss-ink-1: #efe9dc;
+    --ss-ink-2: #e7e0d0;
+    --ss-ink-3: #ddd4c1;
+    --ss-ink-4: #cfc5af;
+    --ss-ink-5: #b9ae96;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #f7f4ec;
+    color: #27321f;
+  }
+  .bd-page__nav {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 30px;
+    padding: 0 12px;
+  }
+  .bd-page__links { display: flex; gap: 10px; opacity: 0.7; }
+  .bd-page__brand { font: 600 11px/1.3 var(--font-ui); letter-spacing: -0.01em; }
+  .bd-page__art { flex: none; height: 128px; overflow: hidden; }
+  .bd-page__art img {
+    display: block;
+    width: 100%;
+    height: 128px;
+    object-fit: cover;
+    object-position: 50% 38%;
+  }
+  .bd-page__copy {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 12px;
+  }
+  .bd-page__headline-slot { min-width: 0; }
+  .bd-page__headline { font: 600 15px/1.25 var(--font-ui); letter-spacing: -0.015em; }
+  .bd-page__cta {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 12px;
+    background: #4e6b3a;
+    color: #f7f4ec;
+    font: 600 11px/1 var(--font-ui);
+    white-space: nowrap;
+  }
+
+  /* Skeleton and result share a slot; only opacity moves, so nothing shifts as the page resolves. */
+  .bd-slot { position: relative; display: grid; }
+  .bd-slot > * { grid-area: 1 / 1; }
+  .bd-page__cta-slot { flex: none; justify-items: end; align-items: center; }
+  .bd-sk, .bd-real { transition: opacity 300ms var(--ease-out-quint); }
+  .bd-sk { opacity: 1; align-self: center; }
+  .bd-real { opacity: 0; }
+  .bd-page[data-ready] .bd-sk { opacity: 0; }
+  .bd-page[data-ready] .bd-real { opacity: 1; }
+  .bd-slot[data-delay='1'] .bd-sk, .bd-slot[data-delay='1'] .bd-real { transition-delay: 70ms; }
+  .bd-slot[data-delay='2'] .bd-sk, .bd-slot[data-delay='2'] .bd-real { transition-delay: 140ms; }
+  .bd-slot[data-delay='3'] .bd-sk, .bd-slot[data-delay='3'] .bd-real { transition-delay: 210ms; }
+
+  .bd-link { --ss-accent: var(--ink-faint); }
+
+  /* The chat card, pinned by its foot: messages rise above the composer as the real thread does. */
+  .bd-chat {
+    position: absolute;
+    left: 12px;
+    bottom: 62px;
+    box-sizing: border-box;
+    width: 212px;
+    padding: 8px;
+    border-radius: var(--radius-panel);
+    background: var(--surface);
+    box-shadow: var(--shadow-float);
+  }
+  .bd-bubble {
+    width: fit-content;
+    max-width: 172px;
+    margin: 2px 0 10px auto;
+    padding: 6px 10px;
+    border-radius: 12px;
+    background: var(--paper-deep);
+    color: var(--ink);
+    font: 500 12px/1.45 var(--font-ui);
+  }
+  .bd-tool {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 196px;
+    height: 24px;
+    padding: 0 4px;
+    color: var(--ink-soft);
+    font: 500 12px/1.3 var(--font-ui);
+    white-space: nowrap;
+  }
+  .bd-tool svg { flex: none; }
+  .bd-tool > span:not(.bd-tool__stat) { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .bd-tool code { flex: none; font: 500 11.5px/1.3 var(--font-mono); color: var(--ink); }
+  .bd-tool__file { text-decoration: underline; text-underline-offset: 2px; text-decoration-color: var(--ink-ghost); }
+  .bd-tool__stat { position: relative; flex: none; display: grid; margin-left: auto; justify-items: end; }
+  .bd-tool__stat > * { grid-area: 1 / 1; transition: opacity 200ms var(--ease-out-quint); }
+  .bd-tool__pending { opacity: 0; display: inline-flex; align-items: center; }
+  .bd-tool__pending[data-on] { opacity: 1; }
+  .bd-tool__diff { opacity: 0; color: var(--ink-faint); font: 500 11px/1.3 var(--font-mono); }
+  .bd-tool__diff[data-on] { opacity: 1; }
+
+  .bd-composer {
+    margin-top: 8px;
+    padding: 8px;
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 1px var(--line);
+    background: var(--surface);
+  }
+  .bd-composer__text {
+    min-height: 34px;
+    color: var(--ink);
+    font: 400 12px/17px var(--font-ui);
+    overflow-wrap: anywhere;
+  }
+  .bd-composer__hint { color: var(--ink-faint); }
+  .bd-caret {
+    display: inline-block;
+    width: 1px;
+    height: 13px;
+    margin-left: 1px;
+    vertical-align: -2px;
+    background: var(--ink);
+  }
+  .bd-composer__foot { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+  .bd-disc {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+  }
+  .bd-disc[data-kind='ghost'] { box-shadow: inset 0 0 0 1px var(--line); color: var(--ink-soft); }
+  .bd-disc[data-kind='send'] { background: var(--paper-deep); color: var(--ink-faint); transition: background-color 150ms var(--ease-out-quint), color 150ms var(--ease-out-quint); }
+  .bd-disc[data-kind='send'][data-ready] { background: var(--ink); color: var(--paper); }
+
+  .bd-dock {
+    position: absolute;
+    left: 248px;
+    top: 286px;
+    display: flex;
+    justify-content: center;
+    width: 280px;
+  }
+  .bd-bar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    box-shadow: var(--shadow-float);
+    color: var(--ink-soft);
+    font: 500 12px/1 var(--font-ui);
+    white-space: nowrap;
+    opacity: 0;
+    will-change: transform;
+    transform: translateY(4px);
+    transition: opacity 200ms var(--ease-out-quint), transform 200ms var(--ease-out-quint);
+  }
+  .bd-bar[data-on] { opacity: 1; transform: none; }
+  .bd-bar > span { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 6px; border-radius: var(--radius-control); }
+
+  /* Narrow workspace: the chat card sits over the node, the read row and composer give way, the node stays whole. */
+  .ss-stage[data-layout='compact'] {
+    .bd-slotframe, .bd-node { left: 22px; top: 136px; width: 300px; height: 216px; }
+    .bd-label { left: 22px; top: 114px; }
+    .bd-page__art { height: 112px; }
+    .bd-chat {
+      left: 22px;
+      top: 22px;
+      bottom: auto;
+      width: 300px;
+      opacity: 0;
+      transition: opacity 240ms var(--ease-out-quint);
+    }
+    .bd-chat[data-sent] { opacity: 1; }
+    .bd-readrow, .bd-composer { display: none; }
+    .bd-tool { width: 284px; }
+    .bd-dock { left: 22px; top: 364px; width: 300px; }
+    .bd-link { display: none; }
+  }
+}

@@ -1,0 +1,48 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Shape face (spec 03 §4.7): rect, ellipse or text; colours come from contract palette tokens. */
+
+.shape {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+.shape[data-shape="ellipse"] {
+  border-radius: 50%;
+}
+
+.shape[data-shape="text"] {
+  align-items: flex-start;
+  justify-content: flex-start;
+  overflow: visible;
+}
+
+.text {
+  width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
+.shape:not([data-shape="text"]) .text {
+  padding: 8px;
+  text-align: center;
+}
+
+.placeholder {
+  color: var(--ink-faint);
+}
+
+.editor {
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  text-align: inherit;
+}

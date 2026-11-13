@@ -1,0 +1,102 @@
+# Fantay — one command entry for the workspace.
+# Runtimes stay pinned where they are declared: studio/mise.toml (Node 24, pnpm 10.33.2)
+# and 素材库/导览支持/mise.toml (Python 3.13.15). Task names are prefixed so they never
+# shadow the library's own tasks (verify, preview, catalog …) when run from inside it.
+
+# Telemetry off for every Studio command run under this folder (no secrets here).
+[env]
+NEXT_TELEMETRY_DISABLED = "1"
+OPEN_DESIGN_VELA_TELEMETRY = "0"
+
+[tasks."studio"]
+description = "Run the Fantay desktop application"
+dir = "{{config_root}}/studio"
+run = "mise x -- pnpm tools-dev run desktop --daemon-port 7456 --web-port 5173"
+
+[tasks."studio:start"]
+description = "Start the Fantay desktop application in the background"
+dir = "{{config_root}}/studio"
+run = "mise x -- pnpm tools-dev start desktop --daemon-port 7456 --web-port 5173"
+
+[tasks."studio:stop"]
+description = "Stop the background Fantay runtime"
+dir = "{{config_root}}/studio"
+run = "mise x -- pnpm tools-dev stop"
+
+[tasks."studio:status"]
+description = "Show Fantay runtime status"
+dir = "{{config_root}}/studio"
+run = "mise x -- pnpm tools-dev status"
+
+[tasks."studio:desktop"]
+description = "Build the design canvas and launch Fantay desktop"
+dir = "{{config_root}}/studio"
+run = ["mise x -- pnpm --filter @fantay/canvas build", "mise x -- pnpm tools-dev start desktop --daemon-port 7456 --web-port 5173"]
+
+[tasks."studio:canvas"]
+description = "Build the desktop design canvas"
+dir = "{{config_root}}/studio"
+run = "mise x -- pnpm --filter @fantay/canvas build"
+
+[tasks."studio:build:mac"]
+description = "Build a portable Fantay macOS DMG locally"
+dir = "{{config_root}}/studio"
+run = [
+  'mise x -- pnpm tools-pack mac build --to dmg --portable --namespace fantay --dir "${TMPDIR:-/tmp}/fantay-design-desktop-build"',
+  'mkdir -p .tmp/desktop',
+  'cp "${TMPDIR:-/tmp}/fantay-design-desktop-build/out/mac/namespaces/fantay/dmg/Fantaydesign-fantay.dmg" ".tmp/desktop/Fantaydesign.dmg"',
+]
+
+[tasks."studio:build:windows"]
+description = "Build a portable Fantay Windows installer (run on Windows)"
+dir = "{{config_root}}/studio"
+run = "mise x -- pnpm tools-pack win build --to nsis --portable --namespace fantay"
+
+[tasks."studio:guard"]
+description = "Run the fork's repository policy checks (pnpm guard)"
+dir = "{{config_root}}/studio"
+run = "mise x -- pnpm guard"
+
+[tasks."studio:typecheck"]
+description = "Typecheck every package of the fork (pnpm typecheck)"
+dir = "{{config_root}}/studio"
+run = "mise x -- pnpm typecheck"
+
+[tasks."studio:test"]
+description = "Run a focused test/check command, save its log, and clean inactive test caches even on failure"
+dir = "{{config_root}}/studio"
+run = "mise x -- node --experimental-strip-types scripts/fantay-test.ts run --"
+
+[tasks."studio:clean"]
+description = "Clean inactive test scratch and rebuildable caches; keep evidence, app data, and latest installers"
+dir = "{{config_root}}/studio"
+run = "mise x -- node --experimental-strip-types scripts/fantay-test.ts clean"
+
+[tasks."library"]
+description = "Serve the 素材库 web UI on 127.0.0.1:8766 and open it"
+dir = "{{config_root}}/素材库/导览支持"
+run = "mise run preview -- --open"
+
+[tasks."cli"]
+description = "Fantasy Design CLI: discover, inspect and reuse local design materials"
+dir = "{{config_root}}/素材库/导览支持"
+run = "mise x -- python scripts/fantasy_design.py"
+
+[tasks."library:catalog"]
+description = "Rebuild the 素材库 index, then verify it"
+dir = "{{config_root}}/素材库/导览支持"
+run = ["mise run catalog", "mise run verify"]
+
+[tasks."library:check"]
+description = "Verify the 素材库 index and run its discovery, bookmark and CLI tests"
+dir = "{{config_root}}/素材库/导览支持"
+run = ["mise run verify", "mise run test"]
+
+[tasks."system:check"]
+description = "Check that the Fantay design system still matches Studio's UI tokens and that 素材库 uses it"
+dir = "{{config_root}}/素材库/导览支持"
+run = "mise x -- python '{{config_root}}/tools/check_fantay.py'"
+
+[tasks."check"]
+description = "All workspace checks: design-system parity, 素材库, and the fork's guard and typecheck"
+run = ["mise run system:check", "mise run library:check", "mise run studio:guard", "mise run studio:typecheck"]

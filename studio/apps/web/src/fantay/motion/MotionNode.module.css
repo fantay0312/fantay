@@ -1,0 +1,134 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Motion node (spec 07 §3.4): card on the surface, black stage, 44px footer. Literal colours are
+   only the media overlays (white text on translucent black over video, and the letterbox). */
+.node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  transition: box-shadow var(--motion-micro) var(--ease-out-quint);
+}
+
+.node[data-selected] {
+  box-shadow: 0 0 0 2px var(--info);
+}
+
+.stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: var(--paper);
+}
+
+.callout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.chip {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100% - 16px);
+  height: 22px;
+  padding: 0 8px;
+  overflow: hidden;
+  border-radius: var(--radius-chip);
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  font-size: var(--type-label);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.chip[data-tone='brand'] {
+  background: var(--brand);
+  color: var(--on-brand);
+}
+
+/* White on the raw --success fill is ~2.4:1 (light) / ~2:1 (dark); the fill is darkened so the
+   white label (a chip over the black video stage, so fixed white) stays ≥ 4.5:1 in both themes (D1). */
+.chip[data-tone='success'] {
+  background: color-mix(in srgb, var(--success) 60%, #000);
+  color: #fff;
+}
+
+/* 01 roles: --danger is the fill for white text (--accent-ink is danger text, 2.8:1 under white in dark). */
+.chip[data-tone='danger'] {
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+.duration {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 2;
+  padding: 2px 6px;
+  border-radius: var(--radius-tag);
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.4;
+  pointer-events: none;
+}
+
+.footer {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 44px;
+  padding: 0 8px;
+  border-top: 1px solid var(--line-soft);
+  background: var(--surface);
+  container-type: inline-size;
+}
+
+.time {
+  flex: none;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* A 9:16 node is 270px wide: without the (aria-hidden) time text the scrubber and Open still fit.
+   The scrubber's aria-valuetext and the duration badge keep the times available. */
+@container (max-width: 299px) {
+  .time {
+    display: none;
+  }
+}
+
+.scrubber {
+  flex: 1 1 auto;
+}

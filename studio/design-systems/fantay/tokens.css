@@ -1,0 +1,167 @@
+/* ─────────────────────────────────────────────────────────────────────────
+ * design-systems/fantay/tokens.css
+ *
+ * Fantay Design — Open Design's own product UI language, bound to the
+ * shared OpenDesign token schema. Every value below is read off the
+ * product UI (apps/web/src/styles/tokens.css, base.css and the shared
+ * primitives); DESIGN.md §Provenance maps each token to its file:line.
+ *
+ * Paste the `:root { … }` block verbatim into the first <style> of an
+ * artifact, then reference everything through var(--name).
+ *
+ * Light is the product theme. The `[data-theme="dark"]` block further
+ * down is DERIVED from the product's own dark token block, which the
+ * product never renders (apps/web/src/state/appearance.ts forces light).
+ * Treat it as unvalidated; see DESIGN.md §Dark Theme.
+ *
+ * Rationed brand green is NOT a token (the shared schema has no slot and
+ * this package adds no brand extensions). Use these literals only in the
+ * components DESIGN.md names (send disc, switch, selected assist pill,
+ * success tick, upgrade pill):
+ *   #87ea5c  brand green      fills only — 1.5:1 on #fff, never text
+ *   #00ff08  signal green     glyph on a #202020 disc / ground under #121212 ink
+ *   #007106  brand ink        text on #f2fff2 (6.05:1)
+ *   #f2fff2  brand surface    selected-assist ground
+ *   #0d5400  brand text       deep green text (8.91:1 on #f2fff2)
+ *   #d0ffb5 / #ebffde         brand weak / brand soft tints
+ * Other product literals that have no schema slot:
+ *   #bdbdbd  strong border / faint text — decorative and disabled only
+ *   #1a74ff  info blue — focus ring and info status only
+ * ─────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ─── Surface: white ground, grey ladder ──────────────────────────
+   * #fff is the product ground. Grouping comes from tone, not strokes:
+   * #fafafa panels and #ededed trays. */
+  --bg: #fff;
+  --surface: #fafafa;
+  --surface-warm: #ededed;  /* neutral tray tone despite the slot name */
+
+  /* ─── Ink ladder ──────────────────────────────────────────────────
+   * #202020 strong ink, #494949 running text, #5c5c5c muted,
+   * #848484 meta (3.74:1 on #fff — meta and large text only). */
+  --fg: #202020;
+  --fg-2: #494949;
+  --muted: #5c5c5c;
+  --meta: #848484;
+
+  /* ─── Borders ─────────────────────────────────────────────────────
+   * Hairlines are grouping aids, not control boundaries (1.38:1). */
+  --border: #dbdbdb;
+  --border-soft: #ededed;
+
+  /* ─── Accent: near-black ink, not a hue ───────────────────────────
+   * #353535 marks selection and focus. The primary CTA pill is drawn in
+   * --fg (#202020) and lightens to --accent on hover (DESIGN.md §Buttons).
+   * --accent-active (#121212) is the darkest ink step: pressed accent,
+   * the user's chat bubble, the selected nav label. */
+  --accent: #353535;
+  --accent-on: #fafafa;
+  --accent-hover: #202020;
+  --accent-active: #121212;
+
+  /* ─── Semantic ────────────────────────────────────────────────────
+   * Icons, dots and fills; none of these clears 4.5:1 as body text on #fff. */
+  --success: #00aa54;
+  --warn: #ff7528;
+  --danger: #f04142;
+
+  /* ─── Typography ──────────────────────────────────────────────────
+   * Albert Sans for everything (the product binds its --serif to the same
+   * stack). JiduMono Pro is named first but never bundled (All Rights
+   * Reserved); the stack falls back to system monospace faces. */
+  --font-display: "Albert Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-body: "Albert Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: "JiduMono Pro", ui-monospace, "SFMono-Regular", "SF Mono", "JetBrains Mono", Menlo, Monaco, Consolas, monospace;
+
+  /* Product steps --font-size-12 … 48. UI chrome is 14px / 600. */
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 32px;
+  --text-4xl: 48px;
+
+  --leading-body: 1.7;       /* reading text: prose, chat */
+  --leading-tight: 1.25;     /* UI chrome and headings: the product's 125% */
+  --tracking-display: -0.02em;
+
+  /* ─── Spacing (product --spacing-* steps) ─────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  --section-y-desktop: 48px;
+  --section-y-tablet: 32px;
+  --section-y-phone: 24px;
+
+  /* ─── Radius (same names and values as the product) ──────────────
+   * 2px inline code, 16px cards, 20px trays stay literal (DESIGN.md). */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+
+  /* ─── Elevation: warm-black shadows ───────────────────────────────── */
+  --elev-flat: none;
+  --elev-ring: 0 0 0 1px var(--border);
+  --elev-raised: 0 6px 24px rgba(28, 27, 26, 0.07), 0 2px 6px rgba(28, 27, 26, 0.04);
+
+  /* ─── Focus: the product's 1px info-blue outline at a 2px offset,
+   * rendered as a box-shadow so it never shifts layout. */
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 3px #1a74ff;
+
+  /* ─── Motion: quick and decisive ──────────────────────────────────
+   * Enter ~200ms, exit and micro-states ~140ms, strong ease-out. */
+  --motion-fast: 140ms;
+  --motion-base: 200ms;
+  --ease-standard: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* ─── Layout ──────────────────────────────────────────────────────
+   * 1648px = calc(1600px + 48px): the home column cap with its gutters. */
+  --container-max: 1648px;
+  --container-gutter-desktop: 24px;
+  --container-gutter-tablet: 16px;
+  --container-gutter-phone: 16px;
+}
+
+/* ─── Dark (derived, not product-validated) ─────────────────────────────
+ * Values come from the product's `[data-theme="dark"]` block, which the
+ * product ships but never renders. Apply only with an explicit
+ * data-theme="dark"; Fantay does not follow prefers-color-scheme. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #202020;
+  --surface: #353535;
+  --surface-warm: #494949;
+  --fg: #fafafa;
+  --fg-2: #ededed;
+  --muted: #bdbdbd;
+  --meta: #848484;
+  --border: #5c5c5c;
+  --border-soft: #494949;
+  --accent: #ededed;
+  --accent-on: #202020;
+  --accent-hover: #fafafa;
+  --accent-active: var(--accent-hover);
+  --success: #3bbf7d;
+  --warn: #ffc740;
+  --danger: #ff5e5e;
+  --elev-raised: 0 6px 24px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.25);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 3px #3aa5f0;
+}
+
+/* The product collapses every duration to 0.01ms under reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0.01ms;
+    --motion-base: 0.01ms;
+  }
+}

@@ -1,0 +1,78 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * Fantay overrides of upstream global selectors whose colours are literals (cannot follow tokens).
+ * Layer legacy-fixes: above legacy (wins at any specificity), below every Fantay layer.
+ * Rule: one group per failure pattern, each selector cites the upstream rule it corrects.
+ */
+
+/* A · accent fill + literal white label — invisible once --accent is light (dark theme).
+   Rules whose own stylesheet already pairs the label with the fill (--accent-contrast / --on-brand)
+   are not listed here; only upstream rules still carrying a literal white remain. */
+[data-theme="dark"] :is(
+  .plugins-home__chip--saved.is-active,           /* styles/home/plugins-home.css:193 */
+  .plugins-home__pill.is-active,                  /* styles/home/plugins-home.css:306 */
+  .plugins-home__pill--all.is-active,             /* styles/home/plugins-home.css:325 */
+  .entry-invite__btn.is-primary,                  /* styles/home/entry-layout.css:8241,8249 */
+  .inline-switcher__account-upgrade,              /* styles/home/entry-layout.css:9045 */
+  .plugins-view__primary,                         /* styles/home/plugins-view.css:392 */
+  .home-hero-confirm__primary,                    /* styles/home/home-hero.css:2949 */
+  .questions-continue,                            /* styles/viewer/composio.css:3035 */
+  .ds-modal-primary-action,                       /* styles/viewer/composio.css:3588 */
+  .chat-history-badge,                            /* styles/viewer/composio.css:4124 */
+  .plugin-loop-home__submit,                      /* styles/viewer/templates-plugins.css:818 */
+  .plugin-details-modal__primary,                 /* styles/viewer/templates-plugins.css:2027 */
+  .memory-connector-selected-mark,                /* styles/viewer/library.css:2392 */
+  .memory-connector-picker.is-selected .memory-connector-picker-box, /* styles/viewer/library.css:2455 */
+  .viewer-action-export,                          /* styles/viewer/tools.css:806 */
+  .sketch-tool.active,                            /* styles/viewer/code.css:544 */
+  .chat-connect-repo-icon,                        /* styles/viewer/code.css:921 */
+  .library-install-submit,                        /* styles/viewer/memory.css:452 */
+  .viewer-action.primary                          /* styles/viewer/core.css:301 */
+) { color: var(--accent-contrast); }
+
+/* B · literal white surfaces carrying token-coloured text (design-files.css `.df-card` / `.df-empty` now use --surface themselves) */
+[data-theme="dark"] :is(
+  .workspace-shell .workspace-tab.is-active,      /* styles/viewer/routines.css:1334 */
+  .app .df-panel, .app .df-main, .app .df-body,   /* styles/viewer/routines.css:3110,3116 */
+  .plugin-marketplace__switch button.is-active,   /* styles/home/plugin-marketplace-demo.css:155 */
+  .plugin-marketplace__filters button.is-active,
+  .plugin-marketplace__category-tags button.is-active, /* :165 */
+  .plugin-marketplace__create-tabs button.is-active    /* :736 */
+) { background-color: var(--surface); }
+
+/* C · literal near-black text on theme grounds */
+[data-theme="dark"] :is(
+  .design-spec-line.is-table,                     /* styles/viewer/composio.css:3746 */
+  .upgrade-team__plan-top small,                  /* styles/home/entry-layout.css:8828 */
+  .upgrade-team__benefits svg                     /* styles/home/entry-layout.css:8885 */
+) { color: var(--ink-soft); }
+
+/* D · project-kind tags: the light-tuned kind hues are kept as literals on purpose
+   (styles/workspace/mention-home.css `.design-card-tag.tag-*`, mirrors --tag-*); dark values = Radix Colors dark step 11 (MIT). */
+[data-theme="dark"] .design-card-tag.tag-prototype { color: #70b8ff; background: rgba(112, 184, 255, 0.14); border-color: rgba(112, 184, 255, 0.3); }
+[data-theme="dark"] .design-card-tag.tag-web-clone { color: #4ccce6; }
+[data-theme="dark"] .design-card-tag.tag-slide { color: #ffa057; }
+[data-theme="dark"] .design-card-tag.tag-media { color: #0bd8b6; }
+
+/* F · upstream body weight (91 A3): Inter at the upstream default 600 (styles/base.css:52) reads heavy.
+   W3-restyle may lower this to 400 after the screenshot pass; record the choice in its notes. */
+body { font-weight: 500; }
+
+/* G · Home hero skin (02 §11.2): UI sans title in both themes, 1px hairline composer & input cards. */
+.home-hero__title {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+}
+.home-hero__composer-card {
+  background: var(--paper-deep);
+  border: 1px solid var(--line);
+}
+.home-hero__input-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+.home-hero__input-card:focus-within {
+  border-color: var(--ink);
+}

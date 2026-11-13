@@ -1,0 +1,564 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The dashboard renders in Settings ▸ AI 用量 (and, compact, in a popover), so its look lives here. It reads the
+   settings language (fantay/styles/settings.css); the compact form sits outside that shell and declares the same
+   variables itself. Charts get their ink ramp from here: every series and heat level is ink mixed into the surface,
+   so the same rules hold on the dark theme, and no hue ever enters the page. */
+.dashboard {
+  /* Six steps an even distance apart, so the smallest series (其他) still reads against the card. */
+  --usage-shade-0: color-mix(in srgb, var(--ink) 86%, var(--surface));
+  --usage-shade-1: color-mix(in srgb, var(--ink) 64%, var(--surface));
+  --usage-shade-2: color-mix(in srgb, var(--ink) 47%, var(--surface));
+  --usage-shade-3: color-mix(in srgb, var(--ink) 33%, var(--surface));
+  --usage-shade-4: color-mix(in srgb, var(--ink) 23%, var(--surface));
+  --usage-shade-5: color-mix(in srgb, var(--ink) 15%, var(--surface));
+  --usage-level-0: var(--sub);
+  --usage-level-1: color-mix(in srgb, var(--ink) 16%, var(--surface));
+  --usage-level-2: color-mix(in srgb, var(--ink) 34%, var(--surface));
+  --usage-level-3: color-mix(in srgb, var(--ink) 58%, var(--surface));
+  --usage-level-4: color-mix(in srgb, var(--ink) 84%, var(--surface));
+  /* Every block below the figures is a heading over one group, spaced like the other Settings pages. */
+  --usage-section-gap: var(--settings-section-gap, 32px);
+  --usage-heading-gap: var(--settings-heading-gap, 12px);
+  --usage-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--usage-section-gap);
+  min-width: 0;
+  color: var(--ink);
+  font-weight: 500;
+  container-type: inline-size;
+}
+
+.dashboard[data-compact='true'] {
+  --settings-radius: 12px;
+  --settings-hairline: 1px solid var(--line);
+  --settings-control-h: 32px;
+  --settings-control-radius: 8px;
+  --settings-row-h: 44px;
+  --settings-row-x: 12px;
+  --settings-row-y: 12px;
+  --settings-section-gap: 16px;
+  --settings-heading-gap: 8px;
+  --settings-tab-gap: 8px;
+  --settings-type-page: 20px;
+  --settings-type-section: 14px;
+  --settings-type-label: 13px;
+  --settings-type-hint: 13px;
+  --settings-type-control: 13px;
+  --settings-type-meta: 12px;
+  --usage-section-gap: 16px;
+  --usage-heading-gap: 8px;
+  max-height: 75vh;
+  padding: 16px;
+  overflow: auto;
+}
+
+/* A capped popover scrolls; without this its cards, being overflow boxes, would shrink and clip instead. */
+.dashboard > * {
+  flex: none;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--settings-type-section);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* ── Lead: the range, the sources, then the range's figures ───────────────────────────────── */
+.lead {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  scroll-margin-top: 16px;
+}
+
+/* Source chips. The Settings trough would hold them on one line and clip the last ones, so this group leaves the
+   trough (out-ranking the shell's segmented rule in settings/usage.css) and lets whole chips wrap. Every line fills the
+   column, chips sharing it in equal parts as far as their names allow; SourceFilter places the line breaks
+   (.sourceBreak) so that two lines come out even rather than leaving one chip alone. Lines are spaced by the chips' own
+   margins, so a break adds no gap of its own. A chip is a 32px ring pill like every control here; the chosen one takes
+   an ink ring, as a custom range does on its trigger. */
+.sources.sources[data-slot='segmented'] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 4px;
+  height: auto;
+  margin-block: -3px;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.sourceBreak {
+  flex: 0 0 100%;
+  height: 0;
+}
+
+.sources.sources[data-slot='segmented'] > [data-slot='segmented-item'] {
+  flex: 1 1 0;
+  height: var(--settings-control-h, 32px);
+  gap: 6px;
+  margin-block: 3px;
+  padding: 0 9px 0 10px;
+  line-height: 1.25;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--ink-soft);
+  font-size: var(--settings-type-control, 13px);
+  font-weight: 500;
+  transition:
+    background-color 100ms var(--usage-ease),
+    box-shadow 160ms var(--usage-ease),
+    color 100ms var(--usage-ease);
+}
+
+.sources.sources[data-slot='segmented'] > [data-slot='segmented-item']:hover:not([data-state='on'], [data-disabled]) {
+  background: var(--sub);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--ink);
+}
+
+.sources.sources[data-slot='segmented'] > [data-slot='segmented-item'][data-state='on'] {
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--ink);
+  color: var(--ink);
+}
+
+/* For the moment SourceFilter reads each chip's own width (never painted). */
+.sources.sources[data-slot='segmented'][data-measuring] > [data-slot='segmented-item'] {
+  flex: none;
+}
+
+/* ── Overview: scope and freshness, the two costs, then volume on a quieter band ────────────── */
+.overview {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: var(--settings-hairline);
+  border-radius: var(--settings-radius);
+  background: var(--surface);
+}
+
+.overviewHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px 12px 0 20px;
+}
+
+.scope {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: var(--settings-type-hint);
+  font-weight: 600;
+  line-height: 28px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The page's one green: the figures are live. Each sync plays a single ring off the dot. */
+.live {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink-faint);
+  font-size: var(--settings-type-meta);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: usage-live 1100ms var(--usage-ease) both;
+}
+
+.live[data-state='syncing'] .liveDot {
+  background: var(--ink-ghost);
+  animation: none;
+}
+
+.live[data-state='error'] .liveDot {
+  background: var(--danger);
+  animation: none;
+}
+
+@keyframes usage-live {
+  from {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 50%, transparent);
+  }
+  to {
+    box-shadow: 0 0 0 7px color-mix(in srgb, var(--success) 0%, transparent);
+  }
+}
+
+.receiptTrigger {
+  flex: none;
+}
+
+.refresh {
+  flex: none;
+  color: var(--ink-faint);
+}
+
+.refresh:hover {
+  color: var(--ink);
+}
+
+.spinning {
+  animation: usage-spin 900ms linear infinite;
+}
+
+@keyframes usage-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.status,
+.error {
+  margin: 0;
+  padding: 8px 20px 20px;
+  font-size: var(--settings-type-hint);
+  line-height: 1.5;
+}
+
+.status {
+  color: var(--ink-soft);
+}
+
+.error {
+  color: var(--danger);
+}
+
+/* The headline: the two costs at display size, a hairline between them. */
+.money {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  padding: 6px 20px 20px;
+}
+
+.figure,
+.stat {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.figure {
+  gap: 4px;
+}
+
+.figure + .figure {
+  padding-left: 20px;
+  border-left: 1px solid var(--line-soft);
+}
+
+.figure dt,
+.stat dt {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: var(--settings-type-hint);
+  font-weight: 500;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.figure dd,
+.stat dd {
+  margin: 0;
+}
+
+.figureValue {
+  color: var(--ink);
+  font-size: 34px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+/* The sign sits small at the digits' cap height, so the amount reads by its figures. */
+.currency {
+  position: relative;
+  top: -0.66em;
+  margin-right: 2px;
+  color: var(--ink-faint);
+  font-size: 0.5em;
+  letter-spacing: 0;
+}
+
+/* Volume: three figures on a band one tone off the card, each with its one line of context. */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  border-top: 1px solid var(--line-soft);
+  background: color-mix(in srgb, var(--sub) 55%, var(--surface));
+}
+
+.stat {
+  gap: 2px;
+  padding: 14px 20px 16px;
+}
+
+.stat + .stat {
+  box-shadow: inset 1px 0 0 var(--line-soft);
+}
+
+.statValue {
+  color: var(--ink);
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.35;
+}
+
+/* A foot never ellipsizes: each phrase is its own span, spaced from the next instead of joined by a dot, and a narrow
+   column wraps between phrases, never inside one (no line starts with a separator). A lone phrase keeps its CJK words
+   whole. */
+.figureFoot,
+.statFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 10px;
+  min-width: 0;
+  color: var(--ink-faint);
+  font-size: var(--settings-type-meta);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.figureFoot > span,
+.statFoot > span {
+  white-space: nowrap;
+}
+
+/* A failure is a red dot beside ink words, never red text. */
+.failed {
+  color: var(--ink-soft);
+}
+
+.failed::before {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--danger);
+  content: '';
+  vertical-align: 1px;
+}
+
+/* Up to 56px, down to 24px before its percentage has to drop to the next line. */
+.meter {
+  position: relative;
+  flex: 1 1 24px;
+  max-width: 56px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.meter > span {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--usage-shade-0);
+  transform-origin: left center;
+  transition: transform 320ms var(--usage-ease);
+}
+
+/* ── Sections: a heading over one group, as on every Settings page ─────────────────────────── */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--usage-heading-gap);
+  min-width: 0;
+}
+
+.sectionTitle {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--settings-type-section);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.4;
+}
+
+/* ── Insights (Codex): label left, value right ────────────────────────────────────────────── */
+.insightList {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: 32px;
+  margin: 0;
+  padding: 2px 16px;
+  border: var(--settings-hairline);
+  border-radius: var(--settings-radius);
+  background: var(--surface);
+}
+
+.insightList > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+  padding: 11px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.insightList > div:first-child {
+  border-top: 0;
+}
+
+.insightList dt {
+  flex: none;
+  color: var(--ink-soft);
+  font-size: var(--settings-type-hint);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.insightList dd {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: var(--settings-type-hint);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 1.45;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 20px 16px;
+  border: var(--settings-hairline);
+  border-radius: var(--settings-radius);
+  background: var(--surface);
+}
+
+.empty strong {
+  font-size: var(--settings-type-label);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.empty p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--settings-type-hint);
+  line-height: 1.5;
+}
+
+.hint {
+  margin: -8px 0 0;
+  color: var(--ink-faint);
+  font-size: var(--settings-type-meta);
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+/* ── Width: the settings column is 660 at most; the popover is 340 ────────────────────────── */
+@container (min-width: 600px) {
+  .insightList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .insightList > div:nth-child(2) {
+    border-top: 0;
+  }
+}
+
+@container (max-width: 520px) {
+  .figureValue {
+    font-size: 28px;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stat:nth-child(3) {
+    grid-column: span 2;
+    box-shadow: inset 0 1px 0 var(--line-soft);
+  }
+}
+
+/* The popover: the same three tiers, tightened to 340px. */
+.dashboard[data-compact='true'] .overviewHead {
+  padding: 8px 6px 0 14px;
+}
+
+.dashboard[data-compact='true'] .money {
+  padding: 2px 14px 14px;
+}
+
+.dashboard[data-compact='true'] .figure + .figure {
+  padding-left: 14px;
+}
+
+.dashboard[data-compact='true'] .figureValue {
+  font-size: 24px;
+}
+
+.dashboard[data-compact='true'] .stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard[data-compact='true'] .stat {
+  padding: 10px 14px 12px;
+}
+
+.dashboard[data-compact='true'] .statValue {
+  font-size: 17px;
+}
+
+.dashboard[data-compact='true'] :is(.status, .error) {
+  padding: 6px 14px 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinning,
+  .liveDot {
+    animation: none;
+  }
+
+  .meter > span,
+  .sources.sources[data-slot='segmented'] > [data-slot='segmented-item'] {
+    transition: none;
+  }
+}
