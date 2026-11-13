@@ -1971,7 +1971,7 @@ const DESIGN_SYSTEM_SURFACE_GUIDE: Record<
 // Build the SKILLS.md usage guide bundled into every downloaded design system.
 // Pure (no I/O) so it can be unit tested against fixed inputs. The guide teaches
 // a recipient how to feed the system to an AI coding tool for on-brand results
-// and attributes it to the OpenDesign open-source project for shareability.
+// and links the recipient to the Fantay product site.
 export function buildDesignSystemSkillsMarkdown(input: {
   title: string;
   summary: string;
@@ -2063,7 +2063,7 @@ export function buildDesignSystemSkillsMarkdown(input: {
       'coding agent.',
   );
   lines.push('');
-  lines.push('https://github.com/nexu-io/open-design');
+  lines.push('https://design.tokentosea.com');
   lines.push('');
 
   return lines.join('\n');

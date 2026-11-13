@@ -2,7 +2,7 @@
 
 Fantay 的工作区包含三部分：
 
-- **设计系统 `fantay`**：统一的视觉基调，沿用 open-design 自身的产品 UI 语言。
+- **设计系统 `fantay`**：应用和生成作品共用的设计令牌与组件规范。
 - **素材库**：收集的风格、组件、SVG、设计 Skill 和网站收藏，共 1240 项。
 - **Fantay 桌面应用**：基于 [nexu-io/open-design](https://github.com/nexu-io/open-design) 开发，可使用个人智能体、管理项目与素材，并完成设计和视频创作。
 

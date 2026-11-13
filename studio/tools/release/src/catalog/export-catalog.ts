@@ -10,16 +10,10 @@ import { assertValidCatalog } from "./validate.ts";
 
 export function resolveRepoRoot(): string {
   const fromEnv = optional("CATALOG_REPO_ROOT");
-  if (fromEnv.length > 0) return resolve(fromEnv);
-
-  try {
-    return execFileSync("git", ["rev-parse", "--show-toplevel"], {
-      cwd: process.cwd(),
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"],
-    }).trim();
-  } catch {
-    // Fall through to layouts used by source execution and the bundled CLI.
+  if (fromEnv.length > 0) {
+    const root = resolve(fromEnv);
+    const applicationRoot = join(root, "studio");
+    return existsSync(join(applicationRoot, "pnpm-workspace.yaml")) ? applicationRoot : root;
   }
 
   for (const candidate of [
@@ -28,7 +22,7 @@ export function resolveRepoRoot(): string {
   ]) {
     if (existsSync(join(candidate, "pnpm-workspace.yaml"))) return candidate;
   }
-  throw new Error("CATALOG_REPO_ROOT is required outside an Open Design checkout");
+  throw new Error("CATALOG_REPO_ROOT is required outside a Fantay application checkout");
 }
 
 function resolveSourceCommit(): string {

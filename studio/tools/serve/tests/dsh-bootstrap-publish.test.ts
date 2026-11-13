@@ -10,15 +10,15 @@ import { startReleaseStorageFixtureServer } from "../src/release-storage-fixture
 
 // The canonical CMD downloads the PS1 from the landing URL; immutable snapshots
 // rewrite exactly that marker to the PS1 published beside them.
-const LANDING_PS1_URL = "https://open-design.ai/install-dsh.ps1?version=1";
+const INSTALLER_URL_MARKER = "__FANTAY_DSH_INSTALLER_URL__";
 const PUBLIC_ORIGIN = "https://releases.example.test";
 
 function cmdSource(): string {
-  return `@echo off\r\npowershell.exe -Command "Invoke-WebRequest '${LANDING_PS1_URL}'"\r\n`;
+  return `@echo off\r\npowershell.exe -Command "Invoke-WebRequest '${INSTALLER_URL_MARKER}'"\r\n`;
 }
 
 function materializedCmd(version: string): string {
-  return cmdSource().replace(LANDING_PS1_URL, `${PUBLIC_ORIGIN}/bootstrap/dsh/${version}/install-dsh.ps1`);
+  return cmdSource().replace(INSTALLER_URL_MARKER, `${PUBLIC_ORIGIN}/bootstrap/dsh/${version}/install-dsh.ps1`);
 }
 
 function sha256(body: string): string {

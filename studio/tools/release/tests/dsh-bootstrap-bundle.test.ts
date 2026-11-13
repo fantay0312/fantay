@@ -8,9 +8,9 @@ import {
   type DshBootstrapObject,
 } from "../src/storage/dsh-bootstrap-bundle.ts";
 
-const LANDING_PS1_URL = "https://open-design.ai/install-dsh.ps1?version=1";
+const INSTALLER_URL_MARKER = "__FANTAY_DSH_INSTALLER_URL__";
 
-function sources(cmd = `download '${LANDING_PS1_URL}'`): DshBootstrapObject[] {
+function sources(cmd = `download '${INSTALLER_URL_MARKER}'`): DshBootstrapObject[] {
   return [
     { body: Buffer.from(cmd), name: "install-dsh.cmd" },
     { body: Buffer.from("powershell installer"), name: "install-dsh.ps1" },
@@ -30,7 +30,7 @@ describe("DeepSeek Harness bootstrap bundle", () => {
     expect(cmd?.body.toString("utf8")).toContain(
       "https://releases.example.test/bootstrap/dsh/v7/install-dsh.ps1",
     );
-    expect(cmd?.body.toString("utf8")).not.toContain(LANDING_PS1_URL);
+    expect(cmd?.body.toString("utf8")).not.toContain(INSTALLER_URL_MARKER);
 
     const checksums = dshBootstrapChecksums(installers).toString("utf8");
     expect(checksums).toContain(
@@ -41,6 +41,6 @@ describe("DeepSeek Harness bootstrap bundle", () => {
   it("fails closed if the canonical CMD no longer has one rewrite marker", () => {
     expect(() =>
       materializeDshBootstrapInstallers(sources("no remote PS1 marker"), "v7", "https://releases.example.test"),
-    ).toThrow(/exactly one landing PS1 URL/);
+    ).toThrow(/exactly one installer URL marker/);
   });
 });

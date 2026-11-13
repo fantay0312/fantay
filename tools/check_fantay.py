@@ -2,7 +2,7 @@
 
 Run from the workspace root: mise run system:check. Exits 1 when any check fails.
 The design system (studio/design-systems/fantay/tokens.css) is the single source of truth;
-this script reports drift after an upstream merge instead of fixing anything.
+this script reports drift after application or design-system changes.
 """
 from pathlib import Path
 from urllib.parse import unquote
@@ -53,7 +53,7 @@ DERIVED = {
     '--container-gutter-desktop', '--container-gutter-tablet', '--container-gutter-phone',
 }
 # Deliberate departures from the product: token -> reason. A token listed here is reported
-# as SKIP instead of FAIL, so restyling a mirrored token (or declining an upstream change)
+# as SKIP instead of FAIL, so restyling a mirrored token (or retaining an intentional design difference)
 # is a recorded decision rather than a red check.
 DIVERGED = {}
 # Product colors with no schema slot that tokens.css must still name as literals.
@@ -153,7 +153,7 @@ def check_tokens():
         if skipped(ours, f'{ours} ↔ {theirs}'):
             continue
         if theirs not in app:
-            report(False, f'{ours} ↔ {theirs}', 'product token missing (renamed upstream?)')
+            report(False, f'{ours} ↔ {theirs}', 'product token missing or renamed')
             continue
         want, have = normal(resolve(app[theirs], app)), normal(fantay.get(ours, ''))
         report(want == have, f'{ours} ↔ {theirs}', f'fantay {have!r}, product {want!r}')

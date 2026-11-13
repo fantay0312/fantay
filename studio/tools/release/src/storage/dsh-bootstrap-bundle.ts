@@ -10,7 +10,7 @@ export type DshBootstrapObject = {
   name: (typeof DSH_BOOTSTRAP_FILES)[number];
 };
 
-const LANDING_PS1_URL = "https://open-design.ai/install-dsh.ps1?version=1";
+const INSTALLER_URL_MARKER = "__FANTAY_DSH_INSTALLER_URL__";
 
 function sha256(body: Buffer): string {
   return createHash("sha256").update(body).digest("hex");
@@ -18,8 +18,8 @@ function sha256(body: Buffer): string {
 
 /**
  * Make the versioned CMD snapshot invoke the PS1 published beside it. The
- * canonical CMD keeps the landing URL so the short public download still
- * works; only immutable R2 snapshots rewrite that source marker.
+ * canonical CMD carries a publication placeholder. Materialization supplies
+ * the immutable URL from the configured Fantay storage origin.
  */
 export function materializeDshBootstrapInstallers(
   sources: readonly DshBootstrapObject[],
@@ -30,10 +30,10 @@ export function materializeDshBootstrapInstallers(
     if (source.name !== "install-dsh.cmd") return { ...source, body: Buffer.from(source.body) };
 
     const cmd = source.body.toString("utf8");
-    const markerCount = cmd.split(LANDING_PS1_URL).length - 1;
+    const markerCount = cmd.split(INSTALLER_URL_MARKER).length - 1;
     if (markerCount !== 1) {
       throw new Error(
-        `install-dsh.cmd must contain exactly one landing PS1 URL for immutable materialization; found ${markerCount}`,
+        `install-dsh.cmd must contain exactly one installer URL marker for immutable materialization; found ${markerCount}`,
       );
     }
     const immutablePs1Url = publicUrl(
@@ -43,7 +43,7 @@ export function materializeDshBootstrapInstallers(
     );
     return {
       ...source,
-      body: Buffer.from(cmd.replace(LANDING_PS1_URL, immutablePs1Url), "utf8"),
+      body: Buffer.from(cmd.replace(INSTALLER_URL_MARKER, immutablePs1Url), "utf8"),
     };
   });
 }

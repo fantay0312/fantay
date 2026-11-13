@@ -53,12 +53,12 @@ dir = "{{config_root}}/studio"
 run = "mise x -- pnpm tools-pack win build --to nsis --portable --namespace fantay"
 
 [tasks."studio:guard"]
-description = "Run the fork's repository policy checks (pnpm guard)"
+description = "Run Fantay repository policy checks (pnpm guard)"
 dir = "{{config_root}}/studio"
 run = "mise x -- pnpm guard"
 
 [tasks."studio:typecheck"]
-description = "Typecheck every package of the fork (pnpm typecheck)"
+description = "Typecheck every Fantay package (pnpm typecheck)"
 dir = "{{config_root}}/studio"
 run = "mise x -- pnpm typecheck"
 
@@ -98,5 +98,5 @@ dir = "{{config_root}}/素材库/导览支持"
 run = "mise x -- python '{{config_root}}/tools/check_fantay.py'"
 
 [tasks."check"]
-description = "All workspace checks: design-system parity, 素材库, and the fork's guard and typecheck"
+description = "All workspace checks: design-system parity, 素材库, and Fantay guard and typecheck"
 run = ["mise run system:check", "mise run library:check", "mise run studio:guard", "mise run studio:typecheck"]

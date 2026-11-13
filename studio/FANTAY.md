@@ -40,9 +40,9 @@ independently in `fantay0312/fantay`, with the workspace root as the Git root.
   per Apache-2.0 §4(b), this document is the notice that those files were
   changed. The authoritative list of changed files is
   the archived pre-migration Git history. Upstream ships no `NOTICE` file.
-- **Name.** "Fantay" is a display rebrand only. It is not affiliated with
-  or endorsed by the Open Design project; the Open Design name appears here only
-  to identify the upstream (Apache-2.0 §6 grants no trademark rights).
+- **Name.** Fantay is independently maintained. Its own repository and distribution
+  endpoints define current releases; inherited names in package and data
+  interfaces preserve compatibility.
 - **Look.** The earlier fork used the upstream grey/green palette. The current
   integration uses the shared tokens in packages/fantay-tokens, layered CSS,
   Inter and a violet brand accent. Keep those token sources authoritative;
@@ -66,7 +66,7 @@ relative to that folder):
 
 | Part | Where | What |
 |---|---|---|
-| Studio | `studio/` (this repo) | The app: daemon + web, run through `tools-dev`. |
+| Studio | `studio/` | The app: daemon + web, run through `tools-dev`. |
 | Design system `fantay` | `studio/design-systems/fantay/` | Built-in package describing the open-design UI look; the default pick. |
 | 素材库 (material library) | `素材库/` (sibling of `studio/`) | The owner's curated, read-only archive. Its Python tooling lives in `素材库/导览支持/` (`mise run catalog`, `verify`, …). The `fantasy-design` CLI reads it and prints JSON (`fantasy-design summary`, `fantasy-design search <q> --limit 3`, `fantasy-design schema`). |
 
@@ -263,9 +263,9 @@ rewrite all of the files below. Every SVG it writes carries
 
 ### Known divergences
 
-- The e2e loading waits match the loading text literally. When upstream adds
+- The e2e loading waits match the loading text literally. When an application change adds
   a new `getByText('Loading OpenDesign…')` wait, swap it to the Fantay text
-  during the merge, or that wait returns immediately instead of synchronizing
+  when updating the test, or that wait returns immediately instead of synchronizing
   on the app mount.
 - `apps/desktop` (dev dock icon) also reads `apps/web/public/app-icon.png`, so
   it shows the Fantay mark. Packaged installers now also use Fantay icons and identity.

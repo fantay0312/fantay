@@ -55,7 +55,7 @@ This file is the single source of truth for agents entering this repository. Rea
 ## Local validation scope
 
 - Run focused tests for changed files and affected integration boundaries.
-- Do not run full daemon or web suites locally unless explicitly requested by the user. This also applies to final regression; full suites run in PR CI.
+- Do not run full daemon or web suites locally unless explicitly requested by the user. This also applies to final regression. Broader suites run when their scope is explicitly requested.
 - Run `pnpm guard` and `pnpm typecheck` before publication. If CI fails, investigate the failing lane and rerun the relevant focused tests.
 
 ## Windows native
@@ -166,7 +166,7 @@ obvious, block the PR and request core-maintainer guidance.
 
 - Local installers and smoke harnesses are owned by `tools/pack`.
 - `tools/release/src/fantay-prepare.ts` prepares versioned installer files, checksums and separate CDN/GitHub metadata. Publishing requires explicit authorization.
-- `tools/release` also retains catalog and DeepSeek bootstrap publication. Their workflows remain independent from ordinary application CI.
+- `tools/release` also retains catalog and DeepSeek bootstrap publication through explicitly configured Fantay storage.
 - Historical OpenDesign branch release, backport, Feishu delivery and whole-workbench cloud deployment procedures are archived under the workspace's `doc/achieve/studio-own-brand-20261107` directory.
 - Runtime channel identities, installer compatibility and update verification remain owned by the packaging and desktop runtime contracts.
 
@@ -217,13 +217,10 @@ Every user-facing capability must be reachable through both the web UI **and** t
 - Blocking review feedback should focus on correctness, security/secrets, data integrity, repository boundary violations, contract/migration breakage, missing required validation, or high-risk maintainability issues.
 - Only maintainers may close a PR instead of requesting changes, and only when the change is not salvageable on the existing branch (wrong target product, foreign test harness, DOM/API assumptions absent from this repo, or scripts that conflict with lifecycle rules).
 
-## PR-duty tooling
+## Repository review
 
-This repository no longer ships a maintainer PR-duty control plane. The former
-`pnpm tools-pr` workflow has moved to the standalone `PerishCode/duty` project
-so personal review-lane automation does not become product workspace
-maintenance surface. Do not recreate `tools/pr`, `@open-design/tools-pr`, or a
-root `pnpm tools-pr` script without a new explicit maintainer decision.
+Review ownership and pull request conventions are defined in the workspace
+root `.github/` directory and `CONTRIBUTING.md`.
 
 ## Prompt variants (two implementations, one switch)
 

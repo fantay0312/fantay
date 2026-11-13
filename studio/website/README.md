@@ -12,6 +12,6 @@
 
 `mise x -- node --experimental-strip-types tools/release/src/fantay-prepare.ts --version 1.0.0 --mac-arm64 /absolute/installer.dmg --win-x64 /absolute/installer.exe`
 
-该命令只准备文件，不创建 release、不推送源码、不上传。使用真实已验证的安装包；不要用旧版安装包冒充新版。生成的 `publish-plan.json` 给出双源上传顺序。原子切换 `stable/latest/metadata.json` 必须最后执行。GitHub 元数据独立指向 GitHub 的同版本文件；CDN 元数据携带 GitHub 镜像，所有文件使用同一 SHA-256。
+该命令只准备文件，不创建 release、不推送源码、不上传。使用真实已验证的安装包；不要用旧版安装包冒充新版。生成的 `publish-plan.json` 给出双源上传顺序。原子切换 `stable/latest/metadata.json` 必须最后执行。GitHub 元数据独立指向 GitHub 的同版本文件；公共 CDN 元数据使用可匿名访问的自有分发地址；私有 GitHub 元数据供维护者归档访问，所有文件使用同一 SHA-256。
 
 源仓库固定为 `fantay0312/fantay`；CDN 前缀为 `https://static.tokentosea.com/fantay-design`。COS 使用专属公开分发桶，不保存账户、私密作品、密钥或诊断数据。凭据通过受控环境注入，禁止写入源文件或打包到应用。

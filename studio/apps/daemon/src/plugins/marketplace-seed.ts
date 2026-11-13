@@ -68,7 +68,17 @@ export function createMarketplaceSeedHelpers(deps: MarketplaceSeedHelperDeps): M
     }
     const manifestPath = path.join(deps.pluginRegistryDir, id, 'open-design-marketplace.json');
     if (!fs.existsSync(manifestPath)) return null;
-    return await fs.promises.readFile(manifestPath, 'utf8');
+    const manifestText = await fs.promises.readFile(manifestPath, 'utf8');
+    const manifest = JSON.parse(manifestText) as { plugins?: MarketplaceSeedEntry[] };
+    if (!Array.isArray(manifest?.plugins)) return manifestText;
+    const sourcePrefix = `${OFFICIAL_PLUGIN_SOURCE_REPO}/`;
+    manifest.plugins = manifest.plugins.map((entry) => {
+      if (typeof entry.source !== 'string' || !entry.source.startsWith(sourcePrefix)) return entry;
+      const localPath = path.resolve(deps.projectRoot, entry.source.slice(sourcePrefix.length));
+      if (!isPathWithin(path.join(deps.projectRoot, 'plugins'), localPath) || !fs.existsSync(localPath)) return entry;
+      return { ...entry, source: localPath };
+    });
+    return JSON.stringify(manifest);
   }
 
   function createMarketplaceFetcher(

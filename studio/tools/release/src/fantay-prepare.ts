@@ -42,7 +42,7 @@ export async function prepareFantayRelease(args: string[]) {
     await copyFile(source,join(out,'assets',name));
     sums.push(sha256+'  '+name);assets.push(name);
     const base={name,size:info.size,sha256};
-    platforms[key!]={enabled:true,arch,artifacts:{[kind!]:{...base,url:primary+'/'+name,fallbackUrls:[github+'/'+name]}}};
+    platforms[key!]={enabled:true,arch,artifacts:{[kind!]:{...base,url:primary+'/'+name}}};
     githubPlatforms[key!]={enabled:true,arch,artifacts:{[kind!]:{...base,url:github+'/'+name}}};
   }
   if (!assets.length) throw new Error('At least one real installer is required; no empty release is generated');

@@ -2,7 +2,7 @@ import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { resolveRepoRoot } from "../src/catalog/export-catalog.ts";
 import { exportCatalog } from "../src/catalog/export.ts";
@@ -16,6 +16,15 @@ const SOURCE_COMMIT = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 describe("catalog export", () => {
   it("resolves the repository root from package and bundled CLI layouts", () => {
     expect(resolveRepoRoot()).toBe(WORKSPACE_ROOT);
+  });
+
+  it("accepts the parent Git workspace as an explicit catalog root", () => {
+    vi.stubEnv("CATALOG_REPO_ROOT", resolve(WORKSPACE_ROOT, ".."));
+    try {
+      expect(resolveRepoRoot()).toBe(WORKSPACE_ROOT);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("derives immutable exporter identity from package version and source commit", () => {
@@ -54,6 +63,7 @@ describe("catalog export", () => {
       kind: "template",
       name: "Alpha Skill",
       mode: "prototype",
+      sourceUrl: "https://github.com/fantay0312/fantay/tree/main/studio/skills/alpha",
     });
     expect(alpha && "preview" in alpha ? alpha.preview?.path : null).toBe("previews/skills/alpha.webp");
 

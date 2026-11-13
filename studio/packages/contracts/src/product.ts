@@ -8,3 +8,19 @@ export const FANTAY_FEEDBACK_URL = `${FANTAY_WEBSITE_URL}/feedback/`;
 export const FANTAY_PRIVACY_URL = `${FANTAY_WEBSITE_URL}/privacy/`;
 /** No environment variable or migrated preference may enable automatic reporting. */
 export const FANTAY_AUTOMATIC_REPORTING_ENABLED: boolean = false;
+
+/** Identify retired product infrastructure when reading inherited service settings. */
+export function isRetiredOpenDesignServiceUrl(value: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
+  const host = url.hostname.toLowerCase();
+  if (host === 'open-design.ai' || host.endsWith('.open-design.ai') || host === 's3.nexu.space') {
+    return true;
+  }
+  const githubHosts = ['github.com', 'api.github.com', 'raw.githubusercontent.com', 'codeload.github.com'];
+  return githubHosts.includes(host) && /^\/(?:repos\/)?nexu-io\/open-design(?:\/|$)/i.test(url.pathname);
+}

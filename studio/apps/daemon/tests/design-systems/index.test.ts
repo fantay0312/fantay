@@ -2,8 +2,10 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import JSZip from 'jszip';
 
 import {
+  buildUserDesignSystemArchive,
   createUserDesignSystem,
   createUserDesignSystemRevision,
   deleteUserDesignSystem,
@@ -97,6 +99,11 @@ describe('design systems registry', () => {
       notes: 'Use compact review flows.',
     });
     const files = await listUserDesignSystemFiles(root, created.id);
+    const archive = await buildUserDesignSystemArchive(root, created.id);
+    const zip = await JSZip.loadAsync(archive!.buffer);
+    const generatedGuide = await zip.file('SKILLS.md')!.async('string');
+    expect(generatedGuide).toContain('https://design.tokentosea.com');
+    expect(generatedGuide).not.toContain('https://github.com/nexu-io/open-design');
     expect(files?.map((file) => file.path)).toEqual(
       expect.arrayContaining([
         'DESIGN.md',

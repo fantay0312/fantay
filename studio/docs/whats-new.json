@@ -2,19 +2,18 @@
   "id": "fantay-20261029-tokentosea-sharing",
   "title": "Fantay creation update",
   "body": "Skill discovery selects guidance for your creative goal and carries it into revisions.\nPublish links and anchored comments with your TokenToSea account; stop and resume the same link.\nMotion preview and export include audio-jump prevention and synchronized playback.\nThe interface, startup animation and desktop app now share the Fantay name.",
-  "imageUrl": "https://whatsnew.open-design.ai/0.18.0.webp",
-  "linkUrl": "https://github.com/nexu-io/open-design/releases/tag/open-design-v0.26.1",
-  "ctaLabel": "Upstream release details",
+  "linkUrl": "https://design.tokentosea.com",
+  "ctaLabel": "Visit Fantay",
   "locales": {
     "zh-CN": {
       "title": "Fantay 创作功能更新",
       "body": "智能路由：根据创作目标选择技能，并在后续修改中延续创作方向\n分享与评论：使用 TokenToSea 账号发布链接与定位评论，支持停止和恢复同一链接\n动画预览与导出：已集成音频防跳播与音画同步修复\n统一品牌：界面、启动动画和桌面应用名称统一为 Fantay",
-      "ctaLabel": "查看上游更新详情"
+      "ctaLabel": "查看 Fantay"
     },
     "zh-TW": {
       "title": "Fantay 創作功能更新",
       "body": "智慧路由：根據創作目標選擇技能，並在後續修改中延續創作方向\n分享與評論：使用 TokenToSea 帳號發布連結與定位評論，支援停止和恢復同一連結\n動畫預覽與匯出：已整合音訊防跳播與影音同步修復\n統一品牌：介面、啟動畫面和桌面應用程式名稱統一為 Fantay",
-      "ctaLabel": "查看上游更新詳情"
+      "ctaLabel": "查看 Fantay"
     }
   }
 }

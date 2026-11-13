@@ -9,6 +9,7 @@ import {
   type SidecarSource,
 } from "@open-design/sidecar-proto";
 import { isReleaseChannel, releaseChannelFromVersion } from "@open-design/release";
+import { isRetiredOpenDesignServiceUrl } from "@open-design/contracts";
 
 /**
  * @module updater-config
@@ -164,11 +165,12 @@ export function resolveDesktopUpdaterConfig(input: DesktopUpdaterConfigInput): D
   const env = input.env ?? process.env;
   const mode = normalizeMode(env[DESKTOP_UPDATE_ENV.MODE], input.mode ?? DESKTOP_UPDATE_MODES.PACKAGE_LAUNCHER);
   const defaultEnabled = input.source === SIDECAR_SOURCES.PACKAGED;
-  const retiredUpstreamFeed = /^https?:\/\/(?:[^/]+\.)?open-design\.ai(?:\/|$)|^https?:\/\/s3\.nexu\.space(?:\/|$)/i.test(env[DESKTOP_UPDATE_ENV.METADATA_URL]?.trim() ?? '');
+  const configuredFeed = env[DESKTOP_UPDATE_ENV.METADATA_URL]?.trim() ?? '';
+  const retiredUpstreamFeed = isRetiredOpenDesignServiceUrl(configuredFeed);
   // A Fantay package must never install an upstream OpenDesign release.
   // Enable updates only once an operator supplies this fork's explicit feed.
   const enabled = (isTruthyEnv(env[DESKTOP_UPDATE_ENV.ENABLED]) ?? defaultEnabled)
-    && Boolean(env[DESKTOP_UPDATE_ENV.METADATA_URL]?.trim()) && !retiredUpstreamFeed;
+    && Boolean(configuredFeed) && !retiredUpstreamFeed;
   const runtimeBase = resolve(input.runtimeBase == null ? process.cwd() : input.runtimeBase);
   const downloadRoot = normalizeDownloadRoot(
     env[DESKTOP_UPDATE_ENV.DOWNLOAD_ROOT] ??
@@ -224,9 +226,8 @@ export function resolveDesktopUpdaterConfig(input: DesktopUpdaterConfigInput): D
     ...(launcherRoot == null ? {} : { launcherRoot }),
     ...(launcherPayloadExtractorPath == null ? {} : { launcherPayloadExtractorPath }),
     ...(launcherRuntimePath == null ? {} : { launcherRuntimePath }),
-    metadataUrl: env[DESKTOP_UPDATE_ENV.METADATA_URL] ?? defaultMetadataUrl(channel),
-    metadataFallbackUrls: channel === 'stable' && (env[DESKTOP_UPDATE_ENV.METADATA_URL] ?? defaultMetadataUrl(channel)).startsWith(DEFAULT_RELEASE_ORIGIN + '/')
-      ? ['https://github.com/fantay0312/fantay/releases/latest/download/metadata.json'] : [],
+    metadataUrl: retiredUpstreamFeed ? defaultMetadataUrl(channel) : configuredFeed || defaultMetadataUrl(channel),
+    metadataFallbackUrls: [],
     mode,
     ...(namespace == null ? {} : { namespace }),
     openDryRun: isTruthyEnv(env[DESKTOP_UPDATE_ENV.OPEN_DRY_RUN]) ?? false,

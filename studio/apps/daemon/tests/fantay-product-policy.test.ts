@@ -53,4 +53,32 @@ describe('Fantay product privacy and bundled sources', () => {
       expect(fetcher).not.toHaveBeenCalled();
     } finally { await rm(dir,{recursive:true,force:true}); }
   });
+
+  it('loads checked-in community plugins locally while retaining explicit third-party sources', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'fantay-community-'));
+    try {
+      const localPlugin = join(dir, 'plugins', 'community', 'demo');
+      const registry = join(dir, 'registry', 'community');
+      await mkdir(localPlugin, { recursive: true });
+      await mkdir(registry, { recursive: true });
+      await writeFile(join(registry, 'open-design-marketplace.json'), JSON.stringify({
+        plugins: [
+          { name: 'community/demo', source: 'github:fantay0312/fantay@main/studio/plugins/community/demo' },
+          { name: 'external/example', source: 'github:example/plugins@v1' },
+        ],
+      }));
+      const helpers = createMarketplaceSeedHelpers({
+        bundledPluginsDir: join(dir, 'plugins', '_official'),
+        projectRoot: dir,
+        pluginRegistryDir: join(dir, 'registry'),
+        marketplaceManifestUrlForRegistry: id => `https://example.test/${id}`,
+        marketplaceRegistryIdFromUrl: () => 'community',
+      });
+      const manifest = JSON.parse((await helpers.marketplaceSeedManifestText('community', []))!);
+      expect(manifest.plugins[0].source).toBe(localPlugin);
+      expect(manifest.plugins[1].source).toBe('github:example/plugins@v1');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
 });

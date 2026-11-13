@@ -1,7 +1,7 @@
 {
   "name": "open-design",
-  "displayName": "OpenDesign",
+  "displayName": "Fantay",
   "version": "1.0.0",
-  "description": "Local-first design app · 139 skills + 150 DESIGN.md systems · exposes projects/files/preview tools to your coding agent over stdio MCP. Requires the `od` daemon on PATH.",
+  "description": "Fantay desktop projects, files, skills, and preview tools for coding agents over stdio MCP. Requires the local od CLI.",
   "mcpServers": "./.mcp.json"
 }

@@ -43,31 +43,10 @@ These invariants complement the coverage posture in
 this section is the source of truth for how a UI test must be written to stay
 green under the sharded full pool.
 
-The `ui-extended-main` full pool (the prerelease gate at its resolved build
-commit, or `workflow_dispatch` with `suite=full`)
-executes every non-visual functional shade in one generically sharded matrix
-(`visual-*.test.ts` is excluded by the config's `testIgnore` and runs in its
-own lane): arbitrary P0/P1/P2 interleavings, contiguous shard slices that
-start mid-file, an isolated tools-dev runtime per Playwright worker
-(`nproc / 2`, so two on the `ui_hot` runner) with
-`OD_PLAYWRIGHT_FULLY_PARALLEL=1`, and slow CI runners. It is the only lane
-that runs the whole non-visual `ui` suite together — every P1/P2 shade, plus
-any P0 case whose file has not been enrolled in `uiP0Groups` or the
-`playwright_critical` file matrix. A `[P0]`/`@critical` tag alone does not
-enroll a new file, so topology validation and the prerelease full pool are both
-required backstops. Two order hazards then hide from
-narrower runs: within-file interleaving (the tests of one file racing under
-fully-parallel workers) and cross-file carry-over (the worker-scoped tools-dev
-runtime — `suite.ts`, `scope: 'worker'` — retaining daemon/config/project
-state between the files a worker runs in sequence). Merge lanes touch each in
-part — `playwright_critical` runs fully-parallel, `ui_p0`'s single-worker
-multi-file groups accumulate carry-over — but only the full pool exercises the
-whole suite interleaved with mid-file shards, so treat it as the acceptance
-gate. New and repaired UI tests must hold the following invariants.
-
-The merge-gated `workspace-restoration` group also runs fully-parallel across
-its two worker-isolated tools-dev runtimes. Its cases must remain independent
-within the file as well as across files.
+UI tests must pass independently and in different execution orders. Use the
+checked-in Playwright configuration and focused suite commands for the current
+change. Include cross-file and parallel execution when the affected behavior
+shares worker or runtime state.
 
 - **Keep browser witnesses at cross-layer boundaries.** Before adding a UI
   case, identify which assertions already belong to component or runtime tests
@@ -149,17 +128,9 @@ within the file as well as across files.
   `agentCliEnv` — and daemon detection resolves `byok-opencode` through the
   `opencode` agent's env. A spec that only passes where a real CLI happens to
   be installed is broken.
-- **Oracles assert the running product's observable behavior.** When a spec
-  goes stale, realign it against the current product, not the spec's own
-  history. A merged product PR is not proof its oracle is verified: what runs
-  on the merge path is governed by registration, not priority tag — the
-  `ui_p0` group files and the `@merge-extra` P1 subset (`playwright_critical`
-  is a mutually-exclusive PR fallback — `run_playwright_critical` is
-  `&& !runUiP0` — so `@critical` does not add coverage on the merge queue). A
-  non-visual P1 case outside those also runs in the manual `p0p1` lane; a
-  non-visual P2 case, or a P0 case in a file no group lists, runs only in the
-  full pool (visual tests have their own lane). Confirm a realigned oracle in
-  the lane that actually executes it, not by the PR merging.
+- **Oracles assert observable behavior.** Align expectations with the current
+  product and run the affected tests explicitly. Record the exact command and
+  results so verification can be reproduced.
 - **Name your failure causes.** A long wait should fail with a diagnosis, not
   an opaque timeout. `sendPrompt` in `ui/real-daemon-run.test.ts` tracks
   whether the create-run request was ever issued, so its failure separates "no

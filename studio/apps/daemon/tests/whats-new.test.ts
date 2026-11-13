@@ -10,8 +10,8 @@ const DOC = {
   id: '0.13.0',
   title: 'Design system sync',
   body: 'Import, edit and sync design systems.',
-  imageUrl: 'https://whatsnew.open-design.ai/0.13.0.png',
-  linkUrl: 'https://github.com/nexu-io/open-design/releases/tag/open-design-v0.13.0',
+  imageUrl: 'https://cdn.example.test/0.13.0.png',
+  linkUrl: 'https://design.tokentosea.com/releases/0.13.0',
   locales: { 'zh-CN': { title: '设计系统同步' } },
 };
 
@@ -26,6 +26,18 @@ describe('whatsNewSourceUrl', () => {
   it('uses no remote source by default on release channels', () => {
     expect(whatsNewSourceUrl({}, 'stable')).toBeNull();
     expect(whatsNewSourceUrl({}, 'beta')).toBeNull();
+  });
+
+  it.each([
+    'https://whatsnew.open-design.ai/whats-new.json',
+    'https://raw.githubusercontent.com/nexu-io/open-design/main/docs/whats-new.json',
+  ])('ignores the inherited announcement source %s', async (url) => {
+    expect(whatsNewSourceUrl({ OD_WHATS_NEW_URL: url }, 'stable')).toBeNull();
+    const service = createWhatsNewService({
+      env: { OD_WHATS_NEW_URL: url },
+      fetchImpl: async () => { throw new Error('retired source must not be fetched'); },
+    });
+    expect((await service.readWhatsNew('stable')).content?.title).toContain('Fantay');
   });
 
   it('resolves to null on non-release channels (development/CI show no card)', () => {

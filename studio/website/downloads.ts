@@ -1,5 +1,5 @@
 (async function () {
-  const targets = ['https://static.tokentosea.com/fantay-design/releases/stable/latest/metadata.json', 'https://github.com/fantay0312/fantay/releases/latest/download/metadata.json'];
+  const targets = ['https://static.tokentosea.com/fantay-design/releases/stable/latest/metadata.json'];
   for (const target of targets) {
     try {
       const response = await fetch(target, { signal: AbortSignal.timeout(8000) });
@@ -19,6 +19,6 @@
       }
       if (!links.length) continue;
       container.replaceChildren(...links); container.className = 'downloads'; break;
-    } catch { /* Keep the honest unpublished state while both feeds are absent. */ }
+    } catch { /* Keep the honest unpublished state while the configured feed is unavailable. */ }
   }
 })();

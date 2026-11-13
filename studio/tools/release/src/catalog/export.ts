@@ -30,9 +30,9 @@ import {
 } from "./schema.ts";
 import { loadCatalogSystemTokens } from "./system-tokens.ts";
 
-const REPO_TREE = "https://github.com/nexu-io/open-design/tree/main";
-const REPO_BLOB = "https://github.com/nexu-io/open-design/blob/main";
-const PLUGIN_PREVIEWS_BASE_URL = "https://repo-assets.open-design.ai/plugin-previews";
+const REPO_TREE = "https://github.com/fantay0312/fantay/tree/main/studio";
+const REPO_BLOB = "https://github.com/fantay0312/fantay/blob/main/studio";
+const PLUGIN_PREVIEWS_BASE_URL = "https://static.tokentosea.com/fantay-design/plugin-previews";
 
 const OFFICIAL_BUCKETS = [
   "examples",

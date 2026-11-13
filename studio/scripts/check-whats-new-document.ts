@@ -1,32 +1,6 @@
-/* ───────────────────────────────────────────────────────────────────
- * Guard: the repository copy of the post-update "What's New" card.
- *
- * `docs/whats-new.json` is the source of truth that
- * `.github/workflows/whats-new-publish.yml` uploads to the R2 object the
- * daemon reads (`DEFAULT_WHATS_NEW_URL`). The daemon parses that document
- * fail-safe: anything missing or malformed resolves to "no highlight"
- * rather than an error, so a typo does not fail a request — it silently
- * removes the card from every user's Home. A successful upload therefore
- * proves nothing about whether the card will appear.
- *
- * This guard closes that gap before merge by running the shipping parser
- * (`parseWhatsNewDocument`) over the repository document and asserting the
- * invariant the fail-safe hides:
- *
- *   the document is either a complete, parser-valid highlight, or the
- *   explicit empty retirement document `{}` — never something in between.
- *
- * It runs in `pnpm guard`, which CI invokes from the `preflight` job. That
- * job is declared `inputs: ["*"]` / `reusable: false` in
- * `.github/config/convergence.json` and its guard step carries no `if`, so it
- * runs on every pull request. That matters here: the document lives under
- * `docs/`, which `.github/config/scopes.json` treats as `certain-exempt` — a
- * change to it selects no scoped validation workload at all, so a lane-routed
- * test would simply never run for the one edit it exists to check.
- *
- * Run standalone: `pnpm exec tsx scripts/check-whats-new-document.ts`
- * Or as part of `pnpm guard` (registered in scripts/guard.ts).
- * ─────────────────────────────────────────────────────────────────── */
+// Validate optional hosted Fantay highlights before publication.
+// Release builds use the bundled document in services/fantay-whats-new.ts.
+// Run through the repository guard or execute this script with tsx.
 
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -36,7 +10,7 @@ import { parseWhatsNewDocument } from "../apps/daemon/src/services/whats-new.ts"
 
 const repoRoot = path.resolve(import.meta.dirname, "..");
 
-/** Kept in sync with the workflow's `WHATS_NEW_DOCUMENT` input. */
+/** Source document for an explicitly hosted Fantay highlight. */
 export const WHATS_NEW_DOCUMENT_PATH = "docs/whats-new.json";
 
 // Field names the daemon parser reads. Anything else in the document is a

@@ -7,9 +7,14 @@ if errorlevel 1 (
   exit /b 1
 )
 
-set "OD_DSH_PS1=%TEMP%\open-design-install-dsh-%RANDOM%-%RANDOM%.ps1"
-rem Immutable R2 publication rewrites this landing URL to the colocated versioned PS1.
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command "$ProgressPreference='SilentlyContinue'; Invoke-WebRequest -UseBasicParsing 'https://open-design.ai/install-dsh.ps1?version=1' -OutFile $env:OD_DSH_PS1"
+if exist "%~dp0install-dsh.ps1" (
+  powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0install-dsh.ps1" %*
+  exit /b
+)
+
+set "OD_DSH_PS1=%TEMP%\fantay-install-dsh-%RANDOM%-%RANDOM%.ps1"
+rem Publication supplies the colocated immutable PowerShell installer URL.
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command "$uri='__FANTAY_DSH_INSTALLER_URL__'; if ($uri.StartsWith('__')) { Write-Error 'Run the colocated install-dsh.ps1 or use a published Fantay installer.'; exit 1 }; $ProgressPreference='SilentlyContinue'; Invoke-WebRequest -UseBasicParsing $uri -OutFile $env:OD_DSH_PS1"
 if errorlevel 1 (
   echo DeepSeek Harness installer: could not download install-dsh.ps1. 1>&2
   exit /b 1

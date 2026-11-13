@@ -1,4 +1,5 @@
 import type { WhatsNewContent, WhatsNewLocaleContent } from '@open-design/contracts';
+import { isRetiredOpenDesignServiceUrl } from '@open-design/contracts';
 import { FANTAY_WHATS_NEW_DOCUMENT } from './fantay-whats-new.js';
 
 // Reads the shipped Fantay highlights, or an explicitly configured
@@ -48,7 +49,7 @@ const WHATS_NEW_TIMEOUT_MS = 4_000;
  */
 export function whatsNewSourceUrl(env: NodeJS.ProcessEnv, _channel: string): string | null {
   const override = env.OD_WHATS_NEW_URL?.trim();
-  if (override) return override;
+  if (override && !isRetiredOpenDesignServiceUrl(override)) return override;
   return null;
 }
 

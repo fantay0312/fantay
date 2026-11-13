@@ -2,9 +2,9 @@
 
 **Parent:** [`spec.md`](spec.md) · **Siblings:** [`skills-protocol.md`](skills-protocol.md) · [`architecture.md`](architecture.md) · [`modes.md`](modes.md)
 
-> Want to read the shared `SKILL.md` protocol instead? See [`skills-protocol.md`](skills-protocol.md). This file is the **how-to** for shipping a rendering template upstream — what to write, how to run it locally, and what we'll send back at review.
+> Want to read the shared `SKILL.md` protocol instead? See [`skills-protocol.md`](skills-protocol.md). This file is the **how-to** for maintaining a rendering template in Fantay — what to write, how to run it locally, and what we'll send back at review.
 
-A design template is the most leverage you can ship into OpenDesign without writing framework code. One folder, one Markdown file with frontmatter, a hand-built example, and the Templates gallery shows it. This guide covers rendering templates (`prototype`, `deck`, `template`, `image`, `video`, and `audio`). Functional skills that do work on user input belong in [`skills/`](../skills/); read [`design-templates/AGENTS.md`](../design-templates/AGENTS.md) for the ownership rule.
+A design template is the most leverage you can ship into Fantay without writing framework code. One folder, one Markdown file with frontmatter, a hand-built example, and the Templates gallery shows it. This guide covers rendering templates (`prototype`, `deck`, `template`, `image`, `video`, and `audio`). Functional skills that do work on user input belong in [`skills/`](../skills/); read [`design-templates/AGENTS.md`](../design-templates/AGENTS.md) for the ownership rule.
 
 If you only have ten seconds, the picture is:
 
@@ -68,7 +68,7 @@ A design template is a **packaged shape for producing one kind of artifact**. It
 
 **Third option: ship an external plugin bundle.** If your workflow is genuinely a recipe (not a daemon feature) but is too vendor-specific or audience-narrow to land in-tree, publish a portable `SKILL.md` bundle with an `open-design.json` manifest and distribute it through the plugin workflow. The current `od skills` CLI is read-only; installation belongs to `od plugin`, not the retired `od skill add` shape. This is the right path for payment-provider workflows, regional marketplace integrations, in-house design systems, and similar — not a rejection, just a different distribution channel.
 
-If you're not sure your idea fits, **open a discussion first** ([github.com/nexu-io/open-design/discussions](https://github.com/nexu-io/open-design/discussions)) — we'd rather spend 5 minutes redirecting than have you build the wrong thing for a week.
+If you're not sure your idea fits, **open a discussion first** ([github.com/fantay0312/fantay/issues](https://github.com/fantay0312/fantay/issues)) — we'd rather spend 5 minutes redirecting than have you build the wrong thing for a week.
 
 ---
 
@@ -291,7 +291,7 @@ Pick the closest one to your idea and read its `SKILL.md` body before writing yo
 ### Upstream
 
 - [Claude Code `SKILL.md` convention](https://docs.anthropic.com/en/docs/claude-code/skills) — the base format
-- [`VoltAgent/awesome-design-md`](https://github.com/VoltAgent/awesome-design-md) — upstream registry for product design systems (most `design-systems/` PRs belong here, not here)
+- [`VoltAgent/awesome-design-md`](https://github.com/VoltAgent/awesome-design-md) — upstream registry for product design systems for optional source imports
 - [Anti-AI-slop checklist](../README.md) — section in the main README; lift the rules into your `references/checklist.md`
 
 ---

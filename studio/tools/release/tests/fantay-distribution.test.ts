@@ -16,7 +16,7 @@ it('prepares matching checksums and independently downloadable GitHub metadata',
     const a=primary.platforms.mac.artifacts.dmg,b=github.platforms.mac.artifacts.dmg;
     expect(a.sha256).toBe(createHash('sha256').update('fixture installer').digest('hex'));
     expect(b.sha256).toBe(a.sha256);
-    expect(a.fallbackUrls).toEqual([b.url]);
+    expect(a.fallbackUrls).toBeUndefined();
     expect(b.url).toBe('https://github.com/fantay0312/fantay/releases/download/v1.2.3/Fantay-1.2.3-mac-arm64.dmg');
     expect(primary.platforms.win).toBeUndefined();
   } finally { await rm(dir,{recursive:true,force:true}); }

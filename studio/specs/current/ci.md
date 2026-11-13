@@ -1,11 +1,8 @@
 # CI orchestration evolution
 
-This document is the current authority for how this repository evolves CI
-scope policy, how `.github/config/scopes.json` and
-`.github/scripts/scopes.py` make workload decisions, and how those decisions
-are evaluated. Workflow ownership and local editing instructions remain in
-`.github/AGENTS.md`; this document describes the design contract rather than
-restating workflow implementation line by line.
+This is an archived OpenDesign CI design retained for historical reference.
+Fantay maintenance follows `../../MAINTAINERS.md`, and its active workflow is
+`../../../.github/workflows/ci.yml`.
 
 The document has four kinds of content:
 
