@@ -1,0 +1,254 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The artifact frame: a 40px bar on paper, then the stage. No hairline between them: the bar and a
+   `fill` stage are one sheet, and a `canvas` stage is set off by tone alone. The bar's metrics match
+   the 代码 surface's header (40px, 28px controls, 12px/600 labels) so every tab in the side
+   workspace opens with the same rhythm. */
+
+.root {
+  container: artifact / inline-size;
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* ── bar ─────────────────────────────────────────────────────────────────────────────────────── */
+
+.bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 40px;
+  padding: 0 8px 0 12px;
+}
+
+.lead {
+  display: flex;
+  flex: 1 1 0;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* Where the file lives and what it is called. The folder gives way first, then the name. */
+.identity {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.folder {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-weight: 500;
+  text-overflow: ellipsis;
+}
+
+.separator {
+  flex: none;
+  margin: 0 3px;
+  color: var(--ink-ghost);
+}
+
+.name {
+  flex: 0 1 auto;
+  min-width: 48px;
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+
+/* Facts about the file. They give way before anything else does. */
+.meta {
+  flex: 0 100 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Sets the view controls apart from the actions without drawing a line. */
+.gap {
+  flex: none;
+  width: 6px;
+}
+
+/* A narrow panel keeps the controls and lets the words go: facts first, then the folder. */
+@container artifact (max-width: 560px) {
+  .meta {
+    display: none;
+  }
+}
+
+@container artifact (max-width: 460px) {
+  .folder,
+  .separator {
+    display: none;
+  }
+}
+
+@container artifact (max-width: 380px) {
+  .lead {
+    display: none;
+  }
+
+  .bar {
+    justify-content: flex-end;
+  }
+}
+
+/* ── stage ───────────────────────────────────────────────────────────────────────────────────── */
+
+.stage {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* A single object on a quiet ground: one step off the paper, so the object's own edge shows. */
+.stage[data-stage='canvas'] {
+  background: var(--sub);
+}
+
+.content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.content[hidden] {
+  display: none;
+}
+
+.content[data-stage='fill'],
+.content[data-stage='page'] {
+  overflow: auto;
+}
+
+.content[data-stage='canvas'] {
+  overflow: hidden;
+}
+
+.footer {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-width: 0;
+  min-height: 32px;
+  padding: 0 8px;
+  background: var(--paper);
+}
+
+/* ── states ──────────────────────────────────────────────────────────────────────────────────── */
+
+.state {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 0;
+  padding: 32px 24px;
+  text-align: center;
+  animation: artifact-state-in var(--motion-enter) var(--ease-out-quint) both;
+}
+
+.stateGlyph {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 6px;
+  border-radius: var(--radius-card);
+  background: var(--sub);
+  color: var(--ink-soft);
+  place-items: center;
+}
+
+.stage[data-stage='canvas'] .stateGlyph {
+  background: var(--paper);
+}
+
+.stateTitle {
+  max-width: 420px;
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.stateDescription {
+  max-width: 380px;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.stateHint {
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.stateActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+@keyframes artifact-state-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .state {
+    animation: none;
+  }
+}

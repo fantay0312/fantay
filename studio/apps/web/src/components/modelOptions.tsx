@@ -2,7 +2,8 @@ import { createPortal } from 'react-dom';
 import { forwardRef, useEffect, useLayoutEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Button } from '@open-design/components';
 import type { AgentModelOption } from '../types';
-import { useT } from '../i18n';
+import { useI18n } from '../i18n';
+import { channelLabel, channelPrice, groupTokenToSeaModels, modelOffer } from './tokenToSeaOffers';
 import { Icon } from './Icon';
 import { modelProviderIconSrc } from './modelProviderIcon';
 import { anchorSelectionInView } from './pickerSelectionAnchor';
@@ -215,6 +216,8 @@ interface SearchableModelSelectProps
    * `groupByCompany={agent.id === 'tokentosea'}` or similar.
    */
   groupByCompany?: boolean;
+  /** TokenToSea catalog: models on the left and purchasable channels on the right. */
+  groupByModel?: boolean;
   minSearchableOptions?: number;
   popoverMinWidth?: number;
   /**
@@ -261,6 +264,7 @@ export const SearchableModelSelect = forwardRef<
     showDisabledOptions = false,
     optionDescription,
     groupByCompany = false,
+    groupByModel = false,
     minSearchableOptions = 8,
     popoverMinWidth,
     popoverMatchTrigger = false,
@@ -271,7 +275,9 @@ export const SearchableModelSelect = forwardRef<
   },
   ref,
 ) {
-  const t = useT();
+  const { t, locale } = useI18n();
+  const zh = locale.startsWith('zh');
+  const grouped = groupByCompany || groupByModel;
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [popoverStyle, setPopoverStyle] = useState<{
@@ -330,9 +336,10 @@ export const SearchableModelSelect = forwardRef<
     return allOptions.filter(
       (option) =>
         option.id === CUSTOM_MODEL_SENTINEL ||
-        matchesModelSearch(option, normalizedQuery),
+        matchesModelSearch(option, normalizedQuery) ||
+        (groupByModel && (modelOffer(option).modelName + ' ' + channelLabel(option, zh)).toLowerCase().includes(normalizedQuery)),
     );
-  }, [allOptions, normalizedQuery]);
+  }, [allOptions, normalizedQuery, groupByModel, zh]);
   const shouldShowSearch = allOptions.length >= minSearchableOptions;
   /** Search, footer, and the popover's two border pixels stay outside the scroller. */
   const popoverChromeHeight = (shouldShowSearch ? 39 : 0) + (multi ? 37 : 0) + 2;
@@ -340,13 +347,12 @@ export const SearchableModelSelect = forwardRef<
   // cross-company list — the case worth "distinguishing companies". Small
   // pickers (a couple of models, or a single provider) stay a flat list, and
   // callers that didn't opt in via `groupByCompany` always stay flat too.
-  const allCompanyCount = useMemo(() => groupModelsByCompany(allOptions).length, [allOptions]);
+  const companyGroups = useMemo(() => groupByModel ? groupTokenToSeaModels(filteredOptions) : groupModelsByCompany(filteredOptions), [groupByModel, filteredOptions]);
   const useTwoLevel =
-    groupByCompany && !normalizedQuery && allOptions.length >= minSearchableOptions &&
-    allCompanyCount >= 2 && (popoverStyle?.width ?? 480) >= 420;
+    grouped && !normalizedQuery && (groupByModel || (allOptions.length >= minSearchableOptions && companyGroups.length >= 2)) &&
+    (popoverStyle?.width ?? 480) >= 420;
   // Grouped from the (search-)filtered options.
-  const companyGroups = useMemo(() => groupModelsByCompany(filteredOptions), [filteredOptions]);
-  const selectedCompanyKey = value ? modelCompany(value).key : companyGroups[0]?.key ?? null;
+  const selectedCompanyKey = selectedOption && groupByModel ? modelOffer(selectedOption).modelKey : value ? modelCompany(value).key : companyGroups[0]?.key ?? null;
   const [browsedCompany, setBrowsedCompany] = useState<string | null>(null);
   // Default the open list to the selected model's company (or the first),
   // and keep it valid as the filtered group set changes.
@@ -483,7 +489,7 @@ export const SearchableModelSelect = forwardRef<
       // caller-provided popoverMinWidth beyond that still wins, and
       // popoverMatchTrigger lifts the cap for forms that align to the field.
       const POPOVER_MAX_WIDTH = 560;
-      const floorWidth = Math.max(rect.width, popoverMinWidth ?? 0, groupByCompany ? 480 : 0);
+      const floorWidth = Math.max(rect.width, popoverMinWidth ?? 0, grouped ? 480 : 0);
       const desiredWidth = popoverMatchTrigger
         ? floorWidth
         : Math.min(floorWidth, Math.max(POPOVER_MAX_WIDTH, popoverMinWidth ?? 0));
@@ -542,7 +548,7 @@ export const SearchableModelSelect = forwardRef<
       window.removeEventListener('resize', updatePosition);
       window.removeEventListener('scroll', updatePosition, true);
     };
-  }, [getPopoverBoundary, groupByCompany, open, popoverMatchTrigger, popoverMinWidth, shouldShowSearch]);
+  }, [getPopoverBoundary, grouped, open, popoverMatchTrigger, popoverMinWidth, shouldShowSearch]);
 
   const popoverReady = popoverStyle !== null;
   useEffect(() => {
@@ -598,7 +604,8 @@ export const SearchableModelSelect = forwardRef<
     const optionDisabledId = disabledHint ? `${optionId}-disabled` : undefined;
     const description = optionDescription?.(option) || null;
     const optionNoteId = description ? `${optionId}-description` : undefined;
-    const sourceLabel = groupByCompany && !useTwoLevel && /^supplier:/i.test(option.id)
+    const sourceLabel = groupByModel ? [!useTwoLevel && channelLabel(option, zh, allOptions), channelPrice(option, zh)].filter(Boolean).join(' · ')
+      : groupByCompany && !useTwoLevel && /^supplier:/i.test(option.id)
       ? modelCompany(option.id, option.label).name : null;
     const sourceLabelId = sourceLabel ? `${optionId}-source` : undefined;
     const optionDescriptionIds = [sourceLabelId, optionNoteId, optionCostId, optionTagId, optionDisabledId]
@@ -621,7 +628,7 @@ export const SearchableModelSelect = forwardRef<
         <span className="model-select-searchable__option-copy">
           <span className="model-select-searchable__option-label">
             <span id={optionLabelId}>
-              {groupByCompany ? modelVersionLabel(option.id, option.label) : option.label}
+              {groupByModel ? (useTwoLevel ? channelLabel(option, zh, activeCompany?.options) : modelOffer(option).modelName) : groupByCompany ? modelVersionLabel(option.id, option.label) : option.label}
             </span>
           </span>
           {sourceLabel ? (
@@ -789,7 +796,8 @@ export const SearchableModelSelect = forwardRef<
             {multi
               ? multi.triggerLabel
               : selectedOption
-                ? groupByCompany && !/^supplier:/i.test(selectedOption.id)
+                ? groupByModel ? [modelOffer(selectedOption).modelName, modelOffer(selectedOption).channel && channelLabel(selectedOption, zh)].filter(Boolean).join(' · ')
+                  : groupByCompany && !/^supplier:/i.test(selectedOption.id)
                   ? modelVersionLabel(selectedOption.id, selectedOption.label)
                   : selectedOption.label
                 : ''}
@@ -810,7 +818,7 @@ export const SearchableModelSelect = forwardRef<
         ? createPortal(
             <div
               ref={popoverRef}
-              className={`model-select-searchable__popover${groupByCompany ? ' model-select-searchable__popover--catalog' : ''}${popoverClassName ? ` ${popoverClassName}` : ''}`}
+              className={`model-select-searchable__popover${grouped ? ' model-select-searchable__popover--catalog' : ''}${groupByModel ? ' model-select-searchable__popover--offers' : ''}${popoverClassName ? ` ${popoverClassName}` : ''}`}
               role="presentation"
               data-testid={popoverTestId}
               onMouseDown={(event) => event.stopPropagation()}

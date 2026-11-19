@@ -43,7 +43,7 @@ export function registerTokenToSeaCloudRoutes(app: Express, runtime: TokenToSeaR
   app.get(['/api/tokentosea/cloud/models', '/api/amr/models'], async (_req, res) => {
     try {
       const models = (await runtime.chatModels()).filter(isTokenToSeaAgentModel)
-        .map(model => ({ id: model.id, label: model.name ?? model.model, enabled: model.available !== false, reasoningOptions: tokenToSeaReasoningOptions(model) }));
+        .map(model => ({ id: model.id, label: model.name ?? model.model, ...(model.channelOffer && { channelOffer: model.channelOffer }), enabled: model.available !== false, reasoningOptions: tokenToSeaReasoningOptions(model) }));
       res.json({ source: 'remote', refreshing: false, models } satisfies AmrModelsResponse);
     } catch (error) { fail(res, error); }
   });

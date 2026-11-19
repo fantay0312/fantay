@@ -44,6 +44,11 @@ vi.mock("../../../src/fantay/pa/PaMessage", async (importOriginal) => {
       renders.message += 1;
       return createElement(actual.PaMessage, props);
     },
+    // The transcripts render each turn through PaTurnBody; count it as the message render.
+    PaTurnBody: (props: Parameters<typeof actual.PaTurnBody>[0]) => {
+      renders.message += 1;
+      return createElement(actual.PaTurnBody, props);
+    },
   };
 });
 
@@ -202,13 +207,15 @@ describe("PA workspace", () => {
         time: "09:00", timezone: "Asia/Taipei", enabled: false, nextRunAt: null, lastError: null, lastTaskId: "t-planned" }],
     });
     mount();
-    fireEvent.click(await screen.findByTestId("pa-place-activity"));
+    // 工作 (the bottom bar) opens 任务; its tab strip leads to 动态 · 目标 · 例行 (Soul UI spec §6.3).
+    fireEvent.click(await screen.findByTestId("pa-place-tasks"));
+    fireEvent.mouseDown(await screen.findByTestId("pa-work-tab-activity"), { button: 0 });
     const page = within(await screen.findByTestId("pa-activity-page"));
     expect(await page.findByText("Task accepted")).toBeTruthy();
-    fireEvent.click(page.getByRole("radio", { name: "Goals" }));
-    expect(page.getByText("Reading plan")).toBeTruthy();
+    fireEvent.mouseDown(page.getByRole("tab", { name: "Goals" }), { button: 0 });
+    expect(await page.findByText("Reading plan")).toBeTruthy();
     expect(page.getByText("1 of 1 tasks completed")).toBeTruthy();
-    fireEvent.click(page.getByRole("radio", { name: "Routines" }));
+    fireEvent.mouseDown(page.getByRole("tab", { name: "Routines" }), { button: 0 });
     expect(page.getByText("Daily review")).toBeTruthy();
     expect(page.getByText("Daily schedule off")).toBeTruthy();
   });
@@ -266,15 +273,17 @@ describe("PA workspace", () => {
   it("creates an agent without changing the existing global model selection", async () => {
     mount();
     await screen.findByTestId("pa-composer-input");
-    fireEvent.click(screen.getByRole("button", { name: "New agent" }));
+    // 新建角色 lives in the roster's ＋ menu (Soul UI spec §3.3).
+    fireEvent.pointerDown(screen.getByTestId("pa-roster-plus"), { button: 0, ctrlKey: false });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "New character" }));
     const dialog = await screen.findByRole("dialog");
     fireEvent.change(within(dialog).getByRole("textbox", { name: "Name" }), {
       target: { value: "Researcher" },
     });
+    // The role lives in the profile editor's 工作 section (UI spec §7.1).
+    fireEvent.click(within(dialog).getByTestId("pa-profile-nav-work"));
     fireEvent.change(
-      within(dialog).getByRole("textbox", {
-        name: "Role and responsibilities",
-      }),
+      within(dialog).getByRole("textbox", { name: "Role" }),
       { target: { value: "Summarize source evidence" } },
     );
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
@@ -307,16 +316,21 @@ describe("PA workspace", () => {
     });
     mount();
     await screen.findByTestId("pa-composer-input");
-    fireEvent.click(screen.getByRole("button", { name: "New agent" }));
+    // 新建角色 lives in the roster's ＋ menu (Soul UI spec §3.3).
+    fireEvent.pointerDown(screen.getByTestId("pa-roster-plus"), { button: 0, ctrlKey: false });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "New character" }));
     const dialog = await screen.findByRole("dialog");
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "Name" }), { target: { value: "Local researcher" } });
+    // The model lives in 文风与模型 and the role in 工作 (UI spec §7.1).
+    fireEvent.click(within(dialog).getByTestId("pa-profile-nav-style"));
     const picker = within(dialog).getByTestId("pa-profile-model-picker");
     await waitFor(() => expect(picker.textContent).toContain("TokenToSea · Account model"));
     fireEvent.click(picker);
     fireEvent.click(await screen.findByRole("button", { name: "Codex" }));
     fireEvent.click(await screen.findByRole("option", { name: /GPT-5/ }));
     expect(vi.mocked(paRequest).mock.calls.some((call) => call[1] === "PATCH")).toBe(false);
-    fireEvent.change(within(dialog).getByRole("textbox", { name: "Name" }), { target: { value: "Local researcher" } });
-    fireEvent.change(within(dialog).getByRole("textbox", { name: "Role and responsibilities" }), { target: { value: "Research" } });
+    fireEvent.click(within(dialog).getByTestId("pa-profile-nav-work"));
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "Role" }), { target: { value: "Research" } });
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     await waitFor(() => expect(paRequest).toHaveBeenCalledWith("/agents", "POST", expect.objectContaining({
       model: { runtime: "codex", modelId: "gpt-5" },
@@ -328,7 +342,7 @@ describe("PA workspace", () => {
     expect(screen.getAllByTestId("fantay-mascot")).toHaveLength(1);
     expect(within(empty).queryByTestId("fantay-mascot")).toBeNull();
   });
-  it("lists channel conversations only under Channel chats", async () => {
+  it("lists a channel conversation as its own row, never under the agent's row", async () => {
     const channelChat: PaConversation = {
       ...stamp,
       id: "chan",
@@ -340,7 +354,6 @@ describe("PA workspace", () => {
     serve({ ...snapshot, conversations: [...snapshot.conversations, channelChat] });
     mount();
     await screen.findByTestId("pa-roster");
-    const heading = await screen.findByText("Channel chats");
     const rows = await waitFor(() => {
       const found = screen
         .getAllByTestId("pa-roster-row")
@@ -348,9 +361,7 @@ describe("PA workspace", () => {
       expect(found).toHaveLength(1);
       return found;
     });
-    expect(
-      heading.compareDocumentPosition(rows[0]!) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    expect(rows[0]!.getAttribute("data-kind")).toBe("channel");
     const agentRows = screen
       .getAllByTestId("pa-roster-row")
       .filter((row) => row.hasAttribute("data-agent-id"));
@@ -445,6 +456,24 @@ describe("PA workspace", () => {
     const transcript = await screen.findByTestId("pa-transcript");
     const card = await within(transcript).findByTestId("pa-needs-card");
     expect(within(card).getByText("Model unavailable")).toBeTruthy();
+  });
+  it("fills and submits the pending view in the real PA transcript", async () => {
+    const task = waitingTask("t-view", {
+      waitKind: "input", waitingReason: "Campaign details",
+      pendingView: {
+        attemptId: "view-attempt", title: "Campaign details", summary: "What is the audience?", interactive: true,
+        view: { type: "form", id: "details", fields: [{ id: "audience", label: "Audience" }], submitLabel: "Submit brief" },
+      },
+    });
+    serve({ ...snapshot, tasks: [task], messages: [ownerMessage(task.id)] });
+    mount();
+    const transcript = await screen.findByTestId("pa-transcript");
+    const card = await within(transcript).findByTestId("pa-needs-card");
+    fireEvent.change(within(card).getByRole("textbox", { name: "Audience" }), { target: { value: "New subscribers" } });
+    fireEvent.click(within(card).getByRole("button", { name: "Submit brief" }));
+    await waitFor(() => expect(paRequest).toHaveBeenCalledWith("/tasks/t-view/answer", "POST", {
+      kind: "view", attemptId: "view-attempt", action: "details", values: { fields: { audience: "New subscribers" } },
+    }));
   });
   it("toggles the right inspector panel when clicking the chat header subject", async () => {
     mount();
@@ -588,6 +617,38 @@ describe("PA workspace", () => {
     expect(input.style.height).toBe("36px");
     expect(input.style.overflowY).toBe("hidden");
   });
+  it("never flips between the capsule and the stacked card on its own (narrow chat column)", async () => {
+    mount();
+    const input = (await screen.findByTestId("pa-composer-input")) as HTMLTextAreaElement;
+    const shell = screen.getByTestId("pa-composer").querySelector(".composer-shell") as HTMLElement;
+    // A 92 px capsule beside a 350 px stacked card: 14 px a character, and a placeholder that needs 110 px.
+    const stackedNow = () => shell.hasAttribute("data-stacked");
+    const boxWidth = () => (stackedNow() ? 350 : 92);
+    const textWidth = () => (input.value ? input.value.length * 14 + 8 : 110);
+    Object.defineProperty(input, "clientWidth", { configurable: true, get: boxWidth });
+    Object.defineProperty(input, "scrollWidth", {
+      configurable: true,
+      get: () => (input.style.width === "0px" ? textWidth() : Math.max(boxWidth(), textWidth())),
+    });
+    Object.defineProperty(input, "scrollHeight", {
+      configurable: true,
+      get: () => (textWidth() > boxWidth() ? 58 : stackedNow() ? 28 : 36),
+    });
+
+    // Empty again: only the placeholder wraps in the capsule, which is not a reason to stack.
+    fireEvent.change(input, { target: { value: "x" } });
+    fireEvent.change(input, { target: { value: "" } });
+    expect(stackedNow()).toBe(false);
+
+    // Ten characters wrap in the capsule and fit the stacked card: it stacks once and stays.
+    fireEvent.change(input, { target: { value: "0123456789" } });
+    expect(stackedNow()).toBe(true);
+    expect(input.style.width).toBe("");
+
+    // Comfortably shorter than the capsule again: back to one line.
+    fireEvent.change(input, { target: { value: "012" } });
+    expect(stackedNow()).toBe(false);
+  });
   it("opens the @ mention picker from the group composer toolbar button", async () => {
     mount();
     await screen.findByTestId("pa-composer-input");
@@ -598,7 +659,7 @@ describe("PA workspace", () => {
     expect(within(listbox).getByText("@Writer")).toBeTruthy();
     expect(within(listbox).getByText("@Reviewer")).toBeTruthy();
   });
-  it("switches the PersonalAgent model directly from the inspector, header, and composer", async () => {
+  it("switches the PersonalAgent model from the inspector and the composer, never from the header", async () => {
     const modelOptions = [
       { runtime: "claude" as const, modelId: "sonnet", label: "Claude Code · sonnet", available: true },
       { runtime: "claude" as const, modelId: "opus", label: "Claude Code · opus", available: true },
@@ -626,14 +687,16 @@ describe("PA workspace", () => {
     });
 
     mount();
-    const inspectorPicker = await screen.findByTestId("pa-inspector-model-picker");
-    const headerPicker = screen.getByTestId("pa-header-model-picker");
+    // The inspector keeps one model row, on its 档案 tab (Soul UI spec §4.7).
+    fireEvent.mouseDown(await screen.findByRole("tab", { name: "Profile" }), { button: 0 });
+    const inspectorPicker = await screen.findByTestId("pa-profile-model-picker");
+    // The header carries no model picker in either mode (Soul UI spec §4.2).
+    expect(screen.queryByTestId("pa-header-model-picker")).toBeNull();
     const composerPicker = screen.getByTestId("pa-composer-model-picker");
     vi.spyOn(inspectorPicker, "getBoundingClientRect").mockReturnValue(new DOMRect(100, 100, 200, 24));
-    vi.spyOn(headerPicker, "getBoundingClientRect").mockReturnValue(new DOMRect(100, 100, 200, 24));
+    vi.spyOn(composerPicker, "getBoundingClientRect").mockReturnValue(new DOMRect(100, 100, 200, 24));
 
     await waitFor(() => expect(inspectorPicker.textContent).toContain("Claude Code · sonnet"));
-    expect(headerPicker.textContent).toContain("Claude Code · sonnet");
     expect(composerPicker.textContent).toContain("sonnet");
 
     fireEvent.pointerDown(inspectorPicker, { button: 0 });
@@ -655,12 +718,11 @@ describe("PA workspace", () => {
         }),
       ),
     );
-    await waitFor(() => expect(screen.getByTestId("pa-inspector-model-picker").textContent).toContain("TokenToSea · DeepSeek Flash"));
-    expect(screen.getByTestId("pa-header-model-picker").textContent).toContain("TokenToSea · DeepSeek Flash");
+    await waitFor(() => expect(screen.getByTestId("pa-profile-model-picker").textContent).toContain("TokenToSea · DeepSeek Flash"));
     expect(screen.getByTestId("pa-composer-model-picker").textContent).toContain("DeepSeek Flash");
 
-    fireEvent.pointerDown(headerPicker, { button: 0 });
-    fireEvent.click(headerPicker);
+    fireEvent.pointerDown(composerPicker, { button: 0 });
+    fireEvent.click(composerPicker);
     fireEvent.change(await screen.findByPlaceholderText("Search models…"), { target: { value: "GPT-5" } });
     fireEvent.click(await screen.findByRole("option", { name: /GPT-5/ }));
     await waitFor(() => expect(paRequest).toHaveBeenCalledWith("/agents/a", "PATCH", expect.objectContaining({

@@ -1,0 +1,445 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The data grid: a spreadsheet's frame in the product's ink. The header row and the row numbers are
+   one tone off the paper and stay put; cells sit on paper between hairlines; the selection is tone
+   and an ink ring, never a colour. Rows are 28px, the header 30px (GRID_ROW_HEIGHT and
+   GRID_HEAD_HEIGHT in grid-model.ts: change both places together). */
+
+.root {
+  --grid-select: color-mix(in srgb, var(--ink) 7%, transparent);
+  --grid-select-edge: color-mix(in srgb, var(--ink) 24%, transparent);
+  --grid-head-on: color-mix(in srgb, var(--ink) 11%, var(--sub));
+
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.scroller {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  outline: none;
+  cursor: default;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--line) transparent;
+  scrollbar-width: thin;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* With a cell selected, its ring says where the keyboard is. Without one, the grid itself does. */
+.root:has(.scroller:focus-visible):not(:has(.active))::after {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  box-shadow: inset 0 0 0 2px var(--focus-ring-color);
+  content: '';
+  pointer-events: none;
+}
+
+.root[data-resizing],
+.root[data-resizing] .scroller {
+  cursor: col-resize;
+}
+
+/* As wide and as tall as the whole table; everything inside is placed in its coordinates. */
+.canvas {
+  position: relative;
+  min-width: 100%;
+}
+
+/* ── header row ──────────────────────────────────────────────────────────────────────────────── */
+
+.head {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  height: 30px;
+  background: var(--sub);
+}
+
+.corner {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  height: 100%;
+  background: var(--sub);
+}
+
+.headCell {
+  position: absolute;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-sizing: border-box;
+  height: 100%;
+  padding: 0 10px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+  transition:
+    background-color var(--motion-micro) var(--ease-out-quint),
+    color var(--motion-micro) var(--ease-out-quint);
+}
+
+.headCell[data-align='center'] {
+  justify-content: center;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+/* The name of a column of numbers sits over its digits. */
+.headCell[data-align='end'] {
+  justify-content: flex-end;
+}
+
+/* A short tick between two headers: enough to find the edge to drag, quieter than a full line. */
+.headCell::after {
+  position: absolute;
+  top: 9px;
+  right: 0;
+  bottom: 9px;
+  width: 1px;
+  background: var(--line);
+  content: '';
+}
+
+.headCell[data-selected] {
+  background: var(--grid-head-on);
+  color: var(--ink);
+}
+
+.headLabel {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The declared type: said once, quietly, and the first thing to give way in a narrow column. */
+.headHint {
+  flex: 0 10000 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-overflow: ellipsis;
+}
+
+/* The edge between two columns, 10px wide so it is easy to catch. */
+.resizer {
+  position: absolute;
+  top: 0;
+  right: -5px;
+  z-index: 2;
+  width: 10px;
+  height: 100%;
+  cursor: col-resize;
+}
+
+.resizer::after {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 4px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--ink-soft);
+  content: '';
+  opacity: 0;
+  transition: opacity var(--motion-micro) var(--ease-out-quint);
+}
+
+.resizer:hover::after,
+.headCell[data-resizing] .resizer::after {
+  opacity: 1;
+}
+
+/* ── row numbers ─────────────────────────────────────────────────────────────────────────────── */
+
+.gutter {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  background: var(--sub);
+}
+
+.rowHead {
+  position: absolute;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  box-sizing: border-box;
+  height: 28px;
+  padding-right: 8px;
+  color: var(--ink-faint);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.rowHead[data-selected] {
+  background: var(--grid-head-on);
+  color: var(--ink);
+}
+
+/* Once the table has moved sideways, the frozen column gets an edge for the cells to pass under. */
+.root[data-scrolled-x] .gutter,
+.root[data-scrolled-x] .corner {
+  box-shadow: 1px 0 0 var(--line);
+}
+
+/* ── cells ───────────────────────────────────────────────────────────────────────────────────── */
+
+.row {
+  position: absolute;
+  right: 0;
+  left: 0;
+  box-sizing: border-box;
+  height: 28px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.columnLine {
+  position: absolute;
+  top: 30px;
+  bottom: 0;
+  width: 1px;
+  background: var(--line-soft);
+}
+
+.cell {
+  position: absolute;
+  top: 0;
+  box-sizing: border-box;
+  height: 27px;
+  padding: 0 10px;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+  line-height: 27px;
+  text-overflow: ellipsis;
+  white-space: pre;
+}
+
+/* Text running on over the empty cells beside it: its paper hides the lines it crosses. */
+.cell[data-spill] {
+  background: var(--paper);
+}
+
+/* Numbers and dates sit on the right, so digits line up; truth values and errors in the middle. */
+.cell[data-kind='n'],
+.merge[data-kind='n'] {
+  text-align: right;
+}
+
+.cell[data-kind='b'],
+.cell[data-kind='e'] {
+  text-align: center;
+}
+
+/* An absent value or a binary one: said, not shown as content. */
+.cell[data-kind='z'],
+.cell[data-kind='x'] {
+  color: var(--ink-ghost);
+}
+
+/* A merged cell covers the cells and lines under it with one piece of paper. */
+.merge {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 10px 1px;
+  overflow: hidden;
+  border-right: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--paper);
+  font-variant-numeric: tabular-nums;
+  line-height: 18px;
+}
+
+.merge > span {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre;
+}
+
+.merge[data-center] {
+  text-align: center;
+}
+
+/* ── selection ───────────────────────────────────────────────────────────────────────────────── */
+
+.range {
+  position: absolute;
+  z-index: 2;
+  background: var(--grid-select);
+  box-shadow: inset 0 0 0 1px var(--grid-select-edge);
+  pointer-events: none;
+}
+
+.active {
+  position: absolute;
+  z-index: 3;
+  border-radius: 1px;
+  box-shadow: inset 0 0 0 1.5px var(--ink-faint);
+  pointer-events: none;
+}
+
+.scroller:focus .active {
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+
+.empty {
+  position: sticky;
+  left: 0;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 56px 24px;
+  color: var(--ink-faint);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* ── the selected cell's value ───────────────────────────────────────────────────────────────────
+   One line under the grid, there only while a cell is selected. It opens from the bottom edge, so
+   the rows under the pointer do not move. Kept mounted so it can close with a transition. */
+
+.valueBar {
+  display: grid;
+  flex: none;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--motion-exit) var(--ease-out-quint);
+}
+
+.valueBar[data-open] {
+  grid-template-rows: 1fr;
+  transition-duration: var(--motion-enter);
+}
+
+.valueClip {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.valueRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  box-sizing: border-box;
+  min-height: 31px;
+  padding: 0 4px 0 12px;
+  border-top: 1px solid var(--line-soft);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.address {
+  flex: none;
+  max-width: 34%;
+  padding-top: 6px;
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.address[data-addressing='cell'] {
+  min-width: 26px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.value {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.valueBar[data-expanded] .value {
+  max-height: 126px;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  scrollbar-color: var(--line) transparent;
+  scrollbar-width: thin;
+  white-space: pre-wrap;
+}
+
+/* The formula behind a calculated value. */
+.note {
+  margin-left: 10px;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.stats {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding-top: 6px;
+  padding-right: 8px;
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expand {
+  flex: none;
+  margin-top: 3px;
+}
+
+@container artifact (max-width: 460px) {
+  .valueRow {
+    gap: 8px;
+  }
+
+  .stats {
+    max-width: 46%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .valueBar,
+  .headCell,
+  .resizer::after {
+    transition: none;
+  }
+}

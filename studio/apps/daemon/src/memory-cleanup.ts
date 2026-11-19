@@ -1,52 +1,39 @@
-// One-time cleanup of memory entries minted by the retired chat
+// One-time migration for data dirs that predate the retirement of the chat
 // auto-extraction pipelines.
 //
 // Context: the chat regex pack wrote junk facts from ordinary chat text
 // (the progressive-aspect "我在…" became "user location: 开做："), and the
 // chat-form profile capture accumulated per-project discovery answers into
-// the global `user_profile` under whatever label each form question used.
-// Both pipelines are retired (chat extraction now defaults OFF in
-// `readMemoryConfig`); this migration removes what they already wrote.
+// the global `user_profile`. Both pipelines are retired (chat extraction now
+// defaults OFF in `readMemoryConfig`).
 //
-// Scope, by product decision:
-//   - DELETE entries that fingerprint-match the regex pack's fill-in
-//     templates (`isHeuristicExtractionArtifact`). Precise: name + body
-//     template must both match.
-//   - PRUNE `user_profile` down to the canonical field set the settings
-//     profile editor writes; drop chat-form residue rows. Delete the entry
-//     when nothing canonical survives.
-//   - KEEP everything else: LLM-extracted facts (kept deliberately —
-//     they are indistinguishable from hand-written prose on disk),
-//     connector/brand output, and anything the user typed by hand.
+// This migration never touches memory text. Memory only grows: nothing is
+// deleted, moved or rewritten on the system's own initiative, so entries the
+// retired pipelines wrote stay where they are for a person to review. All it
+// does is switch off chat extraction on a config that an earlier settings
+// PATCH persisted as `true` (a side effect of writing the whole config
+// object), and record a marker so later boots do nothing. That switch only
+// stops new writes; it neither hides nor changes any existing entry.
 //
 // One-time semantics: a marker file inside the memory dir records the run.
-// Later boots are no-ops — this is a migration, not a standing GC — so a
-// user who consciously re-enables extraction afterwards is not re-flipped
-// and re-created entries are not re-reaped.
+// Later boots are no-ops, so a user who consciously re-enables extraction
+// afterwards is not flipped back.
 
 import { promises as fsp } from 'node:fs';
 import path from 'node:path';
-import { PROFILE_MEMORY_ID } from '@open-design/contracts';
-import {
-  deleteMemoryEntry,
-  isHeuristicExtractionArtifact,
-  listMemoryEntries,
-  memoryDir,
-  pruneProfileBodyToCanonical,
-  readMemoryEntry,
-  upsertMemoryEntry,
-  writeMemoryConfig,
-} from './memory.js';
+import { memoryDir, readMemoryConfig, writeMemoryConfig } from './memory.js';
 
 const MARKER_FILE = '.cleanup_auto_extracted_v1.json';
 
 export interface AutoExtractionCleanupResult {
   /** False when the marker already existed and nothing was touched. */
   ran: boolean;
-  /** Ids of entries removed by the heuristic fingerprint match. */
+  /** Always empty: this migration no longer removes entries. Kept for existing callers. */
   deletedIds: string[];
-  /** True when user_profile was rewritten (or removed) to canonical rows. */
+  /** Always false: this migration no longer rewrites user_profile. Kept for existing callers. */
   profilePruned: boolean;
+  /** True when chat extraction was switched from on to off. */
+  extractionSwitchedOff: boolean;
 }
 
 function markerPath(dataDir: string): string {
@@ -54,64 +41,27 @@ function markerPath(dataDir: string): string {
 }
 
 /**
- * Run the one-time auto-extraction cleanup for a data dir. Idempotent via a
- * marker file; safe to call on every daemon boot. Never throws for a single
- * bad entry — a migration must not take the daemon down.
+ * Run the one-time migration for a data dir. Idempotent via a marker file;
+ * safe to call on every daemon boot. Never throws for a config problem: a
+ * migration must not take the daemon down.
  */
 export async function runAutoExtractionCleanup(
   dataDir: string,
 ): Promise<AutoExtractionCleanupResult> {
   try {
     await fsp.access(markerPath(dataDir));
-    return { ran: false, deletedIds: [], profilePruned: false };
+    return { ran: false, deletedIds: [], profilePruned: false, extractionSwitchedOff: false };
   } catch {
     // No marker — first run.
   }
 
-  const deletedIds: string[] = [];
-  let profilePruned = false;
-
-  const summaries = await listMemoryEntries(dataDir);
-  for (const summary of summaries) {
-    try {
-      const entry = await readMemoryEntry(dataDir, summary.id);
-      if (!entry) continue;
-
-      if (entry.id === PROFILE_MEMORY_ID) {
-        const pruned = pruneProfileBodyToCanonical(entry.body);
-        if (pruned === null) {
-          await deleteMemoryEntry(dataDir, entry.id);
-          profilePruned = true;
-        } else if (pruned !== entry.body.trim()) {
-          await upsertMemoryEntry(
-            dataDir,
-            { ...entry, body: pruned },
-            { silent: true, source: 'manual' },
-          );
-          profilePruned = true;
-        }
-        continue;
-      }
-
-      if (isHeuristicExtractionArtifact(entry)) {
-        await deleteMemoryEntry(dataDir, entry.id);
-        deletedIds.push(entry.id);
-      }
-    } catch (err) {
-      console.warn(
-        `[memory] cleanup skipped entry ${summary.id}:`,
-        err instanceof Error ? err.message : err,
-      );
-    }
-  }
-
-  // Retire the pipelines for configs written before the default flipped:
-  // any earlier settings PATCH persisted `chatExtractionEnabled: true`
-  // as a side effect of writing the whole config object. Forced off once,
-  // here; a conscious re-opt-in through settings sticks afterwards because
-  // the marker short-circuits every later boot.
+  let extractionSwitchedOff = false;
   try {
-    await writeMemoryConfig(dataDir, { chatExtractionEnabled: false });
+    // Only write when the switch is on, so an untouched config stays untouched.
+    if ((await readMemoryConfig(dataDir)).chatExtractionEnabled) {
+      await writeMemoryConfig(dataDir, { chatExtractionEnabled: false });
+      extractionSwitchedOff = true;
+    }
   } catch (err) {
     console.warn(
       '[memory] cleanup could not update config:',
@@ -119,9 +69,9 @@ export async function runAutoExtractionCleanup(
     );
   }
 
-  const marker = { ranAt: Date.now(), deletedIds, profilePruned };
+  const marker = { ranAt: Date.now(), extractionSwitchedOff };
   await fsp.mkdir(memoryDir(dataDir), { recursive: true });
   await fsp.writeFile(markerPath(dataDir), `${JSON.stringify(marker, null, 2)}\n`);
 
-  return { ran: true, deletedIds, profilePruned };
+  return { ran: true, deletedIds: [], profilePruned: false, extractionSwitchedOff };
 }

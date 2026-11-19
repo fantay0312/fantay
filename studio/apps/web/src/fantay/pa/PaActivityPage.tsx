@@ -1,33 +1,46 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+// 工作 · 动态 / 目标 / 例行 (Soul UI spec §6.3): the activity place's three panes under the shared 工作 tab strip.
+// A 先开口 routine (`soul.kind === 'reachout'`) carries a tag and is edited in its chat's 对话设置, its one home.
 import { useEffect, useId, useState } from 'react';
-import type { PaFeedItem, PaGoal, PaGoalInput, PaRoutine, PaRoutineInput } from '@open-design/contracts';
+import type { PaConversation, PaFeedItem, PaGoal, PaGoalInput, PaRoutine, PaRoutineInput } from '@open-design/contracts';
 import { useI18n, useT } from '../../i18n';
 import {
-  Button, Callout, CheckboxField, ConfirmDialog, Field, Input, Segmented, SegmentedItem,
+  Button, Callout, CheckboxField, ConfirmDialog, Field, Input,
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea,
 } from '../ui';
 import { PaModalFrame, paErrorText, usePaSubmit } from './PaAgentModal';
 import { usePa } from './pa-context';
 import { usePaTransport } from './pa-transport';
+import { SoulTag } from './soul/SoulPrimitives';
+import { SoulWorkTabs } from './soul/SoulWorkTabs';
+import type { PaIndex } from './pa-types';
 import page from './PaPages.module.css';
 import styles from './PaActivityPage.module.css';
 
-const TABS = ['activity', 'goals', 'routines'] as const;
-type Tab = typeof TABS[number];
 type Editor = { kind: 'goals'; item?: PaGoal } | { kind: 'routines'; item?: PaRoutine };
 interface FeedPage { items: PaFeedItem[]; nextBefore: number | null }
+
+/** A conversation a routine may run in, mirroring the daemon's `routineTarget`: a direct chat with an enabled agent
+ *  that can answer and does not run on TokenToSea. */
+export function routineTarget(index: PaIndex, chat: PaConversation): boolean {
+  const agent = chat.agentId ? index.agents.get(chat.agentId) : undefined;
+  return !chat.groupId && !chat.channelId && !!agent?.enabled && agent.tools.includes('respond') && agent.model.runtime !== 'tokentosea';
+}
 
 export function PaActivityPage({ active }: { active: boolean }) {
   const { t, locale } = useI18n();
   const { data, index, nav, ui } = usePa();
   const send = usePaTransport();
-  const [tab, setTab] = useState<Tab>(ui.activityTab ?? 'activity');
-  useEffect(() => {
-    if (ui.activityTab) setTab(ui.activityTab);
-  }, [ui.activityTab]);
+  // The pane follows the 工作 strip (`ui.activityTab`); a switch clears the last pane's error.
+  const tab = ui.activityTab ?? 'activity';
   const [editor, setEditor] = useState<Editor | null>(null);
   const [remove, setRemove] = useState<Editor | null>(null);
   const mutation = usePaSubmit();
+  const [shownTab, setShownTab] = useState(tab);
+  if (shownTab !== tab) {
+    setShownTab(tab);
+    mutation.clear();
+  }
   const goals = data.snapshot?.goals ?? [];
   const routines = data.snapshot?.routines ?? [];
   return (
@@ -35,7 +48,7 @@ export function PaActivityPage({ active }: { active: boolean }) {
       <div className={page.inner}>
         <header className={page.head}>
           <div className={page.headText}>
-            <h1 className={page.title}>{t('pa.work.activity')}</h1>
+            <h1 className={page.title}>{t('pa.soul.shell.work.title')}</h1>
             <p className={page.summary}>{t('pa.work.intro')}</p>
           </div>
           {tab !== 'activity' ? (
@@ -44,9 +57,7 @@ export function PaActivityPage({ active }: { active: boolean }) {
             </Button>
           ) : null}
         </header>
-        <Segmented className={page.filter} value={tab} onValueChange={(value) => { if (value) { mutation.clear(); setTab(value as Tab); } }} aria-label={t('pa.work.activity')}>
-          {TABS.map(value => <SegmentedItem className="min-w-0 flex-1" key={value} value={value}>{t(`pa.work.${value}`)}</SegmentedItem>)}
-        </Segmented>
+        <SoulWorkTabs />
         {mutation.error ? <Callout tone="error" role="alert">{mutation.error}</Callout> : null}
         {mutation.conflict ? <Callout tone="neutral" role="status">{t('pa.agentForm.conflict')}</Callout> : null}
         {tab === 'activity' ? <Feed active={active} /> : null}
@@ -79,11 +90,17 @@ export function PaActivityPage({ active }: { active: boolean }) {
             {!routines.length ? <p className={page.hint}>{t('pa.work.noRoutines')}</p> : null}
             {routines.map(routine => {
               const task = routine.lastTaskId ? index.tasks.get(routine.lastTaskId) : undefined;
+              const reachout = routine.soul?.kind === 'reachout';
               return (
-                <article className={styles.entry} key={routine.id}>
+                <article className={styles.entry} key={routine.id} data-testid="pa-routine" data-reachout={reachout ? '' : undefined}>
                   <div className={styles.heading}>
-                    <h2>{routine.name}</h2>
-                    <Button size="sm" variant="ghost" onClick={() => setEditor({ kind: 'routines', item: routine })}>{t('pa.edit')}</Button>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <h2>{routine.name}</h2>
+                      {reachout ? <SoulTag tone="outline">{t('pa.soul.manage.reach.tag')}</SoulTag> : null}
+                    </div>
+                    <Button size="sm" variant="ghost" onClick={() => reachout
+                      ? nav.openModal({ kind: 'chatSettings', conversationId: routine.conversationId })
+                      : setEditor({ kind: 'routines', item: routine })}>{t('pa.edit')}</Button>
                   </div>
                   <p>{routine.enabled && routine.nextRunAt
                     ? t('pa.work.nextRun', {
@@ -177,10 +194,7 @@ function PlanEditor({ editor, onClose, onDelete }: { editor: Editor; onClose(): 
   const ids = useId();
   const goal = editor.kind === 'goals' ? editor.item : undefined;
   const routine = editor.kind === 'routines' ? editor.item : undefined;
-  const conversations = [...index.conversations.values()].filter(chat => {
-    const agent = chat.agentId ? index.agents.get(chat.agentId) : undefined;
-    return !chat.groupId && !chat.channelId && agent?.enabled && agent.tools.includes('respond') && agent.model.runtime !== 'tokentosea';
-  });
+  const conversations = [...index.conversations.values()].filter(chat => routineTarget(index, chat));
   const [name, setName] = useState(editor.item?.name ?? '');
   const [description, setDescription] = useState(goal?.description ?? '');
   const [taskIds, setTaskIds] = useState(goal?.taskIds ?? []);
@@ -193,7 +207,7 @@ function PlanEditor({ editor, onClose, onDelete }: { editor: Editor; onClose(): 
   const valid = !!name.trim() && (editor.kind === 'goals' || !!prompt.trim() &&
     /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time) && !!timezone.trim() &&
     (conversations.some(chat => chat.id === conversationId) || !!routine && !enabled));
-  const tasks = [...index.tasks.values()].reverse().filter(task => taskIds.includes(task.id) || task.goal.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
+  const tasks = [...index.workTasks.values()].reverse().filter(task => taskIds.includes(task.id) || task.goal.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
   const submit = () => {
     if (!valid) return;
     const input: PaGoalInput | PaRoutineInput = editor.kind === 'goals'

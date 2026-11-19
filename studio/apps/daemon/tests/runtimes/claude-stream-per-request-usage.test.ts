@@ -27,7 +27,9 @@ import { daemonAgentPayloadToPersistedAgentEvent } from '../../src/runtimes/chat
 import { createChatRunService } from '../../src/runtimes/runs.js';
 // Untyped replay-mock helper (plain .mjs, no shipped declarations) — imported
 // so the per-request capture path is validated against the real mock output.
-// @ts-expect-error: no type declarations for the mocks helper
+// `@ts-ignore`, not `@ts-expect-error`: with `allowJs` on, TypeScript infers the
+// helper's types and reports nothing here; with it off, the import is untyped.
+// @ts-ignore no type declarations for the mocks helper when allowJs is off
 import { renderAsClaude } from '../../../../mocks/lib/format-claude.mjs';
 
 // Wrap the parser's live SSE events as persisted run.events (`event: 'agent'`,

@@ -48,8 +48,6 @@ export interface LauncherContext {
    * its own.
    */
   createPage?: () => void;
-  /** Create a new sketch in the current Design Files directory. */
-  createSketch?: () => void;
   /** Create a new Markdown document in the current Design Files directory. */
   createDocument?: () => void;
   /** Open the Design Files upload picker. */
@@ -121,17 +119,6 @@ export function buildLauncherActions(ctx: LauncherContext): LauncherAction[] {
       // id to thread through openTab here.
       run: (runCtx) => {
         runCtx.createBrowser?.();
-      },
-    });
-  }
-  if (ctx.createSketch) {
-    actions.push({
-      id: 'new-sketch',
-      iconName: 'pencil',
-      labelKey: 'designFiles.newSketch',
-      descriptionKey: 'workspace.newSketchDescription',
-      run: (runCtx) => {
-        runCtx.createSketch?.();
       },
     });
   }

@@ -194,7 +194,7 @@ function formatRowValue(totals: AiUsageTotals, metric: ReceiptMetricMode, zh: bo
     }
     return { text: receiptTokens(sum), sort: sum };
   }
-  if (totals.requests > 0 && totals.unknown >= totals.requests) {
+  if (totals.unknown > 0 && totals.unknown >= totals.requests) {
     return { text: zh ? '未提供' : 'n/a', sort: -1 };
   }
   const amount = rowKnownCost(totals);
@@ -207,7 +207,7 @@ function computeStreak(
   today: string,
 ): number | null {
   if (!activity?.days.length) return null;
-  const activeSet = new Set(activity.days.filter(d => d.requests > 0).map(d => d.day));
+  const activeSet = new Set(activity.days.filter(d => d.requests > 0 || d.tokens > 0).map(d => d.day));
   if (!activeSet.size) return 0;
   let cursor = anchorDay;
   if (anchorDay === today && !activeSet.has(today)) {
@@ -233,7 +233,7 @@ function computeDailyComparison(
   metric: ReceiptMetricMode,
 ): string | null {
   if (!activity?.days.length) return null;
-  const activeDays = activity.days.filter(d => d.requests > 0);
+  const activeDays = activity.days.filter(d => d.requests > 0 || d.tokens > 0);
   if (activeDays.length < 2) return null;
 
   if (metric === 'cost') {
@@ -307,7 +307,7 @@ export function buildUsageReceipt(options: BuildUsageReceiptOptions): UsageRecei
   } else {
     const charged = Number(t.chargedUsd);
     const reported = Number(t.reportedUsd);
-    const allUnknown = t.requests > 0 && t.unknown >= t.requests;
+    const allUnknown = t.unknown > 0 && t.unknown >= t.requests;
     if (allUnknown) {
       heroEyebrow = zh ? 'API 总费用' : 'API COST';
       heroFigures = [{ label: heroEyebrow, value: zh ? '未提供' : 'N/A' }];
@@ -327,6 +327,9 @@ export function buildUsageReceipt(options: BuildUsageReceiptOptions): UsageRecei
 
   // Summary rows (streak / active days, requests, failed, vs daily average).
   const summaryRows: ReceiptStatRow[] = [];
+  if(t.sessionRecords)summaryRows.push({label:zh?'会话汇总':'Session summaries',value:count(t.sessionRecords)});
+  if (data.scope === 'device') summaryRows.push({ label: zh ? '统计范围' : 'Scope', value: zh ? '本机全部' : 'This device' });
+  if ((t.estimatedRequests ?? 0) > 0) summaryRows.push({ label: zh ? 'Token 估算价值' : 'Estimated token value', value: receiptMoney(t.estimatedUsd ?? '0') });
   const streak = data.from === data.to || data.to === today ? computeStreak(activity, data.to, today) : null;
   if (streak !== null && streak > 0) {
     summaryRows.push({
@@ -509,12 +512,20 @@ const AGENT_ICON_EXT: Record<string, 'svg' | 'png'> = {
   tokentosea: 'svg', claude: 'svg', codex: 'svg', gemini: 'svg', opencode: 'svg',
   'cursor-agent': 'svg', copilot: 'svg', qwen: 'svg', qoder: 'svg', deepseek: 'svg',
   reasonix: 'svg', mimo: 'svg', hermes: 'svg', 'grok-build': 'svg', kimi: 'svg',
-  pi: 'svg', kiro: 'svg', kilo: 'svg', vibe: 'svg', antigravity: 'svg',
+  pi: 'svg', kiro: 'svg', kilo: 'svg', vibe: 'svg', antigravity: 'svg', glm: 'svg',
   aider: 'png', 'trae-cli': 'png', devin: 'png',
 };
 const AGENT_ICON_ALIAS: Record<string, string> = {
   'deepseek-harness': 'deepseek',
   amr: 'tokentosea',
+  cursor: 'cursor-agent',
+  grok: 'grok-build',
+  'antigravity-ide': 'antigravity',
+  'antigravity-insiders': 'antigravity',
+  'qoder-cn': 'qoder',
+  omp: 'pi',
+  'anthropic-api': 'claude',
+  'google-gemini-api': 'gemini',
 };
 
 function agentIconAssetUrl(iconId: string): string | null {

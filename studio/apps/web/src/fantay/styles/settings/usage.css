@@ -20,14 +20,25 @@
     font-weight: 500;
     transition: background-color 100ms var(--settings-ease), color 100ms var(--settings-ease);
 
-    &:hover:not([data-disabled], [data-state='on']) {
+    &:hover:not([data-disabled], [data-state='on'], [aria-checked='true']) {
       color: var(--ink);
     }
-    &[data-state='on'] {
+    &:is([data-state='on'], [aria-checked='true']) {
       background: var(--settings-seg-on);
       color: var(--ink);
       box-shadow: var(--settings-seg-on-shadow);
       font-weight: 500;
+    }
+  }
+  & [data-slot='segmented'][data-size='sm'] {
+    height: 28px;
+    border-radius: 8px;
+
+    & [data-slot='segmented-item'] {
+      height: 24px;
+      padding: 0 10px;
+      border-radius: 6px;
+      font-size: var(--settings-type-meta);
     }
   }
 }

@@ -1,0 +1,687 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The 文件 surface: a 40px bar, a quiet row of type filters, then the library.
+   Quiet paper: ink on the ground, tone for grouping, no borders. A card is a preview on the canvas
+   tone with its name under it; hover changes only the edge of the preview. The bar's metrics are the
+   file viewers' (ArtifactShell.module.css: 40px, 28px controls, 12px/600 labels), so every tab of
+   the side workspace opens with the same rhythm.
+   Kit controls restyled here carry the root class, so they outrank the kit's single-class utilities
+   wherever those sit in the cascade. */
+
+.root {
+  --files-hover: color-mix(in srgb, var(--ink) 5%, transparent);
+
+  container: files / inline-size;
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* ── bar ─────────────────────────────────────────────────────────────────────────────────────── */
+
+.bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 40px;
+  padding: 0 8px 0 12px;
+}
+
+/* Where you are. Every crumb gives way with an ellipsis; the folder you are in gives way last. */
+.crumbs {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  min-width: 0;
+  /* A crumb's hover tone reaches 5px past its text; the text itself starts on the bar's edge. */
+  margin-left: -5px;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.root .crumb {
+  flex: 0 4 auto;
+  min-width: 20px;
+  height: 24px;
+  padding: 0 5px;
+  border-radius: var(--radius-tag);
+  color: var(--ink-faint);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.root .crumb [data-slot='button-label'] {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.crumbCurrent {
+  flex: 0 1 auto;
+  min-width: 28px;
+  padding: 0 5px;
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+
+.crumbSeparator {
+  flex: none;
+  margin: 0 -2px;
+  color: var(--ink-ghost);
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+/* The field is a tray one step off the paper, like the file rail's filter. */
+.root .search {
+  width: 172px;
+  height: 28px;
+  margin-right: 4px;
+  padding: 0 4px 0 8px;
+  gap: 6px;
+  border-radius: var(--radius-control);
+  background: var(--sub);
+  box-shadow: 0 0 0 2px transparent;
+  transition: box-shadow var(--motion-exit) var(--ease-out-quint);
+}
+
+.root .search:focus-within {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ink) 12%, transparent);
+  transition-duration: var(--motion-enter);
+}
+
+/* Narrow panel: the open search takes the breadcrumb's place. */
+.bar[data-search-open] .actions {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.bar[data-search-open] .search {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+.root .viewSwitch {
+  margin: 0 2px;
+  background: transparent;
+}
+
+/* Sets the one labelled action apart without drawing a line. */
+.gap {
+  flex: none;
+  width: 4px;
+}
+
+.sortArrow {
+  margin-inline-start: auto;
+  color: var(--ink-faint);
+}
+
+/* ── filters and the selection row ───────────────────────────────────────────────────────────── */
+
+/* Every filter stays on the row; a narrow panel scrolls it sideways. */
+.filters {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  height: 34px;
+  padding: 0 10px 6px;
+  overflow: auto hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.filters::-webkit-scrollbar {
+  display: none;
+}
+
+.filterList {
+  flex: none;
+}
+
+.root .filter {
+  flex: none;
+  gap: 5px;
+}
+
+.count {
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.selectionCount {
+  flex: none;
+  padding: 0 8px 0 2px;
+  color: var(--ink);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.filtersEnd {
+  flex: 1 1 auto;
+}
+
+.notice {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  margin: 0 12px 8px;
+  padding: 4px 4px 4px 10px;
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--danger) 9%, transparent);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.noticeText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* ── content ─────────────────────────────────────────────────────────────────────────────────── */
+
+.scroll {
+  /* name | modified | size | type | the "more" button. Columns leave from the right when narrow. */
+  --files-list-columns: minmax(0, 1fr) 88px 76px 76px 24px;
+
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  /* The side padding is CONTENT_PAD in LibraryContent.tsx. */
+  padding: 2px 12px 24px;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--line) transparent;
+  scrollbar-width: thin;
+}
+
+/* Rows are placed by the virtualiser: absolute, at heights LibraryContent.tsx computes. */
+.list {
+  --files-columns: 2;
+  --files-preview-height: 120px;
+
+  position: relative;
+  width: 100%;
+  outline: none;
+}
+
+.virtualRow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+.virtualRow[data-kind='cards'],
+.virtualRow[data-kind='tiles'] {
+  display: grid;
+  grid-template-columns: repeat(var(--files-columns), minmax(0, 1fr));
+  align-items: start;
+  column-gap: 12px;
+}
+
+/* ── card ────────────────────────────────────────────────────────────────────────────────────── */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  outline: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.preview {
+  position: relative;
+  height: var(--files-preview-height);
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--sub);
+  box-shadow: 0 0 0 1px transparent;
+  transition: box-shadow var(--motion-micro) var(--ease-out-quint);
+}
+
+/* Only the edge answers the pointer. */
+.card:hover .preview {
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.card[data-selected] .preview {
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.card:focus-visible .preview {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+.cardText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 8px 2px 0;
+}
+
+/* A name in two parts: the head gives way with an ellipsis, the tail (end of the stem and the
+   extension) always shows. `pre` keeps a space that falls on the cut. */
+.name {
+  display: flex;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  white-space: pre;
+}
+
+.nameHead {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nameTail {
+  flex: none;
+}
+
+.meta {
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The agent is writing this file right now. */
+.meta[data-writing] {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-soft);
+}
+
+.root .more {
+  opacity: 0;
+  transition: opacity var(--motion-exit) var(--ease-out-quint);
+}
+
+.root .card .more {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+
+.card:hover .more,
+.card:focus-visible .more,
+.row:hover .more,
+.row:focus-visible .more,
+.root .more:focus-visible {
+  opacity: 1;
+  transition-duration: var(--motion-enter);
+}
+
+.root .rename {
+  height: 28px;
+  padding: 0 7px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ── folder and live-artifact tiles ──────────────────────────────────────────────────────────── */
+
+.tile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  height: 44px;
+  padding: 0 12px;
+  border-radius: var(--radius-chip);
+  background: var(--sub);
+  outline: none;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--motion-micro) var(--ease-out-quint);
+}
+
+.tile:hover {
+  background: color-mix(in srgb, var(--ink) 4%, var(--sub));
+}
+
+.tile:focus-visible,
+.row:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 1px;
+}
+
+.tileGlyph {
+  flex: none;
+  color: var(--ink-soft);
+}
+
+.tileText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tile .name {
+  line-height: 17px;
+}
+
+/* ── list ────────────────────────────────────────────────────────────────────────────────────── */
+
+.listHead,
+.row {
+  display: grid;
+  grid-template-columns: var(--files-list-columns);
+  align-items: center;
+  column-gap: 12px;
+  padding: 0 4px 0 8px;
+}
+
+.listHead {
+  position: sticky;
+  top: -2px;
+  z-index: 2;
+  height: 28px;
+  background: var(--paper);
+}
+
+.headCell {
+  display: flex;
+  min-width: 0;
+}
+
+.root .headButton {
+  height: 24px;
+  margin-inline: -6px;
+  padding: 0 6px;
+  gap: 3px;
+  border-radius: var(--radius-tag);
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.root .headButton[data-on] {
+  color: var(--ink-soft);
+}
+
+.row {
+  height: 32px;
+  border-radius: var(--radius-row);
+  outline: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.row:hover {
+  background: var(--files-hover);
+}
+
+.row[data-selected] {
+  background: var(--sub);
+}
+
+.cellName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.rowGlyph {
+  flex: none;
+  color: var(--ink-faint);
+}
+
+.row .name {
+  flex: 0 1 auto;
+  font-weight: 500;
+}
+
+/* Where a file lives below the open folder. It gives way before the name does. */
+.where {
+  flex: 0 100 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-ghost);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell[data-column='size'],
+.headCell[data-column='size'] {
+  justify-content: flex-end;
+  text-align: end;
+}
+
+.rowEnd {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ── states ──────────────────────────────────────────────────────────────────────────────────── */
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  min-height: 100%;
+  padding: 32px 24px;
+  text-align: center;
+  animation: files-state-in var(--motion-enter) var(--ease-out-quint) both;
+}
+
+.stateGlyph {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 6px;
+  border-radius: var(--radius-card);
+  background: var(--sub);
+  color: var(--ink-soft);
+  place-items: center;
+}
+
+.stateTitle {
+  max-width: 420px;
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.stateActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+/* First load: the cards' own shape, pulsing; no spinner. */
+.skeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 14px 12px;
+}
+
+.skeletonCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.root .skeletonPreview {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-card);
+  background: var(--sub);
+}
+
+.root .skeletonName {
+  width: 68%;
+  background: var(--sub);
+}
+
+.root .skeletonMeta {
+  width: 40%;
+  background: var(--sub);
+}
+
+/* Files dragged in from the desktop: the whole surface becomes the target, calmly. */
+.drop {
+  position: absolute;
+  inset: 6px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: var(--radius-panel);
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  box-shadow: inset 0 0 0 1px var(--line);
+  opacity: 0;
+  pointer-events: none;
+  text-align: center;
+  transition:
+    opacity var(--motion-exit) var(--ease-out-quint),
+    visibility 0s linear var(--motion-exit);
+  visibility: hidden;
+  backdrop-filter: blur(6px);
+}
+
+.drop[data-visible] {
+  opacity: 1;
+  transition:
+    opacity var(--motion-enter) var(--ease-out-quint),
+    visibility 0s;
+  visibility: visible;
+}
+
+.dropGlyph {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 8px;
+  border-radius: var(--radius-card);
+  background: var(--sub);
+  color: var(--ink-soft);
+  place-items: center;
+}
+
+.dropTitle {
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dropHint {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+/* Why the mutations in a menu are off. */
+.root .menuReason {
+  max-width: 220px;
+  white-space: normal;
+}
+
+/* ── narrow panel ────────────────────────────────────────────────────────────────────────────── */
+
+@container files (max-width: 560px) {
+  .scroll {
+    --files-list-columns: minmax(0, 1fr) 88px 76px 24px;
+  }
+
+  .cell[data-column='kind'],
+  .headCell[data-column='kind'] {
+    display: none;
+  }
+}
+
+@container files (max-width: 440px) {
+  .scroll {
+    --files-list-columns: minmax(0, 1fr) 88px 24px;
+  }
+
+  .cell[data-column='size'],
+  .headCell[data-column='size'] {
+    display: none;
+  }
+}
+
+@keyframes files-state-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .state {
+    animation: none;
+  }
+
+  .drop,
+  .preview,
+  .tile,
+  .root .more,
+  .root .search {
+    transition: none;
+  }
+}

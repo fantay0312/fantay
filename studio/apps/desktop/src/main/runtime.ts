@@ -3009,7 +3009,11 @@ export async function createDesktopRuntime(options: DesktopRuntimeOptions): Prom
   const toolPlugins = options.toolPluginPreferencesPath
     ? createDesktopToolPlugins({
         preferencesPath: options.toolPluginPreferencesPath,
-        builtins: [quickSearchPlugin(process.platform), { id: 'toolbox', client: true }],
+        builtins: [
+          quickSearchPlugin(process.platform),
+          { id: 'toolbox', client: true },
+          { id: 'project-timeline', client: true },
+        ],
         shortcuts: globalShortcut,
         desktop: {
           platform: process.platform,

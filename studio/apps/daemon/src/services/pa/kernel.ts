@@ -9,15 +9,27 @@ import { PaError, PaStore } from "../../storage/personal-agent-store.js";
 import { paDigest, redactPaCredentials } from "../personal-agent-gateway.js";
 import { createPaManagedCredentials, type PaCredentialDriver } from "./credentials.js";
 import { PaDistributedScheduler, type WorkerWork } from "./distributed.js";
-import { loadPaConfig, readPrivatePaFile, type PaConfig, type PaMember, type PaQuota, type PaWorkerIdentity } from "./config.js";
+import { loadPaConfig, paMemberSchema, readPrivatePaFile, trustedPaUrl, type PaConfig, type PaMember, type PaQuota, type PaWorkerIdentity } from "./config.js";
 import { PaOciSandbox } from "./sandbox.js";
 
 type EnterprisePrincipal = Extract<PaPrincipal, { kind: "enterprise" }>;
 type Revocation = PaEntity & { throughVersion: number };
 type Reservation = PaEntity & { day: string; group: string; role: PaMember["role"]; reserved: PaQuota };
+type StoredDirectory = PaEntity & { version: number; members: PaMember[] };
+
+/** The members this daemon recognises. A static configuration never changes it; an organization server replaces it. */
+export interface PaDirectoryDriver {
+  members(): readonly PaMember[];
+  version(): number;
+  /** Takes the server's list for `tenantId`. Entries that do not parse are dropped; a member whose group has no
+   *  quota is budgeted under `default`. Returns how many members are now recognised. */
+  replace(tenantId: string, version: number, entries: readonly unknown[]): number;
+}
 
 export interface PaIdentityDriver {
   member(header: string | undefined): PaMember | null;
+  /** The member with this id while the grant is current: not expired, not revoked. */
+  memberById(id: string): PaMember | null;
   worker(header: string | undefined): PaWorkerIdentity | null;
   principal(member: PaMember): EnterprisePrincipal;
   valid(task: PaTask): boolean;
@@ -52,6 +64,9 @@ export interface PaKernel {
   readonly storage: PaStorageDriver;
   readonly scheduler: PaSchedulerDriver;
   readonly managedModels: readonly PaModel[];
+  readonly directory: PaDirectoryDriver;
+  /** The organization server this daemon follows, when one is configured. */
+  readonly org: { url: URL; refreshMs: number; credential(): string } | null;
   audit(): { valid: boolean; entries: number; head: string | null; checkpoint?: { tenantId: string; entries: number; head: string | null; signature: string } };
   verifyCheckpoint(checkpoint: { tenantId: string; entries: number; head: string | null; signature: string }): boolean;
 }
@@ -89,6 +104,32 @@ export function createPaKernel(input: {
   const store = new PaStore(storage.db);
   const isRevoked = (kind: "member" | "worker", id: string, version: number) =>
     (store.get<Revocation>("revocations", `${kind}:${id}`)?.throughVersion ?? -1) >= version;
+  // The last directory an organization server sent survives a restart, so members keep working while it is away.
+  const synced = enterprise?.orgServer ? store.get<StoredDirectory>("settings", "org-directory") : null;
+  let members: PaMember[] = synced?.members ?? enterprise?.members ?? [];
+  let directoryVersion = synced?.version ?? 0;
+  const directory: PaDirectoryDriver = {
+    members: () => members,
+    version: () => directoryVersion,
+    replace(tenantId, version, entries) {
+      if (!enterprise?.orgServer) throw new PaError("此部署没有连接企业服务器", 409, "PA_CONFIG");
+      if (tenantId !== enterprise.tenantId) throw new PaError("企业服务器的组织编号与本机配置不一致", 409, "PA_CONFIG");
+      const seen = new Set<string>();
+      const next = entries.flatMap(entry => {
+        const parsed = paMemberSchema.safeParse(entry);
+        if (!parsed.success || seen.has(parsed.data.id)) return [];
+        seen.add(parsed.data.id);
+        return [{ ...parsed.data, group: enterprise.budgets.groups[parsed.data.group] ? parsed.data.group : "default" }];
+      });
+      if (version !== directoryVersion || JSON.stringify(next) !== JSON.stringify(members)) {
+        if (store.has("settings", "org-directory")) store.update<StoredDirectory>("settings", "org-directory", { version, members: next });
+        else store.create<StoredDirectory>("settings", { version, members: next }, "org-directory");
+      }
+      members = next;
+      directoryVersion = version;
+      return next.length;
+    },
+  };
   const findIdentity = <T extends { id: string; tokenSha256: string; expiresAt: number }>(
     header: string | undefined, identities: readonly T[], valid: (item: T) => boolean,
   ): T | null => {
@@ -99,7 +140,9 @@ export function createPaKernel(input: {
       item.expiresAt > Date.now() && valid(item)) ?? null;
   };
   const identity: PaIdentityDriver = {
-    member: header => findIdentity(header, enterprise?.members ?? [], item => !isRevoked("member", item.id, item.grantVersion)),
+    member: header => findIdentity(header, members, item => !isRevoked("member", item.id, item.grantVersion)),
+    memberById: id => members.find(item => item.id === id && item.expiresAt > Date.now() &&
+      !isRevoked("member", item.id, item.grantVersion)) ?? null,
     worker: header => findIdentity(header, config.workers, item => !isRevoked("worker", item.id, item.expiresAt)),
     principal: member => ({
       kind: "enterprise", id: member.id, tenantId: enterprise!.tenantId, grantVersion: member.grantVersion, expiresAt: member.expiresAt,
@@ -108,12 +151,12 @@ export function createPaKernel(input: {
       if (!enterprise) return task.principal?.kind !== "enterprise";
       const principal = task.principal;
       if (principal?.kind !== "enterprise" || principal.tenantId !== enterprise.tenantId || principal.expiresAt <= Date.now()) return false;
-      const member = enterprise.members.find(item => item.id === principal.id);
+      const member = members.find(item => item.id === principal.id);
       return !!member && member.role !== "viewer" && member.grantVersion === principal.grantVersion &&
         member.expiresAt > Date.now() && !isRevoked("member", member.id, member.grantVersion);
     },
     revoke(kind, id) {
-      const member = enterprise?.members.find(item => item.id === id);
+      const member = members.find(item => item.id === id);
       const worker = config.workers.find(item => item.id === id);
       const throughVersion = kind === "member" ? member?.grantVersion : worker?.expiresAt;
       if (throughVersion === undefined) throw new PaError("身份不存在", 404, "PA_NOT_FOUND");
@@ -128,8 +171,9 @@ export function createPaKernel(input: {
   };
   const isolation = config.sandbox ? new PaOciSandbox(config.sandbox) : null;
   const policy: PaPolicyDriver = {
+    // An admin oversees every work task. A companion chat turn belongs to the member who sent it and to nobody else.
     owns: (member, task) => task.principal?.kind === "enterprise" && task.principal.tenantId === enterprise?.tenantId &&
-      (member.role === "admin" || member.id === task.principal.id),
+      (member.id === task.principal.id || member.role === "admin" && task.kind !== "chat"),
     admits(task, model, work) {
       if (!identity.valid(task)) throw unauthorized();
       if (work?.kind === "shell" && redactPaCredentials(work.script) !== work.script)
@@ -147,7 +191,7 @@ export function createPaKernel(input: {
     reserve(task, attempt, work, remainingMs, delegated) {
       if (!enterprise || task.principal?.kind !== "enterprise") return;
       const principal = task.principal;
-      const member = enterprise.members.find(item => item.id === principal.id);
+      const member = members.find(item => item.id === principal.id);
       if (!member || !identity.valid(task)) throw unauthorized();
       const day = new Date().toISOString().slice(0, 10);
       const reservationId = delegated ? `${attempt.runId}:${delegated.kind}` : attempt.runId;
@@ -181,6 +225,11 @@ export function createPaKernel(input: {
     mode: config.mode, ...(enterprise ? { tenantId: enterprise.tenantId } : {}), store, identity, policy, storage,
     isolation, credentials, scheduler: { distributed },
     managedModels: enterprise?.gateway.models.map(model => ({ runtime: "managed", modelId: model.id })) ?? [],
+    directory,
+    org: enterprise?.orgServer ? {
+      url: trustedPaUrl(enterprise.orgServer.url), refreshMs: enterprise.orgServer.refreshSeconds * 1000,
+      credential: () => readPrivatePaFile(enterprise.orgServer!.credentialFile, 4096).trim(),
+    } : null,
     audit() {
       const result = store.verifyAudit();
       if (!result.valid || !key || !enterprise) return result;

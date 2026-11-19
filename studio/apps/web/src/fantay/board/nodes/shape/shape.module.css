@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-only */
 /* Shape face (spec 03 §4.7): rect, ellipse or text; colours come from contract palette tokens. */
 
+.ink { width: 100%; height: 100%; display: block; overflow: visible; }
+
 .shape {
   position: absolute;
   inset: 0;

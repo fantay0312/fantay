@@ -52,7 +52,8 @@ describe('PA local V1 lifecycle', () => {
   });
   it('keeps local-only data out of standard requests and gates cloud routing before dispatch', async () => {
     const agent = core.snapshot().agents[0]!;
-    core.saveMemory({ content: 'PA_PRIVATE_SENTINEL', source: 'owner', scope: 'private', scopeId: null, dataClass: 'local_only' });
+    // Pinned, so every turn that may read it does; an unpinned memory is read only when relevant.
+    core.saveMemory({ content: 'PA_PRIVATE_SENTINEL', source: 'owner', scope: 'private', scopeId: null, dataClass: 'local_only', pinned: true });
     const privateTask = submit({ dataClass: 'local_only' });
     await waitFor(privateTask.id, 'waiting');
     expect(execute).not.toHaveBeenCalled();
@@ -66,16 +67,23 @@ describe('PA local V1 lifecycle', () => {
     await waitFor(standard.id, 'completed');
     expect(execute.mock.calls[1]![1]).not.toContain('PA_PRIVATE_SENTINEL');
   });
-  it('recalls the still-current version of a fact until its successor takes effect', async () => {
-    const first = core.saveMemory({ content: 'CURRENT_BUILD', source: 'release owner', scope: 'private', scopeId: null, kind: 'fact', validFrom: Date.now() - 60000 });
-    const next = core.saveMemory({ ...first, content: 'FUTURE_BUILD', validFrom: Date.now() + 60000 }, first.id, first.revision);
-    expect(core.memoryHistory(first.id).map(item => [item.revision, item.memory.content])).toEqual([[1, 'CURRENT_BUILD'], [2, 'FUTURE_BUILD']]);
-    const task = submit();
+  it('keeps every text of an edited fact, recalls it only while it is valid, and archives it with its history', async () => {
+    const first = core.saveMemory({ content: 'CURRENT_BUILD', source: 'release owner', scope: 'private', scopeId: null, kind: 'fact', pinned: true, validFrom: Date.now() - 60000 });
+    let task = submit();
     await waitFor(task.id, 'completed');
     expect(execute.mock.calls[0]![1]).toContain('CURRENT_BUILD');
-    expect(execute.mock.calls[0]![1]).not.toContain('FUTURE_BUILD');
+    const next = core.saveMemory({ ...first, content: 'FUTURE_BUILD', validFrom: Date.now() + 60000 }, first.id, first.revision);
+    expect(core.memoryHistory(first.id).map(item => [item.revision, item.memory.content])).toEqual([[1, 'CURRENT_BUILD'], [2, 'FUTURE_BUILD']]);
     expect(next.validFrom).toBeGreaterThan(Date.now());
+    task = submit();
+    await waitFor(task.id, 'completed');
+    // Not valid yet: neither text is recalled until the memory takes effect.
+    expect(execute.mock.calls[1]![1]).not.toContain('FUTURE_BUILD');
+    expect(execute.mock.calls[1]![1]).not.toContain('CURRENT_BUILD');
     core.deleteMemory(first.id);
+    expect(core.memories().find(item => item.id === first.id)!.status).toBe('archived');
+    expect(core.memoryHistory(first.id)).toHaveLength(2);
+    // The legacy version collection is no longer written.
     expect(core.store.list('memory_versions')).toHaveLength(0);
   });
   it('detects an edited audit payload and rejects device RPC traversal', async () => {

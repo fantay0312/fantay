@@ -146,12 +146,20 @@ const residualAllowedExactPaths = new Set([
 ]);
 
 const residualAllowedPathPrefixes = [
+  // Complete MIT Smart Search upstream sources, retained for the bundled engine and local fork development.
+  "native-tool/web_search/vendor/smart-search/",
+  // DS Bot IM protocol adapters. The host uses a typed bridge and the source notice is retained.
+  "apps/daemon/src/integrations/vendor/ds-bot-im/",
   "apps/daemon/dist/",
   "apps/web/.next/",
   "apps/web/out/",
   // Reproducible Vue/CanvasKit bundles from apps/canvas; never hand-authored JS.
   "apps/web/public/canvas-editor/",
   "apps/web/public/canvaskit/",
+  // Vendored pdfjs-dist@6.5.438 worker and codec fallback assets served locally
+  // by the artifact PDF viewer (kept byte-identical to node_modules/pdfjs-dist
+  // by apps/web/tests/fantay/artifact/pdf-runtime.test.ts).
+  "apps/web/public/artifact/pdfjs/",
   "generated/",
   "e2e/playwright-report/",
   "e2e/reports/html/",

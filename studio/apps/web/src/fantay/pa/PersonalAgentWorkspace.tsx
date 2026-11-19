@@ -2,7 +2,7 @@
 // The Fantay workspace root (spec §2–§4, §17, §19). It owns the data hook, the derived index, the view state
 // (mirrored per viewer to localStorage), navigation, composer drafts and the layout mode, and lays out the
 // roster beside either a conversation (with its docked or floating inspector) or one of the three pages.
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent, type RefObject } from 'react';
 import { PanelLeftOpen } from 'lucide-react';
 
 import { usePresence } from '../../hooks/usePresence';
@@ -21,6 +21,7 @@ import {
   SheetTitle,
   Skeleton,
   VisuallyHidden,
+  toast,
 } from '../ui';
 import { PaContext, createPaDrafts, usePa } from './pa-context';
 import { buildIndex, subjectOf } from './pa-model';
@@ -32,6 +33,7 @@ import type {
   PaSnapshot,
   PaUiState,
   Project,
+  PaModalState,
 } from './pa-types';
 import { PaConfirmHost } from './PaConfirmHost';
 import { PaActivityPage } from './PaActivityPage';
@@ -42,8 +44,12 @@ import { PaMemoryPage } from './PaMemoryPage';
 import { PaModalHost } from './PaModalHost';
 import { PaRoster, PaSeenContext } from './PaRoster';
 import { PaTasksPage } from './PaTasksPage';
+import { conversationMode, installedStarter } from './soul/soul-model';
+import { SoulLibraryPage } from './soul/SoulLibraryPage';
+import soulShell from './soul/SoulShell.module.css';
 import { PA_INSPECTOR, PA_ROSTER_WIDTH, dockedInspectorWidth, floatingInspectorWidth, usePaLayout } from './usePaLayout';
 import { usePaWorkspace } from './usePaWorkspace';
+import { PaViewStyles } from './PaViewCard';
 import { PA_ACCESS_REQUIRED, paRequest, setPaAccessToken } from './pa-api';
 import styles from './PersonalAgentWorkspace.module.css';
 
@@ -52,12 +58,16 @@ export interface PersonalAgentWorkspaceProps {
   onOpenProject: (id: string, file?: string) => unknown;
   projects?: readonly Project[]; // default []
   initialState?: Partial<PaUiState>; // lab and tests only
+  /** Lab deep link (&inspector=1) only: start with the floating inspector open at floating widths. */
+  initialFloatingOpen?: boolean;
 }
 
 const UI_KEY = 'fantay.pa.ui.v1';
 const SEEN_KEY = 'fantay.pa.seen.v1';
 const NOW_TICK_MS = 30_000;
 const NO_PROJECTS: readonly Project[] = [];
+/** Modals that create or edit the shared library: agents, group chats, card import, world books, style presets. */
+const LIBRARY_MODALS: ReadonlySet<PaModalState['kind']> = new Set(['agent', 'group', 'cardImport', 'lorebook', 'preset']);
 
 const EMPTY_SNAPSHOT: PaSnapshot = {
   agents: [],
@@ -75,6 +85,7 @@ const DEFAULT_UI: PaUiState = {
   place: 'conversation',
   conversationId: null,
   inspectorOpen: true,
+  inspectorOpenCompanion: false,
   inspectorTab: 'activity',
   inspectorWidth: PA_INSPECTOR.default,
   inspectorAgentId: null,
@@ -83,6 +94,10 @@ const DEFAULT_UI: PaUiState = {
   memoryFilter: 'all',
   modal: null,
   rosterQuery: '',
+  rosterFilter: 'all',
+  libraryTab: 'characters',
+  libraryQuery: '',
+  libraryTag: null,
   focusTurn: null,
 };
 
@@ -106,11 +121,14 @@ function writeJson(key: string, value: unknown): void {
 }
 
 function storedUi(): Partial<PaUiState> {
-  const raw = readJson(UI_KEY) as Partial<Record<'conversationId' | 'inspectorOpen' | 'inspectorWidth', unknown>> | null;
+  const raw = readJson(UI_KEY) as Partial<
+    Record<'conversationId' | 'inspectorOpen' | 'inspectorOpenCompanion' | 'inspectorWidth', unknown>
+  > | null;
   if (!raw || typeof raw !== 'object') return {};
   const out: Partial<PaUiState> = {};
   if (typeof raw.conversationId === 'string' || raw.conversationId === null) out.conversationId = raw.conversationId;
   if (typeof raw.inspectorOpen === 'boolean') out.inspectorOpen = raw.inspectorOpen;
+  if (typeof raw.inspectorOpenCompanion === 'boolean') out.inspectorOpenCompanion = raw.inspectorOpenCompanion;
   if (typeof raw.inspectorWidth === 'number' && Number.isFinite(raw.inspectorWidth))
     out.inspectorWidth = Math.max(PA_INSPECTOR.min, Math.min(PA_INSPECTOR.max, Math.round(raw.inspectorWidth)));
   return out;
@@ -189,8 +207,8 @@ function useInert(ref: RefObject<HTMLElement | null>, inert: boolean): void {
   }, [ref, inert]);
 }
 
-export function PersonalAgentWorkspace({ active, onOpenProject, projects = NO_PROJECTS, initialState }: PersonalAgentWorkspaceProps) {
-  const { t } = useI18n();
+export function PersonalAgentWorkspace({ active, onOpenProject, projects = NO_PROJECTS, initialState, initialFloatingOpen = false }: PersonalAgentWorkspaceProps) {
+  const { t, locale } = useI18n();
   const data = usePaWorkspace(active);
   const [needsEnterpriseAccess, setNeedsEnterpriseAccess] = useState(false);
   const [accessBusy, setAccessBusy] = useState(false);
@@ -212,13 +230,18 @@ export function PersonalAgentWorkspace({ active, onOpenProject, projects = NO_PR
   const hostRef = useRef<HTMLElement>(null);
   const layout = usePaLayout(hostRef);
   const snapshot = data.snapshot ?? EMPTY_SNAPSHOT;
-  const index = useMemo(() => buildIndex(snapshot, data.channels, data.models), [snapshot, data.channels, data.models]);
+  // Built-in style presets are named in the UI's prompt locale.
+  const promptLocale = locale.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+  const index = useMemo(
+    () => buildIndex(snapshot, data.channels, data.models, data.soul, promptLocale),
+    [snapshot, data.channels, data.models, data.soul, promptLocale],
+  );
 
   // ---- view state ----
   const [ui, setUi] = useState<PaUiState>(() => ({ ...DEFAULT_UI, ...storedUi(), ...initialState }));
   /* The floating inspector is transient: closed by default at floating widths (even when the docked preference,
      remembered or passed in, is open) and never written over that preference (spec §4.1). */
-  const [floatingOpen, setFloatingOpen] = useState(false);
+  const [floatingOpen, setFloatingOpen] = useState(initialFloatingOpen);
   const [sheetOpen, setSheetOpen] = useState(false);
   const sheetFrame = useHostFrame(hostRef, sheetOpen);
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -226,8 +249,13 @@ export function PersonalAgentWorkspace({ active, onOpenProject, projects = NO_PR
   const focusTurnNonce = useRef(0);
 
   useEffect(() => {
-    writeJson(UI_KEY, { conversationId: ui.conversationId, inspectorOpen: ui.inspectorOpen, inspectorWidth: ui.inspectorWidth });
-  }, [ui.conversationId, ui.inspectorOpen, ui.inspectorWidth]);
+    writeJson(UI_KEY, {
+      conversationId: ui.conversationId,
+      inspectorOpen: ui.inspectorOpen,
+      inspectorOpenCompanion: ui.inspectorOpenCompanion,
+      inspectorWidth: ui.inspectorWidth,
+    });
+  }, [ui.conversationId, ui.inspectorOpen, ui.inspectorOpenCompanion, ui.inspectorWidth]);
 
   useEffect(() => {
     if (!active) return undefined;
@@ -242,9 +270,13 @@ export function PersonalAgentWorkspace({ active, onOpenProject, projects = NO_PR
 
   const conversationId = useMemo(() => defaultConversation(index, ui.conversationId), [index, ui.conversationId]);
   const dockedWidth = dockedInspectorWidth(layout, ui.inspectorWidth);
+  // The docked open state is remembered per mode: companion chats start closed (`inspectorOpenCompanion`).
+  const shownConversation = conversationId ? index.conversations.get(conversationId) : undefined;
+  const companionShown = shownConversation ? conversationMode(index, shownConversation) === 'companion' : false;
+  const dockedOpen = companionShown ? ui.inspectorOpenCompanion : ui.inspectorOpen;
   // Shown open only when there is something to inspect (or the first load is still arriving).
   const inspectorOpen =
-    (layout.inspector === 'docked' ? ui.inspectorOpen : floatingOpen) && (conversationId !== null || (data.load === 'loading' && !data.snapshot));
+    (layout.inspector === 'docked' ? dockedOpen : floatingOpen) && (conversationId !== null || (data.load === 'loading' && !data.snapshot));
 
   // ---- seen map (unread dots) ----
   // One read of the stored map, at mount (lazy: not re-read and re-parsed on every render).
@@ -279,6 +311,8 @@ export function PersonalAgentWorkspace({ active, onOpenProject, projects = NO_PR
   // ---- navigation ----
   const latest = useRef({ index, layout, actions: data.actions, ui, conversationId, floatingOpen });
   latest.current = { index, layout, actions: data.actions, ui, conversationId, floatingOpen };
+  const tRef = useRef(t);
+  tRef.current = t;
   /** Conversation creations in flight, per agent: a second click while one is pending joins it instead of
    *  creating a second empty chat (review C13). */
   const creating = useRef(new Map<string, Promise<void>>());
@@ -298,16 +332,28 @@ export function PersonalAgentWorkspace({ active, onOpenProject, projects = NO_PR
       creating.current.set(agentId, run);
       return run;
     };
+    const openAgent = async (agentId: string): Promise<void> => {
+      const { index: curIndex } = latest.current;
+      const newest = curIndex.directByAgent.get(agentId)?.[0];
+      // Enterprise mode: a chat with a character is the member's own, so a shared room never stands in for it.
+      const existing = curIndex.enterprise && curIndex.characters.has(agentId) && !newest?.principalId ? undefined : newest;
+      if (existing) {
+        open(existing.id);
+        return;
+      }
+      await create(agentId);
+    };
+    /** The docked inspector's open state is remembered per mode (companion chats: `inspectorOpenCompanion`). */
+    const inCompanion = (): boolean => {
+      const { index: curIndex, conversationId: curConvId } = latest.current;
+      const conversation = curConvId ? curIndex.conversations.get(curConvId) : undefined;
+      return conversation ? conversationMode(curIndex, conversation) === 'companion' : false;
+    };
+    const dockedOpenPatch = (next: boolean): Partial<PaUiState> =>
+      inCompanion() ? { inspectorOpenCompanion: next } : { inspectorOpen: next };
     return {
       openConversation: open,
-      async openAgent(agentId) {
-        const existing = latest.current.index.directByAgent.get(agentId)?.[0];
-        if (existing) {
-          open(existing.id);
-          return;
-        }
-        await create(agentId);
-      },
+      openAgent,
       newConversation: create,
       openPlace(place, opts) {
         setUi((state) => ({
@@ -316,8 +362,30 @@ export function PersonalAgentWorkspace({ active, onOpenProject, projects = NO_PR
           ...(opts?.tasksFilter ? { tasksFilter: opts.tasksFilter } : {}),
           ...(opts?.memoryFilter ? { memoryFilter: opts.memoryFilter } : {}),
           ...(opts?.activityTab ? { activityTab: opts.activityTab } : {}),
+          ...(opts?.libraryTab ? { libraryTab: opts.libraryTab } : {}),
         }));
         setSheetOpen(false);
+      },
+      setRosterFilter(filter) {
+        setUi((state) => (state.rosterFilter === filter ? state : { ...state, rosterFilter: filter }));
+      },
+      setLibrary(patch) {
+        setUi((state) => ({
+          ...state,
+          ...(patch.tab !== undefined ? { libraryTab: patch.tab } : {}),
+          ...(patch.query !== undefined ? { libraryQuery: patch.query } : {}),
+          ...(patch.tag !== undefined ? { libraryTag: patch.tag } : {}),
+        }));
+      },
+      async openStarter(id) {
+        const installed = installedStarter(latest.current.index, id);
+        if (installed) {
+          await openAgent(installed.agentId);
+          return;
+        }
+        // Rooms and new characters: the install is idempotent and answers with the conversation to open.
+        const { conversation } = await latest.current.actions.installStarter(id);
+        open(conversation.id);
       },
       openTaskTurn(taskId) {
         const task = latest.current.index.tasks.get(taskId);
@@ -334,6 +402,11 @@ export function PersonalAgentWorkspace({ active, onOpenProject, projects = NO_PR
         setSheetOpen(false);
       },
       openModal(modal) {
+        // Enterprise mode: the library is the administrators' to change. One guard here covers every entry point.
+        if (!latest.current.index.canManageLibrary && LIBRARY_MODALS.has(modal.kind)) {
+          toast({ id: 'pa-library-managed', title: tRef.current('pa.enterprise.libraryManaged'), description: tRef.current('pa.enterprise.libraryManaged.hint') });
+          return;
+        }
         setUi((state) => ({ ...state, modal }));
       },
       closeModal() {
@@ -341,9 +414,10 @@ export function PersonalAgentWorkspace({ active, onOpenProject, projects = NO_PR
       },
       setInspector(next, tab) {
         if (latest.current.layout.inspector === 'docked') {
+          const openPatch = dockedOpenPatch(next);
           setUi((state) => ({
             ...state,
-            inspectorOpen: next,
+            ...openPatch,
             ...(next ? {} : { inspectorAgentId: null }),
             ...(tab ? { inspectorTab: tab } : {}),
           }));
@@ -365,10 +439,12 @@ export function PersonalAgentWorkspace({ active, onOpenProject, projects = NO_PR
         const convSubject = conv ? subjectOf(curIndex, conv) : null;
         const naturalAgentId = convSubject?.kind === 'agent' ? convSubject.agent.id : null;
         const currentShown = curUi.inspectorAgentId ?? naturalAgentId;
-        const isOpen = curLayout.inspector === 'docked' ? curUi.inspectorOpen : curFloat;
+        const isOpen =
+          curLayout.inspector === 'docked' ? (inCompanion() ? curUi.inspectorOpenCompanion : curUi.inspectorOpen) : curFloat;
         if (opts?.toggle && isOpen && currentShown === agentId) {
           if (curLayout.inspector === 'docked') {
-            setUi((state) => ({ ...state, inspectorOpen: false, inspectorAgentId: null }));
+            const closePatch = dockedOpenPatch(false);
+            setUi((state) => ({ ...state, ...closePatch, inspectorAgentId: null }));
           } else {
             setFloatingOpen(false);
             setUi((state) => (state.inspectorAgentId ? { ...state, inspectorAgentId: null } : state));
@@ -377,9 +453,10 @@ export function PersonalAgentWorkspace({ active, onOpenProject, projects = NO_PR
         }
         const nextOverride = naturalAgentId === agentId ? null : agentId;
         if (curLayout.inspector === 'docked') {
+          const openPatch = dockedOpenPatch(true);
           setUi((state) => ({
             ...state,
-            inspectorOpen: true,
+            ...openPatch,
             inspectorAgentId: nextOverride,
             ...(opts?.tab ? { inspectorTab: opts.tab } : {}),
           }));
@@ -430,6 +507,7 @@ export function PersonalAgentWorkspace({ active, onOpenProject, projects = NO_PR
   );
 
   const offline = data.load === 'offline' && !data.snapshot;
+  const drop = useCardDrop(ui.modal !== null || !index.canManageLibrary, nav, t);
   const hostStyle = {
     '--pa-roster-col': `${PA_ROSTER_WIDTH[layout.roster]}px`,
     '--pa-inspector-w': `${dockedWidth}px`,
@@ -463,6 +541,7 @@ export function PersonalAgentWorkspace({ active, onOpenProject, projects = NO_PR
 
   return (
     <PaContext.Provider value={context}>
+      <PaViewStyles />
       <PaSeenContext.Provider value={seen}>
         <FxRoot
           as="section"
@@ -473,6 +552,7 @@ export function PersonalAgentWorkspace({ active, onOpenProject, projects = NO_PR
           data-place={ui.place}
           className={styles.host}
           style={hostStyle}
+          {...drop.handlers}
         >
           <div className={styles.root} data-roster={layout.roster}>
             {layout.roster !== 'sheet' ? (
@@ -514,12 +594,66 @@ export function PersonalAgentWorkspace({ active, onOpenProject, projects = NO_PR
               </SheetContent>
             </Sheet>
           ) : null}
+          {drop.over ? (
+            <div className={soulShell.veil} data-testid="pa-drop-veil" aria-hidden>
+              <div className={soulShell.veilFrame}>{t('pa.soul.shell.drop.hint')}</div>
+            </div>
+          ) : null}
           <PaModalHost />
           <PaConfirmHost />
         </FxRoot>
       </PaSeenContext.Provider>
     </PaContext.Provider>
   );
+}
+
+/** Soul UI spec §3.8: a dragged file over the workspace shows a veil; dropping a `.png` or `.json` opens the card
+ *  import with it, anything else says what can be imported. Off while a modal is open and for a member who cannot
+ *  manage the library. */
+const CARD_FILE = /\.(png|json|charx)$/i;
+
+function carriesFiles(event: DragEvent<HTMLElement>): boolean {
+  return Array.from(event.dataTransfer?.types ?? []).includes('Files');
+}
+
+function useCardDrop(off: boolean, nav: PaNav, t: ReturnType<typeof useI18n>['t']) {
+  const [over, setOver] = useState(false);
+  const depth = useRef(0);
+  useEffect(() => {
+    if (!off) return;
+    depth.current = 0;
+    setOver(false);
+  }, [off]);
+  const handlers = off
+    ? {}
+    : {
+        onDragEnter(event: DragEvent<HTMLElement>) {
+          if (!carriesFiles(event)) return;
+          event.preventDefault();
+          depth.current += 1;
+          setOver(true);
+        },
+        onDragOver(event: DragEvent<HTMLElement>) {
+          if (!carriesFiles(event)) return;
+          event.preventDefault();
+          event.dataTransfer.dropEffect = 'copy';
+        },
+        onDragLeave(event: DragEvent<HTMLElement>) {
+          if (!carriesFiles(event)) return;
+          depth.current = Math.max(0, depth.current - 1);
+          if (depth.current === 0) setOver(false);
+        },
+        onDrop(event: DragEvent<HTMLElement>) {
+          if (!carriesFiles(event)) return;
+          event.preventDefault();
+          depth.current = 0;
+          setOver(false);
+          const file = Array.from(event.dataTransfer.files).find((candidate) => CARD_FILE.test(candidate.name));
+          if (file) nav.openModal({ kind: 'cardImport', file });
+          else toast({ title: t('pa.soul.shell.drop.unsupported') });
+        },
+      };
+  return { over: over && !off, handlers };
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -709,7 +843,7 @@ function PageArea({ active }: { active: boolean }) {
       {sheet && !inGutter ? <div className={styles.pageBar}>{button}</div> : null}
       <div className={styles.page}>
         {inGutter ? <span className={styles.pageRosterButton}>{button}</span> : null}
-        {ui.place === 'activity' ? <PaActivityPage active={active} /> : ui.place === 'tasks' ? <PaTasksPage /> : ui.place === 'memory' ? <PaMemoryPage /> : <PaConnectionsPage />}
+        {ui.place === 'library' ? <SoulLibraryPage /> : ui.place === 'activity' ? <PaActivityPage active={active} /> : ui.place === 'tasks' ? <PaTasksPage /> : ui.place === 'memory' ? <PaMemoryPage /> : <PaConnectionsPage />}
       </div>
     </div>
   );

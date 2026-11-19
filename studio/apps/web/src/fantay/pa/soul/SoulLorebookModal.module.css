@@ -1,0 +1,697 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* World-book editor (Soul UI spec §7.3), its entry and book forms and the 触发测试 bench. Chrome only: base
+   tokens, no theme colour. The frame (header, footer, hairline groups) comes from PaModals.module.css; this file
+   lays out the three panes inside the frame's body and styles what lives in them. */
+
+/* This editor has a fixed height (the shared frame only caps at 680). */
+:global([data-slot='modal']):has(.body) {
+  height: min(720px, calc(100dvh - 48px));
+  max-height: min(720px, calc(100dvh - 48px));
+}
+
+/* ── header ───────────────────────────────────────────────────────────────────────────── */
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* Sized to its text (or the placeholder), so the facts follow the name. */
+.name {
+  flex: 0 1 auto;
+  width: auto;
+  min-width: 160px;
+  max-width: 480px;
+  height: 34px;
+  field-sizing: content;
+  margin-inline-start: -8px;
+  font-size: var(--type-lead);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.facts {
+  flex: none;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── body and panes ───────────────────────────────────────────────────────────────────── */
+
+/* Doubled so it wins over the frame's padded, scrolling body whatever the stylesheet order. */
+.body.body {
+  container: pa-lore / inline-size;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  border-top: 1px solid var(--line-soft);
+}
+
+/* The frame's conflict and error notices sit above the panes. */
+.body > :not(.panes) {
+  flex: none;
+  margin: 12px 20px 0;
+}
+
+.panes {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: 232px minmax(0, 1fr);
+  min-height: 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-inline-end: 1px solid var(--line-soft);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.switch {
+  flex: none;
+  padding: 12px 20px 0;
+}
+
+.formPane,
+.benchPane {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  padding: 16px 20px 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.panes[data-pane='entry'] .benchPane,
+.panes[data-pane='test'] .formPane {
+  display: none;
+}
+
+@container pa-lore (min-width: 900px) {
+  .panes {
+    grid-template-columns: 264px minmax(0, 1fr) 260px;
+  }
+
+  .main {
+    display: contents;
+  }
+
+  .switch {
+    display: none;
+  }
+
+  .panes[data-pane] .formPane,
+  .panes[data-pane] .benchPane {
+    display: block;
+  }
+
+  .benchPane {
+    padding: 16px 16px 24px;
+    border-inline-start: 1px solid var(--line-soft);
+    background: color-mix(in srgb, var(--sub) 45%, var(--surface));
+  }
+}
+
+/* ── entry list ───────────────────────────────────────────────────────────────────────── */
+
+.listTop {
+  flex: none;
+  padding: 12px 12px 8px;
+}
+
+.bookRow {
+  flex: none;
+  justify-content: flex-start;
+  width: calc(100% - 16px);
+  height: 36px;
+  margin: 0 8px;
+  padding: 0 10px;
+  border-radius: var(--radius-chip);
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+
+.bookRow > [data-slot='button-label'] {
+  gap: 8px;
+}
+
+.bookRow:hover {
+  background: var(--sub);
+}
+
+.bookRow[data-selected],
+.bookRow[data-selected]:hover {
+  background: var(--paper-deep);
+}
+
+.bookIcon {
+  color: var(--ink-soft);
+}
+
+.listRule {
+  flex: none;
+  height: 1px;
+  margin: 8px 16px 6px;
+  background: var(--line-soft);
+}
+
+.listScroll {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1px;
+  min-height: 0;
+  padding: 0 8px 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.skeletons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 2px;
+}
+
+.listFoot {
+  flex: none;
+  padding: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.row {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  height: 52px;
+  padding-inline-start: 10px;
+  border-radius: var(--radius-chip);
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+
+.row:hover,
+.row[data-state='open'] {
+  background: var(--sub);
+}
+
+.row[data-selected],
+.row[data-selected]:hover {
+  background: var(--paper-deep);
+}
+
+.rowSwitch {
+  flex: none;
+}
+
+.rowMain {
+  flex: 1 1 auto;
+  justify-content: flex-start;
+  min-width: 0;
+  height: 100%;
+  padding: 0 10px 0 0;
+  border-radius: 0 var(--radius-chip) var(--radius-chip) 0;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 400;
+  text-align: start;
+}
+
+.rowMain:hover {
+  background: transparent;
+}
+
+.rowMain > [data-slot='button-label'] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.rowText {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rowTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--ink);
+}
+
+.rowTitleText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowKeys {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row[data-off] .rowTitle {
+  color: var(--ink-soft);
+}
+
+.row[data-off] .rowKeys {
+  color: var(--ink-faint);
+}
+
+.fireDot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink);
+  animation: pa-lore-fade var(--pa-dur-enter) var(--pa-ease) both;
+}
+
+.pin {
+  flex: none;
+  color: var(--ink-faint);
+}
+
+.rowEnd {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
+
+.rowTokens {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.invalidDot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-ink);
+}
+
+/* ── forms ────────────────────────────────────────────────────────────────────────────── */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.formTitle {
+  margin: 0;
+  font-size: var(--type-lead);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.empty {
+  max-width: 300px;
+  margin: 72px auto 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-faint);
+  text-align: center;
+  text-wrap: pretty;
+}
+
+.loadError {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.content {
+  min-height: 182px;
+  max-height: 420px;
+  overflow-y: auto;
+  field-sizing: content;
+}
+
+.fieldMeta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 12px;
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.counter[data-over] {
+  color: var(--accent-ink);
+}
+
+.tokens {
+  white-space: nowrap;
+}
+
+.fieldError {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--accent-ink);
+}
+
+.keyNotes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.keyNote {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.keyCode {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.number {
+  width: 96px;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.order {
+  width: 72px;
+}
+
+.numberWide {
+  width: 112px;
+}
+
+.numberFill {
+  width: 100%;
+}
+
+.roleSelect {
+  width: 132px;
+}
+
+.advanced {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.stackRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px 14px;
+}
+
+.stackHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.timers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.timer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.reviewBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reviewList {
+  padding: 0;
+  list-style: none;
+}
+
+.reviewRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 16px;
+}
+
+.reviewSummary {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.reviewAction {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+/* ── 触发测试 ──────────────────────────────────────────────────────────────────────────── */
+
+.bench {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* In the narrow layout the 触发测试 segment above already names the pane: the heading stays for screen readers. */
+.benchTitle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@container pa-lore (min-width: 900px) {
+  .benchTitle {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 18px;
+    color: var(--ink);
+    white-space: normal;
+  }
+}
+
+.benchInput {
+  min-height: 142px;
+}
+
+.benchHint,
+.benchError {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+  text-wrap: pretty;
+}
+
+.benchError {
+  color: var(--accent-ink);
+}
+
+/* Whole parts wrap; the separator dot of a part that starts a line falls into the clipped gutter, so no line
+   begins with a dot. */
+.summary {
+  margin: 2px 0 0;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.summaryParts {
+  display: flex;
+  flex-wrap: wrap;
+  margin-inline-start: -14px;
+}
+
+.summaryPart {
+  position: relative;
+  padding-inline-start: 14px;
+  white-space: nowrap;
+}
+
+.summaryPart::before {
+  content: '·';
+  position: absolute;
+  inset-inline-start: 0;
+  width: 14px;
+  color: var(--ink-ghost);
+  text-align: center;
+}
+
+.results {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transition: opacity var(--pa-dur-quick) var(--pa-ease);
+  animation: pa-lore-fade var(--pa-dur-enter) var(--pa-ease) both;
+}
+
+.results[data-running] {
+  opacity: 0.6;
+}
+
+.result {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 9px 12px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 400;
+  text-align: start;
+  white-space: normal;
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+
+.result:hover {
+  background: var(--sub);
+}
+
+.result[data-selected],
+.result[data-selected]:hover {
+  background: var(--paper-deep);
+}
+
+.result > [data-slot='button-label'] {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  width: 100%;
+}
+
+.resultHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.resultTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result[data-status='inactive'] .resultTitle {
+  color: var(--ink-soft);
+}
+
+.resultTokens {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.resultReason {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+@keyframes pa-lore-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fireDot,
+  .results {
+    animation-duration: 120ms;
+  }
+
+  .row,
+  .bookRow,
+  .result,
+  .results {
+    transition-duration: 120ms;
+  }
+}

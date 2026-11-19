@@ -36,6 +36,7 @@ const ICON_EXT: Record<string, 'svg' | 'png'> = {
   kilo: 'svg',
   vibe: 'svg',
   antigravity: 'svg',
+  glm: 'svg',
   aider: 'png',
   'trae-cli': 'png',
   devin: 'png',
@@ -48,6 +49,14 @@ const ICON_ASSET_ID: Record<string, string> = {
   // Conversations saved before the runtime became TokenToSea still carry `amr`;
   // the daemon resolves that id to `tokentosea` as well.
   amr: 'tokentosea',
+  cursor: 'cursor-agent',
+  grok: 'grok-build',
+  'antigravity-ide': 'antigravity',
+  'antigravity-insiders': 'antigravity',
+  'qoder-cn': 'qoder',
+  omp: 'pi',
+  'anthropic-api': 'claude',
+  'google-gemini-api': 'gemini',
 };
 
 // SVG marks that are single-color silhouettes (no baked brand colors).
@@ -65,6 +74,7 @@ const MONO_ICONS = new Set([
   'mimo',
   'kilo',
   'grok-build',
+  'glm',
 ]);
 
 export function AgentIcon({ id, size = 36, className }: Props) {

@@ -11,14 +11,17 @@ import {
   paArtifactMergeSchema,
   paControlPatchSchema,
 } from "@open-design/contracts";
-import type { PaArtifact, PaAttempt, PaConversation, PaMemory, PaMemoryCandidate, PaMessage, PaTask } from "@open-design/contracts";
+import type { PaArtifact, PaAttempt, PaConversation, PaFeedItem, PaGroup, PaMemoryCandidate, PaMessage, PaTask } from "@open-design/contracts";
 import type { PersonalAgentService } from "../services/personal-agent-service.js";
 import type { PersonalAgentChannels } from "../services/personal-agent-channels.js";
+import { paTaskCardAnswerSchema } from "@open-design/contracts";
 import { PaError } from "../storage/personal-agent-store.js";
 import { isTokenToSeaWriteOrigin } from "../http/tokentosea-origin.js";
 import { transcribePaVoice } from "../services/personal-agent-voice.js";
-import { paWorkerCaps, type PaMember } from "../services/pa/config.js";
+import { paCanManageLibrary, paWorkerCaps, type PaMember } from "../services/pa/config.js";
 import { workerLeaseSchema, workerResultSchema } from "../services/pa/distributed.js";
+import { registerPersonalAgentSoulRoutes } from "./personal-agent-soul.js";
+import { registerPersonalAgentSoulLiveRoutes } from "./personal-agent-soul-live.js";
 
 export interface RegisterPersonalAgentRoutesDeps {
   personalAgent: PersonalAgentService;
@@ -53,6 +56,18 @@ export function registerPersonalAgentRoutes(
   const kernel = service.kernel;
   const enterprise = kernel?.mode === "enterprise";
   const memberOf = (req: Request) => req.res?.locals.paMember as PaMember | undefined;
+  /** Who changes the shared library here. Nobody, once an organization server owns it: it is then changed there. */
+  const canManage = (member: PaMember): boolean => !service.libraryManagedRemotely && paCanManageLibrary(member);
+  /** Agents the member does not see: characters the organization published for groups the member is not in. An admin
+   *  sees every character. */
+  const hiddenFor = (member: PaMember): ReadonlySet<string> =>
+    member.role === "admin" ? new Set<string>() : service.hiddenAgents(member.groups);
+  const conversationHidden = (hidden: ReadonlySet<string>, conversation: Pick<PaConversation, "agentId" | "groupId">): boolean => {
+    if (!hidden.size) return false;
+    if (conversation.agentId && hidden.has(conversation.agentId)) return true;
+    const group = conversation.groupId ? service.store.get<PaGroup>("groups", conversation.groupId) : null;
+    return Boolean(group?.memberIds.some(id => hidden.has(id)));
+  };
   const canSee = (req: Request, task: PaTask) => !enterprise || !!memberOf(req) && kernel!.policy.owns(memberOf(req)!, task);
   const handle =
     (fn: (req: Request, res: Response) => unknown | Promise<unknown>) =>
@@ -106,7 +121,10 @@ export function registerPersonalAgentRoutes(
   });
   app.get("/api/pa/mode", handle(req => {
     const member = enterprise ? kernel!.identity.member(req.get("authorization")) : null;
-    return { mode: kernel?.mode ?? "personal", authorized: !enterprise || !!member, ...(member ? { role: member.role, tenantId: kernel!.tenantId } : {}) };
+    return {
+      mode: kernel?.mode ?? "personal", authorized: !enterprise || !!member,
+      ...(member ? { role: member.role, tenantId: kernel!.tenantId, memberId: member.id, canManageLibrary: canManage(member) } : {}),
+    };
   }));
   for (const action of ["claim", "heartbeat", "result"] as const) {
     app.post(`/api/pa/workers/${action}`, handle(req => {
@@ -125,25 +143,76 @@ export function registerPersonalAgentRoutes(
       return { ok: true };
     }));
   }
+  // Enterprise access is split in two planes. The shared library (agents, group chats, characters, world books, style
+  // presets) is written by admins and by members granted `library.manage`, and read by everyone. Everything a member
+  // says and everything remembered about them (conversations, personas, memories, chat turns) is that member's alone:
+  // an admin oversees work tasks but never opens another member's companion chat.
+  const ownsConversation = (member: PaMember, id: unknown): boolean => {
+    const conversation = typeof id === "string" ? service.store.get<PaConversation>("conversations", id) : null;
+    return conversation?.principalId === member.id && !conversationHidden(hiddenFor(member), conversation);
+  };
+  const ownsMessage = (member: PaMember, id: unknown): boolean =>
+    typeof id === "string" && ownsConversation(member, service.store.get<PaMessage>("messages", id)?.conversationId);
+  /** Whether `member` may call a route under /api/pa/soul. `rest` is the path after `/soul`. */
+  const soulAllowed = (member: PaMember, req: Request, rest: string): boolean => {
+    const read = req.method === "GET" || req.method === "HEAD";
+    const writer = member.role !== "viewer";
+    if (read && (rest === "" || rest === "/speech/status" || rest === "/speech/voices")) return true;
+    if (/^\/(?:characters|starters|lorebooks|presets)(?:\/|$)/.test(rest) || rest === "/speech/preview") return canManage(member);
+    if (!writer) return false;
+    if (/^\/personas(?:\/[a-zA-Z0-9_-]+)?$/.test(rest) || rest === "/assets") return !read;
+    if (rest === "/live" || rest === "/speech" && read) return ownsConversation(member, req.query.conversationId);
+    if (rest === "/speech") return ownsMessage(member, req.body?.messageId);
+    if (/^\/chat\/(?:state|regenerate|continue|roll|draw|event|preview)$/.test(rest)) return ownsConversation(member, req.body?.conversationId);
+    const scoped = /^\/(chats|conversations|trace|messages)\/([a-zA-Z0-9_-]+)(?:\/(?:branch|variant|reveal))?$/.exec(rest);
+    if (!scoped) return false;
+    return scoped[1] === "chats" || scoped[1] === "conversations" ? ownsConversation(member, scoped[2]) : ownsMessage(member, scoped[2]);
+  };
   if (enterprise) app.use("/api/pa", (req, res, next) => {
+    const read = req.method === "GET" || req.method === "HEAD";
+    const resource = req.path;
+    // Portraits and generated audio load from <img> and <audio>, which carry no access token: the file id is the
+    // capability (a random id, or a digest nobody can derive without the text), behind the loopback and origin gate.
+    if (read && (/^\/soul\/assets\/[0-9a-f-]{36}\.(?:png|jpg|webp)$/.test(resource) ||
+      /^\/soul\/speech\/[0-9a-f]{64}\.(?:mp3|wav|ogg|m4a)$/.test(resource))) return next();
     const member = kernel!.identity.member(req.get("authorization"));
     const deny = (status: number, code: string, message: string) => res.status(status).json({ error: { code, message } });
     if (!member) return deny(401, "PA_ENTERPRISE_AUTH", "需要企业访问令牌");
     res.locals.paMember = member;
-    const read = req.method === "GET" || req.method === "HEAD";
-    const resource = req.path;
+    // The organization's companion switches (set on its server, received with the directory).
+    const companion = service.companionPolicy();
+    const chatWrite = !read && (resource.startsWith("/soul/chat") || resource.startsWith("/soul/messages") || resource.startsWith("/soul/conversations")
+      || resource === "/soul/speech" || resource === "/conversations" && service.soul.character(String(req.body?.agentId ?? "")) !== null
+      || resource === "/tasks" && req.body?.kind === "chat");
+    if (!companion.enabled && chatWrite) return deny(403, "PA_POLICY", "组织没有启用陪伴对话");
+    if (!companion.personas && !read && resource.startsWith("/soul/personas")) return deny(403, "PA_POLICY", "组织没有启用成员人设");
+    if (!companion.memory && !read && resource === "/memories" && req.body?.scope === "agent") return deny(403, "PA_POLICY", "组织没有启用角色记忆");
+    if (resource === "/soul" || resource.startsWith("/soul/")) {
+      if (soulAllowed(member, req, resource.slice("/soul".length))) return next();
+      return deny(403, "PA_CAPABILITY_DENIED", read || member.role === "viewer" ? "此主体无权访问该能力" : "角色库由管理员统一管理，对话只属于各自的成员");
+    }
     const shared = ["/", "/models", "/control", "/activity", "/feed", "/projects", "/node"].includes(resource);
     const admin = member.role === "admin" && (
       /^\/(?:agents|groups|conversations)(?:\/[a-zA-Z0-9_-]+(?:\/clone)?)?$/.test(resource) ||
-      ["/audit", "/audit/verify", "/control", "/enterprise/revoke"].includes(resource));
-    if (admin || read && shared || !read && member.role !== "viewer" && ["/tasks", "/memories"].includes(resource)) return next();
-    const match = /^\/(tasks|attempts|artifacts|memories|memory-candidates)\/([a-zA-Z0-9_-]+)(?:\/(events|output|download|history|amend|cancel|resume|reconcile|merge|migrate|resolve))?$/.exec(resource);
+      ["/audit", "/audit/verify", "/control", "/enterprise/revoke", "/enterprise/org", "/enterprise/org/sync"].includes(resource));
+    const library = canManage(member) && /^\/(?:agents|groups)(?:\/[a-zA-Z0-9_-]+(?:\/clone)?)?$/.test(resource);
+    // Any member who may chat opens their own conversation with a character; the handler binds it to the member.
+    const ownChat = !read && member.role !== "viewer" && resource === "/conversations" &&
+      typeof req.body?.agentId === "string" && service.soul.character(req.body.agentId) !== null &&
+      !hiddenFor(member).has(req.body.agentId);
+    // A task into a conversation whose character the member no longer sees is refused like a missing conversation.
+    if (!read && resource === "/tasks" && typeof req.body?.conversationId === "string") {
+      const target = service.store.get<PaConversation>("conversations", req.body.conversationId);
+      if (target && conversationHidden(hiddenFor(member), target)) return deny(404, "PA_NOT_FOUND", "记录不存在");
+    }
+    if (admin || library || ownChat || read && shared || !read && member.role !== "viewer" && ["/tasks", "/memories"].includes(resource)) return next();
+    const match = /^\/(tasks|attempts|artifacts|memories|memory-candidates)\/([a-zA-Z0-9_-]+)(?:\/(events|output|download|history|amend|cancel|resume|answer|reconcile|merge|migrate|resolve))?$/.exec(resource);
     if (!match || !read && member.role === "viewer")
       return deny(403, "PA_CAPABILITY_DENIED", "此主体无权访问该能力");
     const [, collection, id] = match;
     if (collection === "memories") {
-      const memory = service.store.get<PaMemory>("memories", id!);
-      if (memory && (member.role === "admin" || memory.principalId === member.id)) return next();
+      // A member's memories are theirs alone: not even an admin reads, edits or archives them.
+      if (service.memoryById(id!)?.principalId === member.id) return next();
     } else {
       const source = collection === "memory-candidates" ? "memory_candidates" : collection as "artifacts" | "attempts";
       const taskId = collection === "tasks" ? id : service.store.get<PaArtifact | PaAttempt | PaMemoryCandidate>(source, id!)?.taskId;
@@ -155,22 +224,48 @@ export function registerPersonalAgentRoutes(
   app.get(
     "/api/pa",
     handle(req => {
+      if (enterprise && memberOf(req)!.role !== "viewer") service.ensureMemberGroupChats(memberOf(req)!.id);
+      const tag = service.snapshotTag();
+      if (!enterprise && req.query.since === tag) return { unchanged: true, tag };
       const snapshot = service.snapshot();
-      if (!enterprise) return snapshot;
+      if (!enterprise) return { ...snapshot, tag };
       const tasks = snapshot.tasks.filter(task => canSee(req, task));
       const ids = new Set(tasks.map(task => task.id));
       const member = memberOf(req)!;
+      // The member's own conversations, and the shared rooms. In a group chat the member has a conversation of their
+      // own, the group points at it, and the shared room it was copied from is not listed.
+      const hidden = hiddenFor(member);
+      const hiddenGroups = new Set(snapshot.groups.filter(group => group.memberIds.some(id => hidden.has(id))).map(group => group.id));
+      const shown = (item: PaConversation) => !(item.agentId && hidden.has(item.agentId)) && !(item.groupId && hiddenGroups.has(item.groupId));
+      const own = new Set(snapshot.conversations.filter(item => item.principalId === member.id && shown(item)).map(item => item.id));
+      const ownGroupChat = new Map(snapshot.conversations
+        .filter(item => item.groupId && own.has(item.id)).map(item => [item.groupId!, item.id]));
+      const conversations = snapshot.conversations.filter(item =>
+        own.has(item.id) || !item.principalId && shown(item) && !(item.groupId && ownGroupChat.has(item.groupId)));
+      // A finished chat turn leaves the task list, so its candidates are matched against the stored task.
+      const seen = new Map<string, boolean>();
+      const ownsTask = (taskId: string): boolean => {
+        if (!seen.has(taskId)) {
+          const task = service.store.get<PaTask>("tasks", taskId);
+          seen.set(taskId, Boolean(task) && canSee(req, task!));
+        }
+        return seen.get(taskId)!;
+      };
       return {
-        ...snapshot, tasks,
-        messages: snapshot.messages.filter(message => message.taskId && ids.has(message.taskId)),
+        ...snapshot, tasks, conversations,
+        agents: hidden.size ? snapshot.agents.filter(agent => !hidden.has(agent.id)) : snapshot.agents,
+        groups: snapshot.groups.filter(group => !hiddenGroups.has(group.id))
+          .map(group => ownGroupChat.has(group.id) ? { ...group, conversationId: ownGroupChat.get(group.id)! } : group),
+        messages: snapshot.messages.filter(message => own.has(message.conversationId) || Boolean(message.taskId) && ids.has(message.taskId!)),
         attempts: snapshot.attempts.filter(attempt => ids.has(attempt.taskId)),
         artifacts: snapshot.artifacts.filter(artifact => ids.has(artifact.taskId)),
-        memories: snapshot.memories.filter(memory => member.role === "admin" || memory.principalId === member.id),
-        memoryCandidates: snapshot.memoryCandidates?.filter(item => ids.has(item.taskId)),
+        memories: snapshot.memories.filter(memory => memory.principalId === member.id),
+        memoryCandidates: snapshot.memoryCandidates?.filter(item => ownsTask(item.taskId)),
+        member: { id: member.id, role: member.role, canManageLibrary: canManage(member) },
       };
     }),
   );
-  const visibleToDevice = (task: PaTask) => task.dataClass !== "local_only" && !task.channelId;
+  const visibleToDevice = (task: PaTask) => task.dataClass !== "local_only" && !task.channelId && task.kind !== "chat";
   const deviceTask = (req: Request) => {
     const task = service.store.require<PaTask>("tasks", String(req.params.id));
     if (!visibleToDevice(task)) throw new PaError("任务不可通过设备访问", 404, "PA_NOT_FOUND");
@@ -220,6 +315,13 @@ export function registerPersonalAgentRoutes(
     kernel!.identity.revoke(value.kind, value.id);
     return { ok: true };
   }));
+  // The organization server this daemon follows: what was last taken from it, and a sync on demand (admins).
+  app.get('/api/pa/enterprise/org', handle(() => {
+    const status = service.orgStatus();
+    if (!status) throw new PaError("此部署没有连接企业服务器", 409, "PA_CONFIG");
+    return status;
+  }));
+  app.post('/api/pa/enterprise/org/sync', handle(() => service.syncOrg()));
   app.get('/api/pa/artifacts/:id/download', handle(async (req, res) => {
     const file = await service.downloadPrivateArtifact(String(req.params.id));
     res.setHeader("X-Content-Type-Options", "nosniff");
@@ -228,12 +330,36 @@ export function registerPersonalAgentRoutes(
   app.get('/api/pa/feed', handle(req => {
     const before = Number(req.query.before ?? Number.MAX_SAFE_INTEGER);
     if (!Number.isSafeInteger(before) || before < 1) throw new PaError('无效的动态分页位置');
-    const page = service.store.feed(before, 41);
-    const items = enterprise ? page.slice(0, 40).filter(item => {
-      const task = item.taskId ? service.store.get<PaTask>("tasks", item.taskId) : null;
-      return task && canSee(req, task);
-    }) : page.slice(0, 40);
-    return { items, nextBefore: page.length > 40 ? page[39]!.sequence : null };
+    const verdict = new Map<string, boolean>();
+    const shown = (item: PaFeedItem): boolean => {
+      if (!item.taskId) return !enterprise;
+      let ok = verdict.get(item.taskId);
+      if (ok === undefined) {
+        const task = service.store.get<PaTask>("tasks", item.taskId);
+        ok = enterprise ? Boolean(task) && canSee(req, task!) : task?.kind !== "chat";
+        verdict.set(item.taskId, ok);
+      }
+      return ok;
+    };
+    const kept: PaFeedItem[] = [];
+    let cursor = before;
+    let exhausted = false;
+    for (let round = 0; round < 10 && kept.length < 41; round += 1) {
+      const page = service.store.feed(cursor, 200);
+      for (const item of page) {
+        cursor = item.sequence;
+        if (shown(item)) kept.push(item);
+        if (kept.length === 41) break;
+      }
+      if (page.length < 200) {
+        exhausted = true;
+        break;
+      }
+    }
+    // Scan rounds can run out among hidden (chat or other members') events: hand back the scan position so older
+    // history stays reachable; null only when the store really has nothing older.
+    const nextBefore = kept.length > 40 ? kept[39]!.sequence : exhausted ? null : cursor;
+    return { items: kept.slice(0, 40), nextBefore };
   }));
   app.post('/api/pa/goals', handle(req => service.saveGoal(paGoalInputSchema.parse(req.body))));
   app.patch('/api/pa/goals/:id', handle(req => {
@@ -277,7 +403,7 @@ export function registerPersonalAgentRoutes(
   app.get(
     "/api/pa/activity",
     handle(req => {
-      const tasks = service.store.list<PaTask>("tasks").filter(task => canSee(req, task));
+      const tasks = service.store.list<PaTask>("tasks").filter(task => canSee(req, task) && task.kind !== "chat");
       return {
         running: tasks.filter((task) =>
           ["running", "queued", "verifying", "cancelling"].includes(
@@ -316,7 +442,12 @@ export function registerPersonalAgentRoutes(
   );
   app.post(
     "/api/pa/conversations",
-    handle((req) => service.createConversation(text(req.body?.agentId, 100))),
+    handle((req) => {
+      const agentId = text(req.body?.agentId, 100);
+      // Enterprise mode: a chat with a character is the caller's own; any other agent gets a shared room (admins only).
+      const owner = enterprise && service.soul.character(agentId) !== null ? memberOf(req)?.id : undefined;
+      return service.createConversation(agentId, owner);
+    }),
   );
   app.post(
     "/api/pa/groups",
@@ -364,6 +495,7 @@ export function registerPersonalAgentRoutes(
     handle((req) => service.resume(String(req.params.id))),
   );
   app.post('/api/pa/tasks/:id/reconcile', handle(req => service.reconcileTask(String(req.params.id), req.body?.confirmedStopped === true ? { revision: revision.parse(req.body.revision), note: text(req.body.note, 500) } : undefined)));
+  app.post('/api/pa/tasks/:id/answer', handle(req => service.answerTaskCard(String(req.params.id), paTaskCardAnswerSchema.parse(req.body))));
   app.get(
     "/api/pa/tasks/:id/events",
     handle((req) => service.store.events(String(req.params.id))),
@@ -372,7 +504,7 @@ export function registerPersonalAgentRoutes(
     "/api/pa/memories",
     handle(req => service.saveMemory(paMemoryInputSchema.parse(req.body), undefined, undefined, memberOf(req)?.id)),
   );
-  app.get('/api/pa/memories/:id/history', handle(req => service.memoryHistory(String(req.params.id))));
+  app.get('/api/pa/memories/:id/history', handle(req => service.memoryHistory(String(req.params.id), memberOf(req)?.id)));
   app.post('/api/pa/memory-candidates/:id/resolve', handle(req => {
     if (typeof req.body?.accept !== "boolean") throw new PaError("请选择保存或忽略");
     return service.resolveMemoryCandidate(String(req.params.id), revision.parse(req.body.revision), req.body.accept);
@@ -391,8 +523,10 @@ export function registerPersonalAgentRoutes(
   app.delete(
     "/api/pa/memories/:id",
     handle((req) => {
-      service.deleteMemory(String(req.params.id));
+      service.deleteMemory(String(req.params.id), memberOf(req)?.id);
       return { ok: true };
     }),
   );
+  registerPersonalAgentSoulLiveRoutes(app, { service, handle });
+  registerPersonalAgentSoulRoutes(app, { service, handle, revision });
 }

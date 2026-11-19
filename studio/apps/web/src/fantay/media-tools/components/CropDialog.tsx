@@ -6,6 +6,7 @@
 // Modified for Fantay on 2026-10-29 (spec 05 §6.7): Fantay Modal/Segmented/Button, presets
 // free | original | 1:1 | 4:3 | 16:9 | 9:16, read-outs of crop and source size, keyboard nudging of the
 // crop box (arrows move, Shift+arrows resize), handles are pointer targets only, busy confirm.
+// Modified for Fantay on 2026-11 (Soul stage 2): optional locked preset, title and confirm label.
 import { useEffect, useRef, useState } from 'react';
 import type * as React from 'react';
 
@@ -125,17 +126,29 @@ export interface CropDialogProps {
   onClose(): void;
   /** Resolves when the crop is saved; the dialog shows the busy state meanwhile. */
   onConfirm(rect: NormalizedRect): Promise<unknown> | void;
+  /** Fix the ratio: the preset row is hidden and the box starts as the largest centred crop of that ratio. */
+  lockPreset?: Exclude<CropPreset, 'free' | 'original'>;
+  /** Default t('fantay.media.crop.title'). */
+  title?: string;
+  /** Default t('fantay.media.crop.confirm'). */
+  confirmLabel?: string;
 }
 
-export function CropDialog({ open, imageUrl, onClose, onConfirm }: CropDialogProps) {
+const WHOLE: NormalizedRect = { x: 0, y: 0, width: 1, height: 1 };
+
+export function CropDialog({ open, imageUrl, onClose, onConfirm, lockPreset, title, confirmLabel }: CropDialogProps) {
   const t = useT();
   const [crop, setCrop] = useState<NormalizedRect>(DEFAULT_CROP);
-  const [preset, setPreset] = useState<CropPreset>('free');
+  const [preset, setPreset] = useState<CropPreset>(lockPreset ?? 'free');
   const [busy, setBusy] = useState(false);
   const image = useImageNaturalSize(imageUrl, open);
   const viewport = useImageEditorViewport(image, open);
   const dragAbort = useRef<AbortController | null>(null);
   const ratio = presetRatio(preset, image);
+  const heading = title ?? t('fantay.media.crop.title');
+  /** With a locked ratio: the largest centred crop of it (the start and the reset). */
+  const lockedCrop = (): NormalizedRect | null =>
+    lockPreset && image ? fitCropToRatio(WHOLE, presetRatio(lockPreset, image) ?? 1, image) : null;
 
   useEffect(() => {
     if (!open) {
@@ -143,9 +156,13 @@ export function CropDialog({ open, imageUrl, onClose, onConfirm }: CropDialogPro
       return;
     }
     setCrop(DEFAULT_CROP);
-    setPreset('free');
+    setPreset(lockPreset ?? 'free');
     setBusy(false);
-  }, [open, imageUrl]);
+  }, [open, imageUrl, lockPreset]);
+  useEffect(() => {
+    if (!open || !lockPreset || !image) return;
+    setCrop(fitCropToRatio(WHOLE, presetRatio(lockPreset, image) ?? 1, image));
+  }, [open, image, lockPreset]);
   useEffect(() => () => dragAbort.current?.abort(), []);
 
   const startDrag = (mode: DragMode, event: React.PointerEvent, handle?: ResizeHandle) => {
@@ -206,7 +223,7 @@ export function CropDialog({ open, imageUrl, onClose, onConfirm }: CropDialogPro
       data-testid="fx-media-crop-dialog"
       {...BOARD_INTERACTIVE_PROPS}
     >
-      <ModalTitle>{t('fantay.media.crop.title')}</ModalTitle>
+      <ModalTitle>{heading}</ModalTitle>
       <div className={styles.layout}>
         <EditorStage viewport={viewport} imageUrl={imageUrl}>
           <span className={styles.mask} style={{ left: 0, right: 0, top: 0, height: `${crop.y * 100}%` }} />
@@ -221,7 +238,7 @@ export function CropDialog({ open, imageUrl, onClose, onConfirm }: CropDialogPro
             style={{ left: `${crop.x * 100}%`, top: `${crop.y * 100}%`, width: `${crop.width * 100}%`, height: `${crop.height * 100}%` }}
             tabIndex={0}
             role="group"
-            aria-label={cropSize ? t('fantay.media.crop.size', { w: cropSize.width, h: cropSize.height }) : t('fantay.media.crop.title')}
+            aria-label={cropSize ? t('fantay.media.crop.size', { w: cropSize.width, h: cropSize.height }) : heading}
             data-testid="fx-media-crop-box"
             onPointerDown={(event) => startDrag('move', event)}
             onKeyDown={onBoxKeyDown}
@@ -242,28 +259,38 @@ export function CropDialog({ open, imageUrl, onClose, onConfirm }: CropDialogPro
           </div>
         </EditorStage>
         <div className={styles.controls}>
-          <Segmented
-            size="sm"
-            aria-label={t('fantay.media.crop.title')}
-            value={preset}
-            onValueChange={(next) => {
-              const value = next as CropPreset;
-              setPreset(value);
-              const nextRatio = presetRatio(value, image);
-              if (nextRatio && image) setCrop((current) => fitCropToRatio(current, nextRatio, image));
-            }}
-          >
-            {PRESETS.map((entry) => (
-              <SegmentedItem key={entry} value={entry} data-testid={`fx-media-crop-preset-${entry}`}>
-                {entry === 'free' ? t('fantay.media.crop.free') : entry === 'original' ? t('fantay.media.crop.original') : entry}
-              </SegmentedItem>
-            ))}
-          </Segmented>
+          {lockPreset ? null : (
+            <Segmented
+              size="sm"
+              aria-label={t('fantay.media.crop.title')}
+              value={preset}
+              onValueChange={(next) => {
+                const value = next as CropPreset;
+                setPreset(value);
+                const nextRatio = presetRatio(value, image);
+                if (nextRatio && image) setCrop((current) => fitCropToRatio(current, nextRatio, image));
+              }}
+            >
+              {PRESETS.map((entry) => (
+                <SegmentedItem key={entry} value={entry} data-testid={`fx-media-crop-preset-${entry}`}>
+                  {entry === 'free' ? t('fantay.media.crop.free') : entry === 'original' ? t('fantay.media.crop.original') : entry}
+                </SegmentedItem>
+              ))}
+            </Segmented>
+          )}
           <div className={styles.readout}>
             <span>{cropSize ? t('fantay.media.crop.size', { w: cropSize.width, h: cropSize.height }) : '—'}</span>
             {image ? <span>{t('fantay.media.editor.source', { w: image.width, h: image.height })}</span> : null}
           </div>
-          <Button size="sm" variant="ghost" onClick={() => setCrop(preset === 'free' ? DEFAULT_CROP : fitCropToRatio(DEFAULT_CROP, ratio ?? 1, image ?? { width: 1, height: 1 }))}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() =>
+              setCrop(
+                lockedCrop() ?? (preset === 'free' ? DEFAULT_CROP : fitCropToRatio(DEFAULT_CROP, ratio ?? 1, image ?? { width: 1, height: 1 })),
+              )
+            }
+          >
             {t('fantay.media.editor.reset')}
           </Button>
         </div>
@@ -273,7 +300,7 @@ export function CropDialog({ open, imageUrl, onClose, onConfirm }: CropDialogPro
           {t('fantay.media.editor.cancel')}
         </Button>
         <Button variant="primary" loading={busy} data-testid="fx-media-crop-confirm" onClick={() => void confirm()}>
-          {t('fantay.media.crop.confirm')}
+          {confirmLabel ?? t('fantay.media.crop.confirm')}
         </Button>
       </ModalActions>
     </Modal>

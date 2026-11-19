@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // @ts-nocheck
 import { readFileSync, writeFileSync } from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import { basename } from 'node:path';
 import { runDaemonCliStartup, startDaemonRuntime } from './daemon-startup.js';
 import { runLiveArtifactsMcpServer } from './mcp-live-artifacts-server.js';
@@ -320,7 +321,7 @@ const AUTOMATION_BOOLEAN_FLAGS = new Set([
   'help', 'h', 'json', 'disabled', 'enabled',
 ]);
 const MEMORY_STRING_FLAGS = new Set([
-  'daemon-url', 'name', 'description', 'type', 'body', 'body-file',
+  'daemon-url', 'name', 'description', 'type', 'body', 'body-file', 'project-id', 'project',
   // `od memory profile set` reads structured fields verbatim and/or a prose
   // body; `--field "Label=Value"` is repeatable (scanned manually below since
   // parseFlags collapses duplicate keys). `--prompt-file <path|->` mirrors the
@@ -413,7 +414,7 @@ const PLUGIN_LIST_BOOLEAN_FLAGS = new Set([
 ]);
 
 const SUBCOMMAND_MAP = {
-  pa: async (args: string[]) => (await import('./services/personal-agent-cli.js')).runPersonalAgent(args),
+  pa: async (args: string[]) => (await import('./services/personal-agent-cli.js')).runPersonalAgentCommand(args),
   agent: runAgent,
   artifacts: runArtifacts,
   media: runMedia,
@@ -424,6 +425,8 @@ const SUBCOMMAND_MAP = {
   collab: runCollab,
   'message-center': runMessageCenter,
   research: runResearch,
+  search: async (args: string[]) => (await import('./research/search-service-cli.js')).runSearchServiceCli(args),
+  voice: async (args: string[]) => (await import('./services/voice-input-cli.js')).runVoiceInputCli(args),
   plugin: runPlugin,
   ui: runUi,
   marketplace: runMarketplace,
@@ -1245,6 +1248,9 @@ function printRootHelp() {
       Authorize or inspect the current TokenToSea account through
       the local Fantay daemon.
 
+  od voice <settings|models|configure|transcribe> [--json]
+      Configure speech recognition and transcribe a recording.
+
   od memory tree <list|view|edit|move> [args]
       Inspect and edit the memory tree that is injected into agent prompts.
 
@@ -1262,6 +1268,8 @@ function printRootHelp() {
       Create a Side Chat: a new conversation that inherits another
       conversation's context by copying its messages (--seed-from), optionally
       stopping at one message (--fork-after). Mirrors the web chat fork action.
+  od chat <edit|regenerate|select-version> --project <id> --conversation <id> --message <id> [--json]
+      Manage message versions. Edit accepts --prompt or --prompt-file <path|->.
 
   od diagnostics export [<path>] [--json]
       Bundle daemon/web/desktop logs, machine info, and recent crash reports
@@ -1871,7 +1879,7 @@ async function runResearchSearch(rawArgs) {
   try {
     resp = await fetch(url, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', ...(process.env.OD_TOOL_TOKEN ? { authorization: `Bearer ${process.env.OD_TOOL_TOKEN}` } : {}) },
       body: JSON.stringify({
         query,
         ...(Number.isFinite(maxSources) ? { maxSources } : {}),
@@ -9805,6 +9813,9 @@ async function runChat(args) {
                                            context (--seed-from). Use
                                            --fork-after to stop at one source
                                            message.
+  od chat edit --project <id> --conversation <id> --message <id> --prompt-file <path|-> [--agent <id>] [--model <id>] [--json]
+  od chat regenerate --project <id> --conversation <id> --message <id> [--agent <id>] [--model <id>] [--json]
+  od chat select-version --project <id> --conversation <id> --message <id> [--json]
 
 Common options:
   --daemon-url <url>         Fantay daemon HTTP base.
@@ -9822,6 +9833,73 @@ Common options:
   const base = (await projectDaemonUrl(flags)).replace(/\/$/, '');
   const workspaceHeaders = workspaceHeadersFromExplicitFlags(flags) ?? {};
   switch (sub) {
+    case 'edit':
+    case 'regenerate':
+    case 'select-version': {
+      if (!flags.project || !flags.conversation || !flags.message) {
+        console.error('--project, --conversation and --message are required');
+        process.exit(2);
+      }
+      const route = `/api/projects/${encodeURIComponent(flags.project)}/conversations/${encodeURIComponent(flags.conversation)}/messages`;
+      const response = await fetch(base + route, { headers: workspaceHeaders });
+      if (!response.ok) return structuredHttpFailure(response, 'conversation-not-found');
+      const { messages } = await response.json();
+      const expectedLeafId = messages.at(-1)?.id;
+      if (!expectedLeafId) {
+        console.error('The conversation has no messages.');
+        process.exit(2);
+      }
+      if (sub === 'select-version') {
+        const result = await postJsonToDaemon(base,
+          `${route}/${encodeURIComponent(flags.message)}/select-branch`,
+          { expectedLeafId }, workspaceHeaders);
+        if (flags.json) return process.stdout.write(JSON.stringify(result) + '\n');
+        console.log('Message version selected.');
+        return;
+      }
+      const targetIndex = messages.findIndex(message => message.id === flags.message);
+      const target = messages[targetIndex];
+      let questionIndex = targetIndex;
+      if (sub === 'regenerate') {
+        while (questionIndex >= 0 && messages[questionIndex]?.role !== 'user') questionIndex--;
+      }
+      const question = messages[questionIndex];
+      const branchTarget = sub === 'regenerate' ? messages[questionIndex + 1] : question;
+      if (target?.role !== (sub === 'edit' ? 'user' : 'assistant')
+        || question?.role !== 'user' || !branchTarget) {
+        console.error('Choose a message on the active conversation branch.');
+        process.exit(2);
+      }
+      const prompt = sub === 'edit' ? await readPromptFromFlags(flags) : question.content;
+      if (typeof prompt !== 'string') {
+        console.error('Edit requires --prompt or --prompt-file <path|->.');
+        process.exit(2);
+      }
+      const frame = (role, content) => `## ${role}\n${content.replace(/^## (user|assistant|system)\s*$/gm, '### $1')}`;
+      const priorTranscript = messages.slice(0, questionIndex)
+        .map(({ role, content }) => frame(role, content)).join('\n\n');
+      const result = await postJsonToDaemon(base, '/api/runs', {
+        projectId: flags.project,
+        conversationId: flags.conversation,
+        clientRequestId: flags['client-request-id'] ?? randomUUID(),
+        userMessageId: sub === 'edit' ? randomUUID() : question.id,
+        assistantMessageId: randomUUID(),
+        messageBranch: { action: sub, messageId: branchTarget.id, expectedLeafId },
+        message: [priorTranscript, frame('user', prompt)].filter(Boolean).join('\n\n'),
+        currentPrompt: prompt,
+        priorTranscript,
+        attachments: question.attachments?.map(attachment => attachment.path) ?? [],
+        commentAttachments: question.commentAttachments ?? [],
+        ...(question.runContext ? { context: question.runContext, skillIds: question.runContext.skillIds } : {}),
+        ...(question.appliedPluginSnapshot ? { appliedPluginSnapshotId: question.appliedPluginSnapshot.snapshotId } : {}),
+        ...(question.sessionMode ? { sessionMode: question.sessionMode } : {}),
+        ...(flags.agent ? { agentId: flags.agent } : {}),
+        ...(flags.model ? { model: flags.model } : {}),
+      }, workspaceHeaders);
+      if (flags.json) return process.stdout.write(JSON.stringify(result) + '\n');
+      console.log(`[run] started ${result.runId}`);
+      return;
+    }
     case 'new': {
       // Accept --project for parity with the rest of the project-scoped CLI,
       // or a bare positional id for convenience.
@@ -11380,8 +11458,50 @@ Common options:
 
 function printMemoryHelp() {
   console.log(`Usage:
-  od memory tree list [--json]
-      List derived memory-tree folders and entry nodes.
+  od memory overview [--json]
+      Memory Center overview: memories and conversation windows per scope, what waits for you, search level.
+      A scope is kind:id: profile, persona:<id>, bot:<id>, group:<id>, project:<id> or conversation:<id>.
+
+  od memory list [--scope kind:id] [--status active|pending|archived|superseded|rejected|all] [--kind <kind>]
+                 [--pinned|--unpinned] [--via-group] [--no-studio] [--query <text>] [--limit <N>] [--offset <N>] [--json]
+  od memory get <id> [--json]
+  od memory history <id> [--json]
+  od memory create --scope kind:id (--content <text> | --prompt-file <path|->) [--kind <kind>] [--title <text>] [--pinned]
+                   [--due YYYY-MM-DD] [--valid-from YYYY-MM-DD] [--valid-until YYYY-MM-DD] [--json]
+  od memory update <id> [--content <text> | --prompt-file <path|->] [--title <text>] [--kind <kind>] [--pinned|--unpinned]
+                   [--due YYYY-MM-DD | --clear-due] [--note <text>] [--revision <N>] [--json]
+      An edit stores the new text as a new version; the earlier text stays in the history.
+  od memory archive <id> [--json]          Put a memory away. It can be restored; nothing is deleted.
+  od memory restore <id> [--json]
+  od memory redact <id> --confirm [--json]  Clear the text of a memory for good (the record and its history stay).
+  od memory copy <id> --scope kind:id [--title <text>] [--json]
+  od memory inbox [--json]                  Disagreements and proposals that wait for you.
+  od memory pending <item:id|pa:id> (--accept | --reject) [--prompt-file <path|->] [--kind <kind>] [--scope kind:id] [--json]
+  od memory conflict list [--status open|resolved] [--json]
+  od memory conflict get <id> [--json]
+  od memory conflict draft <id> [--json]    A merged text to start from.
+  od memory conflict resolve <id> --resolution keep_new|keep_old|merge|keep_both [--merged-file <path|->] [--json]
+  od memory recall (--query <text> | --prompt-file <path|->) --scope kind:id [--scope kind:id ...] [--limit <N>] [--json]
+  od memory recall (--query <text> | --prompt-file <path|->) --surface studio|pa [--agent <id>] [--group <id>]
+                   [--project <id>] [--conversation <id>] [--json]
+      Recall as a turn would, or search the named scopes. Inspection only: nothing is logged.
+  od memory chunks [--scope kind:id] [--conversation <id>] [--limit <N>] [--offset <N>] [--json]
+  od memory chunk <id> [--json]
+  od memory engine show [--json]
+  od memory engine set [--auto-memory off|review|auto] [--embedding-provider off|local|ollama|openai_compatible]
+                       [--embedding-url <url>] [--embedding-model <name>] [--embedding-dimensions <N>]
+                       [--reranker-provider builtin|local|http] [--reranker-url <url>] [--reranker-model <name>]
+                       [--judge-provider heuristic|jev|llm] [--judge-url <url>] [--judge-model <name>]
+                       [--recall-max-hits <N>] [--recall-budget <chars>] [--recall-min-score <0..1>] [--file <path|->] [--json]
+  od memory engine model <id> download|cancel [--json]
+  od memory reindex [--vectors] [--json]
+  od memory tidy [--scope kind:id] [--json]
+  od memory policy <botId> [--profile-mount owner_profile|persona_only|none] [--auto-memory-mode off|candidate|explicit_auto] [--json]
+      Old names still work and print what they now do: delete -> archive, promote -> copy, candidate -> pending,
+      search -> recall, readback -> chunk, ledger -> engine show.
+
+  od memory tree list [--project-id <id>] [--json]
+      List derived memory-tree folders and entry nodes (optionally scoped to a Studio project).
 
   od memory tree view <id> [--json]
       Print one folder node or entry body.
@@ -11488,10 +11608,11 @@ function printMemoryEntry(entry) {
   process.stdout.write(`${entry.body ?? ''}\n`);
 }
 
-async function fetchMemoryTree(base) {
+async function fetchMemoryTree(base, projectId) {
   let resp;
   try {
-    resp = await fetch(`${base}/api/memory/tree`);
+    const qs = typeof projectId === 'string' ? `?projectId=${encodeURIComponent(projectId)}` : '';
+    resp = await fetch(`${base}/api/memory/tree${qs}`);
   } catch (err) {
     surfaceFetchError(err, base);
     process.exit(3);
@@ -11634,6 +11755,16 @@ async function runMemory(args) {
     process.exit(args.length === 0 ? 2 : 0);
   }
   const topic = args[0];
+  const { MEMORY_CENTER_CLI_TOPICS, runMemoryCenterCli } = await import('./services/memory-center-cli.js');
+  if (MEMORY_CENTER_CLI_TOPICS.has(topic)) {
+    try {
+      await runMemoryCenterCli(args);
+      return;
+    } catch (error) {
+      process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+      process.exit(1);
+    }
+  }
   if (
     topic !== 'tree'
     && topic !== 'profile'
@@ -11679,7 +11810,8 @@ async function runMemory(args) {
   const action = parts[0] ?? 'list';
 
   if (action === 'list') {
-    const data = await fetchMemoryTree(base);
+    const projectId = typeof flags['project-id'] === 'string' ? flags['project-id'] : flags.project;
+    const data = await fetchMemoryTree(base, projectId);
     if (flags.json) return writeJson(data);
     const tree = data.tree ?? [];
     if (tree.length === 0) {

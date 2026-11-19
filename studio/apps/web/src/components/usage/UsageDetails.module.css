@@ -27,13 +27,13 @@
 .tabs {
   display: flex;
   gap: 20px;
-  padding: 4px 16px 0;
+  padding: 2px 16px 0;
   overflow-x: auto;
   scrollbar-width: none;
 }
 
 .tabs [data-slot='tabs-trigger'] {
-  height: 44px;
+  height: 42px;
   gap: 6px;
   font-size: var(--settings-type-label);
 }
@@ -43,9 +43,9 @@
   border-radius: 999px;
   background: var(--sub);
   color: var(--ink-soft);
-  font-size: 12px;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.4;
 }
 
@@ -64,8 +64,115 @@
   border-radius: var(--settings-control-radius, 8px);
 }
 
+.exportButton.exportButton {
+  height: var(--settings-control-h, 32px);
+  border-radius: var(--settings-control-radius, 8px);
+  font-weight: 500;
+}
+
 .panel {
   min-width: 0;
+}
+
+.sessionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-top: var(--settings-hairline);
+}
+
+.backButton.backButton {
+  font-weight: 500;
+}
+
+.sessionIdentity {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-size: var(--settings-type-label);
+}
+
+.sessionId {
+  min-width: 0;
+  overflow: hidden;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--sub);
+  color: var(--ink-soft);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 11px;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sessionStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 0;
+  padding: 10px 16px;
+  border-top: 1px solid var(--line-soft);
+  background: color-mix(in srgb, var(--sub) 45%, var(--surface));
+  font-variant-numeric: tabular-nums;
+}
+
+.sessionStats > div {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.sessionStats dt {
+  color: var(--ink-faint);
+  font-size: var(--settings-type-meta);
+  font-weight: 400;
+}
+
+.sessionStats dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--settings-type-meta);
+  font-weight: 600;
+}
+
+.sessionButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--settings-type-label);
+  font-weight: 600;
+  line-height: 1.45;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sessionButton:hover .sessionLabel {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.sessionButton:focus-visible {
+  outline: 2px solid var(--focus-ring-color, var(--info));
+  outline-offset: 2px;
+}
+
+.sessionLabel {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ── Tables ──────────────────────────────────────────────────────────────────────────────── */
@@ -85,25 +192,26 @@
 }
 
 .table th {
-  padding: 8px 0;
+  padding: 8px 8px;
   border-top: var(--settings-hairline);
   border-bottom: var(--settings-hairline);
   background: var(--sub);
   color: var(--ink-soft);
   font-size: var(--settings-type-meta);
   font-weight: 500;
-  line-height: 1.5;
+  line-height: 1.45;
   white-space: nowrap;
 }
 
 .table td {
-  height: 52px;
-  padding: 6px 0;
+  padding: 10px 8px;
   overflow: hidden;
   border-bottom: 1px solid var(--line-soft);
   color: var(--ink);
   font-weight: 500;
+  line-height: 1.4;
   text-overflow: ellipsis;
+  vertical-align: middle;
   white-space: nowrap;
 }
 
@@ -112,7 +220,7 @@
 }
 
 .table tbody tr:hover td {
-  background: color-mix(in srgb, var(--sub) 60%, transparent);
+  background: color-mix(in srgb, var(--sub) 55%, transparent);
 }
 
 .table th:first-child,
@@ -125,17 +233,21 @@
   padding-right: 16px;
 }
 
-/* Figures right-aligned in fixed columns; the name takes what is left. */
+/* Figures right-aligned in balanced columns; the primary label column gets the generous share. */
 .table th:not(:first-child),
 .table td:not(:first-child) {
-  width: 104px;
-  padding-left: 8px;
+  width: 92px;
   text-align: right;
+}
+
+.table th:nth-child(2),
+.table td:nth-child(2) {
+  width: 82px;
 }
 
 .table th:last-child,
 .table td:last-child {
-  width: 120px;
+  width: 116px;
 }
 
 .table strong,
@@ -149,14 +261,15 @@
 .table strong {
   font-size: var(--settings-type-label);
   font-weight: 600;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 .table small {
+  margin-top: 2px;
   color: var(--ink-faint);
   font-size: var(--settings-type-meta);
-  font-weight: 500;
-  line-height: 1.45;
+  font-weight: 400;
+  line-height: 1.4;
 }
 
 .table small.failed {
@@ -174,10 +287,10 @@
   vertical-align: 1px;
 }
 
-/* 请求日志: time, then the model as text, three figures. */
+/* 请求日志: full timestamp without ellipsis, generous model column, crisp numeric & status columns. */
 .log th:nth-child(1),
 .log td:nth-child(1) {
-  width: 148px;
+  width: 144px;
 }
 
 .log th:nth-child(2),
@@ -187,15 +300,18 @@
 }
 
 .log th:nth-child(3),
-.log td:nth-child(3),
+.log td:nth-child(3) {
+  width: 88px;
+}
+
 .log th:nth-child(4),
 .log td:nth-child(4) {
-  width: 96px;
+  width: 92px;
 }
 
 .log th:last-child,
 .log td:last-child {
-  width: 92px;
+  width: 84px;
 }
 
 .log td:nth-child(1) strong {
@@ -216,7 +332,7 @@
   gap: 6px;
   color: var(--ink-soft);
   font-size: var(--settings-type-meta);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .status::before {
@@ -233,6 +349,7 @@
 
 .status[data-tone='failed'] {
   color: var(--ink);
+  font-weight: 600;
 }
 
 .status[data-tone='failed']::before {
@@ -247,9 +364,10 @@
   color: var(--ink-faint);
 }
 
-.more {
+.more.more {
   display: flex;
   margin: 12px auto;
+  font-weight: 500;
 }
 
 .empty {
@@ -258,7 +376,7 @@
   border-top: var(--settings-hairline);
   color: var(--ink-faint);
   font-size: var(--settings-type-hint);
-  font-weight: 500;
+  font-weight: 400;
   text-align: center;
 }
 
@@ -268,6 +386,6 @@
   border-top: 1px solid var(--line-soft);
   color: var(--ink-faint);
   font-size: var(--settings-type-meta);
-  font-weight: 500;
-  line-height: 1.5;
+  font-weight: 400;
+  line-height: 1.55;
 }

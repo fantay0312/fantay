@@ -83,6 +83,7 @@ export const TOOL_ICONS: Readonly<Record<BoardTool, LucideIcon>> = {
   hand: Hand,
   frame: Frame,
   rectangle: Square,
+  pen: Pencil,
   ellipse: Circle,
   text: Type,
   generate: Sparkles,

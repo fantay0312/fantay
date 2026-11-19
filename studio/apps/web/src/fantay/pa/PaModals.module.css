@@ -665,3 +665,139 @@
   line-height: 1;
   color: var(--ink-soft);
 }
+
+/* ── Soul modals (UI spec 7): a fixed-height editor frame, option rows, the field foot ─────── */
+
+/* An editor with its own panes (the profile editor; any 2xl editor may pass it as `bodyClassName`): the frame keeps
+   a fixed height and the body does not scroll itself. The frame's notices sit above the one pane row. */
+.modal:has(> .form > .fixedFrame) {
+  height: min(720px, calc(100dvh - 48px));
+  max-height: min(720px, calc(100dvh - 48px));
+}
+
+.fixedFrame {
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.fixedFrame > :not(:last-child) {
+  margin: 0 22px 12px;
+}
+
+/* A long modal body that scrolls: its blocks keep their natural height (a group's `overflow: hidden` would otherwise
+   let the column shrink it and clip its rows). */
+.bodyStack > * {
+  flex-shrink: 0;
+}
+
+/* An option row inside a group: a label line over a full-width equal segmented row, then an optional help line. */
+.optionRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px 14px;
+}
+
+.optionLabel {
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.optionHelp {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+/* Under a field: the hint at the start; the token estimate and the {length}/{max} counter at the end. The counter
+   appears past 80% of the limit and turns red over it. Numbers never ellipsize. */
+.fieldFoot {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.fieldHint {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--type-label);
+  line-height: 1.45;
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+.fieldMeta {
+  display: flex;
+  flex: none;
+  gap: 8px;
+  margin-inline-start: auto;
+  font-size: var(--type-label);
+  line-height: 1.45;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fieldMeta [data-over] {
+  color: var(--accent-ink);
+}
+
+.fieldError {
+  margin: 6px 0 0;
+  font-size: var(--type-label);
+  line-height: 1.45;
+  color: var(--accent-ink);
+}
+
+/* A hairline list row: a name, a quiet fact and one trailing action. */
+.listRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 6px 10px 6px 16px;
+}
+
+.listName {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.listMeta {
+  flex: none;
+  font-size: var(--type-label);
+  line-height: 1.4;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.listEmpty {
+  margin: 0;
+  padding: 14px 16px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+/* A Select at the end of a settings row. */
+.rowSelect {
+  width: 220px;
+  max-width: 100%;
+}

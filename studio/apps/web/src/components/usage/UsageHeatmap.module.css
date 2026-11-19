@@ -12,9 +12,9 @@
 .card {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
   min-width: 0;
-  padding: 16px;
+  padding: 16px 18px;
   border: var(--settings-hairline);
   border-radius: var(--settings-radius);
   background: var(--surface);
@@ -48,7 +48,7 @@
   margin: 0;
   color: var(--ink-faint);
   font-size: var(--settings-type-meta);
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1.5;
 }
 
@@ -74,9 +74,11 @@
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   margin: 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line-soft);
 }
 
-/* Figure over label in every column, so both rows line up; the peak's day is a third line under its label. */
+/* Label on top, figure beneath, optional peak date at the foot — consistent with Overview KPIs. */
 .strip > div {
   display: flex;
   flex-direction: column;
@@ -85,21 +87,12 @@
   padding: 0 14px;
 }
 
-.strip dt {
-  order: 2;
-}
-
-.strip .stripNote {
-  order: 3;
-  color: var(--ink-faint);
-  font-size: var(--settings-type-meta);
-  font-weight: 500;
-  letter-spacing: 0;
-  line-height: 1.5;
-}
-
 .strip > div:first-child {
   padding-left: 0;
+}
+
+.strip > div:last-child {
+  padding-right: 0;
 }
 
 .strip > div + div {
@@ -111,7 +104,7 @@
   color: var(--ink-soft);
   font-size: var(--settings-type-meta);
   font-weight: 500;
-  line-height: 1.5;
+  line-height: 1.45;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -127,7 +120,15 @@
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   letter-spacing: -0.01em;
-  line-height: 1.35;
+  line-height: 1.3;
+}
+
+.strip .stripNote {
+  color: var(--ink-faint);
+  font-size: var(--settings-type-meta);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.45;
 }
 
 /* ── Grid ────────────────────────────────────────────────────────────────────────────────── */
@@ -149,8 +150,8 @@
 
 .label {
   fill: var(--ink-faint);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 400;
 }
 
 .cell {
@@ -216,7 +217,7 @@
   gap: 8px 16px;
   color: var(--ink-faint);
   font-size: var(--settings-type-meta);
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1.5;
 }
 

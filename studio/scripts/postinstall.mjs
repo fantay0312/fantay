@@ -32,6 +32,7 @@ const localDevelopment = Object.freeze({
     "packages/diagnostics",
     "packages/dsh-runtime",
     "packages/tokentosea",
+    "native-tool/web_search",
     "apps/daemon",
     "tools/dev",
     "tools/pack",

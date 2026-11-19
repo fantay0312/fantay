@@ -1,0 +1,188 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* 记忆详情. Frame, sections, groups, tags and diff marks come from MemoryDialogFrame.module.css; this file
+   draws the lead text, the version timeline, the linked-memory rows, the disagreement rows and the activity
+   list. */
+
+.back {
+  align-self: flex-start;
+  margin: -2px 0 -8px -8px;
+  color: var(--ink-soft);
+}
+
+.lead {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.text {
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* ── versions: a quiet rail with a dot per version; the current one is ink ─────────────── */
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.version {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-block: 0 18px;
+  padding-inline-start: 20px;
+}
+
+.version::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 6px;
+  inset-inline-start: 2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--line);
+}
+
+.version::after {
+  content: '';
+  position: absolute;
+  inset-block: 19px 2px;
+  inset-inline-start: 5px;
+  width: 1px;
+  background: var(--line-soft);
+}
+
+.version:last-child {
+  padding-block-end: 4px;
+}
+
+.version:last-child::after {
+  content: none;
+}
+
+.version[data-current]::before {
+  background: var(--ink);
+}
+
+.versionName {
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.versionText {
+  font-size: var(--type-copy);
+  line-height: 1.6;
+}
+
+/* ── linked memories: whole row is the button ─────────────────────────────────────────── */
+
+.relatedRow {
+  justify-content: flex-start;
+  width: 100%;
+  height: auto;
+  min-height: 56px;
+  padding: 10px 12px 10px 16px;
+  border-radius: 0;
+  color: var(--ink);
+  font-weight: 400;
+  text-align: start;
+  white-space: normal;
+  transition: background-color var(--motion-micro) var(--ease-out-quint);
+}
+
+.relatedRow > [data-slot='button-label'] {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.relatedRow:hover {
+  background: var(--sub);
+}
+
+.relatedBody {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.relation {
+  font-size: var(--type-label);
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--ink-soft);
+}
+
+.relatedText {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.chevron {
+  flex: none;
+  color: var(--ink-faint);
+}
+
+/* ── disagreements ────────────────────────────────────────────────────────────────────── */
+
+.conflictRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px 12px 16px;
+}
+
+.conflictBody {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* ── activity ─────────────────────────────────────────────────────────────────────────── */
+
+.events {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 7px 0;
+}
+
+.event + .event {
+  border-top: 1px solid var(--line-soft);
+}
+
+.eventText {
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.event > :last-child {
+  flex: none;
+  justify-content: flex-end;
+}

@@ -1,0 +1,69 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* A Mermaid diagram inside running text: a chat message or a Markdown document. The figure is a
+   sheet of paper as wide as the text column; the drawing sits in the middle at its real size and
+   is drawn smaller only when it is wider than the column. Colours come from the diagram theme
+   (`viewers/diagram/theme.module.css`), which the figure also wears. */
+
+.figure {
+  box-sizing: border-box;
+  min-height: 96px;
+  padding: 16px;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.drawing {
+  display: flex;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--motion-enter) var(--ease-out-quint);
+}
+
+.figure[data-diagram-figure='drawn'] .drawing {
+  opacity: 1;
+}
+
+/* The drawing's own padding (24px, for the stage) is more than a figure inside a column needs. */
+.drawing svg {
+  display: block;
+  flex: none;
+  max-width: 100%;
+  height: auto;
+  margin: -8px;
+}
+
+/* One quiet line where a block did not draw and its source is shown instead. */
+.note {
+  margin: 0;
+  padding: 6px 14px 7px;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* ── in a Markdown document ─────────────────────────────────────────────────────────────────── */
+/* The preview is an HTML string, not React, so the figure is written by the document pipeline
+   (`markdown-document.ts`) into the frame the preview gives every code block: the bar names the
+   kind, the copy button copies the source, the body is the drawing. */
+.documentFigure .drawing {
+  opacity: 1;
+  transition: none;
+}
+
+.documentNote {
+  margin: 0;
+  padding: 10px 18px 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawing {
+    transition: none;
+  }
+}

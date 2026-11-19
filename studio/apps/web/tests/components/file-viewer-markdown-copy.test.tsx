@@ -254,6 +254,20 @@ describe('FileViewer markdown code block copy', () => {
     expect(container.querySelector('.mention-popover')).toBeNull();
   });
 
+  it('writes an undo made while the previous save is in flight, even on immediate close', async () => {
+    mockedFetchProjectFileText.mockResolvedValue('original');
+    let complete!: (file: ProjectFile) => void;
+    mockedWriteProjectTextFile.mockImplementationOnce(() => new Promise(resolve => { complete = resolve; }));
+    const { unmount } = render(<FileViewer projectId="project-1" projectKind="prototype" file={baseFile()} />);
+    const editor = await screen.findByRole('textbox');
+    fireEvent.change(editor, { target: { value: 'intermediate' } });
+    await waitFor(() => expect(mockedWriteProjectTextFile).toHaveBeenCalledTimes(1), { timeout: 3000 });
+    fireEvent.change(editor, { target: { value: 'original' } });
+    unmount();
+    await act(async () => { complete(baseFile()); });
+    expect(mockedWriteProjectTextFile.mock.calls.map(call => call[2])).toEqual(['intermediate', 'original']);
+  });
+
   it('flushes a pending markdown autosave when the viewer unmounts before debounce', async () => {
     mockedFetchProjectFileText.mockResolvedValue('initial');
     const { unmount } = render(<FileViewer projectId="project-1" projectKind="prototype" file={baseFile()} />);
@@ -271,6 +285,35 @@ describe('FileViewer markdown code block copy', () => {
         null,
       );
     });
+  });
+
+  it('accepts its save receipt without reading back the file, then loads an external edit', async () => {
+    mockedFetchProjectFileText.mockResolvedValueOnce('before').mockResolvedValue('external edit');
+    mockedWriteProjectTextFile.mockResolvedValueOnce(baseFile({ mtime: 2, size: 6 }));
+    const view = (mtime: number, size: number) => <FileViewer projectId="project-1" projectKind="prototype" file={baseFile({ mtime, size })} />;
+    const { rerender } = render(view(1, 6));
+    const editor = await screen.findByRole('textbox') as HTMLTextAreaElement;
+    fireEvent.change(editor, { target: { value: 'edited' } });
+    await waitFor(() => expect(mockedWriteProjectTextFile).toHaveBeenCalledTimes(1), { timeout: 3000 });
+    rerender(view(2, 6));
+    expect(mockedFetchProjectFileText).toHaveBeenCalledTimes(1);
+    rerender(view(3, 13));
+    await waitFor(() => expect(editor.value).toBe('external edit'));
+  });
+
+  it('ignores a stale read even after a later edit has finished saving', async () => {
+    mockedFetchProjectFileText.mockResolvedValueOnce('initial');
+    let finish!: (value: string) => void;
+    mockedFetchProjectFileText.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    const renderFile = (mtime: number) => <FileViewer projectId="project-1" projectKind="prototype" file={baseFile({ mtime })} />;
+    const { rerender } = render(renderFile(1));
+    const editor = await screen.findByRole('textbox') as HTMLTextAreaElement;
+    rerender(renderFile(2));
+    await waitFor(() => expect(mockedFetchProjectFileText).toHaveBeenCalledTimes(2));
+    fireEvent.change(editor, { target: { value: 'newer' } });
+    await waitFor(() => expect(mockedWriteProjectTextFile).toHaveBeenCalledTimes(1), { timeout: 3000 });
+    await act(async () => { finish('initial'); });
+    expect(editor.value).toBe('newer');
   });
 
   it('keeps dirty markdown text when a file refresh arrives before autosave', async () => {

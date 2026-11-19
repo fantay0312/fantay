@@ -13,7 +13,7 @@ import type { BoardEngine } from '../store/board-engine';
 import { toolForKey } from './tools';
 
 export type BoardShortcutId =
-  | 'tool.select' | 'tool.hand' | 'tool.frame' | 'tool.rectangle' | 'tool.ellipse' | 'tool.text' | 'tool.generate' | 'tool.note'
+  | 'tool.select' | 'tool.hand' | 'tool.frame' | 'tool.rectangle' | 'tool.ellipse' | 'tool.pen' | 'tool.text' | 'tool.generate' | 'tool.note'
   | 'tool.comment'
   | 'zoom.in' | 'zoom.out' | 'zoom.reset' | 'zoom.fit' | 'zoom.selection'
   | 'edit.undo' | 'edit.redo' | 'edit.selectAll' | 'edit.duplicate' | 'edit.delete' | 'edit.group' | 'edit.ungroup'
@@ -38,6 +38,7 @@ export const BOARD_SHORTCUTS: readonly BoardShortcut[] = [
   { id: 'tool.hand', keys: 'h', labelKey: 'board.tool.hand', when: 'always' },
   { id: 'tool.frame', keys: 'f', labelKey: 'board.tool.frame', when: 'always' },
   { id: 'tool.rectangle', keys: 'r', labelKey: 'board.tool.rectangle', when: 'always' },
+  { id: 'tool.pen', keys: 'p', labelKey: 'board.tool.pen', when: 'always' },
   { id: 'tool.ellipse', keys: 'o', labelKey: 'board.tool.ellipse', when: 'always' },
   { id: 'tool.text', keys: 't', labelKey: 'board.tool.text', when: 'always' },
   { id: 'tool.generate', keys: 'g', labelKey: 'board.tool.generate', when: 'always' },
@@ -106,6 +107,7 @@ const TOOL_SHORTCUTS: Readonly<Record<BoardTool, BoardShortcutId>> = {
   frame: 'tool.frame',
   rectangle: 'tool.rectangle',
   ellipse: 'tool.ellipse',
+  pen: 'tool.pen',
   text: 'tool.text',
   generate: 'tool.generate',
   note: 'tool.note',
@@ -226,6 +228,7 @@ export function runShortcut(engine: BoardEngine, id: BoardShortcutId, event: Pic
     case 'tool.hand': commands.setTool('hand'); return true;
     case 'tool.frame': commands.setTool('frame'); return true;
     case 'tool.rectangle': commands.setTool('rectangle'); return true;
+    case 'tool.pen': commands.setTool('pen'); return true;
     case 'tool.ellipse': commands.setTool('ellipse'); return true;
     case 'tool.text': commands.setTool('text'); return true;
     case 'tool.generate': commands.setTool('generate'); return true;

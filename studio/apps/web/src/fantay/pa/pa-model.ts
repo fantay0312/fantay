@@ -6,6 +6,7 @@
 // source is `apps/daemon/src/services/personal-agent-service.ts` (abbreviated SVC below); each mirror names
 // the SVC method it follows. When the daemon changes, update the mirror and its test together.
 import { paRemainingTime } from '@open-design/contracts';
+import { builtinPresets, isInContext } from '@open-design/contracts/soul';
 import type {
   PaAgentStatus,
   PaAttempt,
@@ -18,6 +19,7 @@ import type {
   PaGroup,
   PaIndex,
   PaMemory,
+  PaMemoryCandidate,
   PaMessage,
   PaModelOption,
   PaNeed,
@@ -25,6 +27,7 @@ import type {
   PaPreview,
   PaResumeBlock,
   PaSnapshot,
+  PaSoulSnapshot,
   PaSubject,
   PaTask,
   PaTaskInput,
@@ -75,8 +78,15 @@ function sortAsc<T>(list: T[], key: (item: T) => number): T[] {
 // Index
 // ---------------------------------------------------------------------------------------------------------
 
-/** Builds every lookup the views need from one snapshot. Callers memoise it on data identity. */
-export function buildIndex(s: PaSnapshot, ch: PaChannelSnapshot, models: PaModelOption[]): PaIndex {
+/** Builds every lookup the views need from one snapshot (and the paired soul snapshot). Callers memoise it on data
+ *  identity. `locale` is the prompt locale of the UI: it names the built-in style presets. */
+export function buildIndex(
+  s: PaSnapshot,
+  ch: PaChannelSnapshot,
+  models: PaModelOption[],
+  soul?: PaSoulSnapshot | null,
+  locale: 'zh' | 'en' = 'zh',
+): PaIndex {
   const agents = new Map(s.agents.map((agent) => [agent.id, agent]));
   const groups = new Map(s.groups.map((group) => [group.id, group]));
   const conversations = new Map(s.conversations.map((conversation) => [conversation.id, conversation]));
@@ -126,7 +136,16 @@ export function buildIndex(s: PaSnapshot, ch: PaChannelSnapshot, models: PaModel
   const directByAgent = new Map<string, PaConversation[]>();
   for (const conversation of s.conversations)
     if (conversationKind(conversation) === 'direct' && conversation.agentId) push(directByAgent, conversation.agentId, conversation);
-  for (const [agentId, list] of directByAgent) directByAgent.set(agentId, byActivityDesc(list));
+  // Enterprise mode: the member's own chat with an agent comes before any shared room of that agent.
+  const ownFirst = (list: PaConversation[]) => [...list.filter((c) => c.principalId), ...list.filter((c) => !c.principalId)];
+  for (const [agentId, list] of directByAgent) directByAgent.set(agentId, ownFirst(byActivityDesc(list)));
+
+  // Soul layer. Chat turns never reach a work surface: those read `workTasks`; `tasks` stays complete for lookups.
+  const workTasks = new Map(s.tasks.filter((task) => !isChatTask(task)).map((task) => [task.id, task]));
+  const personaList = soul?.personas ?? EMPTY_LIST;
+  const candidatesByMessage = new Map<string, PaMemoryCandidate[]>();
+  for (const candidate of s.memoryCandidates ?? EMPTY_LIST)
+    if (candidate.status === 'pending' && candidate.sourceMessageId) push(candidatesByMessage, candidate.sourceMessageId, candidate);
 
   const index: PaIndex = {
     agents,
@@ -150,9 +169,24 @@ export function buildIndex(s: PaSnapshot, ch: PaChannelSnapshot, models: PaModel
     channelConversations: byActivityDesc(s.conversations.filter((c) => conversationKind(c) === 'channel')),
     lastActivity,
     needs: [],
+    workTasks,
+    characters: new Map((soul?.characters ?? EMPTY_LIST).map((character) => [character.id, character])),
+    lorebooks: new Map((soul?.lorebooks ?? EMPTY_LIST).map((book) => [book.id, book])),
+    personas: new Map(personaList.map((persona) => [persona.id, persona])),
+    defaultPersona: personaList.find((persona) => persona.isDefault) ?? null,
+    presets: new Map([...builtinPresets(locale), ...(soul?.presets ?? EMPTY_LIST)].map((preset) => [preset.id, preset])),
+    chats: new Map((soul?.chats ?? EMPTY_LIST).map((chat) => [chat.id, chat])),
+    candidatesByMessage,
+    enterprise: s.mode === 'enterprise',
+    canManageLibrary: s.mode !== 'enterprise' || s.member?.canManageLibrary === true,
   };
   index.needs = needsYou(index);
   return index;
+}
+
+/** A companion turn (`kind: 'chat'`). No work surface lists one. */
+export function isChatTask(task: PaTask): boolean {
+  return task.kind === 'chat';
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -207,7 +241,7 @@ export function subjectOf(index: PaIndex, c: PaConversation): PaSubject | null {
 }
 
 /** Plain one-line text from Markdown, for list previews. */
-function previewText(content: string): string {
+export function previewText(content: string): string {
   const unwrapped = unwrapStructured(content);
   const text = unwrapped.kind === 'structured' ? unwrapped.summary : unwrapped.text;
   return text
@@ -227,10 +261,12 @@ function runningAttempt(attempts: readonly PaAttempt[]): PaAttempt | undefined {
   return undefined;
 }
 
-/** The roster row's second line: live state first, then the last message (spec §3.3 item 6). */
+/** The roster row's second line: live state first, then the last message (spec §3.3 item 6). Live states read work
+ *  tasks only; the last message is the newest one in the model context (not hidden, the selected variant). Companion
+ *  conversations use `soulPreview` (soul/soul-model.ts) instead. */
 export function lastPreview(index: PaIndex, c: PaConversation): PaPreview {
   const tasks = index.tasksByConversation.get(c.id) ?? EMPTY_LIST;
-  const latestFirst = [...tasks].reverse();
+  const latestFirst = tasks.filter((task) => !isChatTask(task)).reverse();
   const working = latestFirst.find((task) => task.status === 'running' || task.status === 'verifying');
   if (working) {
     const attempt = runningAttempt(index.attemptsByTask.get(working.id) ?? EMPTY_LIST);
@@ -241,13 +277,18 @@ export function lastPreview(index: PaIndex, c: PaConversation): PaPreview {
   const latest = latestFirst[0];
   if (latest?.status === 'failed') return { kind: 'failed', error: (latest.error ?? '').slice(0, 40) };
   const messages = index.messagesByConversation.get(c.id) ?? EMPTY_LIST;
-  const last = messages[messages.length - 1];
-  if (last) return { kind: 'text', text: previewText(last.content), sender: last.senderId };
+  const lookup = (id: string) => index.messages.get(id);
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    const message = messages[i]!;
+    if (isInContext(message, lookup)) return { kind: 'text', text: previewText(message.content), sender: message.senderId };
+  }
   return { kind: 'empty' };
 }
 
 /** Spec §6.2: messages sharing a task form one turn; a message without a task is a turn of its own; turns are
- *  ordered by their first message. A task whose messages are missing still gets a turn at its creation time. */
+ *  ordered by their first message. A task whose messages are missing still gets a turn at its creation time.
+ *  Soul rules: messages outside the model context (hidden, non-selected variants) are dropped; a message of a chat
+ *  task, or of a task missing from the snapshot (finished chat tasks are left out), is a turn of its own. */
 export function buildTurns(index: PaIndex, conversationId: string): PaTurn[] {
   const turns: PaTurn[] = [];
   const byTask = new Map<string, PaTurn>();
@@ -267,11 +308,15 @@ export function buildTurns(index: PaIndex, conversationId: string): PaTurn[] {
     }
     return turn;
   };
+  const lookup = (id: string) => index.messages.get(id);
   for (const message of index.messagesByConversation.get(conversationId) ?? EMPTY_LIST) {
-    if (message.taskId) turnFor(message.taskId, message.createdAt).messages.push(message);
+    if (!isInContext(message, lookup)) continue;
+    const task = message.taskId ? index.tasks.get(message.taskId) : undefined;
+    if (task && !isChatTask(task)) turnFor(task.id, message.createdAt).messages.push(message);
     else turns.push({ key: `m:${message.id}`, task: null, messages: [message], attempts: [], artifacts: [], startedAt: message.createdAt });
   }
-  for (const task of index.tasksByConversation.get(conversationId) ?? EMPTY_LIST) turnFor(task.id, task.createdAt);
+  for (const task of index.tasksByConversation.get(conversationId) ?? EMPTY_LIST)
+    if (!isChatTask(task)) turnFor(task.id, task.createdAt);
   return sortAsc(turns, (turn) => turn.startedAt);
 }
 
@@ -526,7 +571,7 @@ export function needsYou(index: PaIndex): PaNeed[] {
     (row) => -row.updatedAt,
   ).map((outbox): PaNeed => ({ kind: 'delivery', outbox, channel: channel(outbox.channelId) }));
   const tasks = sortAsc(
-    [...index.tasks.values()].filter((task) => isNeedsYouTask(task, index.attemptsByTask.get(task.id) ?? EMPTY_LIST)),
+    [...index.workTasks.values()].filter((task) => isNeedsYouTask(task, index.attemptsByTask.get(task.id) ?? EMPTY_LIST)),
     (task) => -(task.waitingSince ?? task.updatedAt),
   ).map((task): PaNeed => ({ kind: 'task', task }));
   return [...approvals, ...deliveries, ...tasks];
@@ -618,7 +663,7 @@ export function mentionQuery(text: string, caret: number): { start: number; quer
   return null;
 }
 
-function newRequestId(): string {
+export function newRequestId(): string {
   const cryptoApi = globalThis.crypto as Crypto | undefined;
   if (cryptoApi?.randomUUID) return cryptoApi.randomUUID();
   return `pa-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
@@ -726,12 +771,12 @@ function involves(index: PaIndex, task: PaTask, subject: PaSubject): boolean {
 }
 
 /** The inspector's work list: this conversation's tasks, or every task involving the subject. Newest
- *  activity first. */
+ *  activity first. Work tasks only (chat turns are not tasks to the owner). */
 export function tasksForSubject(index: PaIndex, subject: PaSubject, scope: 'conversation' | 'all', conversationId: string): PaTask[] {
   const list =
     scope === 'conversation'
-      ? (index.tasksByConversation.get(conversationId) ?? EMPTY_LIST).filter((task) => involves(index, task, subject))
-      : [...index.tasks.values()].filter((task) => involves(index, task, subject));
+      ? (index.tasksByConversation.get(conversationId) ?? EMPTY_LIST).filter((task) => !isChatTask(task) && involves(index, task, subject))
+      : [...index.workTasks.values()].filter((task) => involves(index, task, subject));
   return sortAsc(list, (task) => -task.updatedAt);
 }
 

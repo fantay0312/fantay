@@ -1539,7 +1539,7 @@ export function InlineModelSwitcher({
                     // provider's own ids (o1/o3/o4-mini alongside gpt-*,
                     // for instance), which the company heuristic would
                     // otherwise split into misleading fake "companies".
-                    groupByCompany={currentAgent?.id === 'tokentosea'}
+                    groupByModel={currentAgent?.id === 'tokentosea'}
                     value={currentModelId ?? ''}
                     onChange={(nextValue) => {
                       // Same sink as the compact list — `serviceTier: undefined`

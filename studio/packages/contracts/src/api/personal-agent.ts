@@ -1,10 +1,21 @@
 import { z } from "zod";
+import type { PaMessageSoul, PaTaskSoul } from "./personal-agent-soul.js";
 
 export const paModelSchema = z.object({
   // Local runtime IDs also include user-defined agent profiles.
   runtime: z.string().trim().min(1).max(100).regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/),
   modelId: z.string().trim().min(1).max(200),
 });
+export const paProfileMountSchema = z.enum(["owner_profile", "persona_only", "none"]);
+export type PaProfileMount = z.infer<typeof paProfileMountSchema>;
+export const paAutoMemoryModeSchema = z.enum(["off", "candidate", "explicit_auto"]);
+export type PaAutoMemoryMode = z.infer<typeof paAutoMemoryModeSchema>;
+export const paAgentMemoryPolicySchema = z.object({
+  profileMount: paProfileMountSchema.optional(),
+  autoMemoryMode: paAutoMemoryModeSchema.optional(),
+});
+export type PaAgentMemoryPolicy = z.infer<typeof paAgentMemoryPolicySchema>;
+
 export const paAgentInputSchema = z.object({
   name: z.string().trim().min(1).max(60),
   role: z.string().trim().min(1).max(4000),
@@ -12,6 +23,7 @@ export const paAgentInputSchema = z.object({
   model: paModelSchema,
   enabled: z.boolean().default(true),
   tools: z.array(z.enum(["respond", "create_project"])).default(["respond"]),
+  memoryPolicy: paAgentMemoryPolicySchema.optional(),
 });
 export const paGroupInputSchema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -21,6 +33,18 @@ export const paGroupInputSchema = z.object({
   mode: z.enum(["discussion", "collaboration", "review"]).default("discussion"),
 });
 export const paDataClassSchema = z.enum(["standard", "local_only"]);
+export interface PaViewCard {
+  title: string;
+  view: Record<string, unknown>;
+  interactive: boolean;
+  summary: string;
+}
+export interface PaViewAnswer { action: string; values: Record<string, unknown> }
+export const paTaskCardAnswerSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("question"), attemptId: z.string().min(1).max(100), choices: z.array(z.number().int().min(1).max(5)).min(1).max(5) }).strict(),
+  z.object({ kind: z.literal("view"), attemptId: z.string().min(1).max(100), action: z.string().min(1).max(100), values: z.record(z.string(), z.unknown()) }).strict(),
+]);
+export type PaTaskCardAnswer = z.infer<typeof paTaskCardAnswerSchema>;
 export type PaDataClass = z.infer<typeof paDataClassSchema>;
 export const paExecutionSchema = z.object({
   target: z.enum(["local", "worker"]),
@@ -38,7 +62,7 @@ export const paTaskInputSchema = z.object({
   execution: paExecutionSchema.optional(),
   targetAgentIds: z.array(z.string().min(1)).max(12).default([]),
   replyTo: z.string().optional(),
-  kind: z.enum(["discussion", "project"]).default("discussion"),
+  kind: z.enum(["discussion", "project", "chat", "team"]).default("discussion"),
   projectName: z.string().trim().min(1).max(120).optional(),
   projectId: z.string().min(1).max(100).optional(),
   budget: z
@@ -49,15 +73,77 @@ export const paTaskInputSchema = z.object({
     })
     .default({ maxAttempts: 6, timeoutMs: 300000 }),
 });
+export const paMemoryKindSchema = z.enum([
+  "profile",
+  "preference",
+  "fact",
+  "procedure",
+  "promise",
+  "moment",
+]);
+export type PaMemoryKind = z.infer<typeof paMemoryKindSchema>;
+export const paMemoryOriginKindSchema = z.enum([
+  "user_explicit",
+  "tool_verified",
+  "llm_inferred",
+  "imported",
+]);
+export type PaMemoryOriginKind = z.infer<typeof paMemoryOriginKindSchema>;
+export const paMemoryStatusSchema = z.enum([
+  "active",
+  "superseded",
+  "challenged",
+  "archived",
+]);
+export type PaMemoryStatus = z.infer<typeof paMemoryStatusSchema>;
+export const paMemoryRelationSchema = z.enum([
+  "supersedes",
+  "enriches",
+  "challenges",
+]);
+export type PaMemoryRelation = z.infer<typeof paMemoryRelationSchema>;
+export const paMemoryEvolutionSchema = z.object({
+  targetId: z.string().min(1).max(100),
+  relation: paMemoryRelationSchema,
+});
+export type PaMemoryEvolution = z.infer<typeof paMemoryEvolutionSchema>;
+export const paMemorySourceRefKindSchema = z.enum([
+  "message",
+  "task",
+  "attempt",
+  "studio_memory",
+  "raw_chunk",
+  "pa_memory",
+]);
+export type PaMemorySourceRefKind = z.infer<typeof paMemorySourceRefKindSchema>;
+export const paMemorySourceRefSchema = z.object({
+  kind: paMemorySourceRefKindSchema,
+  id: z.string().min(1).max(200),
+  conversationId: z.string().max(100).optional(),
+  startOffset: z.number().int().nonnegative().optional(),
+  endOffset: z.number().int().nonnegative().optional(),
+  startLine: z.number().int().positive().optional(),
+  endLine: z.number().int().positive().optional(),
+  quote: z.string().max(2000).optional(),
+});
+export type PaMemorySourceRef = z.infer<typeof paMemorySourceRefSchema>;
+
 export const paMemoryInputSchema = z.object({
   content: z.string().trim().min(1).max(16000),
   source: z.string().trim().min(1).max(500),
   scope: z.enum(["private", "agent", "group", "project"]),
   scopeId: z.string().max(100).nullable().default(null),
-  kind: z.enum(["preference", "fact", "procedure"]).optional(),
+  kind: paMemoryKindSchema.optional(),
+  originKind: paMemoryOriginKindSchema.optional(),
+  pinned: z.boolean().optional(),
+  status: paMemoryStatusSchema.optional(),
+  evolves: paMemoryEvolutionSchema.nullable().optional(),
+  sourceRefs: z.array(paMemorySourceRefSchema).max(32).optional(),
   validFrom: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
   validUntil: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).nullable().optional(),
   dataClass: paDataClassSchema.optional(),
+  dueAt: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).nullable().optional(),
+  sourceMessageId: z.string().max(100).nullable().optional(),
 });
 export type PaModel = z.infer<typeof paModelSchema>;
 export function isPaLocalCliModel(model: PaModel): boolean {
@@ -79,6 +165,7 @@ export const paRoutineInputSchema = z.object({
   time: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
   timezone: z.string().min(1).max(100),
   enabled: z.boolean().default(false),
+  soul: z.object({ kind: z.literal("reachout") }).strict().optional(),
 }).strict();
 export type PaGoalInput = z.infer<typeof paGoalInputSchema>;
 export type PaRoutineInput = z.infer<typeof paRoutineInputSchema>;
@@ -113,7 +200,19 @@ export interface PaConversation extends PaEntity {
   title: string;
   agentId: string | null;
   groupId: string | null;
+  /** Enterprise mode: the member this conversation belongs to. A conversation without one is a shared work room. */
+  principalId?: string;
 }
+/**
+ * A memory a turn read, with the revision it read. `standing` marks one that was in the prompt only because it is
+ * pinned (always included), not because it was recalled for this request.
+ */
+export interface PaMemoryRef {
+  id: string;
+  revision: number;
+  standing?: boolean;
+}
+
 export interface PaMessage extends PaEntity {
   conversationId: string;
   taskId: string | null;
@@ -124,8 +223,11 @@ export interface PaMessage extends PaEntity {
   replyTo: string | null;
   model?: PaModel;
   attemptId?: string;
-  memoryRefs?: Array<{ id: string; revision: number }>;
+  memoryRefs?: PaMemoryRef[];
   dataClass?: PaDataClass;
+  soul?: PaMessageSoul;
+  viewCard?: PaViewCard;
+  viewAnswer?: PaViewAnswer;
 }
 export type PaPrincipal =
   | { kind: "owner"; id: "owner" }
@@ -147,6 +249,8 @@ export interface PaTask extends PaEntity {
   channelId?: string;
   channelAuthorizationVersion?: number;
   waitKind?: 'input' | 'approval' | 'external_result' | 'device' | 'agent' | 'login' | 'budget' | 'recovery' | 'paused' | 'network' | 'verification' | undefined;
+  channelQuestion?: { attemptId: string; prompt: string; options: string[]; multiple: boolean; askedAt: number } | undefined;
+  pendingView?: (PaViewCard & { attemptId: string }) | undefined;
   waitingSince?: number | undefined;
   expiresAt?: number | undefined;
   timeBudgetExhausted?: boolean;
@@ -160,7 +264,8 @@ export interface PaTask extends PaEntity {
   dataClass?: PaDataClass;
   execution?: PaExecution;
   principal?: PaPrincipal;
-  kind: "discussion" | "project";
+  kind: PaTaskInput["kind"];
+  soul?: PaTaskSoul;
   projectName: string;
   projectId: string | null;
   projectConversationId: string | null;
@@ -215,7 +320,7 @@ export interface PaAttempt extends PaEntity {
   modelReceipt?: { outputSha256: string; receivedAt: number } | undefined;
   workerReceipt?: { workerId: string; generation: number; workHash: string };
   sandboxPlan?: { script: string; sha256: string; receivedAt: number };
-  memoryRefs?: Array<{ id: string; revision: number }>;
+  memoryRefs?: PaMemoryRef[];
   usage: {
     inputTokens?: number | undefined;
     outputTokens?: number | undefined;
@@ -254,7 +359,7 @@ export const paArtifactMergeSchema = z.object({
 }).strict();
 export type PaArtifactMerge = z.infer<typeof paArtifactMergeSchema>;
 export interface PaMemory extends PaEntity, PaMemoryInput {
-  principalId?: string;
+  principalId?: string | undefined;
 }
 export interface PaMemoryCandidate extends PaEntity {
   taskId: string;
@@ -262,7 +367,33 @@ export interface PaMemoryCandidate extends PaEntity {
   content: string;
   dataClass: PaDataClass;
   status: "pending" | "accepted" | "dismissed";
-  memoryId?: string;
+  memoryId?: string | undefined;
+  kind?: PaMemoryKind | undefined;
+  originKind?: PaMemoryOriginKind | undefined;
+  targetScope?: PaMemoryInput["scope"] | undefined;
+  targetScopeId?: string | null | undefined;
+  evolves?: PaMemoryEvolution | null | undefined;
+  conflictMemoryId?: string | undefined;
+  dueAt?: number | null | undefined;
+  sourceMessageId?: string | undefined;
+  agentId?: string | undefined;
+  conversationId?: string | undefined;
+}
+export interface PaEpisode extends PaEntity {
+  taskId: string;
+  conversationId: string;
+  agentId: string | null;
+  projectId: string | null;
+  groupId: string | null;
+  channelId?: string | null | undefined;
+  principalId?: string | undefined;
+  dataClass: PaDataClass;
+  summary: string;
+  outcome: "completed" | "failed" | "cancelled";
+  artifactIds: string[];
+  memoryRefs: PaMemoryRef[];
+  eventStartAt: number;
+  eventEndAt: number;
 }
 export interface PaNode {
   id: string;
@@ -305,6 +436,16 @@ export interface PaModelOption extends PaModel {
   available: boolean;
   detail?: string;
 }
+export interface PaSnapshotMember { id: string; role: "admin" | "operator" | "viewer"; canManageLibrary: boolean }
+/** Enterprise mode following an organization server: what was last taken from it. `count` is the members recognised
+ *  (directory) or the library items in use (library); `error` is that part's last failure, null once it worked. */
+export interface PaOrgLinkStatus {
+  url: string;
+  /** The organization's companion switches as last received: chats on or off, per-member character memory, personas. */
+  companion: { enabled: boolean; memory: boolean; personas: boolean };
+  directory: { version: number; syncedAt: number | null; count: number; error: string | null };
+  library: { version: number; syncedAt: number | null; count: number; error: string | null };
+}
 export interface PaSnapshot {
   agents: PersonalAgent[];
   groups: PaGroup[];
@@ -319,5 +460,12 @@ export interface PaSnapshot {
   routines?: PaRoutine[];
   node: PaNode;
   mode?: "personal" | "enterprise";
+  /** Enterprise mode: who this snapshot was filtered for. `canManageLibrary` gates agents, group chats, characters,
+   *  world books and style presets; everyone else reads them and owns only their conversations, personas and memories. */
+  member?: PaSnapshotMember;
+  /** Present when the daemon follows an organization server: the library is then changed only on that server. */
+  org?: PaOrgLinkStatus;
   execution?: { localSandbox: boolean; remoteWorker: boolean };
+  soulVersion?: string;
+  tag?: string;
 }

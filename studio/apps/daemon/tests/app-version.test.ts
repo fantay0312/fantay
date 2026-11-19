@@ -6,6 +6,10 @@ import {
 } from '../src/app-version.js';
 
 describe('app version helpers', () => {
+  it('restores padded calendar versions for the public app API', () => {
+    expect(resolveAppVersionInfo({ packageMetadata: { version: '26.101.1' }, env: {} }).version).toBe('26.0101.1');
+    expect(resolveAppVersionInfo({ packageMetadata: { version: '26.101.1' }, env: { OD_APP_VERSION: '26.0101.2' } }).version).toBe('26.0101.2');
+  });
   it('resolves version info from package metadata', () => {
     expect(resolveAppVersionInfo({
       packageMetadata: { version: '1.2.3' },

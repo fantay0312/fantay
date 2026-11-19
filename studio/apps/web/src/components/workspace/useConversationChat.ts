@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { streamViaDaemon } from '../../providers/daemon';
-import { listMessages, saveMessage } from '../../state/projects';
+import { reportChatRunFeedback, streamViaDaemon } from '../../providers/daemon';
+import type { ChatSendMeta } from '../ChatComposer';
+import type { ByokMediaDefaults, MediaExecutionPolicy } from '@open-design/contracts';
+import { listMessages, saveMessage, selectChatMessageBranch } from '../../state/projects';
+import { messageVersionRequest } from '../../runtime/chat/message-version-request';
+import type { MessageVersionActions } from '../chat/MessageVersions';
+import { workspaceProjectHeaders } from '../../collab/workspace-identity';
+import type { ChatMessageFeedbackChange } from '../../types';
 import {
   appendErrorStatusEvent,
   runFailureFieldsFromError,
@@ -11,6 +17,8 @@ import { randomUUID } from '../../utils/uuid';
 import { effectiveAgentModelChoice } from '../agentModelSelection';
 import {
   createBufferedTextUpdates,
+  chatAttachmentsFromPreviewCommentImages,
+  mergeChatAttachments,
   finalizeActiveAssistantMessagesOnStop,
   resolveRetryTarget,
   resolveSucceededRunStatus,
@@ -66,6 +74,13 @@ function isActiveRunStatus(status: ChatMessage['runStatus']): boolean {
 }
 
 export interface ConversationChatContext {
+  enabled?: boolean;
+  sideDialogueInstructions?: string;
+  additionalMessages?: ChatMessage[];
+  savedTurnMeta?: (clientRequestId: string) => ChatSendMeta | undefined;
+  designSystemId?: string | null;
+  byokMediaDefaults?: ByokMediaDefaults;
+  mediaExecution?: MediaExecutionPolicy;
   /** Optional utility skill for an embedded, domain-specific workbench. */
   skillId?: string;
   /** Live app config — selects daemon-vs-api mode and the active agent. */
@@ -89,6 +104,9 @@ export interface ConversationChatContext {
 }
 
 export interface UseConversationChatResult {
+  versionActions: MessageVersionActions;
+  onFeedback: (message: ChatMessage, change: ChatMessageFeedbackChange) => void;
+  showProjectMessage: (message: ChatMessage) => void;
   messages: ChatMessage[];
   streaming: boolean;
   error: string | null;
@@ -100,6 +118,7 @@ export interface UseConversationChatResult {
     prompt: string,
     attachments: ChatAttachment[],
     commentAttachments: ChatCommentAttachment[],
+    meta?: ChatSendMeta,
   ) => boolean;
   onRetry: (assistantMessage: ChatMessage) => void;
   onStop: () => void;
@@ -115,6 +134,9 @@ export function useConversationChat(
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editor, setEditor] = useState<MessageVersionActions['editor']>(null);
+  const [switchingBranch, setSwitchingBranch] = useState(false);
+  const branchLock = useRef(false);
   const messageScopeKey = `${projectId}\u0000${conversationId}`;
   const [messagesReadyScopeKey, setMessagesReadyScopeKey] = useState<string | null>(null);
 
@@ -132,6 +154,7 @@ export function useConversationChat(
   const currentScopeRef = useRef(messageScopeKey);
   currentScopeRef.current = messageScopeKey;
   const abortRef = useRef<AbortController | null>(null);
+  const uncommittedVersion = useRef<ChatMessage[] | null>(null);
   const cancelRef = useRef<AbortController | null>(null);
   // Coalesces streamed deltas into ~one React update per animation frame
   // (same primitive the primary chat loop uses) so a side chat doesn't rebuild
@@ -147,6 +170,7 @@ export function useConversationChat(
     setError(null);
     setMessagesReadyScopeKey(null);
     messagesReadyScopeKeyRef.current = null;
+    if (ctx.enabled === false) { setLoading(false); return; }
     void (async () => {
       try {
         const list = await listMessages(
@@ -174,13 +198,14 @@ export function useConversationChat(
       // Navigation retires only the browser subscription, not the daemon run.
       // Release admission before another scope loads, and reject old callbacks.
       requestOwnerRef.current = null;
+      uncommittedVersion.current = null;
       abortRef.current?.abort();
       abortRef.current = null;
       cancelRef.current = null;
       textBufferRef.current?.cancel();
       textBufferRef.current = null;
     };
-  }, [projectId, conversationId, ctx.workspaceContext, messageScopeKey]);
+  }, [projectId, conversationId, ctx.enabled, ctx.workspaceContext, messageScopeKey]);
 
   // A reopened workbench does not own the original stream. Keep its persisted
   // run visible and current without starting a replacement generation.
@@ -221,6 +246,8 @@ export function useConversationChat(
       attachments: ChatAttachment[],
       commentAttachments: ChatCommentAttachment[],
       retryOfAssistantId?: string,
+      meta?: ChatSendMeta,
+      version?: NonNullable<ReturnType<typeof messageVersionRequest>>,
     ) => {
       const {
         config: cfg,
@@ -235,7 +262,7 @@ export function useConversationChat(
       if (messagesReadyScopeKeyRef.current !== messageScopeKey) return false;
       // This controller is installed synchronously before dispatch, so two
       // activations in one React turn cannot admit two replacement requests.
-      if (abortRef.current) return false;
+      if (abortRef.current || branchLock.current) return false;
       if (messagesRef.current.some(message => message.role === 'assistant' && isActiveRunStatus(message.runStatus))) return false;
       const apiMode = cfg.mode === 'api';
       if (apiMode && !isSupportedByokChatProtocol(cfg.apiProtocol)) {
@@ -260,10 +287,16 @@ export function useConversationChat(
       }
       const runtimeAgentId = isByokRun ? BYOK_AGENT_ID : cfg.agentId!;
 
+      const transcript = ctxRef.current.additionalMessages?.length
+        ? [...messagesRef.current, ...ctxRef.current.additionalMessages].sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
+        : messagesRef.current;
       const retryTarget = retryOfAssistantId
-        ? resolveRetryTarget(messagesRef.current, retryOfAssistantId)
+        ? resolveRetryTarget(transcript, retryOfAssistantId)
         : null;
       if (retryOfAssistantId && !retryTarget) return false;
+      const priorRequest = version?.question.clientRequestId ?? retryTarget?.userMsg.clientRequestId;
+      if (priorRequest) meta = { ...ctxRef.current.savedTurnMeta?.(priorRequest), ...meta, clientRequestId: randomUUID() };
+      const runAttachments = mergeChatAttachments(attachments, ...commentAttachments.map(a => chatAttachmentsFromPreviewCommentImages(a.imageAttachments)));
 
       const startedAt = Date.now();
       const selectedAgent = agents.get(runtimeAgentId) ?? null;
@@ -276,14 +309,17 @@ export function useConversationChat(
             choice?.model,
           );
 
-      const userMsg: ChatMessage = retryTarget
-        ? retryTarget.userMsg
-        : {
+      const reusedQuestion = version?.branch.action === 'regenerate' ? version.question : retryTarget?.userMsg;
+      const userMsg: ChatMessage = reusedQuestion ?? {
             id: randomUUID(),
             role: 'user',
             content: prompt,
             createdAt: startedAt,
-            ...(attachments.length > 0 ? { attachments } : {}),
+            sessionMode: meta?.sessionMode ?? sessionMode,
+            ...(meta?.clientRequestId && { clientRequestId: meta.clientRequestId }),
+            ...(meta?.context && { runContext: meta.context }),
+            ...(meta?.appliedPluginSnapshot && { appliedPluginSnapshot: meta.appliedPluginSnapshot }),
+            ...(runAttachments.length > 0 ? { attachments: runAttachments } : {}),
             ...(commentAttachments.length > 0 ? { commentAttachments } : {}),
           };
       // A retry is a new attempt. The previous failure remains an immutable
@@ -301,19 +337,20 @@ export function useConversationChat(
         startedAt,
       };
 
-      const history = retryTarget
-        ? [...retryTarget.priorMessages, userMsg]
-        : [...messagesRef.current, userMsg];
+      const branchPrefix = version ? messagesRef.current.slice(0, version.questionIndex) : undefined;
+      const history = [...(branchPrefix ?? retryTarget?.priorMessages ?? transcript), userMsg];
       // Provider context repeats the original request without its failed
       // output. The visible transcript retains that failed attempt unchanged.
       const nextMessages = retryTarget
         ? [...messagesRef.current, assistantMsg]
-        : [...history, assistantMsg];
+        : [...(branchPrefix ?? messagesRef.current), userMsg, assistantMsg];
+      const previousMessages = messagesRef.current;
+      uncommittedVersion.current = version ? previousMessages : null;
       messagesRef.current = nextMessages;
       setMessages(nextMessages);
       setStreaming(true);
       setError(null);
-      if (!retryTarget) persist(userMsg);
+      if (!retryTarget && !version) persist(userMsg);
 
       const controller = new AbortController();
       const cancelController = new AbortController();
@@ -324,6 +361,13 @@ export function useConversationChat(
         && currentScopeRef.current === messageScopeKey
         && ctxRef.current.workspaceContext === workspaceContext;
       const acceptsCallback = () => ownsScope() && !controller.signal.aborted;
+      let admitted = false;
+      const refreshBranch = () => {
+        if (!version) return;
+        void listMessages(projectId, conversationId, workspaceContext).then(list => {
+          if (ownsScope()) setMessages(list);
+        }).catch(() => {});
+      };
       const updateOwnedAssistant = (updater: (previous: ChatMessage) => ChatMessage) => {
         if (!ownsScope()) return;
         updateAssistant(assistantId, (previous) => ownsScope() ? updater(previous) : previous);
@@ -375,9 +419,18 @@ export function useConversationChat(
             return next;
           });
           clearRefs();
+          refreshBranch();
         },
         onError: (err: Error) => {
           if (!acceptsCallback()) return;
+          if (version && !admitted) {
+            uncommittedVersion.current = null;
+            setMessages(previousMessages);
+            setError(err.message);
+            clearRefs();
+            refreshBranch();
+            return;
+          }
           textBuffer.flush();
           const endedAt = Date.now();
           const code = (err as Error & { code?: string }).code;
@@ -412,6 +465,7 @@ export function useConversationChat(
 
       void streamViaDaemon({
         agentId: runtimeAgentId,
+        sideDialogueInstructions: ctxRef.current.sideDialogueInstructions,
         history,
         signal: controller.signal,
         cancelSignal: cancelController.signal,
@@ -420,10 +474,18 @@ export function useConversationChat(
         conversationId,
         userMessageId: userMsg.id,
         assistantMessageId: assistantId,
-        clientRequestId: randomUUID(),
+        ...(version && { messageBranch: version.branch }),
+        clientRequestId: meta?.clientRequestId ?? randomUUID(),
         skillId: skillId ?? null,
-        skillIds: skillId ? [skillId] : [],
-        designSystemId: cfg.designSystemId ?? null,
+        skillIds: meta?.skillIds ?? (skillId ? [skillId] : []),
+        context: meta?.context ?? userMsg.runContext,
+        research: meta?.research,
+        appliedPluginSnapshotId: meta?.appliedPluginSnapshotId ?? userMsg.appliedPluginSnapshot?.snapshotId,
+        pluginId: userMsg.appliedPluginSnapshot?.pluginId,
+        pluginInputs: userMsg.appliedPluginSnapshot?.inputs,
+        designSystemId: ctxRef.current.designSystemId === undefined ? cfg.designSystemId ?? null : ctxRef.current.designSystemId,
+        mediaExecution: ctxRef.current.mediaExecution,
+        ...(isByokRun && { byokMediaDefaults: ctxRef.current.byokMediaDefaults }),
         workspaceContext,
         attachments: (userMsg.attachments ?? []).map((a) => a.path),
         commentAttachments: userMsg.commentAttachments ?? [],
@@ -432,9 +494,11 @@ export function useConversationChat(
         reasoning: choice?.reasoning ?? null,
         serviceTier: choice?.serviceTier ?? null,
         locale: loc,
-        sessionMode,
+        sessionMode: meta?.sessionMode ?? userMsg.sessionMode ?? sessionMode,
         onRunCreated: (runId) => {
           if (!acceptsCallback()) return;
+          admitted = true;
+          if (version) { uncommittedVersion.current = null; setEditor(null); }
           updateOwnedAssistant((prev) => ({
             ...prev,
             runId,
@@ -467,8 +531,8 @@ export function useConversationChat(
   );
 
   const onSend = useCallback(
-    (prompt: string, attachments: ChatAttachment[], commentAttachments: ChatCommentAttachment[]) => {
-      return runSend(prompt, attachments, commentAttachments);
+    (prompt: string, attachments: ChatAttachment[], commentAttachments: ChatCommentAttachment[], meta?: ChatSendMeta) => {
+      return runSend(prompt, attachments, commentAttachments, undefined, meta);
     },
     [runSend],
   );
@@ -481,6 +545,21 @@ export function useConversationChat(
   );
 
   const onStop = useCallback(() => {
+    if (!cancelRef.current && !abortRef.current) {
+      const active = messagesRef.current.filter(m => m.runId && isActiveRunStatus(m.runStatus));
+      const scope = ctxRef.current.workspaceContext;
+      void Promise.all(active.map(async m => {
+        const result = await fetch(`/api/runs/${encodeURIComponent(m.runId!)}/cancel`, {
+          method: 'POST', headers: scope ? workspaceProjectHeaders(scope) : {},
+        });
+        if (!result.ok) throw new Error(`HTTP ${result.status}`);
+      })).then(async () => {
+        if (!active.length || currentScopeRef.current !== messageScopeKey) return;
+        const list = await listMessages(projectId, conversationId, scope);
+        if (currentScopeRef.current === messageScopeKey && !abortRef.current) setMessages(list);
+      }).catch(err => { if (currentScopeRef.current === messageScopeKey) setError(String(err)); });
+      return;
+    }
     const stoppedAt = Date.now();
     // Abort the cancel signal first so the daemon stops the run (POST cancel),
     // then drop the browser-side SSE subscription.
@@ -492,19 +571,67 @@ export function useConversationChat(
     textBufferRef.current?.cancel();
     textBufferRef.current = null;
     setStreaming(false);
+    if (uncommittedVersion.current) {
+      // POST may still be in flight. Only an admitted branch owns a new row.
+      setMessages(uncommittedVersion.current);
+      uncommittedVersion.current = null;
+      return;
+    }
     setMessages((curr) => {
       const { messages: next, finalized } = finalizeActiveAssistantMessagesOnStop(curr, stoppedAt);
       for (const message of finalized) persist(message);
       return next;
     });
-  }, [persist]);
+  }, [persist, messageScopeKey, projectId, conversationId]);
+
+  const branchSend = async (id: string, text?: string) => {
+    const version = messageVersionRequest(messagesRef.current, id, text);
+    if (!version) return false;
+    const q = version.question;
+    return runSend(version.text, q.attachments ?? [], q.commentAttachments ?? [], undefined, {
+      sessionMode: q.sessionMode, context: q.runContext, appliedPluginSnapshot: q.appliedPluginSnapshot,
+      skillIds: q.runContext?.skillIds,
+    }, version);
+  };
+  const versionActions: MessageVersionActions = {
+    disabled: loading || streaming || recoveringRun || switchingBranch, editor, edit: branchSend,
+    regenerate: id => branchSend(id), setEditor: (id, draft = '') => setEditor(id ? { messageId: id, draft } : null),
+    supports: id => messagesRef.current.some(m => m.id === id),
+    select: async id => {
+      const leaf = messagesRef.current.at(-1)?.id;
+      if (!leaf || branchLock.current || abortRef.current || recoveringRun) return;
+      branchLock.current = true;
+      setSwitchingBranch(true);
+      try {
+        const scope = ctxRef.current.workspaceContext;
+        await selectChatMessageBranch(projectId, conversationId, id, leaf, scope);
+        const list = await listMessages(projectId, conversationId, scope);
+        if (currentScopeRef.current === messageScopeKey) { setMessages(list); setEditor(null); }
+      } catch (err) { if (currentScopeRef.current === messageScopeKey) setError(String(err)); }
+      finally { branchLock.current = false; setSwitchingBranch(false); }
+    },
+  };
+  const onFeedback = (message: ChatMessage, change: ChatMessageFeedbackChange) => {
+    const existing = messagesRef.current.find(m => m.id === message.id);
+    if (!existing) return;
+    const now = Date.now();
+    const feedback = change ? { ...change, createdAt: existing.feedback?.rating === change.rating ? existing.feedback.createdAt : now, updatedAt: now } : undefined;
+    const updated = { ...existing, feedback };
+    setMessages(rows => rows.map(m => m.id === message.id ? updated : m));
+    persist(updated);
+    if (change && existing.runId) void reportChatRunFeedback({ runId: existing.runId, rating: change.rating,
+      reasonCodes: change.reasonCodes ?? [], hasCustomReason: !!change.customReason, customReason: change.customReason ?? '' }, ctxRef.current.workspaceContext);
+  };
 
   return {
+    versionActions, onFeedback,
+    showProjectMessage: message => setMessages(rows => rows.some(m => m.id === message.id)
+      ? rows.map(m => m.id === message.id ? message : m) : [...rows, message]),
     messages,
     streaming,
     error,
     loading,
-    sendDisabled: messagesReadyScopeKey !== messageScopeKey,
+    sendDisabled: messagesReadyScopeKey !== messageScopeKey || switchingBranch,
     onSend,
     onRetry,
     onStop,

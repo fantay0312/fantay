@@ -9,16 +9,26 @@ export const WORKSPACE_DESIGN_FILES_TAB = '__design_files__';
 /** Mirror of FileWorkspace's `DESIGN_SYSTEM_TAB` (equality is asserted by a test). */
 export const WORKSPACE_DESIGN_SYSTEM_TAB = '__design_system__';
 export const WORKSPACE_START_TAB = '__workspace_start__';
+export const WORKSPACE_DIALOGUE_TAB = '__side_dialogue__';
+/** The 代码 surface: file tree, source and this turn's changes in one tab (`fantay/workspace/code`). */
+export const WORKSPACE_CODE_TAB = '__code__' as const;
 
 export type FantayWorkspaceRoot = 'board' | 'files' | 'designSystem';
 
-export function isFantayRootTabId(id: string): id is typeof BOARD_TAB | typeof PROJECT_DESIGN_SYSTEM_TAB {
-  return id === BOARD_TAB || id === PROJECT_DESIGN_SYSTEM_TAB;
+export function isFantayRootTabId(
+  id: string,
+): id is typeof BOARD_TAB | typeof PROJECT_DESIGN_SYSTEM_TAB | typeof WORKSPACE_CODE_TAB | typeof WORKSPACE_DIALOGUE_TAB {
+  return id === BOARD_TAB || id === PROJECT_DESIGN_SYSTEM_TAB || id === WORKSPACE_CODE_TAB || id === WORKSPACE_DIALOGUE_TAB;
 }
 
-/** enabled && (id === PROJECT_DESIGN_SYSTEM_TAB || (id === BOARD_TAB && FANTAY_BOARD_READY)) */
+/** enabled && (id is 设计系统 or 代码 || (id === BOARD_TAB && FANTAY_BOARD_READY)) */
 export function isRenderableFantayRootTab(id: string, enabled: boolean): boolean {
-  return enabled && (id === PROJECT_DESIGN_SYSTEM_TAB || (id === BOARD_TAB && FANTAY_BOARD_READY));
+  return enabled && (
+    id === PROJECT_DESIGN_SYSTEM_TAB
+    || id === WORKSPACE_CODE_TAB
+    || id === WORKSPACE_DIALOGUE_TAB
+    || (id === BOARD_TAB && FANTAY_BOARD_READY)
+  );
 }
 
 /** BOARD_TAB && !FANTAY_BOARD_READY → DESIGN_FILES_TAB; PROJECT_DESIGN_SYSTEM_TAB on a design-system project → DESIGN_SYSTEM_TAB; else id */

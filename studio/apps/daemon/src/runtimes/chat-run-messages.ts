@@ -1,7 +1,12 @@
 import { performance } from 'node:perf_hooks';
 import type Database from 'better-sqlite3';
 import type { PersistedAgentEvent } from '@open-design/contracts';
-import { MAX_ARTIFACT_FOCUS_SHOW, MAX_NEXT_STEP_SUGGESTIONS } from '@open-design/contracts';
+import {
+  MAX_ARTIFACT_FOCUS_SHOW,
+  MAX_NEXT_STEP_SUGGESTIONS,
+  normalizeArtifactFocusTool,
+  normalizeArtifactFocusUrl,
+} from '@open-design/contracts';
 import type { RunFinishedProps } from '@open-design/contracts/analytics';
 import {
   appendMessageAgentEvents,
@@ -576,8 +581,15 @@ function unboundedAgentPayloadToPersistedAgentEvent(data: unknown): PersistedAge
    * the host falls back to its own produced-file inference, which is what every
    * conversation recorded before this event looks like.
    *
-   * Stored only when it carries something usable — an event with neither field
-   * would be a persisted no-op that later folds have to skip anyway.
+   * Stored only when it carries something usable — an event with none of the
+   * fields would be a persisted no-op that later folds have to skip anyway.
+   *
+   * `tool` alone is usable: "show the files tool" opens no file and lists no
+   * card, and a reload must still put the same tool in front. Both `tool` and
+   * `url` go back through the contract normalizers here rather than being
+   * trusted from the payload, so what is stored is what the stripper would
+   * emit — an unknown tool is dropped, and an address is kept only next to
+   * `tool: 'browser'`.
    */
   if (type === 'artifact_focus') {
     const open = typeof data.open === 'string' && data.open ? data.open : undefined;
@@ -586,11 +598,15 @@ function unboundedAgentPayloadToPersistedAgentEvent(data: unknown): PersistedAge
           .filter((p): p is string => typeof p === 'string' && p.trim().length > 0)
           .slice(0, MAX_ARTIFACT_FOCUS_SHOW)
       : undefined;
-    if (!open && (!show || show.length === 0)) return null;
+    const tool = normalizeArtifactFocusTool(data.tool);
+    const url = tool === 'browser' ? normalizeArtifactFocusUrl(data.url) : null;
+    if (!open && (!show || show.length === 0) && !tool) return null;
     return {
       kind: 'artifact_focus',
       ...(open ? { open } : {}),
       ...(show && show.length > 0 ? { show } : {}),
+      ...(tool ? { tool } : {}),
+      ...(url ? { url } : {}),
     };
   }
   if (type === 'conversation_title' && typeof data.title === 'string') {

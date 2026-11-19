@@ -36,6 +36,7 @@ import type {
   PluginShareAction,
   ProjectPluginFolderInstallRequest,
   ProjectScenarioTaskProfile,
+  SelectChatMessageBranchRequest,
   ProjectVisibility,
   ProjectWorkspaceScopeResponse,
   TerminalSession,
@@ -1275,7 +1276,7 @@ export async function listConversations(
 }
 
 /** Thin invalidation for the shared conversations read after a write. */
-function evictConversationsRead(
+export function evictConversationsRead(
   projectId: string,
   workspaceContext?: WorkspaceCollabContext | null,
 ): void {
@@ -1530,6 +1531,28 @@ export async function listMessages(
       true,
     );
   }
+}
+
+export async function selectChatMessageBranch(
+  projectId: string,
+  conversationId: string,
+  messageId: string,
+  expectedLeafId: string,
+  workspaceContext?: WorkspaceCollabContext | null,
+): Promise<void> {
+  const body: SelectChatMessageBranchRequest = { expectedLeafId };
+  const resp = await fetch(
+    `/api/projects/${encodeURIComponent(projectId)}/conversations/${encodeURIComponent(conversationId)}/messages/${encodeURIComponent(messageId)}/select-branch`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(workspaceContext ? workspaceProjectHeaders(workspaceContext) : {}),
+      },
+      body: JSON.stringify(body),
+    },
+  );
+  if (!resp.ok) throw new Error((await readProjectMessageListError(resp)).message);
 }
 
 export interface SaveMessageOptions {

@@ -1,0 +1,246 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* 试试回忆. Controls on top (full-width mode switch, who or where, the question), then the result: a
+   summary line, what was searched, the always-carried memories, the hits with plain reasons and a
+   three-step strength meter, and the prompt text folded away in a mono well. */
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.queryRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.queryRow > :first-child {
+  flex: 1 1 auto;
+}
+
+/* ── choosing scopes ──────────────────────────────────────────────────────────────────── */
+
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.checklistTitle {
+  font-size: var(--type-label);
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--ink-soft);
+}
+
+.checklistBox {
+  max-height: 216px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.checkGroup {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 14px 10px;
+}
+
+.checkGroupLabel {
+  padding: 2px 0 4px;
+  font-size: var(--type-label);
+  line-height: 16px;
+  color: var(--ink-faint);
+}
+
+.checkRow {
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.checkRowNested {
+  padding-inline-start: 18px;
+}
+
+/* ── results ──────────────────────────────────────────────────────────────────────────── */
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 120px;
+}
+
+/* A new question is on its way: the previous answer stays, dimmed, so nothing jumps. */
+.stale {
+  opacity: 0.5;
+  transition: opacity var(--motion-fast) var(--ease-out-quint);
+}
+
+.idle {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+
+.summaryLead {
+  font-size: var(--type-copy);
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.searched {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: -6px;
+}
+
+.searchedLabel {
+  font-size: var(--type-label);
+  line-height: 20px;
+  color: var(--ink-faint);
+}
+
+.standingRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 16px;
+}
+
+.noHits {
+  padding: 4px 0;
+}
+
+.hit {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 16px;
+}
+
+.hitHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.hitText {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.chunkTitle {
+  font-size: var(--type-label);
+  line-height: 16px;
+  color: var(--ink-soft);
+}
+
+.reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* ── strength: three ink steps, never colour ──────────────────────────────────────────── */
+
+.strength {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--type-label);
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--ink-soft);
+}
+
+.meter {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 10px;
+}
+
+.meter > i {
+  display: block;
+  width: 3px;
+  border-radius: 1px;
+  background: var(--line);
+}
+
+.meter > i:nth-child(1) {
+  height: 4px;
+}
+
+.meter > i:nth-child(2) {
+  height: 7px;
+}
+
+.meter > i:nth-child(3) {
+  height: 10px;
+}
+
+.strength[data-level='low'] .meter > i:nth-child(1),
+.strength[data-level='mid'] .meter > i:nth-child(-n + 2),
+.strength[data-level='high'] .meter > i {
+  background: var(--ink-soft);
+}
+
+/* ── the prompt text ──────────────────────────────────────────────────────────────────── */
+
+.prompt {
+  margin-inline: -4px;
+}
+
+.promptBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 4px 0;
+}
+
+.promptHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.promptText {
+  max-height: 320px;
+  margin: 0;
+  padding: 12px 14px;
+  overflow: auto;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-control);
+  background: var(--sub);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 2;
+}

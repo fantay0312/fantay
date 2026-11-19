@@ -22,15 +22,17 @@ import { InkMascot, Tone } from './MangaArt';
 import { CoverArt, MangaPage, PAGE_COUNT, SpineArt, dottedDate, type VolumeContext } from './MangaPages';
 import { playTurnSound, setSoundEnabled, soundEnabled, type TurnSound } from './pageSound';
 import { MANGA_VOLUMES, cjkNumber, mangaChrome, mangaLocale } from './volumes';
+import './manga-fonts.css';
 import styles from './FantayChangelog.module.css';
 
 type TurnKind = 'open' | 'close' | 'next' | 'prev';
 type Mode = 'shelf' | 'reader';
 
-/** Two spreads: the story, then contents beside "to be continued". */
+/** Three spreads: story act I, story act II, then contents beside "to be continued". */
 const SPREADS = [
   [0, 1],
   [2, 3],
+  [4, 5],
 ] as const;
 /** Covers are board and swing a touch slower than paper. */
 const TURN_MS: Record<TurnKind, number> = { open: 980, close: 920, next: 900, prev: 900 };
@@ -156,6 +158,7 @@ export function FantayChangelog({ onClose }: { onClose: () => void }) {
   const [mode, setMode] = useState<Mode>('shelf');
   const [spread, setSpread] = useState(0);
   const [turn, setTurn] = useState<TurnKind | null>(null);
+  const [turnTarget, setTurnTarget] = useState<number | null>(null);
   /** The last page has been turned: the end card is up. */
   const [finished, setFinished] = useState(false);
   const [sound, setSound] = useState(soundEnabled);
@@ -206,17 +209,19 @@ export function FantayChangelog({ onClose }: { onClose: () => void }) {
   }, [finished]);
 
   /** Runs a page turn with its sound; state lands when the leaf does. Under reduced motion it lands at once. */
-  const runTurn = useCallback((kind: TurnKind, land: () => void) => {
+  const runTurn = useCallback((kind: TurnKind, land: () => void, target: number | null = null) => {
     if (reducedMotion()) {
       playTurnSound(TURN_SOUND[kind], INSTANT_TURN_SOUND_MS);
       land();
       return;
     }
     playTurnSound(TURN_SOUND[kind], TURN_MS[kind]);
+    setTurnTarget(target);
     setTurn(kind);
     turnTimer.current = window.setTimeout(() => {
       turnTimer.current = null;
       setTurn(null);
+      setTurnTarget(null);
       land();
     }, TURN_MS[kind]);
   }, []);
@@ -273,7 +278,7 @@ export function FantayChangelog({ onClose }: { onClose: () => void }) {
     if (turn) return;
     setFinished(false);
     if (spread === 0) return;
-    runTurn('prev', () => setSpread(0));
+    runTurn('prev', () => setSpread(0), 0);
   }, [runTurn, spread, turn]);
 
   const toggleSound = useCallback(() => {
@@ -356,7 +361,7 @@ export function FantayChangelog({ onClose }: { onClose: () => void }) {
     right = to[1];
     leaf = { front: restRight, back: to[0] };
   } else if (turn === 'prev') {
-    const to = SPREADS[spread - 1] ?? SPREADS[0];
+    const to = SPREADS[turnTarget ?? spread - 1] ?? SPREADS[0];
     left = to[0];
     leaf = { front: to[1], back: restLeft };
   }
@@ -397,6 +402,7 @@ export function FantayChangelog({ onClose }: { onClose: () => void }) {
             <span className={styles.metaTagline}>{current.copy.tagline}</span>
           </p>
           <dl className={styles.metaTable}>
+            {current.volume.version ? <div><dt><span>{locale.startsWith('zh') ? '版本' : 'VERSION'}</span></dt><dd>{current.volume.version}</dd></div> : null}
             {(
               [
                 [chrome.released, 'RELEASED', dottedDate(current.volume.date)],
@@ -558,7 +564,7 @@ export function FantayChangelog({ onClose }: { onClose: () => void }) {
                     <CoverArt ctx={upNext} />
                   </span>
                 ) : (
-                  <InkMascot look="color" mood="wink" className={styles.finaleMascot} />
+                  <InkMascot look="color" mood="wink" pose="wave" className={styles.finaleMascot} />
                 )}
                 <div className={styles.finaleBody}>
                   <p className={styles.finaleKicker}>{chrome.volumeEnd(active + 1)}</p>

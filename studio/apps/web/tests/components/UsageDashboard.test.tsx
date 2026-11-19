@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import '../fantay/helpers/radix-jsdom';
-import {cleanup,render,screen,waitFor,within} from '@testing-library/react';
+import {cleanup,fireEvent,render,screen,waitFor,within} from '@testing-library/react';
 import {afterEach,expect,it,vi} from 'vitest';
 import {I18nProvider} from '../../src/i18n';
+import {AgentIcon} from '../../src/components/AgentIcon';
 import {UsageDashboard,balancedBreaks} from '../../src/components/usage/UsageDashboard';
 import {placeReadout} from '../../src/components/usage/UsageTrendChart';
 import type {AiUsageSummary} from '@open-design/contracts';
@@ -23,6 +24,24 @@ const value:AiUsageSummary={
   ],
   activity:{from:day,to:day,days:[{day,...metric,unknown:1}]},
 };
+
+it('switches scope through the shared API and labels local estimates separately',async()=>{
+  const fetcher=vi.fn(async(url:string)=>Response.json({...value,scope:url.includes('scope=device')?'device':'fantay',totals:{...totals,estimatedUsd:'1.500000',estimatedRequests:1}}));vi.stubGlobal('fetch',fetcher);
+  render(<I18nProvider initial="zh-CN"><UsageDashboard /></I18nProvider>);
+  await screen.findByText('本地 Token 估算价值');
+  expect(String(fetcher.mock.calls[0]?.[0])).toContain('scope=fantay');
+  fireEvent.click(screen.getByRole('radio',{name:'本机全部'}));
+  await waitFor(()=>expect(fetcher.mock.calls.some(([url])=>url.includes('scope=device'))).toBe(true));
+  expect(await screen.findByText('1 条记录 · 非实际扣费')).toBeInTheDocument();
+  expect(screen.getByRole('radio',{name:'本机全部'})).toHaveAttribute('aria-checked','true');
+});
+
+it('shows session aggregates even when a source has no per-request count',async()=>{
+  vi.stubGlobal('fetch',vi.fn(async()=>Response.json({...value,totals:{...totals,requests:0,failed:0,sessionRecords:1},recent:[]})));
+  render(<I18nProvider initial="zh-CN"><UsageDashboard /></I18nProvider>);
+  expect(await screen.findByText('另含 1 条会话汇总')).toBeInTheDocument();
+  expect(screen.queryByText('还没有用量记录')).toBeNull();
+});
 
 it('shows reported usage and unavailable cost without inventing billed amounts',async()=>{
   const fetcher=vi.fn(async(_url:string,_init?:RequestInit)=>Response.json(value));vi.stubGlobal('fetch',fetcher);
@@ -102,4 +121,37 @@ it('keeps the compact form to the range, figures and one chart',async()=>{
   expect(screen.queryByText('活动')).toBeNull();
   expect(String(fetcher.mock.calls[0]?.[0])).toContain('limit=0');
   expect(String(fetcher.mock.calls[0]?.[0])).not.toContain('activity=1');
+});
+
+it('shows an em dash instead of $0.00 in reported cost when all requests lack provider cost',async()=>{
+  const allUnknown={...totals,requests:12,unknown:12,reportedUsd:'0.000000',failed:0};
+  vi.stubGlobal('fetch',vi.fn(async()=>Response.json({...value,totals:allUnknown})));
+  render(<I18nProvider initial="zh-CN"><UsageDashboard projectId="film" /></I18nProvider>);
+  const reportedTerm=await screen.findByText('其他渠道报告费用');
+  expect(reportedTerm.nextElementSibling?.textContent).toBe('—');
+  expect(screen.getByText('TokenToSea 已扣费').nextElementSibling?.textContent).toBe('$0.00');
+});
+
+it('collapses long local provider lists behind a toggle and resolves aliased agent icons',async()=>{
+  const manyProviders=['tokentosea','claude','codex','gemini','opencode','cursor','grok','antigravity-ide','qoder-cn','omp'].map((provider,index)=>({provider,requests:20-index}));
+  vi.stubGlobal('fetch',vi.fn(async()=>Response.json({...value,availableProviders:manyProviders})));
+  render(<I18nProvider initial="zh-CN"><UsageDashboard /></I18nProvider>);
+  const toggle=await screen.findByRole('button',{name:'+3 更多'});
+  expect(screen.queryByText('Oh My Pi')).toBeNull();
+  fireEvent.click(toggle);
+  expect(screen.getByText('Oh My Pi')).toBeInTheDocument();
+  expect(screen.getByRole('button',{name:'收起'})).toBeInTheDocument();
+
+  const {container}=render(
+    <div>
+      <AgentIcon id="grok" size={14} />
+      <AgentIcon id="antigravity-ide" size={14} />
+      <AgentIcon id="qoder-cn" size={14} />
+      <AgentIcon id="omp" size={14} />
+    </div>,
+  );
+  expect(container.querySelectorAll('.agent-icon-fallback')).toHaveLength(0);
+  expect(container.querySelector('img[src="/agent-icons/antigravity.svg"]')).not.toBeNull();
+  expect(container.querySelector('img[src="/agent-icons/qoder.svg"]')).not.toBeNull();
+  expect(container.querySelector('img[src="/agent-icons/pi.svg"]')).not.toBeNull();
 });

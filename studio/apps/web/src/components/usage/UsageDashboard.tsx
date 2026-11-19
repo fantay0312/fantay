@@ -1,9 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-only */
-/* AI 用量 (Settings ▸ AI 用量; `compact` is the small popover form). One /api/usage read model feeds every figure; a
-   cost that was never reported is shown as unavailable, never as $0 and never re-priced. */
-import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import type { AiUsageSummary, AiUsageTotals, WorkspaceCollabContext } from '@open-design/contracts';
-import { ReceiptText, RefreshCw } from 'lucide-react';
+/* One /api/usage read model feeds every figure. Estimates stay separate from reported costs and charges. */
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { AiUsageLocalSource, AiUsageScope, AiUsageSummary, AiUsageTotals, WorkspaceCollabContext } from '@open-design/contracts';
+import { ChevronRight, ReceiptText, RefreshCw } from 'lucide-react';
 import { Button, Icon, IconButton, Segmented, SegmentedItem } from '../../fantay/ui';
 import { useI18n } from '../../i18n';
 import { workspaceProjectHeaders } from '../../collab/workspace-identity';
@@ -16,13 +15,11 @@ import { UsageRangePicker } from './UsageRangePicker';
 import { UsageReceiptModal } from './UsageReceiptModal';
 import { UsageTrendChart } from './UsageTrendChart';
 import { count, formatRange, money, moneyDigits, percent, presetRange, projectLabel, providerLabel, todayKey, tokens, type UsageRange } from './usage-format';
-import { useElementWidth } from './useElementWidth';
 import styles from './UsageDashboard.module.css';
 
 const REFRESH_MS = 30_000;
 const ALL_SOURCES = '__all';
-/** Space between two source chips on a line; the module's `column-gap` for `.sources`. */
-const CHIP_GAP = 4;
+const COLLAPSED_SOURCE_LIMIT = 8;
 
 type Activity = NonNullable<AiUsageSummary['activity']>;
 
@@ -36,6 +33,8 @@ export function UsageDashboard({ projectId, context, compact = false }: {
   const [today, setToday] = useState(todayKey);
   const [range, setRange] = useState<UsageRange>(() => presetRange('30d'));
   const [provider, setProvider] = useState<string | null>(null);
+  const [selectedScope, setSelectedScope] = useState<AiUsageScope>('fantay');
+  const scope: AiUsageScope = projectId ? 'fantay' : selectedScope;
   const [data, setData] = useState<AiUsageSummary | null>(null);
   const [activity, setActivity] = useState<Activity | null>(null);
   const [error, setError] = useState('');
@@ -44,6 +43,7 @@ export function UsageDashboard({ projectId, context, compact = false }: {
   const [syncedAt, setSyncedAt] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [receiptOpen, setReceiptOpen] = useState(false);
+  const requestPending = useRef(false);
   /** The year of activity does not follow the range, so it is re-read only on a manual refresh, a new day, or a
    *  different project / source; the 30 s refresh and range changes leave it (and the daemon's year-long sync) alone. */
   const reloadActivity = useRef(true);
@@ -55,15 +55,17 @@ export function UsageDashboard({ projectId, context, compact = false }: {
     let active = true;
     let delivered = false;
     const controller = new AbortController();
-    const key = `${projectId ?? ''}\u0000${provider ?? ''}`;
+    const key = `${scope}\u0000${projectId ?? ''}\u0000${provider ?? ''}`;
     const withActivity = !compact && (reloadActivity.current || activityKey.current !== key);
     reloadActivity.current = false;
     setLoading(true);
+    requestPending.current = true;
     const query = new URLSearchParams({
       from: range.from,
       to: range.to,
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       limit: compact ? '0' : '500',
+      scope,
     });
     if (projectId) query.set('projectId', projectId);
     if (provider) query.set('provider', provider);
@@ -90,7 +92,7 @@ export function UsageDashboard({ projectId, context, compact = false }: {
         if (active) setError(String(cause?.message ?? cause));
       })
       .finally(() => {
-        if (active) setLoading(false);
+        if (active) { requestPending.current = false; setLoading(false); }
       });
     return () => {
       active = false;
@@ -98,7 +100,7 @@ export function UsageDashboard({ projectId, context, compact = false }: {
       // A request that was to carry the activity but did not (superseded or failed) hands that job to the next one.
       if (withActivity && !delivered) reloadActivity.current = true;
     };
-  }, [range.from, range.to, provider, projectId, context, revision, compact]);
+  }, [range.from, range.to, provider, projectId, context, revision, compact, scope]);
 
   useEffect(() => {
     const isVisible = () => typeof document === 'undefined' || document.visibilityState === 'visible';
@@ -118,7 +120,7 @@ export function UsageDashboard({ projectId, context, compact = false }: {
       setRevision(value => value + 1);
     };
     const timer = setInterval(() => {
-      if (isVisible()) advanceRefresh();
+      if (isVisible() && !requestPending.current) advanceRefresh();
     }, REFRESH_MS);
     const clock = setInterval(() => {
       if (isVisible()) setNow(Date.now());
@@ -126,7 +128,7 @@ export function UsageDashboard({ projectId, context, compact = false }: {
     const onVisibility = () => {
       if (!isVisible()) return;
       setNow(Date.now());
-      advanceRefresh();
+      if (!requestPending.current) advanceRefresh();
     };
     if (typeof document !== 'undefined') document.addEventListener('visibilitychange', onVisibility);
     return () => {
@@ -161,7 +163,7 @@ export function UsageDashboard({ projectId, context, compact = false }: {
     setRevision(value => value + 1);
   };
   const totals = data?.totals;
-  const empty = Boolean(totals && totals.requests === 0);
+  const empty = Boolean(totals && totals.requests === 0 && !totals.sessionRecords);
   const hasHistory = Boolean(activity?.days.length) || provider !== null;
 
   return (
@@ -170,11 +172,25 @@ export function UsageDashboard({ projectId, context, compact = false }: {
 
       <div className={styles.lead}>
         <div className={styles.controls} ref={summaryRef}>
-          <UsageRangePicker value={range} onChange={setRange} today={today} zh={zh} compact={compact} />
+          <div className={styles.toolbar}>
+            {!projectId && !compact ? (
+              <Segmented className={styles.scopeSwitch} value={scope} aria-label={zh ? '统计范围' : 'Usage scope'} onValueChange={value => {
+                setSelectedScope(value as AiUsageScope);
+                setData(null); setActivity(null); setProvider(null); setError(''); setSyncedAt(null);
+                reloadActivity.current = true;
+              }}>
+                <SegmentedItem value="fantay">{zh ? '仅 Fantay' : 'Fantay only'}</SegmentedItem>
+                <SegmentedItem value="device">{zh ? '本机全部' : 'This device'}</SegmentedItem>
+              </Segmented>
+            ) : null}
+            <UsageRangePicker value={range} onChange={setRange} today={today} zh={zh} compact={compact} />
+          </div>
 
-          {/* Sources as chips that wrap: every source stays whole however many agents report usage. */}
           {!compact && sources.length > 1 ? (
             <SourceFilter sources={sources} requests={sourceRequests} value={provider} onChange={setProvider} zh={zh} />
+          ) : null}
+          {!compact && scope === 'device' && data?.localScan ? (
+            <LocalScanDetails sources={data.localScan.sources} zh={zh} />
           ) : null}
         </div>
 
@@ -183,29 +199,32 @@ export function UsageDashboard({ projectId, context, compact = false }: {
         <section className={styles.overview} aria-label={zh ? '概览' : 'Overview'}>
           <div className={styles.overviewHead}>
             <span className={styles.scope}>
+              {scope === 'device' ? (zh ? '本机全部 · ' : 'This device · ') : ''}
               {scopeLabel(range, today, zh)}
               <span aria-hidden="true"> · </span>
               {provider ? providerLabel(provider) : (zh ? '全部来源' : 'All sources')}
             </span>
-            <span className={styles.live} data-state={error ? 'error' : syncedAt === null ? 'syncing' : 'live'} title={zh ? '每 30 秒自动刷新' : 'Refreshes every 30 seconds'}>
-              <span key={syncedAt ?? 0} className={styles.liveDot} aria-hidden="true" />
-              {syncLabel}
-            </span>
-            {!compact ? (
-              <Button
-                size="sm"
-                variant="ghost"
-                className={styles.receiptTrigger}
-                disabled={!data && loading}
-                onClick={() => setReceiptOpen(true)}
-              >
-                <Icon icon={ReceiptText} size="sm" />
-                {zh ? '生成小票' : 'Receipt'}
-              </Button>
-            ) : null}
-            <IconButton size="sm" className={styles.refresh} aria-label={`${zh ? '刷新用量' : 'Refresh usage'} · ${syncLabel}`} onClick={refresh}>
-              <Icon icon={RefreshCw} size="sm" className={loading ? styles.spinning : undefined} />
-            </IconButton>
+            <div className={styles.overviewActions}>
+              <span className={styles.live} data-state={error ? 'error' : syncedAt === null ? 'syncing' : 'live'} title={zh ? '每 30 秒自动刷新' : 'Refreshes every 30 seconds'}>
+                <span key={syncedAt ?? 0} className={styles.liveDot} aria-hidden="true" />
+                {syncLabel}
+              </span>
+              {!compact ? (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className={styles.receiptTrigger}
+                  disabled={!data && loading}
+                  onClick={() => setReceiptOpen(true)}
+                >
+                  <Icon icon={ReceiptText} size="sm" />
+                  {zh ? '生成小票' : 'Receipt'}
+                </Button>
+              ) : null}
+              <IconButton size="sm" className={styles.refresh} aria-label={`${zh ? '刷新用量' : 'Refresh usage'} · ${syncLabel}`} onClick={refresh}>
+                <Icon icon={RefreshCw} size="sm" className={loading ? styles.spinning : undefined} />
+              </IconButton>
+            </div>
           </div>
           {error ? <p role="alert" className={styles.error}>{error}</p> : null}
           {!data && loading ? <p role="status" className={styles.status}>{zh ? '正在读取用量…' : 'Loading usage…'}</p> : null}
@@ -233,14 +252,17 @@ export function UsageDashboard({ projectId, context, compact = false }: {
           {!compact && activity && activity.days.length ? (
             <UsageHeatmap activity={activity} zh={zh} selectedDay={range.from === range.to ? range.from : null} onSelectDay={selectDay} />
           ) : null}
-          {!compact && !empty ? <UsageDetails data={data} zh={zh} locale={locale} showProjects={!projectId} /> : null}
+          {!compact && !empty ? <UsageDetails key={`${scope}:${provider ?? ''}`} data={data} zh={zh} locale={locale} showProjects={!projectId} context={context} /> : null}
           <p className={styles.hint}>
             {zh ? '每 30 秒自动刷新。' : 'Refreshes every 30 seconds. '}
             {zh ? '扣费来自服务回执，Token 来自供应方报告（输入 + 输出，缓存读取单列）。' : 'Charges come from service receipts; tokens are provider-reported (input + output, cache reads listed apart). '}
             {data.coverageSince ? (zh ? `本范围的记录始于 ${new Date(data.coverageSince).toLocaleDateString(locale)}。` : `Records in this range start ${new Date(data.coverageSince).toLocaleDateString(locale)}. `) : ''}
             {zh
-              ? 'TokenToSea 扣费按当前账号统计；CLI 和自带密钥生成记录属于本机历史，切换账号后仍保留。未提供的费用不计为零，不按当前价格回算。'
-              : 'TokenToSea charges follow the current account. CLI and BYOK generation records belong to this device and remain across account changes. Unavailable cost is not treated as zero or estimated from current prices.'}
+              ? 'TokenToSea 扣费按当前账号统计；CLI 和自带密钥记录属于本机历史。'
+              : 'TokenToSea charges follow the current account. CLI and BYOK records belong to this device.'}
+            {scope === 'device' ? (zh
+              ? ' 本机全部读取受支持 Agent 的本地日志；部分记录表示扫描未覆盖完整历史。估算金额按公开价格表计算 Token 价值，不代表订阅账单或实际扣费。'
+              : ' Device usage reads supported local agent logs; partial means history is incomplete. Estimates show token value at public catalog rates, not subscription bills or actual charges.') : null}
           </p>
         </>
       ) : null}
@@ -252,6 +274,7 @@ export function UsageDashboard({ projectId, context, compact = false }: {
           dashboardRange={range}
           today={today}
           provider={provider}
+          scope={scope}
           projectId={projectId}
           projectName={projectId ? projectNames.get(projectId) : undefined}
           context={context}
@@ -264,8 +287,68 @@ export function UsageDashboard({ projectId, context, compact = false }: {
   );
 }
 
-/** The source chips. Every line of chips spans the column; when they need more than one line, the breaks fall where
- *  the lines come out even, so no chip is left alone (and stretched across the column) on the last one. */
+function scanIssueLabel(issue: string, zh: boolean): string {
+  const labels: Record<string, [string, string]> = {
+    'scan-limit': ['达到本轮扫描上限，刷新后继续', 'Scan limit; refresh to continue'],
+    'file-limit': ['部分文件超过读取上限', 'Some files exceed the read limit'],
+    'invalid-record': ['有未完整写入或无法解析的记录', 'Incomplete or unrecognized records'],
+    'history-overlap': ['部分分叉历史无法确认归属', 'Some fork history cannot be attributed'],
+    'permission': ['部分记录不可读取', 'Some records could not be read'],
+    'unsupported-format': ['检测到暂不支持的数据格式', 'An unsupported format was found'],
+    'incomplete-usage': ['部分调用未提供 Token', 'Some calls did not report tokens'],
+  };
+  return labels[issue]?.[zh ? 0 : 1] ?? issue;
+}
+
+function LocalScanDetails({ sources, zh }: { sources: AiUsageLocalSource[]; zh: boolean }) {
+  const sorted = useMemo(() => {
+    const rank: Record<AiUsageLocalSource['status'], number> = {
+      ready: 0,
+      partial: 1,
+      error: 2,
+      unsupported: 3,
+      'not-found': 4,
+    };
+    return [...sources].sort((a, b) => rank[a.status] - rank[b.status] || b.records - a.records);
+  }, [sources]);
+  const foundCount = sources.filter(s => s.status !== 'not-found').length;
+
+  return (
+    <details className={styles.scanSources}>
+      <summary>
+        <Icon icon={ChevronRight} size="xs" className={styles.scanChevron} />
+        <span>
+          {zh
+            ? `本机 Agent：已发现 ${foundCount} 类 · 查看 ${sources.length} 类扫描结果`
+            : `Local agents: ${foundCount} found · ${sources.length} sources checked`}
+        </span>
+      </summary>
+      <dl aria-label={zh ? '本地 Agent 扫描结果' : 'Local agent scan'}>
+        {sorted.map(source => (
+          <div key={source.provider} data-state={source.status}>
+            <dt>
+              <AgentIcon id={agentIconId(source.provider)} size={13} />
+              <span>{providerLabel(source.provider)}</span>
+            </dt>
+            <dd>
+              <span>
+                {source.status === 'ready' ? (zh ? `${count(source.records)} 条` : `${count(source.records)} records`)
+                  : source.status === 'not-found' ? (zh ? '未发现记录' : 'Not found')
+                  : source.status === 'unsupported' ? (zh ? '暂无本地接口' : 'No local API')
+                  : source.status === 'partial' ? (zh ? `${count(source.records)} 条 · 部分记录` : `${count(source.records)} · partial`)
+                  : (zh ? '读取失败' : 'Read failed')}
+              </span>
+              {source.issues?.length && source.status !== 'unsupported' ? (
+                <small>{source.issues.map(issue => scanIssueLabel(issue, zh)).join(' · ')}</small>
+              ) : null}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </details>
+  );
+}
+
 function SourceFilter({ sources, requests, value, onChange, zh }: {
   sources: string[];
   requests: Map<string, number>;
@@ -273,59 +356,55 @@ function SourceFilter({ sources, requests, value, onChange, zh }: {
   onChange: (provider: string | null) => void;
   zh: boolean;
 }) {
-  const [ref, width] = useElementWidth<HTMLDivElement>(0);
-  const [breaks, setBreaks] = useState<number[]>([]);
-  const [fontsLoaded, setFontsLoaded] = useState(0);
-  const key = sources.join('\n');
-
-  // A web font that lands after the first layout changes every chip's width.
-  useEffect(() => {
-    let live = true;
-    void document.fonts?.ready.then(() => {
-      if (live) setFontsLoaded(loads => loads + 1);
-    });
-    return () => {
-      live = false;
-    };
-  }, []);
-
-  // Each chip's own width is read with growing switched off, before paint; the lines are then laid out from those.
-  useLayoutEffect(() => {
-    const group = ref.current;
-    if (!group || width <= 0) return;
-    group.setAttribute('data-measuring', '');
-    const widths = Array.from(group.querySelectorAll<HTMLElement>('[data-slot="segmented-item"]'), item => Math.ceil(item.getBoundingClientRect().width));
-    group.removeAttribute('data-measuring');
-    const next = balancedBreaks(widths, width, CHIP_GAP);
-    setBreaks(previous => (previous.join() === next.join() ? previous : next));
-  }, [ref, width, key, zh, fontsLoaded]);
+  const [expanded, setExpanded] = useState(false);
+  const canCollapse = sources.length > COLLAPSED_SOURCE_LIMIT;
+  const visibleSources = useMemo(() => {
+    if (!canCollapse || expanded) return sources;
+    const head = sources.slice(0, COLLAPSED_SOURCE_LIMIT - 1);
+    if (value && !head.includes(value) && sources.includes(value)) {
+      head.push(value);
+    }
+    return head;
+  }, [canCollapse, expanded, sources, value]);
+  const hiddenCount = sources.length - visibleSources.length;
 
   return (
-    <Segmented
-      ref={ref}
-      className={styles.sources}
-      value={value ?? ALL_SOURCES}
-      onValueChange={next => onChange(next === ALL_SOURCES ? null : next)}
-      aria-label={zh ? '按来源筛选' : 'Filter by source'}
-    >
-      {[ALL_SOURCES, ...sources].map((id, index) => {
-        const requestCount = requests.get(id);
-        return (
-          <Fragment key={id}>
-            {breaks.includes(index) ? <span className={styles.sourceBreak} aria-hidden="true" /> : null}
-            {id === ALL_SOURCES ? <SegmentedItem value={ALL_SOURCES}>{zh ? '全部' : 'All'}</SegmentedItem> : (
-              <SegmentedItem
-                value={id}
-                title={requestCount === undefined ? id : `${id} · ${count(requestCount)} ${zh ? '次请求' : requestCount === 1 ? 'request' : 'requests'}`}
-              >
-                <AgentIcon id={agentIconId(id)} size={14} />
-                {providerLabel(id)}
-              </SegmentedItem>
-            )}
-          </Fragment>
-        );
-      })}
-    </Segmented>
+    <div className={styles.sourceBar}>
+      <Segmented
+        className={styles.sources}
+        value={value ?? ALL_SOURCES}
+        onValueChange={next => onChange(next === ALL_SOURCES ? null : next)}
+        aria-label={zh ? '按来源筛选' : 'Filter by source'}
+      >
+        <SegmentedItem value={ALL_SOURCES}>{zh ? '全部' : 'All'}</SegmentedItem>
+        {visibleSources.map(id => {
+          const requestCount = requests.get(id);
+          return (
+            <SegmentedItem
+              key={id}
+              value={id}
+              title={requestCount === undefined ? id : `${providerLabel(id)} (${id}) · ${count(requestCount)} ${zh ? '条记录' : requestCount === 1 ? 'record' : 'records'}`}
+            >
+              <AgentIcon id={agentIconId(id)} size={14} />
+              <span>{providerLabel(id)}</span>
+              {requestCount !== undefined && requestCount > 0 ? (
+                <span className={styles.sourceCount} aria-hidden="true">{tokens(requestCount)}</span>
+              ) : null}
+            </SegmentedItem>
+          );
+        })}
+      </Segmented>
+      {canCollapse ? (
+        <button
+          type="button"
+          className={styles.moreSources}
+          aria-expanded={expanded}
+          onClick={() => setExpanded(current => !current)}
+        >
+          {expanded ? (zh ? '收起' : 'Less') : (zh ? `+${hiddenCount} 更多` : `+${hiddenCount} more`)}
+        </button>
+      ) : null}
+    </div>
   );
 }
 
@@ -423,6 +502,8 @@ function Kpis({ totals, zh, compact }: { totals: AiUsageTotals; zh: boolean; com
     totals.pending ? `${zh ? '处理中' : 'pending'} ${count(totals.pending)}` : '',
   ].filter(Boolean).join(' · ') || undefined;
 
+  const reportedUnavailable = totals.requests > 0 && totals.unknown >= totals.requests && Number(totals.reportedUsd) === 0;
+
   return (
     <>
       {/* The two costs stand side by side and are never added up: one is billed, the other only reported. */}
@@ -436,16 +517,28 @@ function Kpis({ totals, zh, compact }: { totals: AiUsageTotals; zh: boolean; com
         </div>
         <div className={styles.figure}>
           <dt>{zh ? '其他渠道报告费用' : 'Other reported cost'}</dt>
-          <dd className={styles.figureValue}><Amount value={money(totals.reportedUsd, digits)} /></dd>
+          <dd className={styles.figureValue} data-unavailable={reportedUnavailable || undefined}>
+            {reportedUnavailable ? '—' : <Amount value={money(totals.reportedUsd, digits)} />}
+          </dd>
           <dd className={styles.figureFoot}>
             {totals.unknown ? (zh ? `费用未提供 ${count(totals.unknown)}` : `Cost unavailable ${count(totals.unknown)}`) : (zh ? '供应方自报' : 'Provider-reported')}
           </dd>
         </div>
       </dl>
+      {(totals.estimatedRequests ?? 0) > 0 ? (
+        <div className={styles.estimate}>
+          <div className={styles.estimateMeta}>
+            <span className={styles.estimateLabel}>{zh ? '本地 Token 估算价值' : 'Estimated local token value'}</span>
+            <span className={styles.estimateNote}>{zh ? `${count(totals.estimatedRequests ?? 0)} 条记录 · 非实际扣费` : `${count(totals.estimatedRequests ?? 0)} records · not charged`}</span>
+          </div>
+          <strong className={styles.estimateValue}>{money(totals.estimatedUsd ?? '0', moneyDigits(totals.estimatedUsd))}</strong>
+        </div>
+      ) : null}
       <dl className={styles.stats}>
         <div className={styles.stat}>
           <dt>{zh ? '请求' : 'Requests'}</dt>
           <dd className={styles.statValue}>{count(totals.requests)}</dd>
+          {totals.sessionRecords ? <dd className={styles.statFoot}>{zh ? `另含 ${count(totals.sessionRecords)} 条会话汇总` : `Also ${count(totals.sessionRecords)} session summaries`}</dd> : null}
           <dd className={styles.statFoot} title={requestsTitle}>
             {totals.failed ? (
               <>

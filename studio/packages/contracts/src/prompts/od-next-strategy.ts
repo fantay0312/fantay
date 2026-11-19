@@ -142,6 +142,12 @@ export interface OdNextStrategyStableRequestContextV2 {
   craftBody?: string | undefined;
   craftSections?: string[] | undefined;
   memoryBody?: string | undefined;
+  /**
+   * The `<memory>` block recalled for this request (Fantay Memory): remembered facts and excerpts of earlier
+   * conversations. It is quoted as a fact, never as an instruction: it is whatever people and models said
+   * before, so it must not pass for workflow rules and must not be refused for the words it happens to use.
+   */
+  recalledMemory?: string | undefined;
   userInstructions?: string | undefined;
   projectInstructions?: string | undefined;
 }
@@ -592,6 +598,7 @@ export function composeOdNextStrategyStableRequestContextV2(
   }
   factualText('layout-primitives', context.layoutPrimitivesCss);
   instructionText('personal-memory', context.memoryBody);
+  factualText('recalled-memory', context.recalledMemory);
   instructionText('user-custom-instructions', context.userInstructions);
   instructionText('project-custom-instructions', context.projectInstructions);
   const designSystemIdentity = {

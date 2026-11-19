@@ -54,9 +54,10 @@ function isTableDelimiter(line: string): boolean {
 
 function escapeCodeSpanPipes(line: string): string {
   if (!line.includes('|') || !line.includes('`')) return line;
-  return line.replace(/`([^`]*\|[^`]*)`/g, (_match, code: string) =>
-    `\`${code.replace(/\|/g, '\\|')}\``,
-  );
+  // Spans are paired left to right. Looking only for a span that holds a pipe would pair the
+  // closing backtick of one span with the opening backtick of the next (`a` | `b`) and escape the
+  // column separators between them.
+  return line.replace(/`[^`]*`/g, (span) => (span.includes('|') ? span.replace(/\|/g, '\\|') : span));
 }
 
 function postProcessMarkdownHtml(html: string): string {

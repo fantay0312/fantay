@@ -28,6 +28,26 @@
  * marker is *held*, not dropped, and re-probed by `settle()` — which the run
  * loop calls after each file-writing tool result and once more at turn end.
  * That makes the trigger "the marker, and the bytes, whichever lands second".
+ *
+ * **`tool` follows its marker's target.** A marker may also name the workspace
+ * tool to show (`tool="code"`, `tool="browser" url="…"`). When the marker has a
+ * usable `open`, the tool travels on that open's event and therefore waits at
+ * the same gate — "show this file in the code tool" must not fire before the
+ * file has bytes any more than a preview may. When it has none, there is
+ * nothing to wait for and the tool is emitted the moment the key checks out.
+ * The address is validated by the contract (`normalizeArtifactFocusUrl`); it is
+ * never fetched here.
+ *
+ * Because one kind of event waits and the other does not, they can leave in a
+ * different order than the markers arrived. What is guaranteed is the outcome:
+ * the emitted events fold (`foldArtifactFocusSelections`) to what the markers
+ * said in the order the model wrote them.
+ *
+ * **A repeat is a no-op.** A marker that says exactly what the last
+ * panel-moving event said — the same file, tool and address, or the same tool
+ * and address on its own — emits nothing. Models restate a marker near their
+ * summary, and a second identical event would reload the page the user is
+ * already looking at.
  */
 
 import fs from 'node:fs';
@@ -38,6 +58,7 @@ import {
   normalizeArtifactFocusPath,
   parseArtifactFocusMarker,
   type ArtifactFocusSelection,
+  type ArtifactFocusTool,
 } from '@open-design/contracts';
 
 /**
@@ -57,7 +78,8 @@ export interface ArtifactFocusMarkerStripper {
   /**
    * Re-probe a held `open` whose file was absent or empty when its marker
    * arrived. Safe to call at any time and any number of times; resolves to
-   * `true` when this call is what released the pending selection.
+   * `true` when this call is what released the pending selection (the `open`
+   * together with the `tool` its marker named, if any).
    */
   settle(): Promise<boolean>;
   /** Stream ended: give back held prose verbatim, and drop a half-written tag. */
@@ -137,6 +159,26 @@ async function defaultProbeFile(
   const stat = await fs.promises.stat(realFile).catch(() => null);
   if (!stat || !stat.isFile()) return null;
   return { size: stat.size };
+}
+
+/** One accepted `open`, with the tool (and address) its own marker named. */
+interface PendingOpen {
+  path: string;
+  tool?: ArtifactFocusTool;
+  url?: string;
+}
+
+/**
+ * Everything one panel-moving event says, as one comparable string. `path` is
+ * `null` for a tool emitted on its own, so that kind never compares equal to an
+ * `open`.
+ */
+function frontSignature(path: string | null, tool?: ArtifactFocusTool, url?: string): string {
+  return JSON.stringify([path, tool ?? null, url ?? null]);
+}
+
+function openSignature(intent: PendingOpen): string {
+  return frontSignature(intent.path, intent.tool, intent.url);
 }
 
 /** `</od-focus` — a stray closing tag models sometimes add out of habit. */
@@ -226,48 +268,53 @@ export function createArtifactFocusMarkerStripper(
   /** Text held back because it might still turn into a marker. */
   let held = '';
   /**
-   * An accepted `open` whose file was not yet non-empty. Held rather than
-   * dropped: the ruling is "open once it has content", and a marker that
-   * arrives a beat before the bytes is the normal case for an agent that
-   * announces the file as it writes it.
-   */
-  let pendingOpen: string | null = null;
-  /**
-   * The last path actually emitted. Two things depend on it:
+   * An accepted `open` whose file was not yet non-empty, with the tool its
+   * marker named. Held rather than dropped: the ruling is "open once it has
+   * content", and a marker that arrives a beat before the bytes is the normal
+   * case for an agent that announces the file as it writes it.
    *
-   *  · **Idempotency.** A marker's own probe and a `settle()` from the run loop
-   *    race by construction — the marker fires one and a tool result fires the
-   *    other a moment later. Both can find the file non-empty. Without this
-   *    latch they both emit and the preview navigates twice.
-   *  · **Last-wins.** It is keyed on the PATH, not a boolean, so a later marker
-   *    naming a *different* file still opens it while a later marker naming the
-   *    *same* file is a no-op.
+   * At most one, and always the newest: a later marker's `open` replaces it.
+   * Probes compare against this slot by identity when they resume, which is
+   * what keeps two of them from both acting on one declaration.
    */
-  let releasedOpen: string | null = null;
+  let pendingOpen: PendingOpen | null = null;
+  /**
+   * What the last event that moved the panel said — an `open` (path, tool and
+   * address together) or a tool emitted on its own (`frontSignature`). A later
+   * marker repeating it exactly is a no-op, so the panel does not navigate
+   * twice to where it already is: a browser told to load the address it is
+   * already showing reloads the page under the user. A marker that changes
+   * anything (another file, the same file in another tool, another address)
+   * is emitted.
+   *
+   * One latch for both kinds on purpose: once a tool has been emitted on its
+   * own the panel has moved on, so repeating the earlier `open` is a real
+   * request again, and the other way round.
+   */
+  let releasedFront: string | null = null;
 
-  /** Probe an accepted open path; emit when the bytes are there. */
-  const tryEmitOpen = async (projectRelative: string): Promise<boolean> => {
+  /** Probe a held open; emit it, with its tool, when the bytes are there. */
+  const tryEmitOpen = async (intent: PendingOpen): Promise<boolean> => {
     if (!projectRoot) return false;
-    if (releasedOpen === projectRelative) {
-      pendingOpen = null;
-      return false;
-    }
-    const absolute = path.resolve(projectRoot, projectRelative);
-    const found = await probe(absolute).catch(() => null);
-    if (!found || found.size <= 0) {
-      pendingOpen = projectRelative;
-      return false;
-    }
-    // Re-check AFTER the await: a concurrent probe of the same path may have
-    // released it while this one was suspended. Single-threaded, so whichever
-    // resumes second sees the latch and bails.
-    if (releasedOpen === projectRelative) {
-      pendingOpen = null;
-      return false;
-    }
-    releasedOpen = projectRelative;
+    const found = await probe(path.resolve(projectRoot, intent.path)).catch(() => null);
+    /*
+     * Re-check AFTER the await. A marker's own probe and a `settle()` from the
+     * run loop race by construction — the marker fires one and a tool result
+     * fires the other a moment later — and both can find the file non-empty.
+     * Single-threaded, so whichever resumes second finds the slot already
+     * emptied and bails. The same check drops a probe whose declaration a later
+     * marker replaced while it was suspended: last wins, in marker order rather
+     * than in whatever order the stats happen to return.
+     */
+    if (pendingOpen !== intent) return false;
+    if (!found || found.size <= 0) return false;
     pendingOpen = null;
-    options.emit({ open: projectRelative });
+    releasedFront = openSignature(intent);
+    options.emit({
+      open: intent.path,
+      ...(intent.tool ? { tool: intent.tool } : {}),
+      ...(intent.url ? { url: intent.url } : {}),
+    });
     return true;
   };
 
@@ -285,10 +332,21 @@ export function createArtifactFocusMarkerStripper(
       projectRoot,
     );
     if (openPath) {
-      pendingOpen = openPath;
-      // Fire-and-forget: the stream must not stall on a stat. `settle()`
-      // re-probes anything this pass could not release.
-      void tryEmitOpen(openPath);
+      const intent: PendingOpen = {
+        path: openPath,
+        ...(parsed.tool ? { tool: parsed.tool } : {}),
+        ...(parsed.url ? { url: parsed.url } : {}),
+      };
+      if (openSignature(intent) === releasedFront) {
+        // Already where the panel is. Dropping the slot also retires an older
+        // open still waiting on bytes: this marker is the turn's latest word.
+        pendingOpen = null;
+      } else {
+        pendingOpen = intent;
+        // Fire-and-forget: the stream must not stall on a stat. `settle()`
+        // re-probes anything this pass could not release.
+        void tryEmitOpen(intent);
+      }
     }
 
     const showPaths: string[] = [];
@@ -301,8 +359,41 @@ export function createArtifactFocusMarkerStripper(
      * already built from files it saw for itself, so a path that does not exist
      * simply matches nothing. Statting here would buy no safety and would add a
      * filesystem round-trip per declared path.
+     *
+     * A tool with no usable `open` needs none either: it names a surface, not a
+     * file, so there are no bytes to wait for. That includes a marker whose
+     * `open` was refused — the path is dropped, the tool it asked for is not.
+     * When the marker does have an `open`, its tool is NOT emitted here; it
+     * waits with that open in `tryEmitOpen`.
      */
-    if (showPaths.length > 0) options.emit({ show: showPaths });
+    const immediate: ArtifactFocusSelection = {};
+    if (showPaths.length > 0) immediate.show = showPaths;
+    if (!openPath && parsed.tool) {
+      /*
+       * An earlier `open` may still be waiting — on bytes, or merely on its
+       * stat. It will be emitted AFTER this event, and an `open` event sets the
+       * folded tool, so left alone it would put its own, older tool back in
+       * front once it lands. Hand it this one instead: the events then fold to
+       * what the markers said in the order they were written, however the
+       * stats interleave. Mutated in place so a probe already in flight still
+       * recognises its declaration. Done even when the event below is skipped
+       * as a repeat — the waiting open was written before this marker either
+       * way.
+       */
+      if (pendingOpen) {
+        pendingOpen.tool = parsed.tool;
+        if (parsed.url) pendingOpen.url = parsed.url;
+        else delete pendingOpen.url;
+      }
+      // Same no-op rule as a repeated `open`: the panel is already there.
+      const signature = frontSignature(null, parsed.tool, parsed.url);
+      if (signature !== releasedFront) {
+        releasedFront = signature;
+        immediate.tool = parsed.tool;
+        if (parsed.url) immediate.url = parsed.url;
+      }
+    }
+    if (immediate.show || immediate.tool) options.emit(immediate);
   };
 
   const strip = (delta: string): string => {

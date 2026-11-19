@@ -9,6 +9,7 @@ import {
   Checkbox,
   Field,
   Input,
+  ModalSpacer,
   Segmented,
   SegmentedItem,
   Select,
@@ -21,6 +22,7 @@ import { usePa } from './pa-context';
 import { isFantay } from './pa-model';
 import { PaAvatar } from './PaAvatar';
 import { modelKeyOf, PaModalFrame, usePaModalReset, usePaReload, usePaSubmit } from './PaAgentModal';
+import { useSoulArrival } from './soul/SoulProfileModal';
 import type { PaGroup, PaGroupInput, PaIndex, PersonalAgent } from './pa-types';
 import styles from './PaModals.module.css';
 
@@ -80,7 +82,7 @@ function groupForm(group: PaGroup | null, index: PaIndex): GroupForm {
 
 export function PaGroupModal({ open, onClose, groupId }: { open: boolean; onClose(): void; groupId: string | null }) {
   const t = useT();
-  const { data, index } = usePa();
+  const { data, index, nav } = usePa();
   const entity = groupId ? (index.groups.get(groupId) ?? null) : null;
   const [base, setBase] = useState<PaGroup | null>(entity);
   const [form, setForm] = useState<GroupForm>(() => groupForm(entity, index));
@@ -94,6 +96,11 @@ export function PaGroupModal({ open, onClose, groupId }: { open: boolean; onClos
     setForm(groupForm(entity, index));
     submit.clear();
     reload.cancel();
+  });
+  // Opened before the first snapshot (a lab deep link): fill the form once the data arrives.
+  useSoulArrival(data.snapshot !== null, () => {
+    setBase(entity);
+    setForm(groupForm(entity, index));
   });
 
   const ids = { name: useId(), moderator: useId(), reviewer: useId() };
@@ -149,6 +156,16 @@ export function PaGroupModal({ open, onClose, groupId }: { open: boolean; onClos
       onSubmit={save}
       footer={
         <>
+          {/* A saved group chat whose members all have a character can be a companion chat: its per-chat settings
+              live in 对话设置 (Soul UI spec 7.8). */}
+          {base && base.memberIds.length > 0 && base.memberIds.every((memberId) => index.characters.has(memberId)) ? (
+            <>
+              <Button variant="ghost" onClick={() => nav.openModal({ kind: 'chatSettings', conversationId: base.conversationId })}>
+                {t('pa.soul.manage.group.settings')}
+              </Button>
+              <ModalSpacer />
+            </>
+          ) : null}
           <Button variant="ghost" onClick={onClose}>
             {t('pa.cancel')}
           </Button>

@@ -242,6 +242,9 @@ import { AppearanceSettingsSection, fantayAppearanceHeader } from '../fantay/acc
 import { FantaySettingsNavItems } from '../fantay/account/FantaySettingsNavItems';
 import { FantayMascot } from '../fantay/brand/FantayMascot';
 import { UsageDashboard } from './usage/UsageDashboard';
+import { SettingsSearchProviders } from './SettingsSearchProviders';
+import { SettingsVoiceInput } from './SettingsVoiceInput';
+import { useVoiceInputCopy } from '../i18n/voice-input';
 import { withBrandName } from './BrandName';
 
 export type SettingsSection =
@@ -252,6 +255,8 @@ export type SettingsSection =
   | 'workspace'
   | 'instructions'
   | 'media'
+  | 'searchProviders'
+  | 'voiceInput'
   | 'composio'
   | 'orbit'
   | 'routines'
@@ -312,7 +317,7 @@ function normalizeSettingsSection(section: SettingsSection): SettingsSection {
 
 /** 模型与提供商 hosts two section tokens: `execution` (CLI / BYOK tabs) and `media` (the media tab). */
 function isProvidersSection(section: SettingsSection): boolean {
-  return section === 'execution' || section === 'media';
+  return section === 'execution' || section === 'media' || section === 'searchProviders' || section === 'voiceInput';
 }
 
 interface ByokProviderPreset {
@@ -1575,6 +1580,7 @@ export function SettingsDialog({
   onDraftChange,
 }: Props) {
   const { t, locale, setLocale } = useI18n();
+  const voiceCopy = useVoiceInputCopy();
   const zhSettings = locale.startsWith('zh');
   const analytics = useAnalytics();
   // Backfill the fixed-origin base URL on mount too, so a config persisted with
@@ -3947,6 +3953,8 @@ export function SettingsDialog({
     },
     // The media tab shares the page header with the CLI / BYOK tabs beside it.
     media: { title: t('settings.title'), subtitle: t('settings.subtitle') },
+    searchProviders: { title: t('settings.title'), subtitle: t('settings.subtitle') },
+    voiceInput: { title: t('settings.title'), subtitle: t('settings.subtitle') },
     composio: { title: t('connectors.title'), subtitle: t('connectors.subtitle') },
     orbit: { title: t('settings.orbit.title'), subtitle: t('settings.orbit.lede') },
     routines: {
@@ -4251,7 +4259,7 @@ export function SettingsDialog({
                   // vendors — every other agent's model list is one
                   // provider's own raw ids, which the company heuristic
                   // would otherwise split into misleading fake "companies".
-                  groupByCompany={selected.id === 'tokentosea'}
+                  groupByModel={selected.id === 'tokentosea'}
                   // Its two columns need more room than the field has; every
                   // other list stays exactly as wide as its trigger.
                   {...(selected.id === 'tokentosea' ? { popoverMinWidth: 340 } : {})}
@@ -4610,7 +4618,7 @@ export function SettingsDialog({
                 className="seg-control"
                 role="tablist"
                 aria-label={t('settings.modeAria')}
-                style={{ ['--seg-cols' as string]: 3 } as CSSProperties}
+                style={{ ['--seg-cols' as string]: 5 } as CSSProperties}
               >
                 <button
                   type="button"
@@ -4660,6 +4668,21 @@ export function SettingsDialog({
                   data-testid="settings-tab-media"
                 >
                   <span className="seg-title">{t('settings.mediaProviders')}</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeSection === 'searchProviders'}
+                  className={'seg-btn seg-btn--inline' + (activeSection === 'searchProviders' ? ' active' : '')}
+                  onClick={() => setActiveSection('searchProviders')}
+                  data-testid="settings-tab-search-providers"
+                >
+                  <span className="seg-title">{locale.startsWith('zh') ? '搜索服务提供商' : 'Search providers'}</span>
+                </button>
+                <button type="button" role="tab" aria-selected={activeSection === 'voiceInput'}
+                  className={'seg-btn seg-btn--inline' + (activeSection === 'voiceInput' ? ' active' : '')}
+                  onClick={() => setActiveSection('voiceInput')} data-testid="settings-tab-voice-input">
+                  <span className="seg-title">{voiceCopy.title}</span>
                 </button>
               </div>
               </div>
@@ -5995,6 +6018,8 @@ export function SettingsDialog({
 
           {activeSection === 'account' ? <AccountSettingsSection /> : null}
           {activeSection === 'usage' ? <UsageDashboard /> : null}
+          {activeSection === 'searchProviders' ? <SettingsSearchProviders onOpenAccount={() => setActiveSection('account')} /> : null}
+          {activeSection === 'voiceInput' ? <SettingsVoiceInput byok={cfg} /> : null}
           {activeSection === 'media' ? (
             <MediaProvidersSection
               cfg={cfg}

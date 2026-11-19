@@ -335,6 +335,7 @@ function reviveTab(value: unknown): WorkspaceChromeTab | null {
       || view === 'materials'
       || view === 'tokentosea'
       || view === 'workbench'
+      || view === 'memory'
       || view === 'integrations'
     ) {
       return { id, kind: 'entry', view, createdAt, lastActiveAt };
@@ -2824,6 +2825,7 @@ function displayTabFor(
     pa: t('pa.title'),
     home: t('entry.navHome'),
     workbench: t('fantayShell.sidebar.workbench'),
+    memory: t('settings.memory'),
     onboarding: t('settings.welcomeTitle'),
     projects: t('entry.navProjects'),
     tasks: t('entry.navTasks'),
@@ -2847,6 +2849,7 @@ function displayTabFor(
     pa: 'users',
     home: 'home',
     workbench: 'sparkles',
+    memory: 'brain',
     onboarding: 'sparkles',
     projects: 'folder',
     tasks: 'kanban',

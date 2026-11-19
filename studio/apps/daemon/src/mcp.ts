@@ -372,6 +372,26 @@ const EXTERNAL_PLUGIN_CONTEXT_ARG = {
 export const TOOL_DEFS = [
   ...skillTools,
   {
+    name: 'web_search',
+    description: 'Search the web using the providers configured in Fantay and return source links.',
+    inputSchema: { type: 'object', properties: { query: { type: 'string', description: 'Search query.' }, provider: { type: 'string', description: 'Optional configured provider ID.' }, maxResults: { type: 'integer', minimum: 1, maximum: 20, description: 'Maximum number of source results.' } }, required: ['query'] },
+  },
+  {
+    name: 'web_fetch',
+    description: 'Read a webpage as Markdown using Fantay search providers.',
+    inputSchema: { type: 'object', properties: { url: { type: 'string', description: 'Public webpage URL.' }, provider: { type: 'string', description: 'Optional configured provider ID.' } }, required: ['url'] },
+  },
+  {
+    name: 'smart_search',
+    description: 'Run a complete Smart Search command including research, deep planning, documentation and academic retrieval. Use smart_search_catalog to inspect commands.',
+    inputSchema: { type: 'object', properties: { command: { type: 'string', description: 'Command ID from smart_search_catalog.' }, arguments: { type: 'array', items: { type: 'string' }, description: 'CLI argument values for the selected command.' } }, required: ['command'] },
+  },
+  {
+    name: 'smart_search_catalog',
+    description: 'Inspect every available Smart Search command and parameter in Fantay.',
+    inputSchema: { type: 'object', properties: {} },
+  },
+  {
     name: 'collect_brief',
     description:
       'Open an interactive Fantay brief card for a new artifact. Use the returned human-readable confirmation with any explicit execution mode; never ask the user to copy an internal draft id or nonce.',
@@ -917,7 +937,8 @@ const toolSearchTerms: Record<string, string> = {
   create_artifact: '创建作品 生成文件', start_run: '启动任务 生成设计', get_run: '任务进度 运行状态',
   cancel_run: '取消任务 停止运行', workbench_find: '搜索工作台 灵感 素材库',
   workbench_read: '读取素材 笔记 高亮', list_agents: '可用智能体', list_plugins: '插件列表 专家套件',
-  get_tokentosea_login_help: '登录帮助', get_tokentosea_login_status: '登录状态',
+  web_search: '搜索网页 联网检索', web_fetch: '提取网页 读取网址', smart_search: '智能搜索',
+  smart_search_catalog: '搜索命令目录', get_tokentosea_login_help: '登录帮助', get_tokentosea_login_status: '登录状态',
 };
 export const compactMcpTools = [...routerTools, resultPageTool, ...directTools];
 
@@ -2266,7 +2287,19 @@ async function handleMcpToolCall(
       : null;
     const headers = workspaceContext?.headers;
     const workspaceId = workspaceContext?.workspaceId;
+    const nativeSearchHeaders = process.env.OD_TOOL_TOKEN ? { Authorization: `Bearer ${process.env.OD_TOOL_TOKEN}` } : {};
     switch (name) {
+      case 'web_search':
+        return ok(await postJson(`${baseUrl}/api/search/search`, args, nativeSearchHeaders));
+      case 'web_fetch':
+        return ok(await postJson(`${baseUrl}/api/search/fetch`, args, nativeSearchHeaders));
+      case 'smart_search':
+        return ok(await postJson(`${baseUrl}/api/search/execute`, args, nativeSearchHeaders));
+      case 'smart_search_catalog': {
+        const response = await fetch(`${baseUrl}/api/search/catalog`, { headers: nativeSearchHeaders });
+        if (!response.ok) throw new Error(await formatDaemonError(response, baseUrl));
+        return ok(await response.json());
+      }
       case 'collect_brief': {
         const collected = (options.briefStore ?? createLocalMcpBriefStore())
           .collect(args);

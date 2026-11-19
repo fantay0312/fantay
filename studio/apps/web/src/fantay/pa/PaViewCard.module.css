@@ -1,0 +1,23 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+.card {
+  min-width: 0;
+  max-width: 100%;
+  --dv-ink: var(--ink);
+  --dv-ink-2: var(--ink-soft);
+  --dv-ink-3: var(--ink-faint);
+  --dv-line: var(--line);
+  --dv-card: var(--paper);
+  --dv-main: var(--paper);
+  --dv-hover: var(--sub);
+  --dv-active: var(--sub);
+  --dv-accent: var(--accent);
+  --dv-accent-ink: var(--accent-ink);
+  --dv-tag-bg: var(--sub);
+}
+
+.card :global(.dv-view),
+.card :global(.dv-q) {
+  width: 100%;
+  max-width: 100%;
+  margin-inline: 0;
+}

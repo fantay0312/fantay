@@ -5,11 +5,19 @@ import { paCardsEn, paCardsZh } from './pa-ui/cards.ts';
 import { paPagesEn, paPagesZh } from './pa-ui/pages.ts';
 import { paManageEn, paManageZh } from './pa-ui/manage.ts';
 import { paNavEn, paNavZh } from './pa-ui/nav.ts';
+import { paSoulShellEn, paSoulShellZh } from './pa-ui/soul-shell.ts';
+import { paSoulChatEn, paSoulChatZh } from './pa-ui/soul-chat.ts';
+import { paSoulInspectorEn, paSoulInspectorZh } from './pa-ui/soul-inspector.ts';
+import { paSoulLibraryEn, paSoulLibraryZh } from './pa-ui/soul-library.ts';
+import { paSoulEditorEn, paSoulEditorZh } from './pa-ui/soul-editor.ts';
+import { paSoulManageEn, paSoulManageZh } from './pa-ui/soul-manage.ts';
+import { paSoulLoreEn, paSoulLoreZh } from './pa-ui/soul-lore.ts';
+import { paSoulStage2En, paSoulStage2Zh } from './pa-ui/soul-stage2.ts';
 export const paEn = {
   'pa.work.activity': 'Activity',
   'pa.work.goals': 'Goals',
   'pa.work.routines': 'Routines',
-  'pa.work.intro': 'Follow your agents’ work and plan what runs next.',
+  'pa.work.intro': 'Follow your characters’ work and plan what runs next.',
   'pa.work.noActivity': 'Task and delivery updates will appear here.',
   'pa.work.noGoals': 'Group related tasks under a shared goal.',
   'pa.work.noRoutines': 'No routines yet.',
@@ -54,18 +62,26 @@ export const paEn = {
   ...paPagesEn,
   ...paManageEn,
   ...paNavEn,
+  ...paSoulShellEn,
+  ...paSoulChatEn,
+  ...paSoulInspectorEn,
+  ...paSoulLibraryEn,
+  ...paSoulEditorEn,
+  ...paSoulManageEn,
+  ...paSoulLoreEn,
+  ...paSoulStage2En,
   "pa.reviewer": "Independent reviewer",
   "pa.title": "Fantay",
-  "pa.subtitle": "A workspace for your agents and ongoing work",
+  "pa.subtitle": "A workspace for your characters and ongoing work",
   "pa.assistant": "Assistant",
-  "pa.agents": "Agents",
-  "pa.groups": "Groups",
+  "pa.agents": "Characters",
+  "pa.groups": "Group chats",
   "pa.tasks": "Tasks",
   "pa.memories": "Memory",
   "pa.connections": "Connections",
   "pa.local": "On this device",
-  "pa.newAgent": "New agent",
-  "pa.newGroup": "New group",
+  "pa.newAgent": "New character",
+  "pa.newGroup": "New group chat",
   "pa.newMemory": "Add memory",
   "pa.name": "Name",
   "pa.role": "Role and responsibilities",
@@ -91,7 +107,7 @@ export const paEn = {
     "Describe your goal. Mention a member with @name, or choose a reply target.",
   "pa.welcome": "What would you like to work on?",
   "pa.welcomeBody":
-    "Ask your assistant, or bring a goal to a group. Each member keeps their own identity and model.",
+    "Ask your assistant, or bring a goal to a group chat. Each member keeps their own identity and model.",
   "pa.target": "Responders",
   "pa.auto": "Moderator decides",
   "pa.reply": "Reply",
@@ -105,7 +121,7 @@ export const paEn = {
   "pa.amend": "Add requirements",
   "pa.amendHint":
     "Applied when the next stage starts. An answer already being written won't use it.",
-  "pa.noTasks": "No tasks yet. Send a goal from the assistant or a group.",
+  "pa.noTasks": "No tasks yet. Send a goal from the assistant or a group chat.",
   "pa.noMemory":
     "No saved memory. Add a preference with a source and a visible scope.",
   "pa.source": "Source",
@@ -113,8 +129,8 @@ export const paEn = {
   "pa.scope": "Visible to",
   "pa.scopeId": "Scope identifier",
   "pa.private": "Private conversations",
-  "pa.agent": "One agent",
-  "pa.group": "One group",
+  "pa.agent": "One character",
+  "pa.group": "One group chat",
   "pa.project": "One project",
   "pa.delete": "Delete",
   "pa.refresh": "Refresh",
@@ -124,7 +140,7 @@ export const paEn = {
   "pa.projectHint":
     "The last two selected members produce and review with different models. Local files are saved with verification evidence.",
   "pa.memoryHint":
-    "Private memory is used only in one-to-one chats. Groups and channels read group memory only.",
+    "Private memory is used only in one-to-one chats. Group chats and channels read group chat memory only.",
   "pa.modelsHint":
     "Uses your Claude Code sign-in, local Ollama models, or authorized TokenToSea models. Fantay's model calls have no shell or external-action tools.",
   "pa.lifecycle":
@@ -155,7 +171,7 @@ export const paZh: PaDict = {
   'pa.work.activity': '动态',
   'pa.work.goals': '目标',
   'pa.work.routines': '例行任务',
-  'pa.work.intro': '查看智能体的工作进展，整理目标和下一步安排。',
+  'pa.work.intro': '查看角色的工作进展，整理目标和下一步安排。',
   'pa.work.noActivity': '任务进展和渠道投递动态会出现在这里。',
   'pa.work.noGoals': '可把相关任务归到同一个目标下。',
   'pa.work.noRoutines': '还没有例行任务。',
@@ -200,23 +216,31 @@ export const paZh: PaDict = {
   ...paPagesZh,
   ...paManageZh,
   ...paNavZh,
+  ...paSoulShellZh,
+  ...paSoulChatZh,
+  ...paSoulInspectorZh,
+  ...paSoulLibraryZh,
+  ...paSoulEditorZh,
+  ...paSoulManageZh,
+  ...paSoulLoreZh,
+  ...paSoulStage2Zh,
   "pa.reviewer": "独立审阅者",
   "pa.title": "Fantay",
-  "pa.subtitle": "让智能体持续协作，让工作有处可寻",
+  "pa.subtitle": "让角色持续协作，让工作有处可寻",
   "pa.assistant": "助手",
-  "pa.agents": "智能体",
-  "pa.groups": "群组",
+  "pa.agents": "角色",
+  "pa.groups": "群聊",
   "pa.tasks": "任务",
   "pa.memories": "记忆",
   "pa.connections": "连接",
   "pa.local": "本机运行",
-  "pa.newAgent": "新建智能体",
-  "pa.newGroup": "新建群组",
+  "pa.newAgent": "新建角色",
+  "pa.newGroup": "新建群聊",
   "pa.newMemory": "添加记忆",
   "pa.name": "名称",
   "pa.role": "职责与工作方式",
   "pa.model": "模型",
-  "pa.members": "群组成员",
+  "pa.members": "群聊成员",
   "pa.moderator": "主持者",
   "pa.mode": "协作方式",
   "pa.discussion": "讨论",
@@ -236,7 +260,7 @@ export const paZh: PaDict = {
   "pa.placeholder": "描述你的目标。可用 @名字 指定成员，也可以回复某条消息。",
   "pa.welcome": "今天想一起完成什么？",
   "pa.welcomeBody":
-    "直接向助手提问，或把目标交给群组。每位成员保留自己的身份、职责与模型。",
+    "直接向助手提问，或把目标交给群聊。每位成员保留自己的身份、职责与模型。",
   "pa.target": "回应成员",
   "pa.auto": "由主持者选择",
   "pa.reply": "回复",
@@ -249,15 +273,15 @@ export const paZh: PaDict = {
   "pa.openProject": "打开项目",
   "pa.amend": "追加要求",
   "pa.amendHint": "在下一阶段开始时使用；正在生成的回答不会采用。",
-  "pa.noTasks": "还没有任务。在助手或群组中发送一个目标即可开始。",
+  "pa.noTasks": "还没有任务。在助手或群聊中发送一个目标即可开始。",
   "pa.noMemory": "还没有保存记忆。可以添加有来源、适用范围明确的偏好。",
   "pa.source": "来源",
   "pa.content": "内容",
   "pa.scope": "可见范围",
   "pa.scopeId": "范围标识",
   "pa.private": "私人对话",
-  "pa.agent": "指定智能体",
-  "pa.group": "指定群组",
+  "pa.agent": "指定角色",
+  "pa.group": "指定群聊",
   "pa.project": "指定项目",
   "pa.delete": "删除",
   "pa.refresh": "刷新",
@@ -267,7 +291,7 @@ export const paZh: PaDict = {
   "pa.projectHint":
     "所选成员中最后两位分别负责产出与审阅，使用不同模型。成果保存到本地项目，并保留验证记录。",
   "pa.memoryHint":
-    "私有记忆只用于一对一对话；群组和渠道只读取群组记忆。",
+    "私有记忆只用于一对一对话；群聊和渠道只读取群聊记忆。",
   "pa.modelsHint":
     "复用 Claude Code 登录、本机 Ollama 模型或已授权的 TokenToSea 模型。Fantay 的模型调用不开放终端和外部操作工具。",
   "pa.lifecycle":

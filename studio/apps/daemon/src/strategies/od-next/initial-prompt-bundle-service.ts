@@ -120,6 +120,15 @@ interface OdNextInitialPromptBundleServiceDeps {
   composeDaemonSystemPrompt: (
     input: Record<string, unknown>,
   ) => Promise<DaemonSystemPromptResult>;
+  /**
+   * Memory recalled for the request, as a ready `<memory>` block or ''. Optional: without it the Bundle
+   * carries only the Settings memory. It must not throw and must settle quickly.
+   */
+  recallMemory?: (input: {
+    projectId?: string | null | undefined;
+    conversationId?: string | null | undefined;
+    query: string;
+  }) => Promise<string>;
 }
 
 export interface PrepareOdNextInitialPromptBundleInput {
@@ -243,6 +252,10 @@ export function createOdNextInitialPromptBundleService(
     const intentSignals = conversationId
       ? latchConversationIntentSignals(deps.db, conversationId, freshIntentSignals)
       : freshIntentSignals;
+    // Keyed on the user's own turn; a headless caller's transcript is cut to its tail by the bridge.
+    const memoryRecall = deps.recallMemory
+      ? await deps.recallMemory({ projectId, conversationId, query: userPrompt }).catch(() => '')
+      : '';
     const {
       odNextBundleHead,
       odNextRecipeIdentity,
@@ -266,6 +279,7 @@ export function createOdNextInitialPromptBundleService(
       devicePlatformSignal: intentSignals.devicePlatform,
       workspaceScope: meta.workspaceScope,
       frozenSkillPackage,
+      memoryRecall,
     });
     const loadedTaskInputs = loadOdNextTaskInputSnapshot(
       taskInputSnapshot,

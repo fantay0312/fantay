@@ -13,7 +13,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { cn } from '../ui/cn';
-import { ART_TRANSFORM, BACK_PATH, EYES, EYE_TILT, FRONT_PATH, SMALL_MAX } from './mascot-art';
+import { SMALL_MAX } from './mascot-art';
 import { clickFlight, flipFlight, pulseFlight, stirFlight, type Flight, type FlightInput } from './mascot-flight';
 import { FACE, HEAD } from './mascot-sheet';
 import type { StageActor } from './mascot-stage';
@@ -25,6 +25,8 @@ export interface FantayMascotProps {
   /** px; omitted = fills its box. */
   size?: number;
   mood?: FantayMascotMood;
+  /** Hold the last frame without advancing cloth physics or drawing into the canvas. */
+  paused?: boolean;
   /** The eyes follow the pointer, and it turns a little to face it. */
   tracking?: boolean;
   /** Increment to lift it once. */
@@ -40,16 +42,6 @@ export interface FantayMascotProps {
   interactive?: boolean;
   className?: string;
 }
-
-/** The original folded-paper artwork, used by the illustrated changelog. */
-export const MASCOT_ART = {
-  front: FRONT_PATH,
-  back: BACK_PATH,
-  eyes: EYES,
-  eyeTilt: EYE_TILT,
-  /** Fits the artwork inside a 0 0 1024 1024 viewBox. */
-  transform: ART_TRANSFORM,
-} as const;
 
 /** The eyes' centre inside the mascot's box, as shares of its width and height: where the living body has them. */
 const EYE_ORIGIN = { x: (1 + HEAD.x) / 2, y: (1 - HEAD.y + FACE.low) / 2 };
@@ -104,6 +96,7 @@ function Artwork({ small, className, size, testId }: { small: boolean; className
 export function FantayMascot({
   size,
   mood = 'idle',
+  paused = false,
   tracking = false,
   pulse = 0,
   flip = 0,
@@ -117,6 +110,10 @@ export function FantayMascot({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const shadowRef = useRef<HTMLSpanElement | null>(null);
   const actorRef = useRef<StageActor | null>(null);
+  const intersecting = useRef(false);
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
+  useEffect(() => { actorRef.current?.show(intersecting.current && !paused); }, [paused]);
   /** What was asked of it before its stage had loaded. */
   const owedRef = useRef({ pulse: false, flip: false });
   const pointerRef = useRef({ x: 0, y: 0, fresh: false, moved: false, known: false });
@@ -142,6 +139,7 @@ export function FantayMascot({
     let lastX = 0;
     let lastY = 0;
     let stillFor = LOOK_HOLD;
+    let hasDrawn = false;
     let ground = '';
     let groundX = '';
     // The mark must not be seen standing in place before the living mascot takes over from it.
@@ -184,6 +182,7 @@ export function FantayMascot({
     };
 
     const drawn = (flight: Flight) => {
+      hasDrawn = true;
       const shadow = shadowRef.current;
       if (!shadow) return;
       // The higher it floats the smaller its shadow, and the shadow follows it sideways.
@@ -238,7 +237,9 @@ export function FantayMascot({
           if (entry.isIntersecting && size === undefined && entry.boundingClientRect.width > 0) {
             live.resize(entry.boundingClientRect.width);
           }
-          live.show(entry.isIntersecting);
+          intersecting.current = entry.isIntersecting;
+          if (entry.isIntersecting && pausedRef.current && !hasDrawn) live.advance(0);
+          live.show(entry.isIntersecting && !pausedRef.current);
         });
         observer.observe(root);
       })

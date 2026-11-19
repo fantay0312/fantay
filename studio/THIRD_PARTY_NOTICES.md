@@ -17,6 +17,30 @@ OpenPencil) are listed in [`apps/canvas/THIRD_PARTY.md`](apps/canvas/THIRD_PARTY
   network are entitled to its Corresponding Source. The complete source of this distribution is
   available at: `<public Fantaydesign repository URL — fill in when published>`.
 
+## DS Bot IM
+
+- Source: [DS Bot at a66cc737](https://github.com/Fei2411/DS-Bot/tree/a66cc737cfb6c3d8a2597e748cded6cab1206dd3/ds-bot/src/host/im).
+- Copyright 2026 Fei2411 and the DS Bot contributors. License: Apache 2.0.
+- Fantay uses the DingTalk, Discord, QQ, Slack, Telegram and WeCom protocol adapters and their formatting and retry helpers. The adapters are adapted for Fantay's authorization, receipt and delivery rules.
+- [Upstream notices](licenses/ds-bot-im-NOTICE.txt), including the MIT-attributed protocol implementations, are retained.
+- The WeCom adapter also follows the [WeCom Team SDK protocol](https://github.com/WecomTeam/aibot-node-sdk), published as MIT.
+
+## Personal Agent channel documents, audio and views
+
+- [PDF.js](https://github.com/mozilla/pdf.js) (`pdfjs-dist@6.5.438`, Apache-2.0) reads attached PDF text and renders images from scanned pages.
+- [yauzl](https://github.com/thejoshwolfe/yauzl) (MIT) and [saxes](https://github.com/lddubeau/saxes) (ISC) read Office archives and XML without extracting files into the workspace.
+- [silk-wasm](https://www.npmjs.com/package/silk-wasm/v/3.7.1) (MIT) decodes WeChat SILK audio for local transcription.
+- [Deep View](https://github.com/Fei2411/deep-view) (`deep-view@0.1.2`, Apache-2.0) validates and displays declarative cards using its standalone core and React entries.
+
+## Fantay Memory: local models and distiller rules
+
+- [onnxruntime-node](https://github.com/microsoft/onnxruntime) (`onnxruntime-node@1.21.1`, MIT, Copyright Microsoft Corporation) runs the local memory models on the CPU (`apps/daemon/src/services/memory/local-models.ts`). The same version was already shipped through `hyperframes`.
+- [Tokenizers.js](https://github.com/huggingface/tokenizers.js) (`@huggingface/tokenizers@0.2.0`, Apache-2.0, Copyright Hugging Face) tokenizes text for those models.
+- The models are not bundled; the app downloads them on request into the daemon data folder and verifies each file's sha256:
+  - [Qwen3-Embedding-0.6B](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B) (Apache-2.0, Alibaba Qwen team), int8 ONNX export [`onnx-community/Qwen3-Embedding-0.6B-ONNX`](https://huggingface.co/onnx-community/Qwen3-Embedding-0.6B-ONNX) at revision `c25a394dd583836952667c12f008335071b3f43d`.
+  - [gte-multilingual-reranker-base](https://huggingface.co/Alibaba-NLP/gte-multilingual-reranker-base) (Apache-2.0, Alibaba-NLP), int8 ONNX export [`onnx-community/gte-multilingual-reranker-base`](https://huggingface.co/onnx-community/gte-multilingual-reranker-base) at revision `ee64367e35a2db0da46bb6497e13a18f8bd585cb`.
+- The memory distiller's rules for checking memories against the transcript, keeping exact identifiers and values, plain present-tense wording, never copying secrets or instructions, and marking disagreements as `CONFLICT` instead of guessing (`apps/daemon/src/services/memory/distill.ts`) are adapted from the memory analyzer and organizer prompts of [anthropics/claude-cookbooks](https://github.com/anthropics/claude-cookbooks) (`managed_agents/example_data/memory_distill/prompts/analyzer_system.md`, `organizer_system.md`). MIT License, Copyright (c) 2023 Anthropic.
+
 ## pi
 
 - Runtime: pi 1.5.0 (`@earendil-works/pi-coding-agent`), the official standalone release from
@@ -186,20 +210,54 @@ Copyright (c) 2021 Radix.
 | `tailwind-merge` | 3.7.0 | MIT | Copyright (c) 2021 Dany Castillo |
 | `lucide-react` | 1.16.0 | ISC | Copyright (c) Lucide Icons and Contributors |
 | `@fontsource-variable/inter` (Inter typeface) | 5.3.0 | SIL Open Font License 1.1 | Copyright (c) 2016 The Inter Project Authors — licence text: [`apps/canvas/licenses/Inter-OFL.txt`](apps/canvas/licenses/Inter-OFL.txt) |
+| `@codemirror/state`, `view`, `language`, `commands`, `search`, `merge`, `language-data`, `@lezer/highlight` (side workspace code viewer) | 6.7.6, 6.43.15, 6.13.1, 6.11.1, 6.7.2, 6.12.3, 6.5.2, 1.2.5 | MIT | Copyright (C) 2018-2021 by Marijn Haverbeke and others |
+| `@tanstack/react-virtual` (side workspace file tree, data grids and archive listings) | 3.14.26 | MIT | Copyright (c) 2021-present Tanner Linsley |
+| `cmdk` (side workspace start page) | 1.1.1 | MIT | Copyright (c) 2022 Paco Coursey |
+| `diff` (turn change counts and patch reading) | 8.0.4 | BSD-3-Clause | Copyright (c) 2009-2015, Kevin Decker |
+| `pdfjs-dist` (artifact PDF viewer and self-hosted worker/cMaps/standard fonts/codecs under `apps/web/public/artifact/pdfjs/`, with `LICENSE` kept beside them) | 6.5.438 | Apache-2.0 | Copyright Mozilla Foundation and contributors |
+| `docx-preview` (artifact Word `.docx` page renderer) | 0.4.1 | Apache-2.0 | Copyright Volodymyr Baydalka |
+| `papaparse` (artifact CSV/TSV streaming parser) | 5.7.1 | MIT | Copyright (c) 2015 Matthew Holt |
+| `@e965/xlsx` (SheetJS Community Edition mirror for workbook reading) | 0.20.3 | Apache-2.0 | Copyright (C) 2012-present SheetJS LLC |
+| `@office-kit/pptx-preview` (and peer `@office-kit/pptx`, PowerPoint slide model and SVG renderer) | 0.21.0 | MIT | Copyright (c) @office-kit contributors |
+| `heic-to` (HEIC/HEIF image decoder in worker) | 1.6.7 | LGPL-3.0 | Copyright Hopper Gee |
+| `tiff` (TIFF image decoder in worker) | 7.1.3 | MIT | Copyright (c) Michaël Zasso |
+| `ag-psd` (Photoshop `.psd` composite reader in worker) | 34.2.0 | MIT | Copyright (c) Agamnentzar |
+| `fflate` (ZIP/GZIP streaming reader for archives, EPUB and OpenDocument) | 0.8.3 | MIT | Copyright (c) 2020 Arjun Barrett |
+| `sql.js` (read-only SQLite WebAssembly viewer) | 1.16.0 | MIT | Copyright (c) sql.js authors |
+| `fast-xml-parser` (XML package/navigation parser) | 5.12.1 | MIT | Copyright (c) Natural Intelligence / Amit Gupta |
+| `three` (3D model stage and loaders) | 0.185.1 | MIT | Copyright © 2010-2026 three.js authors |
+| `dompurify` (HTML allow-list sanitiser for converted documents and notebooks) | 3.4.2 | MPL-2.0 OR Apache-2.0 | Copyright 2015 Mario Heiderich, Cure53 |
+| `shiki` (code cell and Markdown syntax highlighting) | 4.1.0 | MIT | Copyright (c) 2021 Pine Wu, Copyright (c) 2023-PRESENT Anthony Fu |
+| `micromark`, `micromark-extension-gfm` (CommonMark + GFM prose rendering) | 4.0.2, 3.0.0 | MIT | Copyright (c) Titus Wormer |
+| `pele` (Mermaid diagram renderer for the artifact diagram viewer and for Mermaid blocks in Markdown documents and chat messages) | 1.13.0 | MIT | Copyright (c) 2026 kepano |
+| `postal-mime` (MIME parser for the artifact e-mail viewer, run in a worker) | 4.2.0 | MIT-0 | Copyright (c) 2021-2025 Andris Reinman |
+| `katex` (formula typesetting in notebooks, Markdown documents, chat messages and Mermaid labels; its stylesheet and the KaTeX fonts it ships are bundled with the app, and an exported diagram that holds formulas carries the fonts it uses) | 0.19.1 | MIT | Copyright (c) 2013-2020 Khan Academy and other contributors |
+
+The TokenToSea tool catalog also bundles static Lucide geometry in
+`apps/web/src/components/tokentosea/tool-icons/nodes.json`. Full ISC/MIT notices
+are retained next to the source and shipped in `apps/web/public/tool-purpose-icons/LICENSE.txt`.
 
 ## 京華老宋体 (KingHwa OldSong)
 
-`apps/web/public/fonts/KingHwaOldSong-hero.woff2` is a glyph subset of 京華老宋体 v2.002, Font © Copyright
-2022 TerryWang, used for the Home headline. The author's terms allow free commercial use and embedding in
-software; they forbid altering the glyphs, distributing altered versions, or selling the font file on its own.
-The subset keeps the original outlines and name records unchanged.
+`apps/web/public/fonts/KingHwaOldSong-hero.woff2` and `apps/web/public/fonts/KingHwaOldSong-manga.woff2` are
+glyph subsets of 京華老宋体 v2.002, Font © Copyright 2022 TerryWang, used for the Home headline and the
+changelog manga display lettering. The author's terms allow free commercial use and embedding in software; they
+forbid altering the glyphs, distributing altered versions, or selling the font file on its own. The subsets keep
+the original outlines and name records unchanged.
+
+## 霞鹜文楷 (LXGW WenKai)
+
+`apps/web/public/fonts/LXGWWenKai-manga.woff2` is a glyph subset of LXGW WenKai Medium v1.522 from
+[lxgw/LxgwWenKai](https://github.com/lxgw/LxgwWenKai), derived from Fontworks Klee, used for the changelog manga
+dialogue and narration lettering. SIL Open Font License 1.1, Copyright 2021-2026 LXGW and Copyright 2020 The
+Klee Project Authors — licence text: [`licenses/LXGWWenKai-OFL.txt`](licenses/LXGWWenKai-OFL.txt).
 
 ## IM FELL English
 
 `apps/web/public/fonts/IMFellEnglish-Regular.ttf` and `IMFellEnglish-Italic.ttf` are the unmodified IM FELL
 English roman and italic from [google/fonts](https://github.com/google/fonts/tree/main/ofl/imfellenglish), used
-for the Latin text of the Home headline. SIL Open Font License 1.1, Copyright (c) 2010 Igino Marini — licence
-text: [`licenses/IMFellEnglish-OFL.txt`](licenses/IMFellEnglish-OFL.txt).
+for the Latin text of the Home headline and changelog manga display lettering. SIL Open Font License 1.1,
+Copyright (c) 2010 Igino Marini — licence text: [`licenses/IMFellEnglish-OFL.txt`](licenses/IMFellEnglish-OFL.txt).
 
 ## Stageshow
 
@@ -216,9 +274,126 @@ from the workspace's `tools/feature-icons` and also holds eight icons drawn for 
 the engine and icons inside the product with the notice kept; it does not permit redistributing the example icons on
 their own as an icon set.
 
+## Side workspace: start page, code surface and surface router
+
+The side workspace under `apps/web/src/fantay/workspace/{start,code,surfaces}/` adapts code from three
+projects. Every receiving file names its source path, commit and licence in its header and is distributed
+under AGPL-3.0-only together with the upstream notice.
+
+- [eta](https://github.com/0xfe-project/eta) at `793ded7cd96f9cafb713715b2301adeab2f9b046`, MIT,
+  Copyright (c) 2026 eta contributors — licence text: [`licenses/eta-MIT.txt`](licenses/eta-MIT.txt).
+  - `apps/web/src/lib/tool-shape.ts` → `surfaces/tool-shape.ts`: reading a tool call by the shape of its
+    input, the edit-pair reader and the Codex file-change reader.
+  - `apps/web/src/components/workspace/pane.ts` → `code/use-pane-width.ts`: the resizable pane hook.
+- [t3code](https://github.com/pingdotgg/t3code) at `c5e6b24ff5e1b752d91a75fa425322f5c90bf5cf`, MIT,
+  Copyright (c) 2026 T3 Tools Inc. — licence text: [`licenses/t3code-MIT.txt`](licenses/t3code-MIT.txt).
+  - `apps/web/src/components/files/FileBreadcrumbs.tsx` and `filePath.ts` → `code/Breadcrumb.tsx`.
+  - `apps/web/src/components/RightPanelTabs.tsx` (`RightPanelEmptyState`) → `start/WorkspaceStart.tsx`
+    and its stylesheet: the card-less column of rows (structure only).
+- [cindy](https://github.com/makecindy/cindy) at `88941ba77f2e2f30b3e6936102053ccd0d66c2f9`, Apache-2.0,
+  Copyright 2026 XD Inc. The upstream NOTICE is retained as
+  [`licenses/cindy-NOTICE.txt`](licenses/cindy-NOTICE.txt); the Apache-2.0 text is [`LICENSE`](LICENSE).
+  The files below are modified from the originals (Fantay tokens, typed for this renderer, hidden-tab handling).
+  - `apps/desktop/src/renderer/features/cc-agent/workdir-browse/lib/treeRows.ts` and `FileTreeView.tsx`
+    → `code/file-tree.ts`, `code/FileTree.tsx`: flat row model and the virtualised tree wiring.
+  - `packages/maker-shared/src/filePresentation.ts` and `apps/desktop/src/renderer/components/ui/file-type-icon.tsx`
+    → `code/file-visual.ts`.
+  - `apps/desktop/src/renderer/lib/textPreview.ts` and `packages/file-browser-core/src/textFileExts.ts`
+    → `code/text-preview.ts`.
+  - `apps/desktop/src/renderer/components/markdown/codemirrorGithubTheme.ts`, `PlaintextEditor.tsx`,
+    `useIsDarkMode.ts` and `features/cc-agent/workdir-browse/FileBodyView.tsx`
+    → `code/codemirror-theme.ts`, `code/codemirror-runtime.ts`, `code/CodeEditor.tsx`.
+  - `apps/desktop/src/renderer/features/right-sidebar/plugins/file-browser/FileBrowserBody.tsx` and
+    `FileBrowserBody.css`, `features/cc-agent/workdir-browse/FileFilterInput.tsx`
+    → `code/CodeSurface.tsx`, `code/CodeSurface.module.css`, `code/FileRail.tsx`.
+  - `apps/desktop/src/renderer/features/right-sidebar/EmptyState.tsx` → `start/WorkspaceStart.tsx` and its
+    stylesheet: row anatomy and the narrow-panel degradation (structure only).
+  - `apps/desktop/src/renderer/features/right-sidebar/lib/lastTurnChangedFiles.ts`
+    → `surfaces/turn-changes.ts`, `surfaces/tool-shape.ts`: path normalisation and per-runtime path fields.
+- [opencodex](https://github.com/lidge-jun/opencodex) at `c155cc7923dbc0102e27d79185505a85d4357b2c`, MIT,
+  Copyright (c) 2026 opencodex contributors — licence text: [`licenses/opencodex-MIT.txt`](licenses/opencodex-MIT.txt).
+  Reached through cindy's vendored copy (`packages/model-compat/src/upstream/responses/apply-patch-envelope.ts`):
+  the patch-operation line pattern and the freeform-input unwrapping in `surfaces/tool-shape.ts`.
+
+## Artifact viewers, files library and chat product cards
+
+The artifact viewers under `apps/web/src/fantay/artifact/` and the files library under
+`apps/web/src/fantay/workspace/files/` adapt bounded readers, layout models and UI patterns from the
+following projects. Every receiving file carries its `SPDX-License-Identifier: AGPL-3.0-only` header
+naming the upstream path, revision, licence and local changes.
+
+- [t3code](https://github.com/pingdotgg/t3code) at `c5e6b24ff5e1b752d91a75fa425322f5c90bf5cf`, MIT,
+  Copyright (c) 2026 T3 Tools Inc. — licence text: [`licenses/t3code-MIT.txt`](licenses/t3code-MIT.txt).
+  - `apps/web/src/components/files/PdfViewer.tsx`, `pdfDocument.ts`, `pdfLayout.ts`
+    → `artifact/viewers/PdfViewer.tsx`, `pdf/PdfPage.tsx`, `pdf/pdf-document.ts`, `pdf/pdf-layout.ts`,
+    `pdf/pdf-find.ts`.
+  - `apps/web/src/components/files/imageDecode.worker.ts` → `artifact/viewers/image/decode.worker.ts`
+    (bounded HEIF/TIFF decoders, extended with PSD).
+  - `apps/web/src/components/files/extendedDocumentPreview.ts` and `packages/shared/src/imageDimensions.ts`
+    → `artifact/viewers/document/xml.ts`, `document/images.ts`, `document/odt.ts`, `document/rtf.ts`,
+    `ebook/epub.ts`, `slides/odp-outline.ts`, `notebook/parse-notebook.ts`.
+  - `apps/web/src/components/files/DocumentPages.tsx` and `NotebookPreview.tsx`
+    → `artifact/viewers/notebook/notebook-html.ts`, `notebook/NotebookPage.tsx`.
+  - `apps/web/src/components/files/VirtualTablePreview.tsx`
+    → `artifact/viewers/parts/DataGrid.tsx`, `sheet/use-row-windows.ts`.
+  - `apps/web/src/components/files/office/sheet-cells.ts` (MIT, adapted from opencode, Copyright (c) 2025
+    opencode) → `artifact/viewers/sheet/grid-model.ts`.
+  - `apps/web/src/components/files/binaryPreview.worker.ts` and
+    `packages/client-runtime/src/zip/{zipDirectory,boundedZip}.ts`
+    → `artifact/viewers/database/read-database.ts`, `archive/archive-reader.ts`.
+  - `apps/web/src/components/files/AudioPreview.tsx` and `components/media/MediaVideoPlayer.tsx`
+    → `artifact/viewers/AudioViewer.tsx`, `VideoViewer.tsx`, `media/media-time.ts`,
+    `media/use-media-playback.ts`.
+- [cindy](https://github.com/makecindy/cindy) at `88941ba77f2e2f30b3e6936102053ccd0d66c2f9`, Apache-2.0,
+  Copyright 2026 XD Inc. — upstream NOTICE: [`licenses/cindy-NOTICE.txt`](licenses/cindy-NOTICE.txt).
+  - `apps/desktop/src/renderer/features/cc-agent/workdir-browse/FileTreeView.tsx`
+    → `artifact/viewers/archive/ArchiveTree.tsx` (modified to add archive size/date columns and folder totals).
+  - `apps/desktop/src/renderer/components/chat/GeneratedFilesCard.tsx`
+    → `artifact/cards/ArtifactCards.tsx` (group layout and existence rule; rewritten for Fantay tokens,
+    live page covers, anchored share/export menus and active-tab selection).
+  - `packages/maker-shared/src/mermaidAutofix.ts`
+    → `artifact/viewers/diagram/problems.ts` (its list of common mistakes in AI-written Mermaid and its
+    arrow characters; modified so that nothing is rewritten: each case becomes a hint shown with the
+    parser's error, and full-width punctuation and unquoted CJK names were added).
+- [PDF.js](https://github.com/mozilla/pdf.js) at `v6.5.438`, Apache-2.0, Mozilla Foundation.
+  - `web/text_layer_builder.js` (`#bindMouse`, `#enableGlobalSelectionListener`)
+    → `artifact/viewers/pdf/text-selection.ts`.
+
+### Excalidraw fonts served with the app
+
+`apps/web/public/artifact/excalidraw/fonts/` is a byte-identical copy of
+`@excalidraw/excalidraw@0.18.1/dist/prod/fonts/` (234 files; the package itself is MIT, Copyright (c) 2020
+Excalidraw). The sketch editor and the artifact drawing viewer load these fonts from the app instead of the
+library's public CDN, and a drawing saved as SVG embeds the glyphs it uses. Each family keeps its own
+licence, as stated in the font file's name table, in Excalidraw's source, or by its upstream project:
+
+| Family (folder) | Licence | Copyright |
+| --- | --- | --- |
+| Excalifont | SIL OFL 1.1 | Copyright (c) 2024 by Excalidraw |
+| Virgil | SIL OFL 1.1 | Copyright (c) 2011 by Your Own Font Foundry |
+| Xiaolai SC (`Xiaolai`, 209 subset files) | SIL OFL 1.1 ([lxgw/kose-font](https://github.com/lxgw/kose-font)) | Copyright © 2020 LXGW |
+| Nunito | SIL OFL 1.1 | Copyright 2014 The Nunito Project Authors |
+| Lilita One (`Lilita`) | SIL OFL 1.1 | Copyright (c) 2011 Juan Montoreano, with Reserved Font Name "Lilita One" |
+| Assistant | SIL OFL 1.1 | Copyright 2020 The Assistant Project Authors; Copyright 2010 The Source Sans Pro Authors, with Reserved Font Name 'Source' |
+| Cascadia Code (`Cascadia`) | SIL OFL 1.1 ([microsoft/cascadia-code](https://github.com/microsoft/cascadia-code)) | Copyright (c) 2019 - Present, Microsoft Corporation, with Reserved Font Name Cascadia Code |
+| Comic Shanns (`ComicShanns`) | MIT | Copyright (c) 2018 Shannon Miwa, (c) 2023 Jesus Gonzalez, (c) 2023 Rodrigo Batista de Moraes, (c) 2024 Fini Jastrow, (c) 2024 Kyle Beechly |
+| Liberation Sans 1.05 (`Liberation`) | See note | Digitized data © 2007 Ascender Corporation |
+
+Note on Liberation Sans: the file Excalidraw ships (version 1.05) carries the wording of the original Liberation release
+("subject to the license agreement under which you accepted the Liberation font software"), not the SIL OFL
+1.1 text that current [Liberation Fonts](https://github.com/liberationfonts/liberation-fonts) releases use.
+It is redistributed here unmodified, exactly as the Excalidraw package distributes it; review this entry
+before a public release.
+
 ## Design references (no code)
 
 - Wonder (wonder.design): no code or assets used; layout patterns re-implemented clean-room.
+- [Ryugi](https://github.com/Innei/ryugi): no code or assets copied. Interaction principles (reader place
+  preserved across rewrites, structural text/page thumbnails without per-card iframes, and the `<od-focus>`
+  tool marker) were informed by studying product behaviour and the public `v1.51.2` `artifacts/` release
+  (AGPL-3.0-only), implemented here from scratch for React 18.
+- OpenAI Codex desktop app (right-hand panel): no code or assets used; the file-tab, breadcrumb and
+  tree-on-the-right arrangement was observed from screenshots.
 
 ## Palmier Pro — GPL-3.0-only source adaptation
 

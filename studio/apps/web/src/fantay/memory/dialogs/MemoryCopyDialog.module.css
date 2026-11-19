@@ -1,0 +1,15 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* 复制到…: the memory being copied as a plain quote (a rule, no fill), then the target picker. */
+
+.source {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.quote {
+  margin: 0;
+  padding: 1px 0 1px 12px;
+  border-inline-start: 2px solid var(--line);
+}

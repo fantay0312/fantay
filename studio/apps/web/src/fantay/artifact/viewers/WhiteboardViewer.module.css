@@ -1,0 +1,136 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* One drawing on the canvas ground, laid out like the image viewer: the viewport scrolls, the plane
+   is at least as large as the viewport and centres the frame, so a small drawing sits in the middle
+   and a large one pans. A drawing with paper reads as a sheet (the ring gives white paper an edge on
+   a light ground); a drawing without paper is ink straight on the ground. */
+
+.surface {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.viewport {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  outline: none;
+  overscroll-behavior: contain;
+  /* Scrollbars would jump in and out while zooming; panning is by drag, trackpad and arrow keys. */
+  scrollbar-width: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.viewport:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--focus-ring-color);
+}
+
+.viewport[data-pannable] {
+  cursor: grab;
+}
+
+.viewport[data-dragging] {
+  cursor: grabbing;
+}
+
+.plane {
+  display: grid;
+  box-sizing: border-box;
+  width: max-content;
+  min-width: 100%;
+  height: max-content;
+  min-height: 100%;
+  padding: 24px;
+  place-items: center;
+}
+
+.frame {
+  position: relative;
+  flex: none;
+  animation: whiteboard-in var(--motion-enter) var(--ease-out-quint) both;
+}
+
+.frame[data-paper] {
+  border-radius: 2px;
+  box-shadow: var(--shadow-ring);
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* "Showing the previous version": one quiet line over the bottom of the stage. It waits a moment
+   before it appears, so a rewrite that is only half-way through does not make it flicker. */
+.note {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  max-width: calc(100% - 32px);
+  margin: 0;
+  padding: 5px 12px;
+  overflow: hidden;
+  border-radius: var(--radius-chip);
+  background: var(--paper);
+  box-shadow: var(--shadow-float);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity var(--motion-exit) var(--ease-out-quint),
+    transform var(--motion-exit) var(--ease-out-quint);
+}
+
+.note[data-shown] {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  transition:
+    opacity var(--motion-enter) var(--ease-out-quint) 1200ms,
+    transform var(--motion-enter) var(--ease-out-quint) 1200ms;
+}
+
+@container artifact (max-width: 460px) {
+  .note {
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+@keyframes whiteboard-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frame {
+    animation: none;
+  }
+
+  .note,
+  .note[data-shown] {
+    transition: none;
+  }
+}

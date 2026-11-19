@@ -2,7 +2,7 @@
 // Faces of the Fantay workspace (spec §5.5). Fantay wears the mascot (the zero-JS still, its own silhouette);
 // every other agent is a folded paper companion in the five-hue PA identity palette. Group clusters arrange
 // up to three faces, each on a 2 px paper collar.
-import type { CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 
 import { FantayMascotStill } from '../brand/FantayMascot';
 import { cn } from '../ui';
@@ -112,15 +112,40 @@ const LAYOUT: Record<2 | 3, Slot[]> = {
   ],
 };
 
-export function PaGroupAvatar({ members, fantayId, size }: { members: PersonalAgent[]; fantayId: string | null; size: number }) {
+/** A member's character portrait in a cluster slot, cropped to the disc; the paper face when it fails to load. */
+function PortraitFace({ member, src, size, collar }: { member: PersonalAgent; src: string; size: number; collar: boolean }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <PaAvatar agent={member} size={size} fantay={false} className={collar ? styles.collar : undefined} />;
+  return (
+    <span data-slot="pa-avatar" data-portrait="" className={cn(styles.face, styles.portraitFace, collar && styles.collar)} style={{ width: size, height: size }}>
+      <img src={src} alt="" draggable={false} className={styles.portraitImg} onError={() => setFailed(true)} />
+    </span>
+  );
+}
+
+export interface PaGroupAvatarProps {
+  members: PersonalAgent[];
+  fantayId: string | null;
+  size: number;
+  /** A member's character portrait URL (soul-model `portraitSrc`); members without one keep the paper face. */
+  portraitOf?: (agentId: string) => string | null;
+}
+
+export function PaGroupAvatar({ members, fantayId, size, portraitOf }: PaGroupAvatarProps) {
   const label = members.map((member) => member.name).join('、');
   const box: CSSProperties = { width: size, height: size };
+  const portrait = (member: PersonalAgent) => (member.id === fantayId ? null : portraitOf?.(member.id) ?? null);
   if (members.length <= 1) {
     const only = members[0] ?? null;
+    const src = only ? portrait(only) : null;
     return (
       <span role="img" aria-label={label || undefined} data-slot="pa-group-avatar" className={styles.cluster} style={box}>
         <span aria-hidden className={styles.contents}>
-          <PaAvatar agent={only} size={size} fantay={Boolean(only && only.id === fantayId)} />
+          {only && src ? (
+            <PortraitFace key={src} member={only} src={src} size={size} collar={false} />
+          ) : (
+            <PaAvatar agent={only} size={size} fantay={Boolean(only && only.id === fantayId)} />
+          )}
         </span>
       </span>
     );
@@ -138,9 +163,14 @@ export function PaGroupAvatar({ members, fantayId, size }: { members: PersonalAg
         {faces.map((member, i) => {
           const slot = slots[i]!;
           const face = Math.round(size * slot.scale);
+          const src = portrait(member);
           return (
             <span key={member.id} className={styles.slot} style={place(slot)}>
-              <PaAvatar agent={member} size={face} fantay={member.id === fantayId} disc={member.id === fantayId} className={styles.collar} />
+              {src ? (
+                <PortraitFace key={src} member={member} src={src} size={face} collar />
+              ) : (
+                <PaAvatar agent={member} size={face} fantay={member.id === fantayId} disc={member.id === fantayId} className={styles.collar} />
+              )}
             </span>
           );
         })}

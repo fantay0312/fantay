@@ -3,7 +3,7 @@
 /* AI 用量小票弹窗：支持日期范围快选（含昨天/今天）、费用与 Token 口径切换、五种分享画布皮肤（山雾/海汐/洞石/夜墨/透明），以及 2× 高清 PNG
    复制、下载与纯文本复制。 */
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import type { AiUsageSummary, WorkspaceCollabContext } from '@open-design/contracts';
+import type { AiUsageScope, AiUsageSummary, WorkspaceCollabContext } from '@open-design/contracts';
 import { Check, Copy, Download, FileText } from 'lucide-react';
 import { workspaceProjectHeaders } from '../../collab/workspace-identity';
 import { Button, Icon, Modal, ModalTitle, Segmented, SegmentedItem, toast } from '../../fantay/ui';
@@ -90,6 +90,7 @@ export interface UsageReceiptModalProps {
   dashboardRange: UsageRange;
   today: string;
   provider: string | null;
+  scope?: AiUsageScope;
   projectId?: string;
   projectName?: string;
   context?: WorkspaceCollabContext | null;
@@ -104,6 +105,7 @@ export function UsageReceiptModal({
   dashboardRange,
   today,
   provider,
+  scope = 'fantay',
   projectId,
   projectName,
   context,
@@ -173,6 +175,7 @@ export function UsageReceiptModal({
       to: targetBounds.to,
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       limit: '0',
+      scope,
     });
     if (projectId) query.set('projectId', projectId);
     if (provider) query.set('provider', provider);
@@ -204,13 +207,13 @@ export function UsageReceiptModal({
       active = false;
       controller.abort();
     };
-  }, [open, matchesDashboard, targetBounds.from, targetBounds.to, projectId, provider, context, zh]);
+  }, [open, matchesDashboard, targetBounds.from, targetBounds.to, projectId, provider, context, zh, scope]);
 
   const activeData = matchesDashboard ? dashboardData : fetchedData;
   const metric: ReceiptMetricMode = userMetric ?? defaultReceiptMetric(activeData?.totals);
 
   const receipt = useMemo(() => {
-    if (!activeData || activeData.totals.requests === 0) return null;
+    if (!activeData || activeData.totals.requests === 0 && !activeData.totals.sessionRecords) return null;
     return buildUsageReceipt({
       data: activeData,
       activity: activity ?? activeData.activity,

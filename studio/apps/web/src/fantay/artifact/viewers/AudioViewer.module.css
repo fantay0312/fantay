@@ -1,0 +1,107 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The audio player: a paper card on the canvas ground, like the file card, so "one object on a quiet
+   ground" reads the same for a file that plays and a file that cannot be shown. Tone groups it; no
+   border. Inside: the waveform, then one row (clock left, play centred, speed right). */
+
+.wrap {
+  display: grid;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 24px;
+  overflow: auto;
+  place-items: center;
+}
+
+.player {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+  width: min(520px, 100%);
+  /* The top padding leaves room for the time that follows the pointer above the waveform. */
+  padding: 40px 28px 24px;
+  border-radius: var(--radius-panel);
+  background: var(--paper);
+  outline: none;
+  animation: audio-player-in var(--motion-enter) var(--ease-out-quint) both;
+}
+
+/* Three columns with equal sides keep the play button on the card's centre line whatever the
+   clock and the speed measure. */
+.controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.clock {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.elapsed {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.total {
+  color: var(--ink-faint);
+  font-weight: 500;
+}
+
+.play {
+  width: 44px;
+  height: 44px;
+}
+
+.play svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* A triangle's weight sits left of its box: one pixel right puts it on the circle's centre. */
+.playGlyph {
+  translate: 1px 0;
+}
+
+.speed {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 0;
+  /* The speed button's text lines up with the waveform's right edge, not its padding. */
+  margin-right: -8px;
+}
+
+@container artifact (max-width: 460px) {
+  .wrap {
+    padding: 16px;
+  }
+
+  .player {
+    gap: 16px;
+    padding: 36px 20px 20px;
+  }
+}
+
+@keyframes audio-player-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player {
+    animation: none;
+  }
+}

@@ -13,13 +13,18 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 
-import { useT } from '../../../i18n';
+import { useI18n, useT } from '../../../i18n';
+import { MemoryNavigationLabel } from '../../memory/MemoryNavigationLabel';
 import { PaNavIcon } from '../../pa/PaNavIcon';
 import { PaNavigationLabel } from '../../pa/PaNavigationLabel';
 import { useProjectRunStatuses } from '../../../hooks/useProjectRunStatuses';
 import type { Project } from '../../../types';
 import { PluginSidebarFooterActions } from '../../plugins/HarnessSlots';
 import { PluginBoundary, usePluginNavItems } from '../../plugins/react';
+import { TIMELINE_COPY } from '../../plugins/builtin/project-timeline/copy';
+import { TimelineSidebarRows } from '../../plugins/builtin/project-timeline/TimelineSidebarRows';
+import type { TimelineNote } from '../../plugins/builtin/project-timeline/timeline-model';
+import { useTimelineNotes } from '../../plugins/builtin/project-timeline/use-timeline-notes';
 import { useActiveProjectSession } from '../project-bridge';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/cn';
@@ -83,7 +88,7 @@ export function Sidebar({ api, collapsed, className }: SidebarProps) {
 }
 
 function SidebarPanel({ api }: { api: SidebarShellApi }) {
-  const t = useT();
+  const { t, locale } = useI18n();
   const store = useSidebarStore();
   const { route } = api;
   const activeProjectId = activeProjectIdFor(route);
@@ -195,6 +200,35 @@ function SidebarPanel({ api }: { api: SidebarShellApi }) {
     isSidebarNavItemActive(item, route, api.materialsOpen);
   // Pages enabled tool plugins add (工具台 …) follow Fantay's own destinations.
   const pluginNav = usePluginNavItems();
+  const timelinePage = pluginNav.find(item => item.pluginId === 'project-timeline' && item.pageId === 'timeline');
+  const { notes: timelineNotes } = useTimelineNotes(timelinePage ? api.timelineNotesPrefix ?? null : null);
+  const { projectNotes, standaloneNotes } = useMemo(() => {
+    const byProject = new Map<string, TimelineNote[]>();
+    const standalone: TimelineNote[] = [];
+    for (const note of [...timelineNotes].sort((a, b) => b.at - a.at)) {
+      if (note.projectId === null) {
+        standalone.push(note);
+        continue;
+      }
+      const items = byProject.get(note.projectId);
+      if (items) items.push(note);
+      else byProject.set(note.projectId, [note]);
+    }
+    return { projectNotes: byProject, standaloneNotes: standalone };
+  }, [timelineNotes]);
+  const activeNoteId = route.kind === 'tool' && route.pluginId === timelinePage?.pluginId
+    && route.pageId === timelinePage.pageId && route.itemId?.startsWith('note:')
+    ? route.itemId.slice('note:'.length) : undefined;
+  const renderTimelineNotes = (notes: readonly TimelineNote[] | undefined, nested: boolean) =>
+    notes?.length && timelinePage ? <TimelineSidebarRows
+      notes={notes}
+      nested={nested}
+      activeId={activeNoteId}
+      onOpen={noteId => api.go({
+        kind: 'tool', pluginId: timelinePage.pluginId, pageId: timelinePage.pageId, itemId: `note:${noteId}`,
+      })}
+    /> : null;
+  const recentTimelineRows = renderTimelineNotes(standaloneNotes, false);
 
   const listProps = {
     loading: api.projectsLoading,
@@ -202,6 +236,7 @@ function SidebarPanel({ api }: { api: SidebarShellApi }) {
     isExpanded,
     statuses,
     conversationsFor,
+    renderActivity: (projectId: string) => renderTimelineNotes(projectNotes.get(projectId), true),
     // The open project's row has nothing left to open, so a click folds or unfolds its chats instead.
     onOpenProject: (project: Project) => {
       if (project.id === activeProjectId) toggleExpanded(project.id);
@@ -263,6 +298,17 @@ function SidebarPanel({ api }: { api: SidebarShellApi }) {
                 onClick={() => api.go({ kind: 'home', view: 'workbench' })}
               >
                 {t('fantayShell.sidebar.workbench')}
+              </DashNavItem>
+            </li>
+            <li className="list-none">
+              <DashNavItem
+                data-sidebar-row=""
+                data-testid="fantay-sidebar-memory"
+                icon={<FeatureIcon name="memory" slot={15} />}
+                active={navActive('memory')}
+                onClick={() => api.go({ kind: 'home', view: 'memory' })}
+              >
+                <MemoryNavigationLabel />
               </DashNavItem>
             </li>
             <li className="list-none">
@@ -405,6 +451,14 @@ function SidebarPanel({ api }: { api: SidebarShellApi }) {
             >
               {t('fantayShell.sidebar.archived')}
             </DashNavItem>
+          ) : null}
+          {recentTimelineRows ? (
+            <SidebarSection
+              {...sectionProps('timeline-recent')}
+              label={TIMELINE_COPY[locale.startsWith('zh') ? 'zh' : 'en'].recent}
+            >
+              {recentTimelineRows}
+            </SidebarSection>
           ) : null}
         </nav>
       </div>

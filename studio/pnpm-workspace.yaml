@@ -3,6 +3,7 @@ packages:
   - apps/*
   - tools/*
   - shells/*
+  - native-tool/*
   - e2e
 
 overrides:
@@ -16,6 +17,19 @@ overrides:
   qs: 6.15.2
   tmp: 0.2.7
   yaml: 2.9.0
+
+# Fantay uses Deep View's standalone core and React entry points. Its DSH
+# host peers are only needed by the plugin entry point.
+packageExtensions:
+  deep-view@0.1.2:
+    peerDependencies:
+      react: '>=18'
+    peerDependenciesMeta:
+      '@deepseek-ai/cordis': { optional: true }
+      '@deepseek-ai/dsh-llm': { optional: true }
+      '@deepseek-ai/dsh-tools': { optional: true }
+      '@deepseek-ai/dsh-web': { optional: true }
+      react: { optional: true }
 
 onlyBuiltDependencies:
   - better-sqlite3

@@ -15,6 +15,7 @@ import { Button, FxLegacy, Icon, Tooltip, cn, toast } from '../ui';
 import { PaAvatar } from './PaAvatar';
 import { usePaStopConfirm } from './PaConfirmHost';
 import { PaNeedsYouCard, PaResultCard, paAutoWait } from './PaWorkCards';
+import { platformName as channelPlatformName } from './PaConnectionsPage';
 import { usePa } from './pa-context';
 import { paPendingKey } from './usePaWorkspace';
 import {
@@ -55,13 +56,13 @@ export function agentName(index: PaIndex, attempts: PaAttempt[], id: string | nu
 
 /** The connection kind, as the header subline names it ("飞书机器人", "个人微信"). */
 export function platformLabel(t: ReturnType<typeof useT>, type: string | undefined): string {
-  return type === 'weixin' ? t('pa.weixin') : type === 'feishu' ? t('pa.feishu') : '';
+  return channelPlatformName(type, t);
 }
 
 /** The platform itself ("飞书", "微信"), for sentences such as "不会发回飞书" or "已回复到飞书", where the
  *  connection-kind label would read "发回飞书机器人". */
 export function platformName(t: ReturnType<typeof useT>, type: string | undefined): string {
-  return type === 'weixin' ? t('pa.roster.weixin') : type === 'feishu' ? t('pa.roster.feishu') : '';
+  return type === 'weixin' ? t('pa.roster.weixin') : type === 'feishu' ? t('pa.roster.feishu') : channelPlatformName(type, t);
 }
 
 export function errorToast(error: unknown) {

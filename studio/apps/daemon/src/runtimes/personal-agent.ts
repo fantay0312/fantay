@@ -1,9 +1,9 @@
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { mkdir, readFile, rm, unlink } from "node:fs/promises";
 import { writeFileSync } from "node:fs";
 import path from "node:path";
 import { Agent, fetch as fetchDirect, type RequestInit as DirectRequestInit } from "undici";
-import { isPaLocalCliModel, type PaAttempt, type PaDataClass, type PaModel, type PaModelOption } from "@open-design/contracts";
+import { isPaLocalCliModel, type PaAttempt, type PaChatWire, type PaDataClass, type PaModel, type PaModelOption } from "@open-design/contracts";
 import {
   createCommandInvocation,
   terminateProcessGroup,
@@ -29,13 +29,18 @@ import { tokenToSeaNativePath } from "../integrations/tokentosea-claude.js";
 import { PaError } from "../storage/personal-agent-store.js";
 import { loadMmdRouteLaunchEnv } from "./mmd-routes.js";
 import { executePaLocalModel } from "./personal-agent-local.js";
+import { createPaClaudeStreamReader, readPaOllamaStream, readPaSseText } from "./personal-agent-stream.js";
+import type { PaImageInput } from "../integrations/pa-channel-transport.js";
 
 export interface PaModelResult {
   text: string;
   usage: PaAttempt["usage"];
   resolvedModel?: string | undefined;
   workerReceipt?: NonNullable<PaAttempt["workerReceipt"]>;
+  wire?: 'structured' | 'flat';
 }
+/** Receives raw reply text as it arrives. `reset` discards what was sent before (the runtime restarted the message). */
+export type PaDeltaSink = (chunk: string, meta?: { reset?: boolean }) => void;
 export interface PaModelRuntime {
   models(): Promise<PaModelOption[]>;
   accountId?(): string | undefined;
@@ -45,8 +50,48 @@ export interface PaModelRuntime {
     prompt: string,
     runId: string,
     signal: AbortSignal,
-    limits?: { dataClass?: PaDataClass; maxCostUsd?: number },
+    limits?: { dataClass?: PaDataClass; maxCostUsd?: number; chat?: PaChatWire; onDelta?: PaDeltaSink; images?: PaImageInput[]; choice?: { reasoning?: string; serviceTier?: string } },
   ): Promise<PaModelResult>;
+}
+
+/** Claude gets the character's system text through --system-prompt only where the flag is safe and supported. */
+export function paClaudeStructured(chat: PaChatWire | undefined, platform: NodeJS.Platform, supported: boolean): boolean {
+  return Boolean(chat) && supported && platform !== "win32" && Buffer.byteLength(chat!.system) <= 100_000;
+}
+const claudeSystemPromptSupport = new Map<string, Promise<boolean>>();
+function claudeSupportsSystemPrompt(launchPath: string, env: NodeJS.ProcessEnv): Promise<boolean> {
+  let known = claudeSystemPromptSupport.get(launchPath);
+  if (!known) {
+    known = new Promise<boolean>((resolve) => {
+      try {
+        execFile(launchPath, ["--help"], { env, timeout: 5000, windowsHide: true }, (error, stdout) =>
+          resolve(!error && String(stdout).includes("--system-prompt")));
+      } catch {
+        resolve(false);
+      }
+    });
+    claudeSystemPromptSupport.set(launchPath, known);
+  }
+  return known;
+}
+/** Live text from Claude Code needs both the stream-json output and partial messages; an older build answers false. */
+const claudePartialMessagesSupport = new Map<string, Promise<boolean>>();
+function claudeSupportsPartialMessages(launchPath: string, env: NodeJS.ProcessEnv): Promise<boolean> {
+  let known = claudePartialMessagesSupport.get(launchPath);
+  if (!known) {
+    known = new Promise<boolean>((resolve) => {
+      try {
+        execFile(launchPath, ["-p", "--help"], { env, timeout: 5000, windowsHide: true }, (error, stdout) => {
+          const help = String(stdout);
+          resolve(!error && help.includes("--include-partial-messages") && help.includes("stream-json"));
+        });
+      } catch {
+        resolve(false);
+      }
+    });
+    claudePartialMessagesSupport.set(launchPath, known);
+  }
+  return known;
 }
 
 const MAX_OUTPUT = 2 * 1024 * 1024;
@@ -215,9 +260,11 @@ export function createPaModelRuntime(dataDir: string): PaModelRuntime {
     },
     async execute(model, prompt, runId, signal, limits) {
       signal.throwIfAborted();
+      const images = limits?.images ?? [];
       if (model.runtime === "managed") throw new PaError("企业模型仅可从已配置的企业网关调用", 403, "PA_ROUTE_DENIED");
       if (isPaLocalCliModel(model) && model.runtime !== 'claude') {
-        return executePaLocalModel(dataDir, model, prompt, runId, signal, terminatePaProcess);
+        if (images.length) throw new PaError("此 PA 模型入口仅支持文字，请为渠道选择支持图片的模型", 422, "PA_MODEL_UNAVAILABLE");
+        return executePaLocalModel(dataDir, model, prompt, runId, signal, terminatePaProcess, limits?.choice);
       }
       if (model.runtime === "claude") {
         const { launch, env: baseEnv } = await claudeLaunch();
@@ -235,14 +282,30 @@ export function createPaModelRuntime(dataDir: string): PaModelRuntime {
         signal.throwIfAborted();
         // Keep the user's normal TUI preference unchanged. This is an isolated,
         // explicitly model-only print invocation without MCP, hooks or tools.
+        const chat = limits?.chat;
+        const structured = paClaudeStructured(chat, process.platform,
+          chat ? await claudeSupportsSystemPrompt(launch.launchPath, env) : false);
+        const live = limits?.onDelta;
+        const partial = Boolean(live) && await claudeSupportsPartialMessages(launch.launchPath, env);
+        const streaming = partial || images.length > 0;
+        const input = structured ? chat!.transcript : prompt;
+        const stdin = images.length ? `${JSON.stringify({
+          type: "user", message: { role: "user", content: [
+            { type: "text", text: input },
+            ...images.map(image => ({ type: "image", source: { type: "base64", media_type: image.mediaType, data: image.data } })),
+          ] },
+        })}\n` : input;
         const invocation = createCommandInvocation({
           command: launch.launchPath,
           args: [
             "-p",
             "--output-format",
-            "json",
-            "--model",
-            model.modelId,
+            streaming ? "stream-json" : "json",
+            ...(streaming ? ["--verbose"] : []),
+            ...(partial ? ["--include-partial-messages"] : []),
+            ...(images.length ? ["--input-format", "stream-json"] : []),
+            ...(model.modelId !== 'default' ? ['--model', model.modelId] : []),
+            ...(limits?.choice?.reasoning && limits.choice.reasoning !== 'default' ? ['--effort', limits.choice.reasoning] : []),
             "--tools",
             "",
             "--strict-mcp-config",
@@ -255,9 +318,11 @@ export function createPaModelRuntime(dataDir: string): PaModelRuntime {
             "--no-session-persistence",
             "--session-id",
             runId,
+            ...(structured ? ["--system-prompt", chat!.system] : []),
           ],
           env,
         });
+        const reader = streaming ? createPaClaudeStreamReader(live ?? (() => {})) : null;
         return new Promise<PaModelResult>((resolve, reject) => {
           const child = spawn(invocation.command, invocation.args, {
             cwd,
@@ -289,7 +354,13 @@ export function createPaModelRuntime(dataDir: string): PaModelRuntime {
           signal.addEventListener("abort", abort, { once: true });
           if (signal.aborted) abort();
           child.stdout.on("data", (chunk) => {
-            if (output.length + String(chunk).length <= MAX_OUTPUT)
+            if (reader) {
+              reader.push(chunk);
+              if (!exceeded && reader.bytes() > MAX_OUTPUT * 8) {
+                exceeded = true;
+                abort();
+              }
+            } else if (output.length + String(chunk).length <= MAX_OUTPUT)
               output += String(chunk);
             else {
               exceeded = true;
@@ -304,6 +375,7 @@ export function createPaModelRuntime(dataDir: string): PaModelRuntime {
           });
           child.once("error", reject);
           child.once("close", async (code) => {
+            reader?.end();
             signal.removeEventListener("abort", abort);
             const stopped = termination ? await termination :
               !isProcessGroupAlive(child.pid) || await terminatePaProcess(child.pid!);
@@ -331,7 +403,7 @@ export function createPaModelRuntime(dataDir: string): PaModelRuntime {
                 ),
               );
             try {
-              const result = JSON.parse(output) as {
+              const result = (reader ? reader.result() : JSON.parse(output)) as {
                 result?: string;
                 is_error?: boolean;
                 usage?: { input_tokens?: number; output_tokens?: number };
@@ -341,6 +413,7 @@ export function createPaModelRuntime(dataDir: string): PaModelRuntime {
               if (result.is_error || !result.result?.trim())
                 throw new Error("empty");
               resolve({
+                ...(structured ? { wire: "structured" as const } : {}),
                 text: result.result,
                 resolvedModel:
                   Object.keys(result.modelUsage ?? {}).join(",") ||
@@ -374,21 +447,30 @@ export function createPaModelRuntime(dataDir: string): PaModelRuntime {
               return;
             }
           }
-          child.stdin.end(prompt);
+          child.stdin.end(stdin);
         });
       }
       if (model.runtime === "ollama") {
         const modelId = limits?.dataClass === "local_only" ? await localOllamaModel(model.modelId, signal) : model.modelId;
         signal.throwIfAborted();
+        const chat = limits?.chat;
         const response = await ollamaFetch("chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           signal,
           body: JSON.stringify({
             model: modelId,
-            messages: [{ role: "user", content: prompt }],
-            stream: false,
-            options: { num_predict: 8192 },
+            messages: chat ? [{ role: "system", content: chat.system }, ...chat.messages] : [{
+              role: "user", content: prompt, ...(images.length ? { images: images.map(image => image.data) } : {}),
+            }],
+            stream: Boolean(limits?.onDelta),
+            options: chat ? {
+              num_predict: chat.sampling?.maxTokens ?? 8192,
+              ...(chat.sampling?.temperature !== undefined ? { temperature: chat.sampling.temperature } : {}),
+              ...(chat.sampling?.topP !== undefined ? { top_p: chat.sampling.topP } : {}),
+              ...(chat.contextTokens ? { num_ctx: chat.contextTokens } : {}),
+              ...(chat.stop.length ? { stop: chat.stop } : {}),
+            } : { num_predict: 8192 },
           }),
         });
         if (!response.ok)
@@ -397,6 +479,15 @@ export function createPaModelRuntime(dataDir: string): PaModelRuntime {
             503,
             "PA_MODEL_UNAVAILABLE",
           );
+        if (limits?.onDelta) {
+          const streamed = await readPaOllamaStream(response, limits.onDelta, MAX_OUTPUT);
+          if (!streamed.text.trim()) throw new PaError("本机模型返回空内容", 503);
+          return {
+            ...(chat ? { wire: "structured" as const } : {}),
+            text: streamed.text,
+            usage: { inputTokens: streamed.inputTokens, outputTokens: streamed.outputTokens, visibility: "reported" },
+          };
+        }
         const data = JSON.parse(await boundedResponse(response)) as {
           message?: { content?: string };
           prompt_eval_count?: number;
@@ -405,6 +496,7 @@ export function createPaModelRuntime(dataDir: string): PaModelRuntime {
         if (!data.message?.content?.trim())
           throw new PaError("本机模型返回空内容", 503);
         return {
+          ...(chat ? { wire: "structured" as const } : {}),
           text: data.message.content,
           usage: {
             inputTokens: data.prompt_eval_count,
@@ -428,8 +520,13 @@ export function createPaModelRuntime(dataDir: string): PaModelRuntime {
       ).toFixed(6);
       if (!Number.isFinite(Number(maximum)) || Number(maximum) <= 0)
         throw new PaError("模型授权额度不足", 403, "PA_BUDGET");
-      const messages = [{ role: "user", content: prompt }];
       const operation = tokenToSeaNativePath(entry);
+      const messages = [{ role: "user", content: images.length ? [
+        { type: "text", text: prompt },
+        ...images.map(image => operation === "/v1/messages"
+          ? { type: "image", source: { type: "base64", media_type: image.mediaType, data: image.data } }
+          : { type: "image_url", image_url: { url: `data:${image.mediaType};base64,${image.data}` } }),
+      ] : prompt }];
       const stream =
         entry.executionKind === "official" &&
         !entry.examples?.some(
@@ -474,7 +571,7 @@ export function createPaModelRuntime(dataDir: string): PaModelRuntime {
           "PA_MODEL_UNAVAILABLE",
         );
       let raw: string;
-      try { raw = await boundedResponse(response); }
+      try { raw = stream && limits?.onDelta ? await readPaSseText(response, operation, limits.onDelta, MAX_OUTPUT) : await boundedResponse(response); }
       catch (error) {
         if (error instanceof PaError && error.code === "PA_INVALID_OUTPUT")
           throw new PaError("模型响应超出上限，服务端结果待核对", 409, "PA_RESULT_UNKNOWN");

@@ -35,6 +35,8 @@ import shareEntryStyles from './share/ShareEntry.module.css';
 import { HtmlProjectCoverFrame } from './project-cover';
 import { AudioArtifact } from './chat/AudioArtifact';
 import { ARTIFACT_ANCHOR_ATTR, artifactAnchorId } from './chat/AnchoredMenuShell';
+import { ArtifactCards as ProductArtifactCards } from '../fantay/artifact/cards/ArtifactCards';
+import { useFantayShellEnabled } from '../fantay/shell/flags';
 
 interface Props {
   entries: FileOpEntry[];
@@ -136,6 +138,9 @@ export function FileOpsSummary({
   const [expanded, setExpanded] = useState(false);
   // 音频胶囊要自己拼文件 URL(它不走 `ArtifactCard`,拿不到那里的上下文)
   const { workspaceContext } = useProjectCollabContext();
+  // The product shell draws its own cards (`fantay/artifact/cards`); with the shell off the
+  // inherited cards below stay exactly as they are.
+  const productShell = useFantayShellEnabled();
 
   if (entries.length === 0) return null;
 
@@ -205,13 +210,24 @@ export function FileOpsSummary({
     : entries;
 
   const cards = projectId && cardItems.length > 0 ? (
-    <ArtifactCards
-      items={cardItems}
-      projectId={projectId}
-      onOpen={onRequestOpenFile}
-      onPublish={onPublish}
-      onExport={onExport}
-    />
+    productShell ? (
+      <ProductArtifactCards
+        items={cardItems}
+        projectId={projectId}
+        files={projectFiles}
+        onOpen={onRequestOpenFile}
+        onPublish={onPublish}
+        onExport={onExport}
+      />
+    ) : (
+      <ArtifactCards
+        items={cardItems}
+        projectId={projectId}
+        onOpen={onRequestOpenFile}
+        onPublish={onPublish}
+        onExport={onExport}
+      />
+    )
   ) : null;
   const audioRows = projectId && audioEntries.length > 0 ? (
     <div className="file-ops-audio" data-testid="file-ops-audio">

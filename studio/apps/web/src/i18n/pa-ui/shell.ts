@@ -22,7 +22,7 @@ export const paShellEn = {
   'pa.roster.open': 'Open chat',
   'pa.roster.editProfile': 'Edit profile',
   'pa.roster.duplicate': 'Duplicate',
-  'pa.roster.editGroup': 'Edit group',
+  'pa.roster.editGroup': 'Edit group chat',
   'pa.roster.channelSettings': 'Channel settings',
   'pa.roster.openList': 'Chats',
   'pa.roster.feishu': 'Feishu',
@@ -74,9 +74,9 @@ export const paShellEn = {
   'pa.dur.hours': '{h}h {m}m',
 
   // Memory scope names (pa-model.memoryScopeName)
-  'pa.scope.private': 'Private',
-  'pa.scope.agent': 'Agent · {name}',
-  'pa.scope.group': 'Group · {name}',
+  'pa.scope.private': 'Owner profile & global preferences',
+  'pa.scope.agent': 'Character · {name}',
+  'pa.scope.group': 'Group chat · {name}',
   'pa.scope.project': 'Project · {name}',
   'pa.scope.deleted': 'Deleted target',
 } as const;
@@ -97,9 +97,9 @@ export const paShellZh: { [K in keyof typeof paShellEn]: string } = {
   'pa.roster.noMatch': '没有匹配的对话',
   'pa.roster.rowMenu': '更多操作',
   'pa.roster.open': '打开对话',
-  'pa.roster.editProfile': '编辑档案',
+  'pa.roster.editProfile': '编辑资料',
   'pa.roster.duplicate': '复制',
-  'pa.roster.editGroup': '编辑群组',
+  'pa.roster.editGroup': '编辑群聊',
   'pa.roster.channelSettings': '渠道设置',
   'pa.roster.openList': '对话列表',
   'pa.roster.feishu': '飞书',
@@ -145,9 +145,9 @@ export const paShellZh: { [K in keyof typeof paShellEn]: string } = {
   'pa.dur.minutes': '{m} 分 {s} 秒',
   'pa.dur.hours': '{h} 小时 {m} 分',
 
-  'pa.scope.private': '私有',
-  'pa.scope.agent': '智能体 · {name}',
-  'pa.scope.group': '群组 · {name}',
+  'pa.scope.private': '个人画像与全局偏好',
+  'pa.scope.agent': '角色 · {name}',
+  'pa.scope.group': '群聊 · {name}',
   'pa.scope.project': '项目 · {name}',
   'pa.scope.deleted': '已删除的对象',
 };

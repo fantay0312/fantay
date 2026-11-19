@@ -1739,9 +1739,6 @@ function globMatch(name, glob) {
 
 // Coarse kind buckets the frontend uses to pick a viewer.
 export function kindFor(name) {
-  // Editable sketches use a compound extension so they slot into the
-  // "sketch" bucket while still being valid JSON on disk.
-  if (name.endsWith('.sketch.json')) return 'sketch';
   const ext = path.extname(name).toLowerCase();
   if (ext === '.html' || ext === '.htm') return 'html';
   if (ext === '.svg') return 'sketch';

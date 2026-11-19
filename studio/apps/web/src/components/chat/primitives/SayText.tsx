@@ -12,6 +12,7 @@
 import { useMemo, useRef, type ReactElement } from 'react';
 import { renderMarkdown } from '../../../runtime/markdown';
 import { useCharReveal } from '../useCharReveal';
+import { useStreamingMarkdownSnapshot } from '../useStreamingMarkdownSnapshot';
 import styles from './record.module.css';
 
 export interface SayTextProps {
@@ -58,9 +59,10 @@ export function SayText({ text, live }: SayTextProps): ReactElement | null {
   // hook 必须无条件调用 —— 空文本的提前返回放在它们后面
   const hostRef = useRef<HTMLDivElement>(null);
   useCharReveal(hostRef, Boolean(live));
+  const snapshot = useStreamingMarkdownSnapshot(text, Boolean(live));
   const body = useMemo(
-    () => renderMarkdown(text.trim(), { syntaxHighlight: !live }),
-    [live, text],
+    () => renderMarkdown(snapshot.trim(), { syntaxHighlight: !live }),
+    [live, snapshot],
   );
 
   if (!text.trim()) return null;

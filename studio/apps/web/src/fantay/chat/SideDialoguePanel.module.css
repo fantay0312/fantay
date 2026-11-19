@@ -1,0 +1,17 @@
+.panel { display: flex; flex: 1 1 0%; min-width: 0; min-height: 0; flex-direction: column; overflow: hidden; }
+.panel[hidden] { display: none; }
+.panel > :global(.pane) { flex: 1; min-height: 0; }
+.loading { margin: auto; color: var(--ink-soft); font-size: 13px; }
+.actions, .review > div { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.actions { padding: 0 2px 4px; }
+.actions small { margin-inline-start: auto; color: var(--ink-soft); }
+.actions button, .review button {
+  display: inline-flex; align-items: center; gap: 5px; padding: 4px 7px; border: 0;
+  background: transparent; border-radius: 6px; color: var(--ink-soft); font: inherit; font-size: 12px; cursor: pointer;
+}
+.actions button:hover, .review button:hover { background: var(--paper-deep); }
+.actions button:disabled, .review button:disabled { opacity: .45; cursor: default; }
+.review { padding: 10px; margin-block-end: 6px; background: var(--paper-deep); border-radius: 10px; }
+.review label { display: block; font-size: 12px; margin-bottom: 6px; }
+.review textarea { width: 100%; box-sizing: border-box; min-height: 60px; max-height: 25vh; resize: vertical; font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--line-soft); border-radius: 5px; padding: 6px; }
+.review > div { justify-content: flex-end; }

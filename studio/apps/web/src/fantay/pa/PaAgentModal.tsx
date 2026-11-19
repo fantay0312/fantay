@@ -245,7 +245,7 @@ export const modelKeyOf = (model: { runtime: string; modelId: string }) => `${mo
 
 type AgentModel = PaAgentInput['model'];
 
-interface AgentForm {
+export interface AgentForm {
   name: string;
   role: string;
   model: AgentModel;
@@ -253,7 +253,7 @@ interface AgentForm {
   project: boolean;
 }
 
-const TEMPLATES = [
+export const TEMPLATES = [
   { name: 'pa.agentForm.tplResearcher', role: 'pa.agentForm.tplResearcherRole' },
   { name: 'pa.agentForm.tplDesigner', role: 'pa.agentForm.tplDesignerRole' },
   { name: 'pa.agentForm.tplWriter', role: 'pa.agentForm.tplWriterRole' },
@@ -261,13 +261,13 @@ const TEMPLATES = [
 ] as const;
 
 /** Prefer the account catalog for new agents, retaining existing agents' choices. */
-function defaultModel(models: readonly PaModelOption[]): AgentModel {
+export function defaultModel(models: readonly PaModelOption[]): AgentModel {
   const first = models.find((option) => option.available && option.runtime === 'tokentosea')
     ?? models.find((option) => option.available);
   return first ? { runtime: first.runtime, modelId: first.modelId } : { runtime: 'claude', modelId: 'sonnet' };
 }
 
-function agentForm(agent: PersonalAgent | null, models: readonly PaModelOption[]): AgentForm {
+export function agentForm(agent: PersonalAgent | null, models: readonly PaModelOption[]): AgentForm {
   if (!agent) return { name: '', role: '', model: defaultModel(models), enabled: true, project: true };
   return {
     name: agent.name,

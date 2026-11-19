@@ -2,6 +2,7 @@
 // The rows of the 项目 section, every project kind together: skeletons while App loads the catalogue, an
 // empty caption, then the project rows with their lazy chat lists (spec 02 §11.4).
 import type { ProjectDisplayStatus } from '@open-design/contracts';
+import type { ReactNode } from 'react';
 
 import { useT } from '../../../i18n';
 import { STATUS_LABEL_KEYS } from '../../../state/projectRunStatus';
@@ -24,6 +25,7 @@ export interface SidebarProjectListProps {
   isExpanded(projectId: string): boolean;
   statuses: ReadonlyMap<string, ProjectDisplayStatus>;
   conversationsFor(projectId: string): SidebarConversationListState;
+  renderActivity?(projectId: string): ReactNode;
   onOpenProject(project: Project): void;
   onToggleExpanded(projectId: string): void;
   onSelectConversation(projectId: string, conversationId: string): void;
@@ -41,6 +43,7 @@ export function SidebarProjectList({
   isExpanded,
   statuses,
   conversationsFor,
+  renderActivity,
   onOpenProject,
   onToggleExpanded,
   onSelectConversation,
@@ -84,6 +87,7 @@ export function SidebarProjectList({
             statusTone={tone}
             statusLabel={tone && status ? t(STATUS_LABEL_KEYS[status]) : undefined}
             conversations={conversationsFor(project.id)}
+            activity={renderActivity?.(project.id)}
             onToggleExpanded={() => onToggleExpanded(project.id)}
             onOpen={() => onOpenProject(project)}
             onSelectConversation={(conversationId) => onSelectConversation(project.id, conversationId)}

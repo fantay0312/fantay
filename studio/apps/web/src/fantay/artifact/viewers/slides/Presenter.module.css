@@ -1,0 +1,127 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Presenting. The overlay is the element handed to the Fullscreen API; until (or unless) the
+   browser grants the screen it fills the viewer's frame, bar included. Black ground, the slide on
+   its own white paper, and two small pieces of chrome that fade when the reader is not moving. */
+
+.presenter {
+  /* Width over height of a slide; set from the deck. */
+  --slide-ratio: 1.7778;
+
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  display: grid;
+  overflow: hidden;
+  outline: none;
+  background: #000000;
+  /* Sizes the slide from this box: `cqw` and `cqh` below are its width and height. */
+  container-type: size;
+  cursor: none;
+  place-items: center;
+  animation: presenter-in var(--motion-enter) var(--ease-out-quint) both;
+}
+
+.presenter[data-chrome] {
+  cursor: default;
+}
+
+/* The largest box of the deck's proportions that fits. A document's paper stays white. */
+.frame {
+  position: relative;
+  width: min(100cqw, calc(100cqh * var(--slide-ratio)));
+  aspect-ratio: var(--slide-ratio);
+  overflow: hidden;
+  background: #ffffff;
+}
+
+/* The current slide and its neighbours are stacked; only the current one shows. */
+.picture {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.picture[data-current] {
+  opacity: 1;
+}
+
+.failed {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  margin: 0;
+  padding: 24px;
+  color: #6f6f6f;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+  place-items: center;
+}
+
+/* ── chrome ──────────────────────────────────────────────────────────────────────────────────── */
+
+.counter,
+.close {
+  position: absolute;
+  opacity: 0;
+  transition: opacity var(--motion-exit) var(--ease-out-quint);
+}
+
+.presenter[data-chrome] .counter,
+.presenter[data-chrome] .close,
+.close:focus-within {
+  opacity: 1;
+  transition-duration: var(--motion-enter);
+}
+
+/* "3 / 12": a quiet tag at the foot of the screen, readable over a dark or a light slide. */
+.counter {
+  bottom: 16px;
+  left: 50%;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgb(24 24 24 / 0.72);
+  color: #f2f2f2;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 18px;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.close {
+  top: 12px;
+  right: 12px;
+  border-radius: 999px;
+  background: rgb(24 24 24 / 0.72);
+}
+
+@keyframes presenter-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .presenter {
+    animation: none;
+  }
+
+  .counter,
+  .close {
+    transition: none;
+  }
+}

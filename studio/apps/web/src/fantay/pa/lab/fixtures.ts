@@ -11,16 +11,22 @@ import type {
   PaControl,
   PaConversation,
   PaGroup,
+  PaLorebook,
   PaMemory,
   PaMessage,
   PaModelOption,
   PaRoutine,
   PaSnapshot,
+  PaSoulSnapshot,
+  PaSoulTrace,
+  PaSpeechItem,
+  PaSpeechStatus,
   PaTask,
   PersonalAgent,
   Project,
 } from '@open-design/contracts';
 import type { PaUiState } from '../pa-types';
+import { companionChat, companionGroup, firstRunSoul, journalChat, liveChat, soulLibrary, spritesChat, storyGame, voiceChat } from './soul-fixtures';
 
 export const PA_SCENARIO_IDS = [
   'first-run',
@@ -32,6 +38,15 @@ export const PA_SCENARIO_IDS = [
   'connections',
   'offline',
   'long-cjk',
+  'first-run-soul',
+  'companion-chat',
+  'story-game',
+  'companion-group',
+  'library',
+  'live-chat',
+  'voice-chat',
+  'sprites-chat',
+  'journal-chat',
 ] as const;
 export type PaScenarioId = (typeof PA_SCENARIO_IDS)[number];
 
@@ -53,6 +68,17 @@ export interface PaFixture {
   /** Every GET rejects (scenario `offline`). */
   offline?: boolean;
   arrivals?: PaFixtureArrival[];
+  /** The soul snapshot (GET /soul); `snapshot.soulVersion` equals `soul.version`. */
+  soul?: PaSoulSnapshot;
+  /** Full world books behind `soul.lorebooks` (GET /soul/lorebooks/:id). */
+  lorebookDocs?: PaLorebook[];
+  /** Context records by agent message id (GET /soul/trace/:id). */
+  traces?: Record<string, PaSoulTrace>;
+  /** Canned raw replies per agent id, used in rotation; they carry `<turn_meta>` footers for the reply parser. */
+  replies?: Record<string, string[]>;
+  /** Stage 2 voice replies: the speech status (GET /soul/speech/status), voice lists by model and stored items. Absent:
+   *  no speech service is set up. */
+  speech?: { status: PaSpeechStatus; voices?: Record<string, Array<{ id: string; name: string }>>; items?: PaSpeechItem[] };
 }
 
 const MIN = 60_000;
@@ -260,6 +286,7 @@ function channel(id: string, type: PaChannel['type'], name: string, targetId: st
     enabled: true,
     allowProject: true,
     shareGroupMemory: false,
+    chatMode: 'work',
     allowedSenderIds: ['ou_8f3a21'],
     remoteChatId: type === 'feishu' ? 'oc_5c9e1d' : null,
     tenantId: type === 'feishu' ? 'tenant_demo' : null,
@@ -981,7 +1008,20 @@ const BUILDERS: Record<PaScenarioId, (now: number) => PaFixture> = {
   connections,
   offline,
   'long-cjk': longCjk,
+  // Called lazily: ./soul-fixtures imports helpers from this file, so neither side touches the other at load time.
+  'first-run-soul': (now) => firstRunSoul(now),
+  'companion-chat': (now) => companionChat(now),
+  'story-game': (now) => storyGame(now),
+  'companion-group': (now) => companionGroup(now),
+  library: (now) => soulLibrary(now),
+  'live-chat': (now) => liveChat(now),
+  'voice-chat': (now) => voiceChat(now),
+  'sprites-chat': (now) => spritesChat(now),
+  'journal-chat': (now) => journalChat(now),
 };
+
+/** Builders shared with ./soul-fixtures. */
+export { DAY, HOUR, MIN, attempt, cast, control, conversation, firstRun, fixtureOf, message, stamp, task };
 
 export function isPaScenario(value: string | null | undefined): value is PaScenarioId {
   return (PA_SCENARIO_IDS as readonly string[]).includes(value ?? '');

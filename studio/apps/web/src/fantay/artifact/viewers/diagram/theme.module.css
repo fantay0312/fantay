@@ -1,0 +1,135 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The look of a drawn Mermaid diagram, wherever it is shown: the diagram viewer's stage, a Markdown
+   document, a chat message. Whatever holds the drawing wears `.theme`. */
+
+/* ── colours and type ───────────────────────────────────────────────────────────────────────── */
+/* pele draws every colour and font from these variables, so the drawing follows the theme without
+   being drawn again. Ink on paper: text in ink, lines a step softer, nodes in the well tone with a
+   quiet edge, groups one tone lighter than nodes. No accent: emphasis is ink. */
+.theme {
+  --pele-bg: var(--paper);
+  --pele-fg: var(--ink);
+  --pele-fg-on-light: #181818;
+  --pele-fg-on-dark: #ffffff;
+  --pele-muted: var(--ink-soft);
+  --pele-line: var(--ink-soft);
+  --pele-surface: var(--sub);
+  --pele-surface-alt: var(--diagram-group);
+  --pele-border: var(--ink-ghost);
+  /* Gantt tasks, the "today" marker, sequence numbers: a step softer than text, so they do not shout. */
+  --pele-accent: var(--ink-soft);
+  --pele-critical: var(--danger);
+  --pele-error: var(--danger);
+  --pele-radius: 6px;
+  --pele-font: var(--font-ui);
+  --pele-font-mono: var(--font-mono);
+  --pele-title-weight: 600;
+  --pele-heading-weight: 600;
+  --pele-bold-weight: 600;
+
+  /* Group (subgraph) ground: between the paper and the node tone. */
+  --diagram-group: #f8f8f8;
+  /* The lighter pair of a quadrant chart's four tiles. */
+  --diagram-tile: #f8f8f8;
+
+  /* Chart series (pie, xychart, sankey, git branches…). Eight muted hues at one chroma, in an order
+     validated for colour-blind separation of neighbours (OKLab ΔE ≥ 8.7 simulated, ≥ 17.9 normal),
+     so a chart reads as a deliberate set beside a monochrome interface, not a rainbow:
+     slate, terracotta, teal, ochre, plum, sage, lavender, brick. */
+  --pele-series-1: #3a6aa7;
+  --pele-series-2: #cc7b4b;
+  --pele-series-3: #008e88;
+  --pele-series-4: #c1983a;
+  --pele-series-5: #9e4f7e;
+  --pele-series-6: #619655;
+  --pele-series-7: #8572bb;
+  --pele-series-8: #a04037;
+}
+
+/* Dark: the same hues stepped for the dark paper (every one ≥ 3:1 against it). */
+:global([data-theme='dark']) .theme {
+  --pele-fg-on-light: #181818;
+  --pele-fg-on-dark: #ffffff;
+  --diagram-group: #1f1f1f;
+  --diagram-tile: #222222;
+  --pele-series-1: #5788c7;
+  --pele-series-2: #cc7b4b;
+  --pele-series-3: #0e9a94;
+  --pele-series-4: #b28c32;
+  --pele-series-5: #b26191;
+  --pele-series-6: #679c5b;
+  --pele-series-7: #8b78c1;
+  --pele-series-8: #b14f45;
+}
+
+/* The rules below set properties on pele's elements directly. A drawing that leaves the app does
+   not take this sheet with it, so `diagram/export.ts` writes these values onto the elements
+   (`THEMED`): a rule added here needs its selector and properties added there. */
+
+/* ── quadrant chart ─────────────────────────────────────────────────────────────────────────── */
+/* Four tiles told apart by tone, diagonal pairs alike, the paper between them is the two axes.
+   No outlines. A quadrant's name is a quiet caption, so a point and its label read over it. */
+.theme :global(.pele-quadrantChart .pele-quadrants) {
+  stroke: none;
+}
+
+.theme :global(.pele-quadrantChart .pele-quadrant[data-id='2'] rect),
+.theme :global(.pele-quadrantChart .pele-quadrant[data-id='4'] rect) {
+  fill: var(--diagram-tile);
+}
+
+.theme :global(.pele-quadrantChart .pele-quadrant .pele-label) {
+  fill: var(--ink-faint);
+  font-weight: 600;
+}
+
+/* A point keeps a ring of paper, so two that touch, or one on a caption, stay separate marks. */
+.theme :global(.pele-quadrantChart .pele-point) {
+  stroke: var(--paper);
+  stroke-width: 2px;
+  paint-order: stroke;
+}
+
+.theme :global(.pele-quadrantChart .pele-point-labels text) {
+  font-weight: 500;
+}
+
+/* ── sankey ─────────────────────────────────────────────────────────────────────────────────── */
+/* Ribbons a step lighter, so names and amounts lead; the one under the pointer comes forward. */
+.theme :global(.pele-sankey .pele-sankey-links) {
+  fill-opacity: 0.32;
+}
+
+.theme :global(.pele-sankey .pele-sankey-link) {
+  transition: fill-opacity var(--motion-fast) var(--ease-out-quint);
+}
+
+.theme :global(.pele-sankey .pele-sankey-link:hover) {
+  fill-opacity: 0.6;
+}
+
+.theme :global(.pele-sankey .pele-label text) {
+  font-weight: 500;
+}
+
+.theme :global(.pele-sankey .pele-sankey-value) {
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+
+/* ── C4 ─────────────────────────────────────────────────────────────────────────────────────── */
+/* A boundary is a group like a flowchart's subgraph: a faint ground one tone lighter than the
+   boxes inside it. The stereotype line («container») is a caption, not a second title. */
+.theme :global(.pele-c4 .pele-c4-boundary > rect) {
+  fill: var(--diagram-group);
+}
+
+.theme :global(.pele-c4 .pele-c4-type) {
+  letter-spacing: 0.02em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme :global(.pele-sankey .pele-sankey-link) {
+    transition: none;
+  }
+}

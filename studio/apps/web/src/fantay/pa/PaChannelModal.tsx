@@ -4,6 +4,7 @@
 // WeChat QR + PIN, permissions (PATCH with the full input), verification facts, commands and history.
 // Every section is a heading over one hairline group block (the settings recipe of spec §13).
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { isPaImPlatform, PA_CHANNEL_TYPES, PA_IM_PLATFORMS } from '@open-design/contracts';
 import { useI18n, useT } from '../../i18n';
 import { openExternalUrl } from '../../providers/registry';
 import {
@@ -12,8 +13,6 @@ import {
   ConfirmDialog,
   Field,
   Input,
-  Segmented,
-  SegmentedItem,
   Select,
   SelectContent,
   SelectGroup,
@@ -28,6 +27,7 @@ import { usePa } from './pa-context';
 import { PaModalFrame, PaSwitchRow, paErrorText, usePaModalReset, usePaReload, usePaSubmit } from './PaAgentModal';
 import { ChannelStatusLabel, formatStamp, PaHistoryDisclosure, platformName, recentInbox } from './PaConnectionsPage';
 import { PaDisclosure } from './PaDisclosure';
+import { PaFeishuRegistration } from './PaFeishuRegistration';
 import type { PaChannel, PaChannelInput, PaChannelLogin, PaChannelPairing, PaIndex, PaLocalFeishuApp } from './pa-types';
 import styles from './PaModals.module.css';
 
@@ -55,7 +55,20 @@ const CONNECTABLE: ReadonlyArray<PaChannel['status']> = ['disconnected', 'error'
 type Route = Pick<PaChannelInput, 'targetKind' | 'targetId'>;
 interface Permissions extends Route {
   allowProject: boolean;
+  allowTeam: boolean;
+  allowRemoteApproval: boolean;
+  allowAccountModel: boolean;
+  shareUpdates: boolean;
   shareGroupMemory: boolean;
+  chatMode: PaChannelInput['chatMode'];
+}
+
+/** 聊天模式 can be offered for a route whose characters all have a card: an agent other than Fantay with a card, or a
+ *  group chat whose members all have one (the same rule that makes a desktop chat a companion chat). */
+function routeCanChat(index: PaIndex, route: Route): boolean {
+  if (route.targetKind === 'agent') return route.targetId !== index.fantay?.id && index.characters.has(route.targetId);
+  const members = index.groups.get(route.targetId)?.memberIds ?? [];
+  return members.length > 0 && members.every((id) => index.characters.has(id));
 }
 
 const routeValue = (route: Route) => `${route.targetKind}:${route.targetId}`;
@@ -82,7 +95,12 @@ function draftInput(index: PaIndex): PaChannelInput {
     ...defaultRoute(index),
     enabled: false,
     allowProject: false,
+    allowTeam: false,
+    allowRemoteApproval: false,
+    allowAccountModel: false,
+    shareUpdates: false,
     shareGroupMemory: false,
+    chatMode: 'work',
     allowedSenderIds: [],
     remoteChatId: null,
     tenantId: null,
@@ -98,7 +116,12 @@ function inputOf(channel: PaChannel): PaChannelInput {
     targetId: channel.targetId,
     enabled: channel.enabled,
     allowProject: channel.allowProject,
+    allowTeam: channel.allowTeam ?? false,
+    allowRemoteApproval: channel.allowRemoteApproval ?? false,
+    allowAccountModel: channel.allowAccountModel ?? false,
+    shareUpdates: channel.shareUpdates ?? false,
     shareGroupMemory: channel.shareGroupMemory,
+    chatMode: channel.chatMode ?? 'work',
     allowedSenderIds: channel.allowedSenderIds,
     remoteChatId: channel.remoteChatId,
     tenantId: channel.tenantId,
@@ -110,7 +133,12 @@ function permissionsOf(channel: PaChannel): Permissions {
     targetKind: channel.targetKind,
     targetId: channel.targetId,
     allowProject: channel.allowProject,
+    allowTeam: channel.allowTeam ?? false,
+    allowRemoteApproval: channel.allowRemoteApproval ?? false,
+    allowAccountModel: channel.allowAccountModel ?? false,
+    shareUpdates: channel.shareUpdates ?? false,
     shareGroupMemory: channel.shareGroupMemory,
+    chatMode: channel.chatMode ?? 'work',
   };
 }
 
@@ -118,6 +146,11 @@ const samePermissions = (a: Permissions, b: Permissions) =>
   a.targetKind === b.targetKind &&
   a.targetId === b.targetId &&
   a.allowProject === b.allowProject &&
+  a.allowTeam === b.allowTeam &&
+  a.allowRemoteApproval === b.allowRemoteApproval &&
+  a.allowAccountModel === b.allowAccountModel &&
+  a.shareUpdates === b.shareUpdates &&
+  a.chatMode === b.chatMode &&
   (a.targetKind !== 'group' || a.shareGroupMemory === b.shareGroupMemory);
 
 /** Groups first, then agents (Fantay first); the current target stays listed even if it is gone. */
@@ -174,28 +207,34 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export function PaChannelModal({ open, onClose, channelId }: { open: boolean; onClose(): void; channelId: string | null }) {
+export function PaChannelModal({ open, onClose, channelId, connectionId }: { open: boolean; onClose(): void; channelId: string | null; connectionId?: string | undefined }) {
   const t = useT();
   const { locale } = useI18n();
-  const { data, index, now } = usePa();
+  const { data, index, nav, now } = usePa();
   const actions = data.actions;
 
   /* create → edit: the modal keeps its frame and swaps to the new channel */
   const [created, setCreated] = useState<PaChannel | null>(null);
   const id = channelId ?? created?.id ?? null;
   const channel = id ? (index.channels.get(id) ?? (created?.id === id ? created : null)) : null;
+  const parent = connectionId ? index.channels.get(connectionId) : undefined;
 
-  const [draft, setDraft] = useState<PaChannelInput>(() => draftInput(index));
+  const initialDraft = () => ({ ...draftInput(index), ...(parent ? {
+    type: parent.type, targetKind: parent.targetKind, targetId: parent.targetId,
+  } : {}) });
+  const [draft, setDraft] = useState<PaChannelInput>(initialDraft);
   const [perm, setPerm] = useState<Permissions | null>(() => (channel ? permissionsOf(channel) : null));
   const [permBase, setPermBase] = useState<Permissions | null>(perm);
   const [appId, setAppId] = useState('');
   const [appSecret, setAppSecret] = useState('');
+  const [brand, setBrand] = useState<'feishu' | 'lark'>('feishu');
+  const [imFields, setImFields] = useState<Record<string, string>>({});
   const [localApps, setLocalApps] = useState<PaLocalFeishuApp[] | null>(null);
   const [localId, setLocalId] = useState('');
   const [pairing, setPairing] = useState<PaChannelPairing | null>(null);
   const [login, setLogin] = useState<PaChannelLogin | null>(null);
   const [pin, setPin] = useState('');
-  const [confirmForget, setConfirmForget] = useState(false);
+  const [confirmDisconnect, setConfirmDisconnect] = useState<'forget' | 'remove' | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const submit = usePaSubmit();
   const reload = usePaReload(channel, (latest) => {
@@ -203,22 +242,24 @@ export function PaChannelModal({ open, onClose, channelId }: { open: boolean; on
     setPerm(next);
     setPermBase(next);
   });
-  const ids = { name: useId(), route: useId(), appId: useId(), appSecret: useId(), localApp: useId(), pin: useId(), editRoute: useId() };
+  const ids = { name: useId(), route: useId(), appId: useId(), appSecret: useId(), localApp: useId(), pin: useId(), editRoute: useId(), platform: useId(), brand: useId(), im: useId() };
 
   usePaModalReset(open, channelId ?? 'new', () => {
     setCreated(null);
-    setDraft(draftInput(index));
+    setDraft(initialDraft());
     const next = channel && channelId ? permissionsOf(channel) : null;
     setPerm(next);
     setPermBase(next);
     setAppId('');
     setAppSecret('');
+    setBrand('feishu');
+    setImFields({});
     setLocalApps(null);
     setLocalId('');
     setPairing(null);
     setLogin(null);
     setPin('');
-    setConfirmForget(false);
+    setConfirmDisconnect(null);
     setBusy(null);
     submit.clear();
     reload.cancel();
@@ -297,10 +338,12 @@ export function PaChannelModal({ open, onClose, channelId }: { open: boolean; on
       const input: PaChannelInput = {
         ...draft,
         name: draft.name.trim(),
+        allowTeam: draft.type === 'feishu' && draft.targetKind === 'agent' && draft.allowTeam === true,
         shareGroupMemory: draft.targetKind === 'group' && draft.shareGroupMemory,
+        chatMode: routeCanChat(index, draft) ? draft.chatMode : 'work',
       };
       void submit.run(async () => {
-        const next = await actions.createChannel(input);
+        const next = await (connectionId ? actions.createChannelBinding(connectionId, input) : actions.createChannel(input));
         setCreated(next);
         const permissions = permissionsOf(next);
         setPerm(permissions);
@@ -312,8 +355,8 @@ export function PaChannelModal({ open, onClose, channelId }: { open: boolean; on
         open={open}
         onClose={onClose}
         size="lg"
-        title={t('pa.addChannel')}
-        lede={t('pa.channelIntro')}
+        title={t(connectionId ? 'pa.channel.addBinding' : 'pa.addChannel')}
+        lede={connectionId ? parent?.name : t('pa.channelIntro')}
         error={submit.error}
         onSubmit={create}
         footer={
@@ -327,22 +370,14 @@ export function PaChannelModal({ open, onClose, channelId }: { open: boolean; on
           </>
         }
       >
-        <Field label={t('pa.platform')} labelVariant="form">
-          <Segmented
-            size="md"
-            className="flex w-full"
-            aria-label={t('pa.platform')}
-            value={draft.type}
-            onValueChange={(type) => setDraft((current) => ({ ...current, type: type as PaChannelInput['type'] }))}
-          >
-            <SegmentedItem value="feishu" className="min-w-0 flex-1">
-              {t('pa.feishu')}
-            </SegmentedItem>
-            <SegmentedItem value="weixin" className="min-w-0 flex-1">
-              {t('pa.weixin')}
-            </SegmentedItem>
-          </Segmented>
-        </Field>
+        {!connectionId ? <Field label={t('pa.platform')} htmlFor={ids.platform} labelVariant="form">
+          <Select value={draft.type} onValueChange={type => setDraft(current => ({ ...current, type: type as PaChannelInput['type'] }))}>
+            <SelectTrigger id={ids.platform} className="w-full"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {PA_CHANNEL_TYPES.map(type => <SelectItem key={type} value={type}>{platformName(type, t)}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </Field> : null}
         <div className={styles.fields}>
           <Field label={t('pa.name')} htmlFor={ids.name} labelVariant="form">
             <Input
@@ -371,12 +406,24 @@ export function PaChannelModal({ open, onClose, channelId }: { open: boolean; on
             checked={draft.allowProject}
             onChange={(allowProject) => setDraft((current) => ({ ...current, allowProject }))}
           />
+          {draft.type === 'feishu' && draft.targetKind === 'agent' ? (
+            <PaSwitchRow label={t('pa.channel.allowTeam')} hint={t('pa.channel.allowTeamHint')}
+              checked={draft.allowTeam === true} onChange={(allowTeam) => setDraft((current) => ({ ...current, allowTeam }))} />
+          ) : null}
           {draft.targetKind === 'group' ? (
             <PaSwitchRow
               label={t('pa.shareGroupMemory')}
               hint={t('pa.shareMemoryHelp')}
               checked={draft.shareGroupMemory}
               onChange={(shareGroupMemory) => setDraft((current) => ({ ...current, shareGroupMemory }))}
+            />
+          ) : null}
+          {routeCanChat(index, draft) ? (
+            <PaSwitchRow
+              label={t('pa.channel.chatMode')}
+              hint={t('pa.channel.chatModeHint')}
+              checked={draft.chatMode === 'companion'}
+              onChange={(on) => setDraft((current) => ({ ...current, chatMode: on ? 'companion' : 'work' }))}
             />
           ) : null}
         </div>
@@ -393,6 +440,8 @@ export function PaChannelModal({ open, onClose, channelId }: { open: boolean; on
     : [];
   const history = channel ? recentInbox(index.inbox, channel.id) : [];
   const canPair = !!channel && channel.enabled && channel.credentialConfigured;
+  const alternateIm = channel?.type && !channel.connectionId && isPaImPlatform(channel.type) ? PA_IM_PLATFORMS[channel.type] : null;
+  const imValid = alternateIm?.fields.every(field => imFields[field.key]?.trim()) === true;
   const loginMessage = login?.message?.trim() ?? '';
   const showLogin = !!login && (!!login.qrImagePath || !!loginMessage || login.status === 'verify_code');
 
@@ -401,7 +450,9 @@ export function PaChannelModal({ open, onClose, channelId }: { open: boolean; on
     const input: PaChannelInput = {
       ...inputOf(channel),
       ...permissions,
+      allowTeam: channel.type === 'feishu' && permissions.targetKind === 'agent' && permissions.allowTeam,
       shareGroupMemory: permissions.targetKind === 'group' && permissions.shareGroupMemory,
+      chatMode: routeCanChat(index, permissions) ? permissions.chatMode : 'work',
     };
     const held = channel;
     void submit
@@ -417,7 +468,7 @@ export function PaChannelModal({ open, onClose, channelId }: { open: boolean; on
   const connectFeishu = (event: FormEvent) => {
     event.preventDefault();
     if (!channel || !appId.trim() || !appSecret.trim()) return;
-    void act('feishu', () => actions.connectFeishu(channel.id, { appId: appId.trim(), appSecret: appSecret.trim() })).then((ok) => {
+    void act('feishu', () => actions.connectFeishu(channel.id, { appId: appId.trim(), appSecret: appSecret.trim(), brand })).then((ok) => {
       if (!ok) return;
       setAppSecret('');
       toast({ tone: 'success', title: t('pa.channel.credentialsSaved') });
@@ -447,7 +498,7 @@ export function PaChannelModal({ open, onClose, channelId }: { open: boolean; on
       leading={
         channel ? (
           <span className={styles.platformTile} aria-hidden>
-            {channel.type === 'feishu' ? '飞' : '微'}
+            {platformName(channel.type, t).slice(0, 1)}
           </span>
         ) : undefined
       }
@@ -480,7 +531,7 @@ export function PaChannelModal({ open, onClose, channelId }: { open: boolean; on
                     <div className={styles.rowError}>{channel.lastError}</div>
                   ) : !channel.credentialConfigured ? (
                     <div className={styles.rowHint}>
-                      {channel.type === 'feishu' ? t('pa.channel.needsCredentials') : t('pa.channel.needsWechatLogin')}
+                      {channel.type === 'weixin' ? t('pa.channel.needsWechatLogin') : t('pa.channel.needsCredentials')}
                     </div>
                   ) : null}
                 </div>
@@ -501,14 +552,19 @@ export function PaChannelModal({ open, onClose, channelId }: { open: boolean; on
                   ) : null}
                 </div>
               </div>
-              {channel.credentialConfigured ? (
+              {channel.credentialConfigured && !channel.connectionId ? (
                 <div className={styles.row}>
                   <div className={styles.rowText}>
                     <div className={styles.rowLabel}>{t('pa.channel.credentialsRow')}</div>
                     <div className={styles.rowHint}>{t('pa.channel.credentialsHint')}</div>
                   </div>
                   <div className={styles.rowControl}>
-                    <Button size="sm" className={styles.dangerQuiet} loading={busy === 'forget'} onClick={() => setConfirmForget(true)}>
+                    {channel.enabled && channel.type !== 'weixin' ? (
+                      <Button size="sm" onClick={() => nav.openModal({ kind: 'channel', channelId: null, connectionId: channel.id })}>
+                        {t('pa.channel.addBinding')}
+                      </Button>
+                    ) : null}
+                    <Button size="sm" className={styles.dangerQuiet} loading={busy === 'forget'} onClick={() => setConfirmDisconnect('forget')}>
                       {t('pa.channel.forgetShort')}
                     </Button>
                   </div>
@@ -517,10 +573,10 @@ export function PaChannelModal({ open, onClose, channelId }: { open: boolean; on
             </div>
           </Section>
 
-          {channel.type === 'feishu' ? (
-            <>
+          {channel.type === 'feishu' && !channel.connectionId ? (
               <Section title={t('pa.channel.secCredentials')}>
                 <div className={styles.group}>
+                  {open ? <PaFeishuRegistration key={channel.id} channelId={channel.id} configured={channel.credentialConfigured} /> : null}
                   <PaDisclosure className={styles.rowDisclosure} label={<span className={styles.rowDisclosureLabel}>{t('pa.channel.useLocalApp')}</span>}>
                     <div className={styles.rowDisclosureBody}>
                       <Button
@@ -570,8 +626,17 @@ export function PaChannelModal({ open, onClose, channelId }: { open: boolean; on
                       ) : null}
                     </div>
                   </PaDisclosure>
-                  {/* App ID, App Secret and the submit share one line, so the button closes the form it belongs to. */}
-                  <form className={cn(styles.groupPad, styles.credentials)} noValidate onSubmit={connectFeishu}>
+                  <form className={styles.groupPad} noValidate onSubmit={connectFeishu}>
+                    <Field label={t('pa.channel.feishuEdition')} htmlFor={ids.brand} labelVariant="form">
+                      <Select value={brand} onValueChange={value => setBrand(value === 'lark' ? 'lark' : 'feishu')}>
+                        <SelectTrigger id={ids.brand} className="w-full"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="feishu">{t('pa.feishu')}</SelectItem>
+                          <SelectItem value="lark">Lark</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    <div className={styles.credentials}>
                     <Field label={t('pa.appId')} htmlFor={ids.appId} labelVariant="form">
                       <Input
                         id={ids.appId}
@@ -596,6 +661,7 @@ export function PaChannelModal({ open, onClose, channelId }: { open: boolean; on
                     <Button type="submit" disabled={!appId.trim() || !appSecret.trim()} loading={busy === 'feishu'}>
                       {t('pa.connectFeishu')}
                     </Button>
+                    </div>
                   </form>
                   <div className={styles.note}>
                     <p className={styles.noteText}>{t('pa.feishuSetup')}</p>
@@ -607,12 +673,32 @@ export function PaChannelModal({ open, onClose, channelId }: { open: boolean; on
                   </div>
                 </div>
               </Section>
-
+          ) : null}
+          {alternateIm ? (
+            <Section title={t('pa.channel.secBotCredentials')}>
+              <form className={cn(styles.group, styles.groupPad)} onSubmit={event => {
+                event.preventDefault();
+                if (imValid) void act('im', () => actions.connectIm(channel.id, imFields)).then(ok => {
+                  if (ok) setImFields({});
+                });
+              }}>
+                {alternateIm.fields.map(field => (
+                  <Field key={field.key} label={field.label} htmlFor={`${ids.im}-${field.key}`} labelVariant="form">
+                    <Input id={`${ids.im}-${field.key}`} type={field.secret ? 'password' : 'text'}
+                      autoComplete={field.secret ? 'new-password' : 'off'} spellCheck={false} maxLength={500}
+                      value={imFields[field.key] ?? ''} onChange={event => setImFields(current => ({ ...current, [field.key]: event.target.value }))} />
+                  </Field>
+                ))}
+                <div><Button type="submit" disabled={!imValid} loading={busy === 'im'}>{t('pa.connect')}</Button></div>
+              </form>
+            </Section>
+          ) : null}
+          {channel.type !== 'weixin' ? (
               <Section title={t('pa.channel.secPairing')}>
                 <div className={styles.group}>
                   <div className={styles.row}>
                     <div className={styles.rowText}>
-                      <div className={styles.rowCopy}>{t('pa.channel.pairIntro')}</div>
+                      <div className={styles.rowCopy}>{t('pa.channel.pairIntroPlatform')}</div>
                       {!canPair ? <div className={styles.rowHint}>{t('pa.channel.pairNeedsConnection')}</div> : null}
                     </div>
                     <div className={styles.rowControl}>
@@ -648,7 +734,6 @@ export function PaChannelModal({ open, onClose, channelId }: { open: boolean; on
                   ) : null}
                 </div>
               </Section>
-            </>
           ) : (
             <Section title={t('pa.channel.secWechat')}>
               <div className={styles.group}>
@@ -728,7 +813,7 @@ export function PaChannelModal({ open, onClose, channelId }: { open: boolean; on
                       className={styles.routeSelect}
                       value={permissions}
                       onChange={(route) =>
-                        setPerm({ ...permissions, ...route, shareGroupMemory: route.targetKind === 'group' && permissions.shareGroupMemory })
+                        setPerm({ ...permissions, ...route, allowTeam: route.targetKind === 'agent' && permissions.allowTeam, shareGroupMemory: route.targetKind === 'group' && permissions.shareGroupMemory })
                       }
                     />
                   </div>
@@ -739,12 +824,36 @@ export function PaChannelModal({ open, onClose, channelId }: { open: boolean; on
                   checked={permissions.allowProject}
                   onChange={(allowProject) => setPerm({ ...permissions, allowProject })}
                 />
+                {channel.type === 'feishu' && permissions.targetKind === 'agent' ? (
+                  <PaSwitchRow label={t('pa.channel.allowTeam')} hint={t('pa.channel.allowTeamHint')}
+                    checked={permissions.allowTeam} onChange={(allowTeam) => setPerm({ ...permissions, allowTeam })} />
+                ) : null}
+                {!permissions.allowProject ? (
+                  <PaSwitchRow label={t('pa.channel.allowRemoteApproval')} hint={t('pa.channel.allowRemoteApprovalHint')}
+                    checked={permissions.allowRemoteApproval}
+                    onChange={(allowRemoteApproval) => setPerm({ ...permissions, allowRemoteApproval })} />
+                ) : null}
+                <PaSwitchRow label={t('pa.channel.allowAccountModel')} hint={t('pa.channel.allowAccountModelHint')}
+                  checked={permissions.allowAccountModel}
+                  onChange={(allowAccountModel) => setPerm({ ...permissions, allowAccountModel })} />
+                {channel.type !== 'weixin' && channel.type !== 'qq' ? (
+                  <PaSwitchRow label={t('pa.channel.shareUpdates')} hint={t('pa.channel.shareUpdatesHint')}
+                    checked={permissions.shareUpdates} onChange={(shareUpdates) => setPerm({ ...permissions, shareUpdates })} />
+                ) : null}
                 {permissions.targetKind === 'group' ? (
                   <PaSwitchRow
                     label={t('pa.shareGroupMemory')}
                     hint={t('pa.shareMemoryHelp')}
                     checked={permissions.shareGroupMemory}
                     onChange={(shareGroupMemory) => setPerm({ ...permissions, shareGroupMemory })}
+                  />
+                ) : null}
+                {routeCanChat(index, permissions) ? (
+                  <PaSwitchRow
+                    label={t('pa.channel.chatMode')}
+                    hint={t('pa.channel.chatModeHint')}
+                    checked={permissions.chatMode === 'companion'}
+                    onChange={(on) => setPerm({ ...permissions, chatMode: on ? 'companion' : 'work' })}
                   />
                 ) : null}
               </div>
@@ -786,7 +895,7 @@ export function PaChannelModal({ open, onClose, channelId }: { open: boolean; on
           <div className={styles.disclosures}>
             <PaDisclosure className={styles.sectionDisclosure} label={t('pa.channel.commands')}>
               <div className={cn(styles.group, styles.commands)}>
-                {COMMANDS.map((key) => {
+                {(channel.type === 'feishu' && channel.allowTeam ? [...COMMANDS, 'pa.channel.cmdTeam', 'pa.channel.cmdTeamRun'] as const : COMMANDS).map((key) => {
                   const text = t(key);
                   const space = text.indexOf(' ');
                   return (
@@ -800,17 +909,24 @@ export function PaChannelModal({ open, onClose, channelId }: { open: boolean; on
             </PaDisclosure>
             <PaHistoryDisclosure rows={history} showChannel={false} variant="modal" />
           </div>
+          <Button size="sm" variant="ghost" className={styles.dangerQuiet} loading={busy === 'remove'}
+            onClick={() => setConfirmDisconnect('remove')}>{t('pa.channel.removeChannel')}</Button>
 
           <ConfirmDialog
-            open={confirmForget}
-            onOpenChange={setConfirmForget}
-            title={t('pa.channel.forget')}
-            description={t('pa.channel.forgetBody')}
-            confirmLabel={t('pa.channel.forget')}
+            open={confirmDisconnect !== null}
+            onOpenChange={next => { if (!next) setConfirmDisconnect(null); }}
+            title={t(confirmDisconnect === 'remove' ? 'pa.channel.removeChannel' : 'pa.channel.forget')}
+            description={t(confirmDisconnect === 'remove' ? 'pa.channel.removeChannelHint' : 'pa.channel.forgetBody')}
+            confirmLabel={t(confirmDisconnect === 'remove' ? 'pa.channel.removeChannel' : 'pa.channel.forget')}
             cancelLabel={t('pa.cancel')}
             destructive
             onConfirm={() => {
-              setConfirmForget(false);
+              const removing = confirmDisconnect === 'remove';
+              setConfirmDisconnect(null);
+              if (removing) {
+                void act('remove', () => actions.removeChannel(channel.id)).then(ok => { if (ok) onClose(); });
+                return;
+              }
               void act('forget', () => actions.disconnectChannel(channel.id, true)).then((ok) => {
                 if (ok) {
                   setPairing(null);

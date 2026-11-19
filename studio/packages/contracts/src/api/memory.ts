@@ -63,8 +63,10 @@ export interface MemoryEntrySummary {
   description: string;
   /** Category — drives the filename prefix and the system-prompt section it lands in. */
   type: MemoryType;
+  /** Optional project scope (`null` / absent = global personal memory; string = isolated to that Studio project). */
+  projectId?: string | null | undefined;
   /** Which pipeline wrote the entry; absent on pre-provenance files. */
-  source?: MemoryEntrySource;
+  source?: MemoryEntrySource | undefined;
   /** Unix milliseconds — file mtime. */
   updatedAt: number;
 }
@@ -184,10 +186,11 @@ export interface MemoryTreeListResponse {
 // PATCH /api/memory/tree/:id — edit an entry node from tree-aware callers.
 // Folder nodes are currently derived, so only entry ids are patchable.
 export interface UpdateMemoryTreeNodeRequest {
-  name?: string;
-  description?: string;
-  type?: MemoryType;
-  body?: string;
+  name?: string | undefined;
+  description?: string | undefined;
+  type?: MemoryType | undefined;
+  body?: string | undefined;
+  projectId?: string | null | undefined;
 }
 
 export interface UpdateMemoryTreeNodeResponse {
@@ -196,14 +199,16 @@ export interface UpdateMemoryTreeNodeResponse {
 }
 
 // POST /api/memory      → upsert (id supplied → update; missing → create)
-// PUT  /api/memory/:id  → update by id
+// PUT  api/memory/:id   → update by id
 export interface UpsertMemoryRequest {
   /** Optional on create — daemon derives a slug from `type` + `name`. */
-  id?: string;
+  id?: string | undefined;
   name: string;
   description: string;
   type: MemoryType;
   body: string;
+  /** Optional Studio project scope (`null` / omitted = global personal layer). */
+  projectId?: string | null | undefined;
 }
 
 export interface UpsertMemoryResponse {

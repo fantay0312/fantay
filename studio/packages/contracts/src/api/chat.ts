@@ -222,6 +222,16 @@ export interface ByokMediaDefaults {
   speechVoice?: string;
 }
 
+export interface ChatMessageBranchRequest {
+  action: 'edit' | 'regenerate';
+  messageId: string;
+  expectedLeafId: string;
+}
+
+export interface SelectChatMessageBranchRequest {
+  expectedLeafId: string;
+}
+
 export interface ChatRequest {
   agentId: string;
   message: string;
@@ -266,6 +276,7 @@ export interface ChatRequest {
   systemPrompt?: string;
   projectId?: string | null;
   conversationId?: string | null;
+  messageBranch?: ChatMessageBranchRequest;
   sessionMode?: ChatSessionMode;
   /** Client-minted id for the latest user turn. The daemon pins this row before
    * the assistant row so concurrent best-effort message persistence cannot
@@ -1248,8 +1259,20 @@ export type PersistedAgentEvent =
    *
    * More than one may be persisted for a turn; fold last-wins per field with
    * `foldArtifactFocusSelections`.
+   *
+   * `tool` names the workspace surface the marker asked for and `url` the
+   * address for the browser one (only ever next to `tool: 'browser'`). An event
+   * may carry `tool` alone — "show the files tool" opens no file and lists no
+   * card. Conversations recorded before `tool` existed have neither field and
+   * read exactly as they did.
    */
-  | { kind: 'artifact_focus'; open?: string; show?: string[] }
+  | {
+      kind: 'artifact_focus';
+      open?: string;
+      show?: string[];
+      tool?: import('./artifact-focus-marker.js').ArtifactFocusTool;
+      url?: string;
+    }
   | { kind: 'conversation_title'; title: string }
   | { kind: 'thinking'; text: string }
   /**
@@ -1483,6 +1506,8 @@ export function isChatArtifactStaticCoverReady(
 
 export interface ChatMessage {
   id: string;
+  /** Sibling message IDs in creation order, including this visible version. */
+  branchVersionIds?: string[];
   role: ChatRole;
   content: string;
   agentId?: string;

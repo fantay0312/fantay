@@ -14,6 +14,7 @@ export type { TokenToSeaReasoningEffort } from './tokentosea-reasoning.js';
 export interface TokenToSeaModel {
   id: string;
   model: string;
+  channelOffer?: import('@open-design/contracts').AgentModelOption['channelOffer'];
   name?: string;
   provider?: string;
   priceVersion: string | number;
@@ -129,7 +130,12 @@ export class TokenToSeaRuntime {
 
   middleware = (req: Request, res: Response, next: NextFunction): void => {
     const bearer = /^Bearer (\S+)$/i.exec(String(req.headers.authorization ?? ''))?.[1];
-    const tool = bearer && (req.originalUrl.startsWith('/api/tools/') || req.originalUrl.startsWith('/api/media/tasks/')) ? this.toolSessions.get(bearer) : undefined;
+    const searchRoute = req.originalUrl.startsWith('/api/search/') || req.originalUrl === '/api/research/search';
+    const tool = bearer && (searchRoute || req.originalUrl.startsWith('/api/tools/') || req.originalUrl.startsWith('/api/media/tasks/')) ? this.toolSessions.get(bearer) : undefined;
+    if (searchRoute && bearer && !tokenToSeaCookie(req) && (!tool || tool.expires <= Date.now())) {
+      this.sessions.run({ raw: '', user: null }, next);
+      return;
+    }
     const raw = tool && tool.expires > Date.now() ? tool.context.raw : tokenToSeaCookie(req);
     if (!raw && isLocalCliRequest(req)) {
       // The od CLI (a local non-browser client) carries no session cookie. It

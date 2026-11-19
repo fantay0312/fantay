@@ -1,0 +1,339 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* A Mermaid diagram on the canvas ground. The viewport scrolls; the plane is at least as large as
+   the viewport and centres the frame, so a small diagram sits in the middle and a large one pans
+   (the image viewer's model). The frame is a sheet of paper; the drawing is ink on it. The
+   drawing's own colours are in `diagram/theme.module.css`. */
+
+/* ── stage ──────────────────────────────────────────────────────────────────────────────────── */
+
+.root {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.source {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.viewport {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  outline: none;
+  overscroll-behavior: contain;
+  /* Scrollbars would jump in and out while zooming; panning is by drag, keys and trackpad. */
+  scrollbar-width: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.viewport:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--focus-ring-color);
+}
+
+.viewport[data-pannable] {
+  cursor: grab;
+}
+
+.viewport[data-dragging] {
+  cursor: grabbing;
+}
+
+.plane {
+  display: grid;
+  box-sizing: border-box;
+  width: max-content;
+  min-width: 100%;
+  height: max-content;
+  min-height: 100%;
+  padding: 24px;
+  place-items: center;
+}
+
+/* The sheet the diagram is drawn on: paper, set off from the ground by tone and a ring. */
+.frame {
+  position: relative;
+  flex: none;
+  overflow: hidden;
+  border-radius: var(--radius-control);
+  background: var(--paper);
+  box-shadow: var(--shadow-ring);
+  opacity: 0;
+  transition: opacity var(--motion-enter) var(--ease-out-quint);
+}
+
+.frame[data-ready] {
+  opacity: 1;
+}
+
+.drawing {
+  width: 100%;
+  height: 100%;
+}
+
+/* The vector is resized with the frame, so it is redrawn sharp at every zoom. */
+.drawing svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  overflow: hidden;
+}
+
+/* Inert links: they look like links and copy their address on click. */
+.drawing [data-diagram-link] {
+  cursor: pointer;
+}
+
+.drawing [data-diagram-link]:hover text,
+.drawing [data-diagram-link]:hover tspan {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.viewport[data-dragging] [data-diagram-link] {
+  cursor: grabbing;
+}
+
+/* ── a diagram that does not parse ──────────────────────────────────────────────────────────── */
+
+.problem {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 0;
+  padding: 32px 24px;
+  overflow: auto;
+  text-align: center;
+  animation: diagram-state-in var(--motion-enter) var(--ease-out-quint) both;
+}
+
+.problemGlyph {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 6px;
+  border-radius: var(--radius-card);
+  background: var(--paper);
+  color: var(--ink-soft);
+  place-items: center;
+}
+
+.problemTitle {
+  max-width: 420px;
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Chinese breaks at punctuation and spaces only, so an example such as A["文字(说明)"] stays whole. */
+.problemHint {
+  max-width: 400px;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+  word-break: keep-all;
+}
+
+/* The line as written, with a caret under the place the parser stopped. */
+.excerpt {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 12px;
+  box-sizing: border-box;
+  width: min(100%, 460px);
+  margin: 10px 0 0;
+  padding: 10px 14px 10px 12px;
+  overflow-x: auto;
+  border-radius: var(--radius-control);
+  background: var(--paper);
+  box-shadow: var(--shadow-ring);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 18px;
+  text-align: left;
+}
+
+.excerptGutter {
+  color: var(--ink-ghost);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  user-select: none;
+}
+
+.excerptCode {
+  color: var(--ink);
+  font-family: inherit;
+  white-space: pre;
+}
+
+.excerptCaret {
+  color: var(--danger);
+  font-weight: 600;
+  line-height: 12px;
+  white-space: pre;
+}
+
+.excerptPad {
+  visibility: hidden;
+}
+
+.problemActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+/* ── the newest version did not draw: one quiet line over the old drawing ─────────────────────── */
+
+.stale {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-sizing: border-box;
+  max-width: calc(100% - 24px);
+  height: 32px;
+  padding: 0 4px 0 11px;
+  border-radius: var(--radius-chip);
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity var(--motion-exit) var(--ease-out-quint),
+    transform var(--motion-exit) var(--ease-out-quint);
+}
+
+.stale[data-show] {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+  transition-duration: var(--motion-enter);
+}
+
+.staleGlyph {
+  flex: none;
+  color: var(--ink-faint);
+}
+
+.staleText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.staleAction {
+  flex: none;
+  height: 24px;
+  padding: 0 8px;
+}
+
+/* ── a hint next to the thing (a copied link or picture) ─────────────────────────────────────── */
+
+.hint {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 6;
+  max-width: calc(100% - 24px);
+  padding: 5px 9px;
+  overflow: hidden;
+  border-radius: var(--radius-control);
+  background: var(--ink);
+  box-shadow: var(--shadow-float);
+  color: var(--paper);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -4px);
+  transition:
+    opacity var(--motion-exit) var(--ease-out-quint),
+    transform var(--motion-exit) var(--ease-out-quint);
+}
+
+.hint[data-at='pointer'] {
+  transform: translate(-50%, calc(-100% - 4px));
+}
+
+.hint[data-show] {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  transition-duration: var(--motion-enter);
+}
+
+.hint[data-show][data-at='pointer'] {
+  transform: translate(-50%, calc(-100% - 8px));
+}
+
+/* ── narrow panel ───────────────────────────────────────────────────────────────────────────── */
+
+@container artifact (max-width: 460px) {
+  .problem {
+    padding: 24px 16px;
+  }
+
+  .stale {
+    bottom: 10px;
+    max-width: calc(100% - 16px);
+  }
+}
+
+@keyframes diagram-state-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frame,
+  .stale,
+  .hint {
+    transition: none;
+  }
+
+  .problem {
+    animation: none;
+  }
+}

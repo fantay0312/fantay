@@ -6,6 +6,10 @@ This package retains the catalog publisher, DeepSeek bootstrap publisher and Fan
 
 Run these through mise from the Studio root.
 
+- `pnpm tools-release next-version` prints the next `YY.MMDD.N` version (Asia/Taipei; January 1 is `26.0101.1`).
+- After authoring the matching entry in `packages/contracts/src/fantay-releases.ts`, `pnpm tools-release sync-version` synchronizes application package metadata and detailed Markdown/HTML/JSON logs under `docs/releases/`.
+- `pnpm tools-release sync-version --check` verifies consistency without writing. Rebuild the contracts, release and tools-release packages after editing their source. Only internal npm/Electron-builder fields use numeric SemVer encoding; public versions keep the four-digit date.
+
 - `pnpm tools-release export-catalog` exports the product content catalog.
 - `pnpm tools-release render-catalog-previews` renders catalog previews.
 - `pnpm tools-release pack-catalog` creates the checksummed content package.

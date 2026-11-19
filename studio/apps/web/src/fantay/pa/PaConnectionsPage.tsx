@@ -40,8 +40,18 @@ export function ChannelStatusLabel({ status, className }: { status: PaChannel['s
   );
 }
 
-export function platformName(type: PaChannel['type'], t: TFn): string {
-  return t(type === 'feishu' ? 'pa.feishu' : 'pa.weixin');
+export function platformName(type: string | undefined, t: TFn): string {
+  switch (type) {
+    case 'feishu': return t('pa.feishu');
+    case 'weixin': return t('pa.weixin');
+    case 'dingtalk': return t('pa.channel.dingtalk');
+    case 'wecom': return t('pa.channel.wecom');
+    case 'qq': return 'QQ';
+    case 'telegram': return 'Telegram';
+    case 'discord': return 'Discord';
+    case 'slack': return 'Slack';
+    default: return '';
+  }
 }
 
 /** The routed agent or group by name, never an id. */
@@ -356,7 +366,7 @@ export function PaConnectionsPage() {
                     onClick={() => nav.openModal({ kind: 'channel', channelId: channel.id })}
                   >
                     <span className={styles.tile} aria-hidden>
-                      {channel.type === 'feishu' ? '飞' : '微'}
+                      {platformName(channel.type, t).slice(0, 1)}
                     </span>
                     <span className={styles.channelText}>
                       <span className={styles.channelName}>{channel.name}</span>

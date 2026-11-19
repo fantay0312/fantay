@@ -1,0 +1,2360 @@
+[
+  {
+    "id": "search",
+    "label": "搜索",
+    "description": "选择一个合适渠道检索，返回结果和来源；普通搜索只运行一轮。",
+    "fields": [
+      {
+        "name": "query",
+        "label": "问题或关键词",
+        "help": "要问的问题或关键词。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "platform",
+        "label": "--platform",
+        "help": "",
+        "flags": [
+          "--platform"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "model",
+        "label": "模型",
+        "help": "本次改用哪个模型，留空用当前配置。",
+        "flags": [
+          "--model"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "extra_sources",
+        "label": "结果数量",
+        "help": "本轮向选中渠道请求的结果条数，不增加检索渠道。",
+        "flags": [
+          "--extra-sources"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": 0,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "validation",
+        "label": "来源要求",
+        "help": "strict 要求来源证据；普通搜索不会因此自动补搜或判断充分性。",
+        "flags": [
+          "--validation"
+        ],
+        "kind": "choice",
+        "choices": [
+          "fast",
+          "balanced",
+          "strict"
+        ],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "fallback",
+        "label": "回退策略",
+        "help": "一家失败后要不要自动换下一家。",
+        "flags": [
+          "--fallback"
+        ],
+        "kind": "choice",
+        "choices": [
+          "auto",
+          "off"
+        ],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "providers",
+        "label": "服务商筛选",
+        "help": "限定只用哪些服务商，留空由路由决定。",
+        "flags": [
+          "--providers"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "auto",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "stream",
+        "label": "启用流式请求",
+        "help": "对 OpenAI 兼容接口启用流式请求。部分服务只有流式下才肯长时间思考。",
+        "flags": [
+          "--stream"
+        ],
+        "kind": "bool",
+        "choices": [],
+        "required": false,
+        "default": false,
+        "multiple": false,
+        "nargs": 0,
+        "advanced": true
+      },
+      {
+        "name": "no_stream",
+        "label": "禁用流式请求",
+        "help": "对 OpenAI 兼容接口禁用流式请求。",
+        "flags": [
+          "--no-stream"
+        ],
+        "kind": "bool",
+        "choices": [],
+        "required": false,
+        "default": false,
+        "multiple": false,
+        "nargs": 0,
+        "advanced": true
+      },
+      {
+        "name": "timeout",
+        "label": "超时（秒）",
+        "help": "这一条命令的总时间上限（秒），会覆盖全局设置。",
+        "flags": [
+          "--timeout"
+        ],
+        "kind": "float",
+        "choices": [],
+        "required": false,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "route",
+    "label": "查看路由",
+    "description": "默认只预览本地可用能力；勾选远程判断会调用路由服务，但不执行搜索。",
+    "fields": [
+      {
+        "name": "query",
+        "label": "问题或关键词",
+        "help": "要问的问题或关键词。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "validation",
+        "label": "来源要求",
+        "help": "strict 要求来源证据；普通搜索不会因此自动补搜或判断充分性。",
+        "flags": [
+          "--validation"
+        ],
+        "kind": "choice",
+        "choices": [
+          "fast",
+          "balanced",
+          "strict"
+        ],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "remote",
+        "label": "允许远程路由判断",
+        "help": "明确允许远程路由判断，可能计费；默认关闭，且不执行检索。",
+        "flags": [
+          "--remote"
+        ],
+        "kind": "bool",
+        "choices": [],
+        "required": false,
+        "default": false,
+        "multiple": false,
+        "nargs": 0,
+        "advanced": true
+      },
+      {
+        "name": "router_mode",
+        "label": "路由方式",
+        "help": "本次改用哪种路由方式，仅影响这一次调用。",
+        "flags": [
+          "--router-mode"
+        ],
+        "kind": "choice",
+        "choices": [
+          "jev",
+          "local"
+        ],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "fetch",
+    "label": "读取网页",
+    "description": "把一个网页地址读成干净正文。",
+    "fields": [
+      {
+        "name": "url",
+        "label": "网页地址",
+        "help": "完整网页地址，需带 http:// 或 https://。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "timeout",
+        "label": "超时（秒）",
+        "help": "这一条命令的总时间上限（秒），会覆盖全局设置。",
+        "flags": [
+          "--timeout"
+        ],
+        "kind": "float",
+        "choices": [],
+        "required": false,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "map",
+    "label": "站点地图",
+    "description": "列出一个站点的结构。",
+    "fields": [
+      {
+        "name": "url",
+        "label": "网页地址",
+        "help": "完整网页地址，需带 http:// 或 https://。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "instructions",
+        "label": "--instructions",
+        "help": "",
+        "flags": [
+          "--instructions"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "max_depth",
+        "label": "--max-depth",
+        "help": "",
+        "flags": [
+          "--max-depth"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": 1,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "max_breadth",
+        "label": "--max-breadth",
+        "help": "",
+        "flags": [
+          "--max-breadth"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": 20,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "limit",
+        "label": "--limit",
+        "help": "",
+        "flags": [
+          "--limit"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": 50,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "timeout",
+        "label": "超时（秒）",
+        "help": "这一条命令的总时间上限（秒），会覆盖全局设置。",
+        "flags": [
+          "--timeout"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": 150,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "exa-search",
+    "label": "Exa 搜索",
+    "description": "指定用 Exa 搜索，结果只来自这一家。",
+    "fields": [
+      {
+        "name": "query",
+        "label": "问题或关键词",
+        "help": "要问的问题或关键词。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "num_results",
+        "label": "结果数量",
+        "help": "返回多少条结果。",
+        "flags": [
+          "--num-results"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": 5,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "search_type",
+        "label": "--search-type",
+        "help": "",
+        "flags": [
+          "--search-type"
+        ],
+        "kind": "choice",
+        "choices": [
+          "neural",
+          "keyword",
+          "auto"
+        ],
+        "required": false,
+        "default": "neural",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "include_text",
+        "label": "--include-text",
+        "help": "",
+        "flags": [
+          "--include-text"
+        ],
+        "kind": "bool",
+        "choices": [],
+        "required": false,
+        "default": false,
+        "multiple": false,
+        "nargs": 0,
+        "advanced": true
+      },
+      {
+        "name": "include_highlights",
+        "label": "--include-highlights",
+        "help": "",
+        "flags": [
+          "--include-highlights"
+        ],
+        "kind": "bool",
+        "choices": [],
+        "required": false,
+        "default": false,
+        "multiple": false,
+        "nargs": 0,
+        "advanced": true
+      },
+      {
+        "name": "start_published_date",
+        "label": "--start-published-date",
+        "help": "",
+        "flags": [
+          "--start-published-date"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "include_domains",
+        "label": "--include-domains",
+        "help": "",
+        "flags": [
+          "--include-domains"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": true,
+        "nargs": "+",
+        "advanced": true
+      },
+      {
+        "name": "exclude_domains",
+        "label": "--exclude-domains",
+        "help": "",
+        "flags": [
+          "--exclude-domains"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": true,
+        "nargs": "+",
+        "advanced": true
+      },
+      {
+        "name": "category",
+        "label": "--category",
+        "help": "",
+        "flags": [
+          "--category"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "exa-similar",
+    "label": "Exa 相似网页",
+    "description": "用 Exa 找出和某个网页相似的页面。",
+    "fields": [
+      {
+        "name": "url",
+        "label": "网页地址",
+        "help": "完整网页地址，需带 http:// 或 https://。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "num_results",
+        "label": "结果数量",
+        "help": "返回多少条结果。",
+        "flags": [
+          "--num-results"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": 5,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "zhipu-search",
+    "label": "智谱搜索",
+    "description": "指定用智谱搜索，结果只来自这一家。",
+    "fields": [
+      {
+        "name": "query",
+        "label": "问题或关键词",
+        "help": "要问的问题或关键词。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "count",
+        "label": "结果数量",
+        "help": "返回多少条结果。",
+        "flags": [
+          "--count"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": 10,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "search_engine",
+        "label": "--search-engine",
+        "help": "",
+        "flags": [
+          "--search-engine"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "search_recency_filter",
+        "label": "--search-recency-filter",
+        "help": "",
+        "flags": [
+          "--search-recency-filter"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "noLimit",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "search_domain_filter",
+        "label": "--search-domain-filter",
+        "help": "",
+        "flags": [
+          "--search-domain-filter"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "content_size",
+        "label": "--content-size",
+        "help": "",
+        "flags": [
+          "--content-size"
+        ],
+        "kind": "choice",
+        "choices": [
+          "medium",
+          "high"
+        ],
+        "required": false,
+        "default": "medium",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "zhipu-mcp-search",
+    "label": "智谱 MCP 搜索",
+    "description": "用智谱 Coding Plan 额度搜索。",
+    "fields": [
+      {
+        "name": "query",
+        "label": "问题或关键词",
+        "help": "要问的问题或关键词。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "count",
+        "label": "结果数量",
+        "help": "返回多少条结果。",
+        "flags": [
+          "--count"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": 5,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "zhipu-mcp-reader",
+    "label": "智谱 MCP 网页阅读",
+    "description": "用智谱 Coding Plan 额度读取网页正文。",
+    "fields": [
+      {
+        "name": "url",
+        "label": "网页地址",
+        "help": "完整网页地址，需带 http:// 或 https://。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "zhipu-mcp-search-doc",
+    "label": "智谱 仓库文档检索",
+    "description": "在某个代码仓库的文档里检索。",
+    "fields": [
+      {
+        "name": "repo",
+        "label": "代码仓库",
+        "help": "代码仓库，形如 owner/name。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "query",
+        "label": "问题或关键词",
+        "help": "要问的问题或关键词。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "max_results",
+        "label": "--max-results",
+        "help": "",
+        "flags": [
+          "--max-results"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": 5,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "zhipu-mcp-repo-structure",
+    "label": "智谱 仓库目录",
+    "description": "列出某个代码仓库的目录结构。",
+    "fields": [
+      {
+        "name": "repo",
+        "label": "代码仓库",
+        "help": "代码仓库，形如 owner/name。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "ref",
+        "label": "分支或版本",
+        "help": "分支名、标签或提交号，留空用默认分支。",
+        "flags": [
+          "--ref"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "zhipu-mcp-read-file",
+    "label": "智谱 仓库文件阅读",
+    "description": "读取某个代码仓库里的一个文件。",
+    "fields": [
+      {
+        "name": "repo",
+        "label": "代码仓库",
+        "help": "代码仓库，形如 owner/name。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "path",
+        "label": "文件路径",
+        "help": "仓库内的文件路径。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "ref",
+        "label": "分支或版本",
+        "help": "分支名、标签或提交号，留空用默认分支。",
+        "flags": [
+          "--ref"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "anysearch-domains",
+    "label": "AnySearch 查询领域",
+    "description": "列出 AnySearch 支持的垂直领域。实验性能力。",
+    "fields": [
+      {
+        "name": "domain",
+        "label": "domain",
+        "help": "",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": "?",
+        "advanced": false
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": true
+  },
+  {
+    "id": "anysearch-search",
+    "label": "AnySearch 搜索",
+    "description": "在指定垂直领域里搜索。实验性能力。",
+    "fields": [
+      {
+        "name": "query",
+        "label": "问题或关键词",
+        "help": "要问的问题或关键词。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "domain",
+        "label": "--domain",
+        "help": "",
+        "flags": [
+          "--domain"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "sub_domain",
+        "label": "--sub-domain",
+        "help": "",
+        "flags": [
+          "--sub-domain"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "sub_domain_params",
+        "label": "--sub-domain-params",
+        "help": "转发给 AnySearch 的 sub_domain_params，JSON 对象。",
+        "flags": [
+          "--sub-domain-params"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "param",
+        "label": "--param",
+        "help": "可重复的 key=value，会覆盖上面 JSON 里的同名键。",
+        "flags": [
+          "--param"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": [],
+        "multiple": true,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "max_results",
+        "label": "--max-results",
+        "help": "",
+        "flags": [
+          "--max-results"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": 5,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": true
+  },
+  {
+    "id": "anysearch-extract",
+    "label": "AnySearch 读取网页",
+    "description": "用 AnySearch 读取一个网页。实验性能力。",
+    "fields": [
+      {
+        "name": "url",
+        "label": "网页地址",
+        "help": "完整网页地址，需带 http:// 或 https://。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "max_length",
+        "label": "--max-length",
+        "help": "",
+        "flags": [
+          "--max-length"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": 20000,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": true
+  },
+  {
+    "id": "anysearch-batch",
+    "label": "AnySearch 批量搜索",
+    "description": "一次并行跑最多 5 条 AnySearch 查询。实验性能力。",
+    "fields": [
+      {
+        "name": "queries",
+        "label": "问题列表（每行一项）",
+        "help": "多条查询，每行一条。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": true,
+        "nargs": "+",
+        "advanced": false
+      },
+      {
+        "name": "max_results",
+        "label": "--max-results",
+        "help": "",
+        "flags": [
+          "--max-results"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": 3,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": true
+  },
+  {
+    "id": "sciverse-catalog",
+    "label": "SciVerse 目录",
+    "description": "列出 Sciverse 学术库可用的检索字段。实验性能力。",
+    "fields": [
+      {
+        "name": "collection",
+        "label": "--collection",
+        "help": "旧版选择器；填 authors 或 sources 会直接返回参数错误。",
+        "flags": [
+          "--collection"
+        ],
+        "kind": "choice",
+        "choices": [
+          "papers",
+          "authors",
+          "sources"
+        ],
+        "required": false,
+        "default": "papers",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "include_sample_values",
+        "label": "--include-sample-values",
+        "help": "",
+        "flags": [
+          "--include-sample-values"
+        ],
+        "kind": "bool",
+        "choices": [],
+        "required": false,
+        "default": false,
+        "multiple": false,
+        "nargs": 0,
+        "advanced": true
+      },
+      {
+        "name": "include_field_stats",
+        "label": "--include-field-stats",
+        "help": "",
+        "flags": [
+          "--include-field-stats"
+        ],
+        "kind": "bool",
+        "choices": [],
+        "required": false,
+        "default": false,
+        "multiple": false,
+        "nargs": 0,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": true
+  },
+  {
+    "id": "sciverse-search",
+    "label": "SciVerse 搜索",
+    "description": "按结构化条件检索学术论文。实验性能力，需显式指定。",
+    "fields": [
+      {
+        "name": "query",
+        "label": "问题或关键词",
+        "help": "要问的问题或关键词。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": "?",
+        "advanced": false
+      },
+      {
+        "name": "collection",
+        "label": "--collection",
+        "help": "旧版选择器；填 authors 或 sources 会直接返回参数错误。",
+        "flags": [
+          "--collection"
+        ],
+        "kind": "choice",
+        "choices": [
+          "papers",
+          "authors",
+          "sources"
+        ],
+        "required": false,
+        "default": "papers",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "title_contains",
+        "label": "--title-contains",
+        "help": "",
+        "flags": [
+          "--title-contains"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "abstract_contains",
+        "label": "--abstract-contains",
+        "help": "",
+        "flags": [
+          "--abstract-contains"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "authors",
+        "label": "--authors",
+        "help": "作者名，多个用英文逗号分隔。",
+        "flags": [
+          "--authors"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "journals",
+        "label": "--journals",
+        "help": "期刊或来源名，多个用英文逗号分隔。",
+        "flags": [
+          "--journals"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "subjects",
+        "label": "--subjects",
+        "help": "学科标签，多个用英文逗号分隔。",
+        "flags": [
+          "--subjects"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "year_from",
+        "label": "--year-from",
+        "help": "",
+        "flags": [
+          "--year-from"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "year_to",
+        "label": "--year-to",
+        "help": "",
+        "flags": [
+          "--year-to"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "filters_advanced",
+        "label": "--filters-advanced",
+        "help": "Sciverse 字段过滤条件，JSON 数组。",
+        "flags": [
+          "--filters-advanced"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "sort_advanced",
+        "label": "--sort-advanced",
+        "help": "Sciverse 排序条件，JSON 数组。",
+        "flags": [
+          "--sort-advanced"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "sort_by_year",
+        "label": "--sort-by-year",
+        "help": "",
+        "flags": [
+          "--sort-by-year"
+        ],
+        "kind": "choice",
+        "choices": [
+          "desc",
+          "asc",
+          "none"
+        ],
+        "required": false,
+        "default": "none",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "freshness_boost",
+        "label": "--freshness-boost",
+        "help": "",
+        "flags": [
+          "--freshness-boost"
+        ],
+        "kind": "choice",
+        "choices": [
+          "NONE",
+          "MILD",
+          "STRONG"
+        ],
+        "required": false,
+        "default": "NONE",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "page",
+        "label": "--page",
+        "help": "",
+        "flags": [
+          "--page"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": 1,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "page_size",
+        "label": "--page-size",
+        "help": "",
+        "flags": [
+          "--page-size"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": 10,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": true
+  },
+  {
+    "id": "sciverse-semantic",
+    "label": "SciVerse 语义搜索",
+    "description": "按语义相似度检索学术论文。实验性能力，需显式指定。",
+    "fields": [
+      {
+        "name": "query",
+        "label": "问题或关键词",
+        "help": "要问的问题或关键词。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "top_k",
+        "label": "--top-k",
+        "help": "",
+        "flags": [
+          "--top-k"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": 10,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "retrieval",
+        "label": "--retrieval",
+        "help": "",
+        "flags": [
+          "--retrieval"
+        ],
+        "kind": "choice",
+        "choices": [
+          "hybrid",
+          "milvus",
+          "es"
+        ],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "mode",
+        "label": "--mode",
+        "help": "已废弃的兼容别名，等价于 --retrieval hybrid。",
+        "flags": [
+          "--mode"
+        ],
+        "kind": "choice",
+        "choices": [
+          "fast",
+          "balanced",
+          "quality"
+        ],
+        "required": false,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "source_types",
+        "label": "--source-types",
+        "help": "来源类型，可填 web 或 pdf，多个用英文逗号分隔。",
+        "flags": [
+          "--source-types"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": true
+  },
+  {
+    "id": "sciverse-read",
+    "label": "SciVerse 文献阅读",
+    "description": "按文献 ID 读取正文片段。实验性能力。",
+    "fields": [
+      {
+        "name": "doc_id",
+        "label": "doc_id",
+        "help": "",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "offset",
+        "label": "--offset",
+        "help": "",
+        "flags": [
+          "--offset"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": 0,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "limit",
+        "label": "--limit",
+        "help": "",
+        "flags": [
+          "--limit"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": 4096,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": true
+  },
+  {
+    "id": "sciverse-relations",
+    "label": "SciVerse 关联检索",
+    "description": "查一篇论文的引用与被引关系。实验性能力。",
+    "fields": [
+      {
+        "name": "unique_id",
+        "label": "unique_id",
+        "help": "",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "relation",
+        "label": "--relation",
+        "help": "",
+        "flags": [
+          "--relation"
+        ],
+        "kind": "choice",
+        "choices": [
+          "CITATIONS",
+          "REFERENCES",
+          "RELATED_WORKS"
+        ],
+        "required": false,
+        "default": "CITATIONS",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "page",
+        "label": "--page",
+        "help": "",
+        "flags": [
+          "--page"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": 1,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "page_size",
+        "label": "--page-size",
+        "help": "",
+        "flags": [
+          "--page-size"
+        ],
+        "kind": "int",
+        "choices": [],
+        "required": false,
+        "default": 25,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": true
+  },
+  {
+    "id": "context7-library",
+    "label": "Context7 查找库",
+    "description": "按名字找到对应的开源库标识。",
+    "fields": [
+      {
+        "name": "name",
+        "label": "名称",
+        "help": "要查找的库名。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "query",
+        "label": "问题或关键词",
+        "help": "要问的问题或关键词。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": "?",
+        "advanced": false
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "context7-docs",
+    "label": "Context7 查文档",
+    "description": "读取某个开源库的文档。",
+    "fields": [
+      {
+        "name": "library_id",
+        "label": "库标识",
+        "help": "开源库标识，可先用「Context7 查找库」拿到。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "query",
+        "label": "问题或关键词",
+        "help": "要问的问题或关键词。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "deep",
+    "label": "离线研究计划",
+    "description": "只生成研究计划，不联网、不花钱，用来先看它打算怎么查。",
+    "fields": [
+      {
+        "name": "query",
+        "label": "问题或关键词",
+        "help": "要问的问题或关键词。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "budget",
+        "label": "研究深度",
+        "help": "离线计划的建议深度，不执行检索或消耗请求额度。",
+        "flags": [
+          "--budget"
+        ],
+        "kind": "choice",
+        "choices": [
+          "quick",
+          "standard",
+          "deep"
+        ],
+        "required": false,
+        "default": "standard",
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "evidence_dir",
+        "label": "研究证据目录",
+        "help": "研究过程中抓到的证据存放目录。",
+        "flags": [
+          "--evidence-dir"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "research",
+    "label": "在线研究",
+    "description": "真正执行深度研究：拆子问题、找来源、抓正文、核对后给结论。耗时较长。",
+    "fields": [
+      {
+        "name": "query",
+        "label": "问题或关键词",
+        "help": "要问的问题或关键词。",
+        "flags": [],
+        "kind": "text",
+        "choices": [],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "budget",
+        "label": "研究深度",
+        "help": "研究预算上限；达到目标后会提前停止。",
+        "flags": [
+          "--budget"
+        ],
+        "kind": "choice",
+        "choices": [
+          "quick",
+          "standard",
+          "deep"
+        ],
+        "required": false,
+        "default": "deep",
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "evidence_dir",
+        "label": "研究证据目录",
+        "help": "研究过程中抓到的证据存放目录。",
+        "flags": [
+          "--evidence-dir"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "fallback",
+        "label": "回退策略",
+        "help": "auto 允许故障兜底和后续检索；off 关闭这些行为，但保留已发现来源的必要正文读取。",
+        "flags": [
+          "--fallback"
+        ],
+        "kind": "choice",
+        "choices": [
+          "auto",
+          "off"
+        ],
+        "required": false,
+        "default": "auto",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "stream",
+        "label": "启用流式请求",
+        "help": "对 OpenAI 兼容接口启用流式请求。部分服务只有流式下才肯长时间思考。",
+        "flags": [
+          "--stream"
+        ],
+        "kind": "bool",
+        "choices": [],
+        "required": false,
+        "default": false,
+        "multiple": false,
+        "nargs": 0,
+        "advanced": true
+      },
+      {
+        "name": "no_stream",
+        "label": "禁用流式请求",
+        "help": "对 OpenAI 兼容接口禁用流式请求。",
+        "flags": [
+          "--no-stream"
+        ],
+        "kind": "bool",
+        "choices": [],
+        "required": false,
+        "default": false,
+        "multiple": false,
+        "nargs": 0,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "smoke",
+    "label": "冒烟检查",
+    "description": "用假数据走一遍路由和兜底逻辑，不碰真实服务商。",
+    "fields": [
+      {
+        "name": "mode",
+        "label": "--mode",
+        "help": "已废弃的兼容别名，等价于 --retrieval hybrid。",
+        "flags": [
+          "--mode"
+        ],
+        "kind": "choice",
+        "choices": [
+          "mock",
+          "live"
+        ],
+        "required": false,
+        "default": "mock",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "mock",
+        "label": "--mock",
+        "help": "跑离线冒烟检查，不碰真实服务商。",
+        "flags": [
+          "--mock"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "mock",
+        "multiple": false,
+        "nargs": 0,
+        "advanced": true
+      },
+      {
+        "name": "live",
+        "label": "--live",
+        "help": "跑真实服务商的冒烟检查，会发网络请求。",
+        "flags": [
+          "--live"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "mock",
+        "multiple": false,
+        "nargs": 0,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "doctor",
+    "label": "服务商全面诊断（在线）",
+    "description": "逐个探测已配置的服务商是否可用。会对每一家发真实请求，可能计费。",
+    "fields": [
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "diagnose",
+    "label": "诊断 OpenAI 兼容接口",
+    "description": "针对 OpenAI 兼容接口做一次定向排查。",
+    "fields": [
+      {
+        "name": "diagnose_target",
+        "label": "排查对象",
+        "help": "要排查哪一路接口。",
+        "flags": [],
+        "kind": "choice",
+        "choices": [
+          "openai-compatible"
+        ],
+        "required": true,
+        "default": null,
+        "multiple": false,
+        "nargs": null,
+        "advanced": false
+      },
+      {
+        "name": "timeout",
+        "label": "超时（秒）",
+        "help": "这一条命令的总时间上限（秒），会覆盖全局设置。",
+        "flags": [
+          "--timeout"
+        ],
+        "kind": "float",
+        "choices": [],
+        "required": false,
+        "default": 30,
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "model/current",
+    "label": "当前模型",
+    "description": "显示当前生效的主搜索模型。",
+    "fields": [
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "model/list",
+    "label": "可用模型",
+    "description": "读取已配置接口提供的模型列表，供选择或手动填写模型 ID。",
+    "fields": [
+      {
+        "name": "provider",
+        "label": "模型服务商",
+        "help": "选择 xAI 或 OpenAI 兼容接口；auto 读取已配置的接口。",
+        "flags": [
+          "--provider"
+        ],
+        "kind": "choice",
+        "choices": [
+          "auto",
+          "xai-responses",
+          "openai-compatible"
+        ],
+        "required": false,
+        "default": "auto",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      },
+      {
+        "name": "output",
+        "label": "输出文件（可选）",
+        "help": "把渲染后的结果另存到这个文件。",
+        "flags": [
+          "--output"
+        ],
+        "kind": "text",
+        "choices": [],
+        "required": false,
+        "default": "",
+        "multiple": false,
+        "nargs": null,
+        "advanced": true
+      }
+    ],
+    "experimental": false
+  },
+  {
+    "id": "regression",
+    "label": "离线回归检查",
+    "description": "离线跑一遍命令行回归检查，不联网。",
+    "fields": [],
+    "experimental": false
+  }
+]

@@ -49,8 +49,10 @@ test('[P1] TokenToSea catalog stays readable and saves the exact searched model 
   const models = [
     { id: initialId, label: 'DeepSeek V4.1 Flash' },
     { id: 'supplier:lingzhigongfang/global/claude-fable-5', label: '灵智工坊 · Claude Fable 5' },
-    { id: 'supplier:lingzhigongfang/global/claude-fable-5.1', label: '灵智工坊 · Claude Fable 5.1' },
-    { id: targetId, label: '算力智选 · Claude Fable 5.1' },
+    { id: 'supplier:lingzhigongfang/global/claude-fable-5.1', label: '灵智工坊 · Claude Fable 5.1',
+      channelOffer: { modelKey: 'anthropic/chat/claude-fable-5.1', modelName: 'Claude Fable 5.1', supplier: '灵智工坊', channel: 'global', inputMultiplier: '0.25', outputMultiplier: '0.25' } },
+    { id: targetId, label: '算力智选 · Claude Fable 5.1',
+      channelOffer: { modelKey: 'anthropic/chat/claude-fable-5.1', modelName: 'Claude Fable 5.1', supplier: '算力智选', channel: 'global', inputMultiplier: '0.3', outputMultiplier: '0.4' } },
     ...Array.from({ length: 25 }, (_, index) => ({
       id: `supplier:lingzhigongfang/global/model-${index}`,
       label: `灵智工坊 · Model ${index} with a long preview version 2026-11-06`,
@@ -78,9 +80,12 @@ test('[P1] TokenToSea catalog stays readable and saves the exact searched model 
   await trigger.click();
   await expect(search).toBeFocused();
   await expect(popover.getByText(/Supplier:|Official:/)).toHaveCount(0);
-  await popover.getByRole('button', { name: '灵智工坊', exact: true }).click();
-  await popover.getByRole('button', { name: '算力智选', exact: true }).hover();
-  await expect(popover.getByRole('option', { name: 'Claude Fable 5', exact: true })).toBeVisible();
+  await popover.getByRole('button', { name: 'Claude Fable 5.1', exact: true }).click();
+  await popover.getByRole('button', { name: 'Claude Fable 5', exact: true }).hover();
+  await expect(popover.getByRole('option', { name: '灵智工坊 · global', exact: true })).toBeVisible();
+  await expect(popover.getByRole('option', { name: '算力智选 · global', exact: true })).toBeVisible();
+  await expect(popover.getByRole('option', { name: '灵智工坊 · global', exact: true })).toContainText('0.25×');
+  await expect(popover.getByRole('option', { name: '算力智选 · global', exact: true })).toContainText('输入 0.3× · 输出 0.4×');
 
   for (const width of [1280, 820]) {
     await page.setViewportSize({ width, height: 900 });
@@ -105,12 +110,13 @@ test('[P1] TokenToSea catalog stays readable and saves the exact searched model 
     await testInfo.attach(`catalog-${width}`, { body: await page.screenshot(), contentType: 'image/png' });
   }
 
-  const lastModel = popover.getByRole('option', { name: 'Model 24 with a long preview version 2026-11-06', exact: true });
+  const lastModel = popover.getByRole('button', { name: 'Model 24 with a long preview version 2026-11-06', exact: true });
   await lastModel.scrollIntoViewIfNeeded();
   await lastModel.click();
+  await popover.getByRole('option', { name: '灵智工坊 · global', exact: true }).click();
   await expect(trigger).toContainText('Model 24');
   await trigger.click();
-  await expect(popover.getByRole('option', { selected: true })).toHaveAccessibleName('Model 24 with a long preview version 2026-11-06');
+  await expect(popover.getByRole('option', { selected: true })).toHaveAccessibleName('灵智工坊 · global');
 
   await search.fill('Claude Fable 5.1');
   await expect(popover.getByRole('option')).toHaveCount(2);
@@ -121,19 +127,19 @@ test('[P1] TokenToSea catalog stays readable and saves the exact searched model 
   await page.keyboard.press('Enter');
   await expect(popover).toHaveCount(0);
   await expect(trigger).toBeFocused();
-  await expect(trigger).toContainText('算力智选 · Claude Fable 5.1');
+  await expect(trigger).toContainText('Claude Fable 5.1 · 算力智选 · global');
   await expect.poll(async () => (await (await page.request.get('/api/app-config')).json()).config.agentModels?.tokentosea?.model).toBe(targetId);
   await page.reload();
   // Desktop settings is an overlay; its entry route returns to Home on reload.
   await page.getByRole('button', { name: '设置', exact: true }).click();
   await page.getByRole('tab', { name: '本机 CLI', exact: true }).click();
-  await expect(trigger).toContainText('算力智选 · Claude Fable 5.1');
+  await expect(trigger).toContainText('Claude Fable 5.1 · 算力智选 · global');
   await trigger.click();
-  await expect(popover.getByRole('option', { selected: true })).toHaveAccessibleName('Claude Fable 5.1');
+  await expect(popover.getByRole('option', { selected: true })).toHaveAccessibleName('算力智选 · global');
   await search.fill('no-such-model');
   await expect(popover.getByRole('option')).toHaveCount(0);
   await expect(popover).toContainText('没有符合条件的模型');
   await search.press('Escape');
   await expect(popover).toHaveCount(0);
-  await expect(trigger).toContainText('算力智选 · Claude Fable 5.1');
+  await expect(trigger).toContainText('Claude Fable 5.1 · 算力智选 · global');
 });

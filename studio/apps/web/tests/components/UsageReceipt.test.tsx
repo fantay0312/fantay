@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AiUsageSummary, AiUsageTotals } from '@open-design/contracts';
 import { I18nProvider } from '../../src/i18n';
 import { UsageDashboard } from '../../src/components/usage/UsageDashboard';
+import { presetRange, todayKey } from '../../src/components/usage/usage-format';
 import {
   buildUsageReceipt,
   cleanReceiptModelDisplayName,
@@ -228,13 +229,14 @@ describe('usage-receipt model and invariants', () => {
 
 describe('UsageReceiptModal integration in UsageDashboard', () => {
   it('opens receipt modal from UsageDashboard, switches to Yesterday, and copies plain text with live announcement', async () => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayKey();
+    const range = presetRange('30d', today);
     const baseTotals = makeTotals({ requests: 4, reportedUsd: '18.600000', unknown: 0, failed: 0 });
     const bucketMetric = { requests: 4, tokens: 28_500_000, costUsd: '18.600000' };
     const baseSummary: AiUsageSummary = {
       days: 30,
-      from: '2026-10-13',
-      to: today,
+      from: range.from,
+      to: range.to,
       bucket: 'day',
       timeZone: 'Asia/Shanghai',
       provider: null,

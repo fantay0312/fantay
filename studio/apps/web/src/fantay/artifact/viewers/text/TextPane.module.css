@@ -1,0 +1,62 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Holds the shared code pane (which positions itself absolutely) and carries the tints of a terminal
+   log. Sixteen terminal colours fold into the product's status text tones, so a red error line is
+   the same red as every other error in the app, in both themes.
+   Above the pane, one quiet line says when the reader is not seeing the file the usual way (no
+   highlighting, or only its head): a band of tone, the one the 代码 surface uses, so it reads as a
+   fact and not as a warning. */
+
+.notice {
+  flex: none;
+  margin: 0;
+  padding: 6px 16px;
+  overflow: hidden;
+  background: var(--sub);
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A narrow panel lets the sentence take a second line instead of losing its end. */
+@container artifact (max-width: 460px) {
+  .notice {
+    padding: 6px 12px;
+    white-space: normal;
+  }
+}
+
+.host {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.host :global(.fx-ansi-red) {
+  color: var(--accent-ink);
+}
+
+.host :global(.fx-ansi-green) {
+  color: var(--success-ink);
+}
+
+.host :global(.fx-ansi-yellow) {
+  color: var(--warning-ink);
+}
+
+.host :global(.fx-ansi-blue) {
+  color: var(--info-ink);
+}
+
+.host :global(.fx-ansi-faint) {
+  color: var(--ink-faint);
+}
+
+.host :global(.fx-ansi-bold) {
+  font-weight: 600;
+}

@@ -10,6 +10,8 @@ Fantay 的工作区包含三部分：
 
 ## 目录
 
+按功能查源码、调用链和对应测试，见 [Fantay 代码库地图](CODEBASE_MAP.md)。
+
 | 路径 | 内容 |
 |---|---|
 | `设计系统/` | 软链接，指向 `studio/design-systems/fantay/`。设计系统的唯一来源，内含 DESIGN.md、tokens.css、组件样张、预览页和 Albert Sans 字体 |

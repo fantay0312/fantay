@@ -8,6 +8,24 @@ import { I18nProvider } from '../../src/i18n';
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe('TokenToSea services', () => {
+  it('uses the same purpose icon in the tool list and selected detail', async () => {
+    const tool = { id: 'tool_6bce09133ba9995a9d7e9b08abcda670', name: '智能处理 6BCE', category: 'ai', description: '车辆年款与评级查询' };
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      if (url.includes('/models?')) return Response.json({ data: [] });
+      if (/\/tools(?:\?|$)/.test(url)) return Response.json({ items: [tool], total: 1 });
+      if (url.endsWith('/actions')) return Response.json([]);
+      throw new Error(`Unexpected request ${url}`);
+    }));
+    const { container } = render(<I18nProvider initial="zh-CN"><TokenToSeaServices active variant="embedded" accountSignedIn /></I18nProvider>);
+    fireEvent.click(await screen.findByRole('radio', { name: /工具/ }));
+    const row = await screen.findByRole('button', { name: /智能处理 6BCE/ });
+    expect(row.querySelector('[data-tool-icon="Car"]')).not.toBeNull();
+    fireEvent.click(row);
+    expect(await screen.findByRole('heading', { name: tool.name })).toBeTruthy();
+    expect(container.querySelectorAll('[data-tool-icon="Car"]')).toHaveLength(2);
+    expect(container.querySelector('[data-tool-icon="Cpu"]')).toBeNull();
+  });
+
   it('shows only video models and imports a completed video through the movie callback', async () => {
     const assetId = `asset_${'a'.repeat(64)}`;
     const onVideoImport = vi.fn(async () => {});

@@ -1,0 +1,150 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* 待处理. Conflict cards are whole-row buttons inside a hairline group; proposal rows fold away
+   (grid rows 1fr → 0fr with a fade, the exit duration) once resolved. Warm only on the 有分歧 tag. */
+
+.empty {
+  margin-block: 8px;
+}
+
+/* ── conflict cards ───────────────────────────────────────────────────────────────────── */
+
+.card {
+  justify-content: flex-start;
+  width: 100%;
+  height: auto;
+  padding: 12px 12px 12px 16px;
+  border-radius: 0;
+  color: var(--ink);
+  font-weight: 400;
+  text-align: start;
+  white-space: normal;
+  transition: background-color var(--motion-micro) var(--ease-out-quint);
+}
+
+.card > [data-slot='button-label'] {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.card:hover {
+  background: var(--sub);
+}
+
+.cardBody {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 3px;
+  align-items: baseline;
+}
+
+.pairLabel {
+  font-size: var(--type-label);
+  line-height: 20px;
+  color: var(--ink-faint);
+}
+
+/* Long memories wrap (up to three lines) instead of being cut to one; the compare dialog shows them in full. */
+.pairText {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+/* The state of a side already put away, ahead of its text. */
+.pairState {
+  margin-inline-end: 6px;
+  vertical-align: 1px;
+}
+
+.cardAction {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--type-body);
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.card:hover .cardAction {
+  color: var(--ink);
+}
+
+/* ── proposals ────────────────────────────────────────────────────────────────────────── */
+
+.fold {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition:
+    grid-template-rows var(--motion-exit) var(--ease-out-quint),
+    opacity var(--motion-exit) var(--ease-out-quint);
+}
+
+.fold[data-leaving] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.foldInner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fold {
+    transition: opacity var(--motion-micro) linear;
+  }
+}
+
+.pendingRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 12px 10px 16px;
+}
+
+.pendingText {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.pendingFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.pendingActions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  margin-inline-start: auto;
+}
+
+/* ── 改一下再记下 ─────────────────────────────────────────────────────────────────────── */
+
+.editContent {
+  min-height: 112px;
+  resize: vertical;
+}

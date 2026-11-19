@@ -32,6 +32,7 @@ import { parseFrontmatter } from './design-systems/frontmatter.js';
 // turn would add a microtask hop for no real benefit.
 import type { MemoryExtractionOrigin } from '@open-design/contracts';
 import { captureExtractionOrigin, recordHeuristic, recordSkip } from './memory-extractions.js';
+import { assertSafeMemoryWrite } from './services/pa/memory-security.js';
 
 // Tiny in-process bus. The HTTP layer (`/api/memory/events`) subscribes
 // to this and forwards events to any open SSE client; the storage
@@ -86,6 +87,10 @@ const VALID_SOURCES = new Set<string>([
   'annotation',
 ]);
 
+// Writers that run without a person asking for this entry. They may refresh only an entry they wrote
+// themselves; see `resolveAutomaticWriteId`.
+const AUTOMATIC_SOURCES = new Set<string>(['heuristic', 'llm', 'connector', 'brand', 'annotation']);
+
 function emitChange(event: Omit<MemoryChangeEvent, 'at'>): void {
   memoryEvents.emit('change', { ...event, at: Date.now() });
 }
@@ -126,25 +131,30 @@ function isValidType(t) {
 // non-ASCII (CJK / emoji) the cleaned slug ends up empty; in that case
 // we hash the raw name so two distinct Chinese memories don't collide
 // on the `<type>_note` fallback.
-export function deriveMemoryId(type, name) {
+function fnv1a36(input) {
+  let h = 0x811c9dc5 >>> 0;
+  const text = String(input || '');
+  for (let i = 0; i < text.length; i++) {
+    h = (h ^ text.charCodeAt(i)) >>> 0;
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(36);
+}
+
+export function deriveMemoryId(type, name, projectId) {
   const safeType = isValidType(type) ? type : 'user';
   const raw = String(name || '');
+  const projPrefix =
+    safeType !== 'profile' && typeof projectId === 'string' && projectId.trim()
+      ? `p${fnv1a36(projectId.trim())}_`
+      : '';
   const cleaned = raw
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '')
-    .slice(0, 48);
-  if (cleaned.length > 0) return `${safeType}_${cleaned}`;
-  // FNV-1a 32-bit on the original name. Tiny, deterministic, no
-  // dependencies. Collisions are still possible, but for the dozens of
-  // memories a user is likely to accumulate, the birthday risk is
-  // negligible.
-  let h = 0x811c9dc5 >>> 0;
-  for (let i = 0; i < raw.length; i++) {
-    h = (h ^ raw.charCodeAt(i)) >>> 0;
-    h = Math.imul(h, 0x01000193) >>> 0;
-  }
-  return `${safeType}_n${h.toString(36)}`;
+    .slice(0, projPrefix ? 36 : 48);
+  if (cleaned.length > 0) return `${safeType}_${projPrefix}${cleaned}`;
+  return `${safeType}_${projPrefix}n${fnv1a36(raw)}`;
 }
 
 function entryPath(dataDir, id) {
@@ -154,6 +164,26 @@ function entryPath(dataDir, id) {
     throw new Error('invalid memory id');
   }
   return path.join(memoryDir(dataDir), `${id}.md`);
+}
+
+// Replaced and deleted entry files are kept here instead of being destroyed. Both folders are invisible to
+// the listing, which reads only `<id>.md` files at the top level.
+const HISTORY_DIR = '.history';
+const TRASH_DIR = '.trash';
+
+// Copies the current file to `.history/<id>/<mtimeMs>.md` when the next write would change it.
+async function keepPreviousVersion(filePath, id, nextContent) {
+  let previous;
+  let stat;
+  try {
+    [previous, stat] = await Promise.all([fsp.readFile(filePath, 'utf8'), fsp.stat(filePath)]);
+  } catch {
+    return;
+  }
+  if (previous === nextContent) return;
+  const dir = path.join(path.dirname(filePath), HISTORY_DIR, id);
+  await ensureDir(dir);
+  await fsp.writeFile(path.join(dir, `${Math.floor(stat.mtimeMs)}.md`), previous);
 }
 
 function indexPath(dataDir) {
@@ -329,12 +359,17 @@ export async function writeMemoryIndex(dataDir, body, options) {
 function summarize(id, raw, mtime) {
   const { data, body } = parseFrontmatter(raw);
   const type = isValidType(data?.type) ? data.type : 'user';
+  const projectId =
+    type !== 'profile' && typeof data?.projectId === 'string' && data.projectId.trim()
+      ? data.projectId.trim()
+      : undefined;
   return {
     summary: {
       id,
       name: typeof data?.name === 'string' && data.name ? data.name : id,
       description: typeof data?.description === 'string' ? data.description : '',
       type,
+      ...(projectId ? { projectId } : {}),
       // Absent on files written before provenance landed; those must be
       // classified by content fingerprints, never assumed manual.
       source: VALID_SOURCES.has(data?.source) ? data.source : undefined,
@@ -344,7 +379,10 @@ function summarize(id, raw, mtime) {
   };
 }
 
-export async function listMemoryEntries(dataDir) {
+export async function listMemoryEntries(
+  dataDir,
+  options: { projectId?: string | null; includeAllProjects?: boolean } = {},
+) {
   const dir = memoryDir(dataDir);
   let names = [];
   try {
@@ -352,6 +390,15 @@ export async function listMemoryEntries(dataDir) {
   } catch {
     return [];
   }
+  const hasProjectFilter =
+    options &&
+    typeof options === 'object' &&
+    !options.includeAllProjects &&
+    Object.prototype.hasOwnProperty.call(options, 'projectId');
+  const activeProjectId =
+    typeof options?.projectId === 'string' && options.projectId.trim()
+      ? options.projectId.trim()
+      : null;
   const out = [];
   for (const name of names) {
     if (!name.endsWith('.md')) continue;
@@ -365,6 +412,9 @@ export async function listMemoryEntries(dataDir) {
         fsp.stat(filePath),
       ]);
       const { summary } = summarize(id, raw, stat.mtimeMs);
+      if (hasProjectFilter && summary.projectId && summary.projectId !== activeProjectId) {
+        continue;
+      }
       out.push(summary);
     } catch {
       // Skip unreadable / malformed files; never let one bad file
@@ -402,8 +452,8 @@ function extractAutomationRefs(body, label) {
   return Array.from(refs);
 }
 
-export async function buildMemoryTree(dataDir) {
-  const entries = await listMemoryEntries(dataDir);
+export async function buildMemoryTree(dataDir, options: { projectId?: string | null; includeAllProjects?: boolean } = {}) {
+  const entries = await listMemoryEntries(dataDir, options);
   const byType = new Map();
   for (const type of MEMORY_TREE_TYPES) byType.set(type, []);
   for (const entry of entries) {
@@ -474,13 +524,22 @@ export async function readMemoryEntry(dataDir, id) {
   return { ...summary, body };
 }
 
-function renderEntryFile(name, description, type, body, source) {
-  const safeName = String(name || 'Untitled').replace(/\r?\n/g, ' ').trim();
+function fileEntryName(name) {
+  return String(name || 'Untitled').replace(/\r?\n/g, ' ').trim();
+}
+
+function renderEntryFile(name, description, type, body, source, projectId) {
+  const safeName = fileEntryName(name);
   const safeDesc = String(description || '').replace(/\r?\n/g, ' ').trim();
   const safeType = isValidType(type) ? type : 'user';
   const safeSource = VALID_SOURCES.has(source) ? source : 'manual';
+  const safeProjectId =
+    safeType !== 'profile' && typeof projectId === 'string' && projectId.trim()
+      ? projectId.replace(/\r?\n/g, ' ').trim()
+      : '';
+  const projectLine = safeProjectId ? `projectId: ${safeProjectId}\n` : '';
   const trimmedBody = String(body || '').replace(/^\s+/, '');
-  return `---\nname: ${safeName}\ndescription: ${safeDesc}\ntype: ${safeType}\nsource: ${safeSource}\n---\n\n${trimmedBody}\n`;
+  return `---\nname: ${safeName}\ndescription: ${safeDesc}\ntype: ${safeType}\n${projectLine}source: ${safeSource}\n---\n\n${trimmedBody}\n`;
 }
 
 export async function updateMemoryTreeNode(dataDir, id, patch) {
@@ -490,6 +549,10 @@ export async function updateMemoryTreeNode(dataDir, id, patch) {
   const current = await readMemoryEntry(dataDir, id);
   if (!current) throw new Error('memory not found');
   const nextType = isValidType(patch?.type) ? patch.type : current.type;
+  const nextProjectId =
+    patch && Object.prototype.hasOwnProperty.call(patch, 'projectId')
+      ? patch.projectId
+      : current.projectId;
   return upsertMemoryEntry(dataDir, {
     id,
     name:
@@ -502,22 +565,69 @@ export async function updateMemoryTreeNode(dataDir, id, patch) {
         : current.description,
     type: nextType,
     body: typeof patch?.body === 'string' ? patch.body : current.body,
+    ...(nextProjectId !== undefined ? { projectId: nextProjectId } : {}),
   });
 }
 
-export async function upsertMemoryEntry(dataDir, input, options) {
+// Two names can map to one id (`deriveMemoryId` lower-cases and drops punctuation), and an id can already
+// hold something a person wrote. An automatic writer must not replace what it did not write: it may reuse
+// `id` only when that is free or holds this writer's own earlier entry of the same name and type. Otherwise
+// it gets a stable fresh id (`<id>_<hash of name>`), so repeating the same write updates the same file.
+// Files with no `source:` (written before provenance existed) count as a person's.
+export async function resolveAutomaticWriteId(dataDir, { id, type, name, source }) {
+  if (!AUTOMATIC_SOURCES.has(source)) return id;
+  const wanted = fileEntryName(name);
+  const isOwn = (e) => e.source === source && e.type === type && e.name === wanted;
+  const first = await readMemoryEntry(dataDir, id);
+  if (!first || isOwn(first)) return id;
+  const hash = fnv1a36(wanted);
+  for (let n = 1; n <= 50; n++) {
+    const suffix = n === 1 ? hash : `${hash}${n}`;
+    const candidate = `${id.slice(0, 95 - suffix.length)}_${suffix}`;
+    const taken = await readMemoryEntry(dataDir, candidate);
+    if (!taken || isOwn(taken)) return candidate;
+  }
+  throw new Error('no free memory id for this name');
+}
+
+export async function upsertMemoryEntry(
+  dataDir,
+  input,
+  options: { source?: string; silent?: boolean } = {},
+) {
   const { name, description, type, body } = input || {};
   if (!name || !isValidType(type)) {
     throw new Error('memory entry requires `name` and a valid `type`');
   }
-  const id = input?.id && /^[a-z0-9_]+$/.test(input.id)
-    ? input.id
-    : deriveMemoryId(type, name);
+  assertSafeMemoryWrite(`${String(name || '')}\n${String(description || '')}\n${String(body || '')}`);
+  const source = options?.source ?? 'manual';
+  const explicitHasProject =
+    input && Object.prototype.hasOwnProperty.call(input, 'projectId');
+  const explicitId = input?.id && /^[a-z0-9_]+$/.test(input.id) ? input.id : null;
+  let effectiveProjectId;
+  if (type === 'profile') {
+    effectiveProjectId = undefined;
+  } else if (explicitHasProject) {
+    effectiveProjectId =
+      typeof input.projectId === 'string' && input.projectId.trim()
+        ? input.projectId.trim()
+        : undefined;
+  }
+  const id = await resolveAutomaticWriteId(dataDir, {
+    id: explicitId ?? deriveMemoryId(type, name, effectiveProjectId),
+    type,
+    name,
+    source,
+  });
+  if (type !== 'profile' && !explicitHasProject && explicitId) {
+    // Keep the project scope of the entry being edited, taken from the file that is actually written.
+    effectiveProjectId = (await readMemoryEntry(dataDir, id))?.projectId;
+  }
   await ensureDir(memoryDir(dataDir));
-  await fsp.writeFile(
-    entryPath(dataDir, id),
-    renderEntryFile(name, description, type, body, options?.source ?? 'manual'),
-  );
+  const filePath = entryPath(dataDir, id);
+  const content = renderEntryFile(name, description, type, body, source, effectiveProjectId);
+  await keepPreviousVersion(filePath, id, content);
+  await fsp.writeFile(filePath, content);
   await ensureIndexHasEntry(dataDir, id, name, description);
   const entry = await readMemoryEntry(dataDir, id);
   if (!entry) throw new Error('failed to read memory entry after write');
@@ -528,7 +638,7 @@ export async function upsertMemoryEntry(dataDir, input, options) {
       name: entry.name,
       description: entry.description,
       type: entry.type,
-      source: options?.source ?? 'manual',
+      source,
     });
   }
   return entry;
@@ -536,7 +646,11 @@ export async function upsertMemoryEntry(dataDir, input, options) {
 
 export async function deleteMemoryEntry(dataDir, id) {
   try {
-    await fsp.unlink(entryPath(dataDir, id));
+    const filePath = entryPath(dataDir, id);
+    await fsp.access(filePath);
+    const trash = path.join(memoryDir(dataDir), TRASH_DIR);
+    await ensureDir(trash);
+    await fsp.rename(filePath, path.join(trash, `${id}-${Date.now()}.md`));
   } catch {
     // Already gone — fine. Caller doesn't care.
   }
@@ -618,14 +732,20 @@ async function removeIndexLine(dataDir, id) {
 // disk (paste the line back in the settings panel to re-enable it).
 // Without this filter, deleted index lines had no effect — the daemon
 // kept reading every entry file and the index editor was cosmetic only.
-export async function composeMemoryBody(dataDir) {
+export async function composeMemoryBody(dataDir, options) {
   const cfg = await readMemoryConfig(dataDir);
   if (!cfg.enabled) return '';
   const allEntries = await listMemoryEntries(dataDir);
   if (allEntries.length === 0) return '';
   const indexBody = await readMemoryIndex(dataDir);
   const linkedIds = parseIndexLinkIds(indexBody);
-  const entries = allEntries.filter((e) => linkedIds.has(e.id));
+  const activeProjectId =
+    typeof options?.projectId === 'string' && options.projectId.trim()
+      ? options.projectId.trim()
+      : null;
+  const entries = allEntries.filter(
+    (e) => linkedIds.has(e.id) && (!e.projectId || e.projectId === activeProjectId),
+  );
   if (entries.length === 0) return '';
   const grouped = new Map();
   for (const e of entries) {
@@ -710,11 +830,17 @@ async function readEntryBodyById(dataDir, id) {
 // from the index stops being enforced without deleting the file. Returns an
 // empty array when memory is disabled (the master switch turns enforcement
 // off for free).
-export async function listActiveRuleEntries(dataDir) {
+export async function listActiveRuleEntries(dataDir, options) {
   const cfg = await readMemoryConfig(dataDir);
   if (!cfg.enabled) return [];
   const allEntries = await listMemoryEntries(dataDir);
-  const rules = allEntries.filter((e) => e.type === 'rule');
+  const activeProjectId =
+    typeof options?.projectId === 'string' && options.projectId.trim()
+      ? options.projectId.trim()
+      : null;
+  const rules = allEntries.filter(
+    (e) => e.type === 'rule' && (!e.projectId || e.projectId === activeProjectId),
+  );
   if (rules.length === 0) return [];
   const indexBody = await readMemoryIndex(dataDir);
   const linkedIds = parseIndexLinkIds(indexBody);
@@ -925,9 +1051,9 @@ const HEURISTIC_ARTIFACT_MATCHERS = REMEMBER_PATTERNS.map((pattern) => ({
 /**
  * True when a memory entry is provably an artifact of the retired chat
  * regex pack — its name matches one of the pack's fixed display names and
- * its body is an instance of that pattern's fill-in template. Used by the
- * one-time cleanup migration; LLM, connector, and hand-written entries never
- * match because their bodies are free prose, not template instances.
+ * its body is an instance of that pattern's fill-in template. A classifier
+ * only: nothing removes entries on this basis. LLM, connector, and hand-written
+ * entries never match because their bodies are free prose, not template instances.
  */
 export function isHeuristicExtractionArtifact(entry) {
   const name = typeof entry?.name === 'string' ? entry.name : '';
@@ -1036,8 +1162,10 @@ export function pruneProfileBodyToCanonical(body) {
   return renderProfileBody(kept);
 }
 
+const AUTO_PROFILE_NAME = 'Work profile';
+
 // Merge freshly-answered form pairs into the existing profile, by label, and
-// upsert the singleton `user_profile` entry. Runs synchronously pre-turn so
+// upsert the automatic profile entry (`user_profile` unless a person owns that id). Runs synchronously pre-turn so
 // the profile is visible to the SAME turn's prompt composition. Returns the
 // written entry summary, or null when there was nothing to write or the
 // profile hook is disabled.
@@ -1045,10 +1173,17 @@ async function captureProfileFromForm(dataDir, parsed) {
   if (!parsed || !Array.isArray(parsed.pairs) || parsed.pairs.length === 0) {
     return null;
   }
-  // Read the existing profile (if any) and merge by label so a later
+  // Read the profile this writer owns (if any) and merge by label so a later
   // discovery answer adds/overwrites individual fields rather than clobbering
-  // the whole block.
-  const existing = await readMemoryEntry(dataDir, PROFILE_MEMORY_ID);
+  // the whole block. A profile a person wrote at PROFILE_MEMORY_ID is never
+  // merged into or replaced: the answers go to a separate automatic profile.
+  const profileId = await resolveAutomaticWriteId(dataDir, {
+    id: PROFILE_MEMORY_ID,
+    type: 'profile',
+    name: AUTO_PROFILE_NAME,
+    source: 'heuristic',
+  });
+  const existing = await readMemoryEntry(dataDir, profileId);
   const merged = parseProfileBody(existing?.body ?? '');
   for (const pair of parsed.pairs) {
     const label = canonicalProfileLabel(typeof pair?.label === 'string' ? pair.label : '');
@@ -1060,9 +1195,9 @@ async function captureProfileFromForm(dataDir, parsed) {
   const entry = await upsertMemoryEntry(
     dataDir,
     {
-      id: PROFILE_MEMORY_ID,
+      id: profileId,
       type: 'profile',
-      name: 'Work profile',
+      name: AUTO_PROFILE_NAME,
       description:
         'Role, audience, domain, and delivery defaults captured at onboarding.',
       body: renderProfileBody(merged),
@@ -1143,7 +1278,13 @@ export async function extractFromMessage(dataDir, userMessage, options?: { extra
     // captured phrase (rather than the stable display name) lets two
     // "我是" matches — e.g. "我是张三" then "我是软件工程师" — coexist
     // instead of overwriting one another.
-    const id = deriveMemoryId(pattern.type, trimmedCaptured);
+    const scopedProjectId =
+      pattern.type !== 'user' &&
+      typeof extractionOrigin?.projectId === 'string' &&
+      extractionOrigin.projectId.trim()
+        ? extractionOrigin.projectId.trim()
+        : undefined;
+    const id = deriveMemoryId(pattern.type, trimmedCaptured, scopedProjectId);
     try {
       const entry = await upsertMemoryEntry(
         dataDir,
@@ -1153,6 +1294,7 @@ export async function extractFromMessage(dataDir, userMessage, options?: { extra
           name: pattern.name,
           description,
           body,
+          ...(scopedProjectId ? { projectId: scopedProjectId } : {}),
         },
         // Silence the per-entry upsert event so the batched 'extract'
         // emit below produces exactly one frontend toast.

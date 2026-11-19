@@ -1,0 +1,107 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The standing picture column (stage 2 spec §12.2). It fills the inline start of the transcript wrap at
+   --pa-soul-stage-w, on the plain theme paper; the sprite keeps its own shape (contain), stands on the bottom edge
+   16 px up and is at most 72 % of the column's height, so a tall window shows air above the head instead of a giant
+   figure. The paper pattern of the transcript next to it scrolls and this column does not, so instead of a seam the
+   column's paper fades out over the transcript's first 20 px (its gutter, never text).
+   Local properties: none. */
+
+/* z-index 1: the transcript scroller carries a mask, which paints it as a positioned layer; the column and its fade
+   must stay above it (they take no pointer events). */
+.stage {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  box-sizing: border-box;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  width: var(--pa-soul-stage-w);
+  padding: 16px 14px;
+  inset-block: 0;
+  inset-inline-start: 0;
+  background: var(--pa-skin-paper);
+  pointer-events: none;
+  user-select: none;
+  animation: soul-stage-in var(--pa-dur-enter) var(--pa-ease) backwards;
+  transition: background-color var(--pa-dur-enter) var(--pa-ease);
+}
+
+.stage::after {
+  position: absolute;
+  width: 20px;
+  inset-block: 0;
+  inset-inline-start: 100%;
+  background: linear-gradient(to right, var(--pa-skin-paper), transparent);
+  content: '';
+}
+
+:global([dir='rtl']) .stage::after {
+  background: linear-gradient(to left, var(--pa-skin-paper), transparent);
+}
+
+.image {
+  display: block;
+  grid-area: 1 / 1;
+  align-self: end;
+  justify-self: center;
+  max-width: 100%;
+  max-height: 72%;
+  object-fit: contain;
+  object-position: 50% 100%;
+}
+
+/* A new sprite fades in over the previous one once it has loaded (--pa-dur-swap). */
+.image[data-swap='wait'] {
+  opacity: 0;
+}
+
+.image[data-swap='in'] {
+  animation: soul-stage-swap-in var(--pa-dur-swap) var(--pa-ease) both;
+}
+
+.under[data-out] {
+  animation: soul-stage-swap-out var(--pa-dur-swap) linear both;
+}
+
+@keyframes soul-stage-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes soul-stage-swap-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes soul-stage-swap-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage {
+    animation: soul-stage-fade 120ms linear backwards;
+  }
+  .image[data-swap='in'],
+  .under[data-out] {
+    animation: none;
+  }
+  .under {
+    display: none;
+  }
+}
+
+@keyframes soul-stage-fade {
+  from {
+    opacity: 0;
+  }
+}

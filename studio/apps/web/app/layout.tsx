@@ -8,6 +8,10 @@ import { FANTAY_THEME_INIT_SCRIPT } from '../src/fantay/theme/init-script';
 // the root route stylesheet so Turbopack does not leave the lazy chunk as a
 // preload-only resource after the host mounts.
 import '../src/components/OnboardingWelcome.module.css';
+import '../src/components/composer/VoiceInputButton.css';
+import '../src/components/SettingsVoiceInput.css';
+import '../src/components/SettingsSearchProviders.css';
+import '../src/components/fantay-changelog/manga-fonts.css';
 
 export const metadata: Metadata = {
   title: 'Fantay',

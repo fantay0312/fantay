@@ -15,6 +15,7 @@ export interface SidebarShellApi {
   projects: readonly Project[];
   projectsLoading: boolean;
   workspaceContext: WorkspaceCollabContext | null;
+  timelineNotesPrefix?: string | null;
   clientType: FantayClientType;
   hostPlatform: string | undefined;
   mode: FantaySidebarMode;

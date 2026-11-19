@@ -1,0 +1,230 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* One film on the canvas ground. The frame is the film's own rectangle (sized by the viewer), so
+   there are no black bars; the ring gives a light picture an edge, as it does for images. The
+   controls sit on the picture and are fixed light-on-dark: they do not follow the theme. */
+
+.stage {
+  position: relative;
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  place-items: center;
+}
+
+.frame {
+  position: relative;
+  flex: none;
+  overflow: hidden;
+  border-radius: var(--radius-control);
+  background: #000000;
+  box-shadow: var(--shadow-ring);
+  outline: none;
+  opacity: 0;
+  transition: opacity var(--motion-enter) var(--ease-out-quint);
+}
+
+.frame[data-ready] {
+  opacity: 1;
+}
+
+.frame:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+/* Fullscreen: the frame becomes the screen and the picture is fitted inside it. `contain` makes the
+   frame the reference for the speed menu, which is rendered inside it while fullscreen. */
+.frame:fullscreen {
+  width: 100vw !important;
+  height: 100vh !important;
+  border-radius: 0;
+  box-shadow: none;
+  contain: layout;
+}
+
+.frame[data-controls='hidden'][data-playing] {
+  cursor: none;
+}
+
+.video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.surface {
+  position: absolute;
+  inset: 0;
+}
+
+/* The large play mark before the first play. It is a picture of the action, not a second button:
+   the click goes to the picture under it. */
+.mark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.48);
+  color: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+  scale: 0.92;
+  translate: -50% -50%;
+  transition:
+    opacity var(--motion-exit) var(--ease-out-quint),
+    scale var(--motion-exit) var(--ease-out-quint);
+  backdrop-filter: blur(8px);
+  place-items: center;
+}
+
+.mark[data-visible] {
+  opacity: 1;
+  scale: 1;
+  transition-duration: var(--motion-enter);
+}
+
+.mark svg {
+  width: 24px;
+  height: 24px;
+  /* A triangle's weight sits left of its box. */
+  translate: 2px 0;
+}
+
+.frame[data-compact] .mark {
+  width: 48px;
+  height: 48px;
+}
+
+.frame[data-compact] .mark svg {
+  width: 18px;
+  height: 18px;
+}
+
+.flash {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  max-width: calc(100% - 24px);
+  padding: 4px 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 16px;
+  opacity: 0;
+  pointer-events: none;
+  text-overflow: ellipsis;
+  translate: -50% 0;
+  transition: opacity var(--motion-exit) var(--ease-out-quint);
+  white-space: nowrap;
+}
+
+.flash[data-visible] {
+  opacity: 1;
+  transition-duration: var(--motion-micro);
+}
+
+/* The overlay. The kit's buttons read the product tokens, so the tokens are restated here as
+   light-on-dark: the same controls, drawn for a picture instead of for paper. */
+.controls {
+  --ink: #ffffff;
+  --ink-soft: rgba(255, 255, 255, 0.9);
+  --ink-faint: rgba(255, 255, 255, 0.62);
+  --paper-deep: rgba(255, 255, 255, 0.18);
+  --focus-ring-color: #ffffff;
+
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 36px 10px 6px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.3) 46%, rgba(0, 0, 0, 0));
+  color: #ffffff;
+  transition:
+    opacity var(--motion-enter) var(--ease-out-quint),
+    translate var(--motion-enter) var(--ease-out-quint);
+}
+
+.frame[data-controls='hidden'] .controls {
+  opacity: 0;
+  pointer-events: none;
+  translate: 0 4px;
+  transition-duration: var(--motion-exit);
+}
+
+/* Keyboard focus inside the overlay always brings it back. */
+.frame[data-controls='hidden'] .controls:has(:focus-visible) {
+  opacity: 1;
+  pointer-events: auto;
+  translate: 0 0;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  height: 32px;
+}
+
+.clock {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-left: 6px;
+  overflow: hidden;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.total {
+  color: var(--ink-faint);
+  font-weight: 500;
+}
+
+.spacer {
+  flex: 1 1 0;
+  min-width: 4px;
+}
+
+.optional {
+  display: inline-flex;
+  flex: none;
+}
+
+/* A small picture (a vertical film in a short panel) keeps play, the clock, mute and fullscreen;
+   speed and picture-in-picture stay reachable by enlarging the panel or going fullscreen. */
+.frame[data-compact] .optional,
+.frame[data-compact] .total {
+  display: none;
+}
+
+.frame[data-compact] .controls {
+  padding: 28px 6px 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frame,
+  .mark,
+  .flash,
+  .controls {
+    transition: none;
+  }
+
+  .frame[data-controls='hidden'] .controls {
+    translate: 0 0;
+  }
+}

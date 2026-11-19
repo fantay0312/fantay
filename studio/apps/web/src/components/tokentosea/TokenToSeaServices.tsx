@@ -23,6 +23,7 @@ import {
 } from '../../fantay/ui';
 import styles from './TokenToSeaServices.module.css';
 import { ModelBrandIcon } from './ModelBrandIcon';
+import { ToolPurposeIcon } from './ToolPurposeIcon';
 
 interface Model {
   id: string; model: string; name?: string; displayName?: string; provider: string; modality?: string; executionKind?: string;
@@ -32,7 +33,7 @@ interface Model {
   modelLimits?: { contextTokensLabel?: string; maxInputTokensLabel?: string; maxOutputTokens?: number };
   examples?: { id: string; path: string; mode: string; body: Record<string, unknown> }[];
 }
-interface Tool { id: string; publicId?: string; name: string; description?: string; }
+interface Tool { id: string; publicId?: string; name: string; description?: string; category?: string; }
 type ToolPage = { items?: Tool[]; tools?: Tool[]; total?: number } | Tool[];
 interface Action { id: string; name: string; priceVersion: string; priceUsd: string; exampleInput?: Record<string, unknown>; requiresQuote?: boolean; inputSchema: { properties: Record<string, { type: string; description?: string; enum?: string[] }>; required?: string[] }; }
 interface Result { id?: string; status?: string; deliveryState?: string; output?: unknown; errorCode?: string; chargedUsd?: string; }
@@ -324,7 +325,7 @@ export function TokenToSeaServices({ active, variant = 'page', accountSignedIn, 
   ) : tool ? (
     <>
       <header className={styles.detailHead}>
-        <span className={styles.badgeLg} aria-hidden="true">{monogram(tool.name)}</span>
+        <span className={styles.badgeLg} aria-hidden="true"><ToolPurposeIcon tool={tool} size={28} /></span>
         <div className={styles.detailHeadText}>
           <h2 className={styles.detailTitle}>{tool.name}</h2>
           <p className={styles.detailMeta}>{zh ? '工具' : 'Tool'}</p>
@@ -458,7 +459,7 @@ export function TokenToSeaServices({ active, variant = 'page', accountSignedIn, 
                       aria-pressed={entry.id === selected}
                       onClick={() => void select(entry.id)}
                     >
-                      <span className={styles.badge} aria-hidden="true">{item.model ? <ModelBrandIcon model={item.model} fallback={monogram(item.model.brandLabel ?? item.model.provider ?? name)} /> : monogram(name)}</span>
+                      <span className={styles.badge} aria-hidden="true">{item.model ? <ModelBrandIcon model={item.model} fallback={monogram(item.model.brandLabel ?? item.model.provider ?? name)} /> : <ToolPurposeIcon tool={item.tool!} />}</span>
                       <span className={styles.rowText}>
                         <strong className={styles.serviceName}>{name}</strong>
                         <span className={styles.serviceMeta}>{item.model ? modelMeta(item.model) : item.tool!.description}</span>

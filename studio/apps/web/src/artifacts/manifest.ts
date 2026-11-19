@@ -49,7 +49,7 @@ function inferKindFromEntry(entry: string): ArtifactKind | null {
   const ext = normalizeExt(entry);
   if (['.html', '.htm'].includes(ext)) return 'html';
   if (ext === '.svg') return 'svg';
-  if (ext === '.md') return 'markdown-document';
+  if (['.md', '.markdown', '.mdown', '.mkd', '.mkdn'].includes(ext)) return 'markdown-document';
   if (['.jsx', '.tsx'].includes(ext)) return 'react-component';
   if (['.js', '.ts', '.json', '.css'].includes(ext)) return 'code-snippet';
   return null;

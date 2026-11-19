@@ -22,6 +22,8 @@ export interface ProjectFileChangeEvent {
   type: 'file-changed';
   path: string;
   kind: 'add' | 'change' | 'unlink';
+  mtime?: number;
+  size?: number;
 }
 
 // Re-exported under the local "project event" naming so consumers in this

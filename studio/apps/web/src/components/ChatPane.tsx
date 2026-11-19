@@ -132,6 +132,13 @@ import type { AppConfig, ChatAttachment, ChatCommentAttachment, ChatMessage, Cha
 import { agentDisplayName } from '../utils/agentLabels';
 import { commentTargetDisplayName, commentsToAttachments, simplePositionLabel } from '../comments';
 import { AssistantMessage, type QuestionFormSubmitHandler } from './AssistantMessage';
+import { Button } from '@open-design/components';
+import {
+  AssistantMessageVersionActions,
+  EditSentMessage,
+  MessageVersionNavigation,
+  type MessageVersionActions,
+} from './chat/MessageVersions';
 import { chatSeam } from './chat/ChatRoot';
 import { PlanPill } from './chat/PlanPill';
 import { PluginInputDock } from '../fantay/plugins/HarnessSlots';
@@ -180,6 +187,7 @@ import {
   ChatComposer,
   type ChatComposerHandle,
   type ChatSendOutcome,
+  type ComposerActions,
   type ChatSendMeta,
 } from './ChatComposer';
 import { attachmentLocalPreviewUrl } from '../runtime/chat/creation-handoff';
@@ -200,7 +208,6 @@ import { supportChannels } from './chat/support-channels';
 import { ExportLogsAction } from './chat/ExportLogsAction';
 import type { RecoveryActionBlockReason } from '../runtime/chat/recovery-gating';
 import { repoConnectCopy } from './design-system-github-evidence';
-import { isRenderableSketchJson, SketchPreview } from './SketchPreview';
 import type { SettingsSection } from './SettingsDialog';
 import { composerDraftKeyFor, hasConversationActivity } from '../utils/conversationActivity';
 
@@ -546,15 +553,6 @@ function ChatArtifactPreview({
     projectRawUrl(projectId, file.name, workspaceContext),
     `v=${Math.round(file.mtime)}`,
   );
-  if (isRenderableSketchJson(file)) {
-    return (
-      <SketchPreview
-        projectId={projectId}
-        file={file}
-        workspaceContext={workspaceContext}
-      />
-    );
-  }
   if (file.kind === 'image' || file.kind === 'sketch') {
     return <img src={url} alt="" loading="lazy" />;
   }
@@ -615,7 +613,11 @@ function chatArtifactKindLabel(kind: ProjectFile['kind'], t: TranslateFn): strin
   return t('designFiles.kindBinary');
 }
 
-interface Props {
+export interface ChatPaneProps {
+  /** A bound secondary pane has its own tab header and consumes only locally targeted input. */
+  boundSidePane?: boolean;
+  surfaceVisible?: boolean;
+  composerActions?: ComposerActions;
   messages: ChatMessage[];
   streaming: boolean;
   loading?: boolean;
@@ -764,6 +766,7 @@ interface Props {
   /** `anchorId` 同上。 */
   onArtifactDownload?: (fileName: string, anchorId?: string) => void;
   onForkFromMessage?: (assistantMessage: ChatMessage) => void;
+  messageVersionActions?: MessageVersionActions;
   forkingMessageId?: string | null;
   // Header "+" button — kicks off ProjectView's create-conversation flow.
   onNewConversation?: () => void;
@@ -1325,6 +1328,9 @@ function NewSessionGlyph(): ReactElement {
 }
 
 export function ChatPane({
+  boundSidePane = false,
+  surfaceVisible = true,
+  composerActions,
   inlineComposer = false,
   messages,
   streaming,
@@ -1393,6 +1399,7 @@ export function ChatPane({
   onArtifactDownload,
   onForkFromMessage,
   forkingMessageId = null,
+  messageVersionActions,
   onNewConversation,
   newConversationDisabled = false,
   conversations,
@@ -1470,7 +1477,7 @@ export function ChatPane({
   historyPortalTarget,
   designSystemPicker,
   config,
-}: Props) {
+}: ChatPaneProps) {
   const { workspaceContext } = useProjectCollabContext();
   const { t, locale } = useI18n();
   const permissionConversation = conversations.find(({ id }) => id === activeConversationId);
@@ -4132,6 +4139,9 @@ export function ChatPane({
           hover to expand); they no longer sit as quick pills above the input. */}
     <ChatComposer
       ref={composerRef}
+      extraActions={composerActions}
+      receiveWorkspaceEvents={!boundSidePane}
+      surfaceVisible={surfaceVisible}
       quotes={quotes}
       onClearQuotes={clearQuotes}
       onRestoreQuotes={setQuotes}
@@ -4368,7 +4378,7 @@ export function ChatPane({
        抹在 .pane 自己身上、**不另外包一层**:包一层会打断 `.split-chat-slot > .pane`
        这类子选择器(全仓 11 条),聊天卡的圆角 / 白底 / backdrop-filter 会集体失效。 */
     <div {...chatSeam('pane')} data-empty-centered={isCenteredEmptyState ? 'true' : undefined}>
-        {historyPortalTarget ? (
+        {boundSidePane ? null : historyPortalTarget ? (
           /* The dock host lives outside the chat tree, so the portal
              re-applies the --chat-* seam for the control's own styles. No
              header row here: the project name is shown once, in the
@@ -4583,6 +4593,7 @@ export function ChatPane({
                   nextStepSkills={skills}
                   nextStepVariant={nextStepVariant}
                   onForkFromMessage={viewerOnly ? undefined : onForkFromMessage}
+                  messageVersionActions={viewerOnly ? undefined : messageVersionActions}
                   // 只读访客发不出这一轮,自然也接不了上一轮的活 —— 和 Fork 同一条门
                   onContinueRemainingTasks={viewerOnly ? undefined : onContinueRemainingTasks}
                   onAssistantFeedback={onAssistantFeedback}
@@ -5341,6 +5352,7 @@ function ChatRows({
   nextStepSkills,
   nextStepVariant,
   onForkFromMessage,
+  messageVersionActions,
   onContinueRemainingTasks,
   onAssistantFeedback,
   forkingMessageId,
@@ -5432,6 +5444,7 @@ function ChatRows({
   nextStepSkills?: SkillSummary[];
   nextStepVariant?: NextStepActionsVariant;
   onForkFromMessage?: (message: ChatMessage) => void;
+  messageVersionActions?: MessageVersionActions;
   onContinueRemainingTasks?: (
     assistantMessage: ChatMessage,
     todos: TodoItem[],
@@ -5502,6 +5515,7 @@ function ChatRows({
           t={t}
           highlighted={highlightedUserMessageId === m.id}
           onResend={onResendUserMessage}
+          versionActions={messageVersionActions?.supports?.(m.id) === false ? undefined : messageVersionActions}
         />
       );
     }
@@ -5620,15 +5634,30 @@ function ChatRows({
         nextStepVariant={nextStepVariant}
       />
     );
-    if (turnBalanceUsd == null) return assistantRow;
+    let question = messages[item.messageIndex - 1];
+    if (messageVersionActions) {
+      let index = item.messageIndex - 1;
+      while (index >= 0 && messages[index]?.role !== 'user') index--;
+      question = messages[index];
+    }
+    const versionActions = messageVersionActions && messageVersionActions.supports?.(m.id) !== false ? (
+      <AssistantMessageVersionActions message={m} actions={messageVersionActions}
+        canRegenerate={!messageStreaming && !assistantMessageNeverHadARun(m)
+          && question?.role === 'user' && !question.sendFailed
+          && !isFormAnswersMessage(question.content) && !isDesignSystemWorkspacePrompt(question.content)
+          && (m.runStatus === undefined || m.runStatus === 'succeeded')}
+      />
+    ) : null;
+    if (turnBalanceUsd == null && !versionActions) return assistantRow;
     return (
       <>
         {assistantRow}
-        <UpgradeCard
+        {versionActions}
+        {turnBalanceUsd != null ? <UpgradeCard
           balanceUsd={turnBalanceUsd}
           onRecharge={onLowBalanceTurnCardRecharge}
           pausedAudience={lowBalanceTurnCardAudience}
-        />
+        /> : null}
       </>
     );
   };
@@ -6724,6 +6753,7 @@ const UserMessage = memo(UserMessageImpl);
   t,
   highlighted,
   onResend,
+  versionActions,
 }: {
   message: ChatMessage;
   projectId: string | null;
@@ -6731,6 +6761,7 @@ const UserMessage = memo(UserMessageImpl);
   onRequestOpenFile?: (name: string) => void;
   /** 发送失败时那颗常驻的「重试」(稿子第 49 / 50 格) */
   onResend?: (message: ChatMessage) => void;
+  versionActions?: MessageVersionActions;
   /** Legacy mirror-fixture inputs are accepted but intentionally not rendered. */
   onRequestPluginDetails?: (pluginId: string) => void;
   onRequestDesignSystemDetails?: (system: DesignSystemSummary) => void;
@@ -6763,6 +6794,9 @@ const UserMessage = memo(UserMessageImpl);
   const displayContent = isDesignSystemWorkspaceRequest
     ? t('chat.designSystemStatus.title')
     : formAnswersDisplayBody(message.content);
+  const canEdit = versionActions && !message.sendFailed && !isDesignSystemWorkspaceRequest
+    && !isFormAnswersMessage(message.content);
+  const editor = versionActions?.editor?.messageId === message.id ? versionActions.editor : null;
 
   useEffect(() => {
     return () => {
@@ -6821,22 +6855,30 @@ const UserMessage = memo(UserMessageImpl);
             ))}
           </div>
         ) : null}
-        {message.content ? (
+        {message.content || canEdit || message.branchVersionIds?.length ? (
           <div className="user-text-wrap">
-            {isDesignSystemWorkspaceRequest ? (
+            {editor && versionActions ? (
+              <EditSentMessage message={message} actions={versionActions} draft={editor.draft} />
+            ) : isDesignSystemWorkspaceRequest ? (
               <UserStatusCard
                 title={t('chat.designSystemStatus.title')}
                 description={t('chat.designSystemStatus.description')}
               />
-            ) : (
+            ) : message.content ? (
               <UserBubble content={displayContent} t={t} />
-            )}
-            <div className="user-actions">
+            ) : null}
+            {!editor && versionActions && <MessageVersionNavigation message={message} actions={versionActions} />}
+            {!editor && <div className="user-actions">
               {/* 稿子**渲染出来**是「时间 → 复制 → 重试」(它的说明文字写的是「时间在最右」,
                   和自己的 DOM 打架;用户 2026-08-26 指认以渲染为准)。
                   时间不是动作,所以不给按钮那套 30px 命中框。 */}
               {clock ? <span className="user-actions-time">{clock}</span> : null}
-              <button
+              {canEdit && <Button size="icon" variant="ghost" disabled={versionActions.disabled}
+                aria-label={t('common.edit')} title={t('common.edit')}
+                onClick={() => versionActions.setEditor(message.id, message.content)}>
+                <Icon name="pencil" size={16} />
+              </Button>}
+              {message.content && <button
                 type="button"
                 className="ghost user-copy-btn"
                 onClick={handleCopy}
@@ -6844,7 +6886,7 @@ const UserMessage = memo(UserMessageImpl);
                 title={copied ? t('chat.copyDone') : t('chat.copyPrompt')}
               >
                 <Icon name={copied ? 'check' : 'copy'} size={16} />
-              </button>
+              </button>}
               {/* 发送失败那颗「重试」(稿子第 49 / 50 格的 `.msg-act .keep`):
                   和时间 / 复制**同一行**,但不跟着 hover 出没 —— 第 50 格的状态名
                   写的就是「时间与复制浮出,重试常驻」。 */}
@@ -6862,7 +6904,7 @@ const UserMessage = memo(UserMessageImpl);
                   <span>{t('chat.record.retry')}</span>
                 </button>
               ) : null}
-            </div>
+            </div>}
           </div>
         ) : null}
       </div>

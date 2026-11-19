@@ -20,7 +20,7 @@ export function layoutFor(width: number): PaLayout {
 }
 
 /** The docked width actually used: the remembered preference clamped to 300–420 and to what leaves the chat
- *  column at least 520 px. */
+ *  column at least `PA_INSPECTOR.chatMin` (420 px). */
 export function dockedInspectorWidth(layout: PaLayout, preferred: number): number {
   const main = layout.width - PA_ROSTER_WIDTH[layout.roster];
   const max = Math.max(PA_INSPECTOR.min, Math.min(PA_INSPECTOR.max, main - PA_INSPECTOR.chatMin));

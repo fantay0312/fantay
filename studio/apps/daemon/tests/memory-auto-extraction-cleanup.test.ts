@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  extractFromMessage,
   listMemoryEntries,
   memoryDir,
   readMemoryConfig,
@@ -118,60 +119,46 @@ afterEach(async () => {
 });
 
 describe('one-time auto-extraction cleanup', () => {
-  it('deletes heuristic-pack artifacts and keeps LLM / brand / manual entries', async () => {
+  async function listIds() {
+    return (await listMemoryEntries(dataDir)).map((e) => e.id).sort();
+  }
+
+  it('moves, deletes and rewrites nothing: retired-pipeline entries and the profile stay as they are', async () => {
+    const before = await listIds();
     const result = await runAutoExtractionCleanup(dataDir);
     expect(result.ran).toBe(true);
-    expect([...result.deletedIds].sort()).toEqual(
-      HEURISTIC_GARBAGE.map((e) => e.id).sort(),
-    );
+    expect(result.deletedIds).toEqual([]);
+    expect(result.profilePruned).toBe(false);
 
-    const remaining = (await listMemoryEntries(dataDir)).map((e) => e.id).sort();
-    expect(remaining).toEqual(
-      [...KEEP_ENTRIES.map((e) => e.id), 'user_profile'].sort(),
+    expect(await listIds()).toEqual(before);
+    expect(before).toEqual(
+      [...[...HEURISTIC_GARBAGE, ...KEEP_ENTRIES].map((e): string => e.id), 'user_profile'].sort(),
     );
-  });
-
-  it('prunes user_profile down to canonical labels, preserving hand-filled fields', async () => {
-    await runAutoExtractionCleanup(dataDir);
+    // The mixed profile, form residue included, is byte-for-byte what the person had.
     const profile = await readMemoryEntry(dataDir, 'user_profile');
-    expect(profile).not.toBeNull();
-    expect(profile!.body).toContain('- Role: 产品经理');
-    expect(profile!.body).toContain('- Domain: design tools');
-    expect(profile!.body).not.toContain('要做什么？');
-    expect(profile!.body).not.toContain('宝可梦粉丝');
-    expect(profile!.body).not.toContain('What should I build?');
-  });
-
-  it('deletes user_profile entirely when no canonical field survives', async () => {
-    await upsertMemoryEntry(
-      dataDir,
-      {
-        id: 'user_profile',
-        name: 'Work profile',
-        description: 'Role, audience, domain, and delivery defaults captured at onboarding.',
-        type: 'profile',
-        body: '- 要做什么？: Prototype\n- 目标平台: iOS App',
-      },
-      { silent: true },
-    );
-    await runAutoExtractionCleanup(dataDir);
-    expect(await readMemoryEntry(dataDir, 'user_profile')).toBeNull();
-  });
-
-  it('drops index bullets for deleted entries and keeps the survivors linked', async () => {
-    await runAutoExtractionCleanup(dataDir);
-    const index = await readMemoryIndex(dataDir);
-    for (const gone of HEURISTIC_GARBAGE) {
-      expect(index).not.toContain(`(${gone.id}.md)`);
+    expect(profile!.body.trim()).toBe(MIXED_PROFILE_BODY);
+    for (const garbage of HEURISTIC_GARBAGE) {
+      expect((await readMemoryEntry(dataDir, garbage.id))!.body.trim()).toBe(garbage.body);
     }
-    for (const kept of KEEP_ENTRIES) {
-      expect(index).toContain(`(${kept.id}.md)`);
+    // Nothing was moved to .trash and nothing was copied to .history.
+    for (const dir of ['.trash', '.history']) {
+      await expect(fsp.access(path.join(memoryDir(dataDir), dir))).rejects.toThrow();
+    }
+  });
+
+  it('keeps every index bullet', async () => {
+    const before = await readMemoryIndex(dataDir);
+    await runAutoExtractionCleanup(dataDir);
+    expect(await readMemoryIndex(dataDir)).toBe(before);
+    for (const entry of [...HEURISTIC_GARBAGE, ...KEEP_ENTRIES]) {
+      expect(before).toContain(`(${entry.id}.md)`);
     }
   });
 
   it('forces chatExtractionEnabled off exactly once, then respects a re-opt-in', async () => {
     await writeMemoryConfig(dataDir, { chatExtractionEnabled: true });
-    await runAutoExtractionCleanup(dataDir);
+    const first = await runAutoExtractionCleanup(dataDir);
+    expect(first.extractionSwitchedOff).toBe(true);
     expect((await readMemoryConfig(dataDir)).chatExtractionEnabled).toBe(false);
 
     // A user who consciously re-enables extraction after the migration must
@@ -182,26 +169,29 @@ describe('one-time auto-extraction cleanup', () => {
     expect((await readMemoryConfig(dataDir)).chatExtractionEnabled).toBe(true);
   });
 
-  it('is idempotent: the second run is a no-op and resurrects nothing', async () => {
+  it('leaves a data dir with extraction already off without a config file', async () => {
+    const result = await runAutoExtractionCleanup(dataDir);
+    expect(result.extractionSwitchedOff).toBe(false);
+    await expect(fsp.access(path.join(memoryDir(dataDir), '.config.json'))).rejects.toThrow();
+  });
+
+  it('is idempotent: the second run is a no-op', async () => {
     const first = await runAutoExtractionCleanup(dataDir);
     expect(first.ran).toBe(true);
-
-    // Re-seed one garbage entry AFTER the migration marker exists; a later
-    // boot must not delete it (one-time semantics, not a standing GC).
-    await upsertMemoryEntry(dataDir, HEURISTIC_GARBAGE[0], { silent: true });
     const second = await runAutoExtractionCleanup(dataDir);
     expect(second.ran).toBe(false);
     expect(await readMemoryEntry(dataDir, HEURISTIC_GARBAGE[0].id)).not.toBeNull();
   });
 
   it('records a marker file inside the memory dir', async () => {
-    const result = await runAutoExtractionCleanup(dataDir);
+    await writeMemoryConfig(dataDir, { chatExtractionEnabled: true });
+    await runAutoExtractionCleanup(dataDir);
     const markerRaw = await fsp.readFile(
       path.join(memoryDir(dataDir), '.cleanup_auto_extracted_v1.json'),
       'utf8',
     );
     const marker = JSON.parse(markerRaw);
-    expect(marker.deletedIds.sort()).toEqual([...result.deletedIds].sort());
+    expect(marker.extractionSwitchedOff).toBe(true);
     expect(typeof marker.ranAt).toBe('number');
   });
 });
@@ -243,5 +233,212 @@ describe('source provenance on new writes', () => {
     );
     const entry = await readMemoryEntry(dataDir, 'user_hand_written');
     expect(entry!.source).toBe('manual');
+  });
+});
+
+describe('automatic writers never replace what they did not write', () => {
+  const HAND_WRITTEN = {
+    id: 'rule_avoid_gradients',
+    name: 'Avoid gradients',
+    description: 'my own rule',
+    type: 'rule',
+    body: 'No gradients anywhere, ever.',
+  } as const;
+  // Same derived id as HAND_WRITTEN: the trailing dot normalizes away.
+  const COLLIDING = {
+    name: 'Avoid gradients.',
+    description: 'model-written rule',
+    type: 'rule',
+    body: 'Prefer flat fills.',
+  } as const;
+
+  async function seedHandWritten() {
+    await upsertMemoryEntry(dataDir, HAND_WRITTEN, undefined);
+  }
+
+  async function historyFiles(id: string) {
+    try {
+      return await fsp.readdir(path.join(memoryDir(dataDir), '.history', id));
+    } catch {
+      return [];
+    }
+  }
+
+  it.each(['llm', 'annotation', 'heuristic', 'connector', 'brand'] as const)(
+    'a %s write whose derived id is a person\'s entry lands under a fresh id',
+    async (source) => {
+      await seedHandWritten();
+      const written = await upsertMemoryEntry(dataDir, COLLIDING, { silent: true, source });
+
+      expect(written.id).not.toBe(HAND_WRITTEN.id);
+      expect(written.id.startsWith(`${HAND_WRITTEN.id}_`)).toBe(true);
+      expect(written.source).toBe(source);
+      expect(written.body.trim()).toBe(COLLIDING.body);
+
+      const mine = await readMemoryEntry(dataDir, HAND_WRITTEN.id);
+      expect(mine).toMatchObject({
+        name: HAND_WRITTEN.name,
+        description: HAND_WRITTEN.description,
+        source: 'manual',
+      });
+      expect(mine!.body.trim()).toBe(HAND_WRITTEN.body);
+      // Nothing was overwritten, so nothing needed copying to .history either.
+      expect(await historyFiles(HAND_WRITTEN.id)).toEqual([]);
+      expect(await readMemoryIndex(dataDir)).toContain(`(${written.id}.md)`);
+    },
+  );
+
+  it('repeating the same automatic write updates its own fresh entry instead of adding another', async () => {
+    await seedHandWritten();
+    const first = await upsertMemoryEntry(dataDir, COLLIDING, { silent: true, source: 'llm' });
+    const second = await upsertMemoryEntry(
+      dataDir,
+      { ...COLLIDING, body: 'Prefer flat fills and solid colours.' },
+      { silent: true, source: 'llm' },
+    );
+    expect(second.id).toBe(first.id);
+    expect(second.body.trim()).toBe('Prefer flat fills and solid colours.');
+    const ours = (await listMemoryEntries(dataDir)).filter((e) => e.id.startsWith(HAND_WRITTEN.id));
+    expect(ours).toHaveLength(2);
+    expect((await readMemoryEntry(dataDir, HAND_WRITTEN.id))!.body.trim()).toBe(HAND_WRITTEN.body);
+  });
+
+  it('an automatic writer still refreshes its own earlier entry of the same name in place', async () => {
+    const first = await upsertMemoryEntry(dataDir, COLLIDING, { silent: true, source: 'llm' });
+    expect(first.id).toBe(HAND_WRITTEN.id);
+    const second = await upsertMemoryEntry(
+      dataDir,
+      { ...COLLIDING, body: 'Prefer flat fills, always.' },
+      { silent: true, source: 'llm' },
+    );
+    expect(second.id).toBe(first.id);
+    expect(second.body.trim()).toBe('Prefer flat fills, always.');
+    expect(await historyFiles(first.id)).toHaveLength(1);
+  });
+
+  it('a different automatic writer does not take over another writer\'s entry of the same name', async () => {
+    const llm = await upsertMemoryEntry(dataDir, COLLIDING, { silent: true, source: 'llm' });
+    const annotation = await upsertMemoryEntry(
+      dataDir,
+      { ...COLLIDING, body: 'From a review comment.' },
+      { silent: true, source: 'annotation' },
+    );
+    expect(annotation.id).not.toBe(llm.id);
+    expect((await readMemoryEntry(dataDir, llm.id))!.body.trim()).toBe(COLLIDING.body);
+  });
+
+  it('a same-named entry from a person is not replaced either', async () => {
+    await seedHandWritten();
+    const written = await upsertMemoryEntry(
+      dataDir,
+      { ...COLLIDING, name: HAND_WRITTEN.name },
+      { silent: true, source: 'llm' },
+    );
+    expect(written.id).not.toBe(HAND_WRITTEN.id);
+    expect((await readMemoryEntry(dataDir, HAND_WRITTEN.id))!.body.trim()).toBe(HAND_WRITTEN.body);
+  });
+
+  it('a file with no source marker (written before provenance) counts as a person\'s', async () => {
+    await fsp.mkdir(memoryDir(dataDir), { recursive: true });
+    const legacy = '---\nname: Avoid gradients\ndescription: old\ntype: rule\n---\n\nOld rule body.\n';
+    await fsp.writeFile(path.join(memoryDir(dataDir), 'rule_avoid_gradients.md'), legacy);
+    const written = await upsertMemoryEntry(dataDir, COLLIDING, { silent: true, source: 'llm' });
+    expect(written.id).not.toBe('rule_avoid_gradients');
+    expect(await fsp.readFile(path.join(memoryDir(dataDir), 'rule_avoid_gradients.md'), 'utf8')).toBe(legacy);
+  });
+
+  it('an explicit id held by a person\'s entry is not reused by the heuristic pack', async () => {
+    const mine = await upsertMemoryEntry(
+      dataDir,
+      { id: 'user_hand_fact', name: 'Hand fact', description: '', type: 'user', body: 'Mine.' },
+      undefined,
+    );
+    const written = await upsertMemoryEntry(
+      dataDir,
+      { id: 'user_hand_fact', name: 'User role', description: 'auto', type: 'user', body: '- auto' },
+      { silent: true, source: 'heuristic' },
+    );
+    expect(written.id).not.toBe(mine.id);
+    expect((await readMemoryEntry(dataDir, mine.id))!.body.trim()).toBe('Mine.');
+  });
+
+  it('keeps the project scope of the file actually written, not of the entry it avoided', async () => {
+    await upsertMemoryEntry(
+      dataDir,
+      { id: 'user_scoped', name: 'Scoped', description: '', type: 'project', body: 'Mine.', projectId: 'proj-a' },
+      undefined,
+    );
+    const written = await upsertMemoryEntry(
+      dataDir,
+      { id: 'user_scoped', name: 'Other', description: '', type: 'project', body: 'Auto.' },
+      { silent: true, source: 'llm' },
+    );
+    expect(written.id).not.toBe('user_scoped');
+    expect(written.projectId).toBeUndefined();
+  });
+
+  it('a person editing an entry in Settings still replaces it, with the old text kept in .history', async () => {
+    await seedHandWritten();
+    const edited = await upsertMemoryEntry(
+      dataDir,
+      { ...HAND_WRITTEN, name: 'Avoid gradients.', body: 'Gradients only on hero art.' },
+      undefined,
+    );
+    expect(edited.id).toBe(HAND_WRITTEN.id);
+    expect(edited.body.trim()).toBe('Gradients only on hero art.');
+    const history = await historyFiles(HAND_WRITTEN.id);
+    expect(history).toHaveLength(1);
+    const kept = await fsp.readFile(
+      path.join(memoryDir(dataDir), '.history', HAND_WRITTEN.id, history[0]!),
+      'utf8',
+    );
+    expect(kept).toContain(HAND_WRITTEN.body);
+  });
+
+  describe('profile capture from a form', () => {
+    const FORM = '[form answers — discovery]\n- Role: 设计师\n- Domain: fintech\n';
+
+    beforeEach(async () => {
+      await writeMemoryConfig(dataDir, { chatExtractionEnabled: true });
+    });
+
+    it('does not merge into or replace a profile a person wrote', async () => {
+      // seedStore already wrote a person's `user_profile`.
+      const before = await readMemoryEntry(dataDir, 'user_profile');
+      const changed = await extractFromMessage(dataDir, FORM);
+
+      const after = await readMemoryEntry(dataDir, 'user_profile');
+      expect(after!.body.trim()).toBe(before!.body.trim());
+      expect(after!.source).toBe('manual');
+
+      const profileIds = changed.map((c) => c.id);
+      expect(profileIds).toHaveLength(1);
+      expect(profileIds[0]).not.toBe('user_profile');
+      const captured = await readMemoryEntry(dataDir, profileIds[0]!);
+      expect(captured).toMatchObject({ type: 'profile', source: 'heuristic' });
+      // Only the form's answers, not a copy of the person's fields.
+      expect(captured!.body.trim()).toBe('- Role: 设计师\n- Domain: fintech');
+    });
+
+    it('later forms merge into the same automatic profile', async () => {
+      const first = await extractFromMessage(dataDir, FORM);
+      const second = await extractFromMessage(
+        dataDir,
+        '[form answers — discovery]\n- Primary audience: 财务团队\n- Role: 产品设计师\n',
+      );
+      expect(second[0]!.id).toBe(first[0]!.id);
+      const captured = await readMemoryEntry(dataDir, first[0]!.id);
+      expect(captured!.body.trim()).toBe(
+        '- Role: 产品设计师\n- Domain: fintech\n- Primary audience: 财务团队',
+      );
+      expect((await readMemoryEntry(dataDir, 'user_profile'))!.body.trim()).toBe(MIXED_PROFILE_BODY);
+    });
+
+    it('still writes user_profile when no person has one', async () => {
+      await fsp.rm(path.join(memoryDir(dataDir), 'user_profile.md'));
+      const changed = await extractFromMessage(dataDir, FORM);
+      expect(changed.map((c) => c.id)).toEqual(['user_profile']);
+      expect((await readMemoryEntry(dataDir, 'user_profile'))!.source).toBe('heuristic');
+    });
   });
 });

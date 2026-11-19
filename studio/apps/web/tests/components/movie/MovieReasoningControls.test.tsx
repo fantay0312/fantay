@@ -55,7 +55,7 @@ it('uses the RunControl slider panel for TokenToSea effort ladders instead of th
   expect(slider.max).toBe('4');
   expect(screen.getByText('推荐')).toBeTruthy();
   expect(screen.getByText('更深的推理，适合复杂问题')).toBeTruthy();
-  expect(screen.getByRole('button', { name: '切换模型 · TokenTide · Claude Opus 5.5' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: '切换模型 · Claude Opus 5.5' })).toBeTruthy();
 
   fireEvent.change(slider, { target: { value: '4' } });
   expect(onConfigChange).toHaveBeenCalledWith(expect.objectContaining({

@@ -5,4 +5,5 @@ import type { ToolPluginClientModule } from '../types';
 
 export const BUILTIN_CLIENT_MODULES: Record<string, () => Promise<{ default: ToolPluginClientModule }>> = {
   toolbox: () => import('./toolbox'),
+  'project-timeline': () => import('./project-timeline'),
 };

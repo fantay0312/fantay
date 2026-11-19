@@ -1,0 +1,18 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/*
+ * 记忆 page host. The page keeps the shared page frame (resource-pages.css): the same side gutters and the
+ * same title start as 设计系统, 素材库 and 插件. Like 设计系统 it is a two-pane workbench rather than a scrolling
+ * page, so its panes reach the window's foot (no bottom inset) and scroll on their own; the frame column is
+ * given a real height for them to fill. Component styles live in src/fantay/memory/*.module.css.
+ */
+[data-fantay-shell] .entry-main__inner--wide:has(> [data-testid='entry-view-memory'][data-active='true']) {
+  height: 100%;
+  padding-top: var(--page-top);
+  padding-bottom: 0;
+}
+[data-fantay-shell] [data-testid='entry-view-memory'][data-active='true'] {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}

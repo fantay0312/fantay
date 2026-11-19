@@ -2117,15 +2117,6 @@
   background: #fff;
   pointer-events: none;
 }
-.app .chat-design-artifact-preview .sketch-preview,
-.chat-skin .chat-design-artifact-preview .sketch-preview,
-.app .chat-design-artifact-preview .sketch-preview svg,
-.chat-skin .chat-design-artifact-preview .sketch-preview svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-  pointer-events: none;
-}
 .app .chat-design-artifact-fallback,
 .chat-skin .chat-design-artifact-fallback {
   width: 100%;

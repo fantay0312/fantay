@@ -64,6 +64,7 @@ import {
 } from './runtimes/run-event-payload-budget.js';
 import { migrateStrategyTaskStore } from './strategies/task-store.js';
 import { observeRead } from './services/daemon-health.js';
+import { messageBranchVersions } from './storage/message-branches.js';
 
 export type SqliteDb = Database.Database;
 type DbRow = Record<string, any>;
@@ -491,7 +492,26 @@ function migrate(db: SqliteDb): void {
   if (!conversationCols.some((c: DbRow) => c.name === 'intent_signals_json')) {
     db.exec(`ALTER TABLE conversations ADD COLUMN intent_signals_json TEXT`);
   }
+  if (!conversationCols.some((c: DbRow) => c.name === 'message_branches_enabled')) {
+    db.exec(`ALTER TABLE conversations ADD COLUMN message_branches_enabled INTEGER NOT NULL DEFAULT 0`);
+  }
   const messageCols = db.prepare(`PRAGMA table_info(messages)`).all() as DbRow[];
+  if (!conversationCols.some(column => column.name === 'side_parent_id')) {
+    db.exec('ALTER TABLE conversations ADD COLUMN side_parent_id TEXT REFERENCES conversations(id) ON DELETE CASCADE');
+  }
+  if (!conversationCols.some(column => column.name === 'side_owner')) {
+    db.exec('ALTER TABLE conversations ADD COLUMN side_owner TEXT');
+  }
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_conversation_side_owner ON conversations(side_parent_id, side_owner) WHERE side_parent_id IS NOT NULL');
+  if (!messageCols.some((c: DbRow) => c.name === 'branch_parent_id')) {
+    db.exec(`ALTER TABLE messages ADD COLUMN branch_parent_id TEXT`);
+  }
+  if (!messageCols.some((c: DbRow) => c.name === 'branch_selected')) {
+    db.exec(`ALTER TABLE messages ADD COLUMN branch_selected INTEGER NOT NULL DEFAULT 1`);
+  }
+  if (!messageCols.some((c: DbRow) => c.name === 'branch_visible')) {
+    db.exec(`ALTER TABLE messages ADD COLUMN branch_visible INTEGER NOT NULL DEFAULT 1`);
+  }
   if (!messageCols.some((c: DbRow) => c.name === 'agent_id')) {
     db.exec(`ALTER TABLE messages ADD COLUMN agent_id TEXT`);
   }
@@ -1826,7 +1846,7 @@ function listLatestProjectRunStatusesUnobserved(db: SqliteDb) {
                   ) AS rn
              FROM messages m
              JOIN conversations c ON c.id = m.conversation_id
-            WHERE m.run_status IS NOT NULL
+            WHERE m.run_status IS NOT NULL AND m.branch_visible = 1
          )
         WHERE rn = 1`,
     )
@@ -1919,7 +1939,7 @@ export function listLatestConversationRunStatuses(db: SqliteDb) {
               COALESCE(m.ended_at, m.started_at, m.created_at) AS updatedAt,
               m.position AS position
          FROM messages m
-        WHERE m.run_status IS NOT NULL
+        WHERE m.run_status IS NOT NULL AND m.branch_visible = 1
         ORDER BY updatedAt DESC, m.position DESC`,
     )
     .all() as DbRow[];
@@ -1945,7 +1965,7 @@ export function listFirstConversationRunStatuses(db: SqliteDb) {
               COALESCE(m.ended_at, m.started_at, m.created_at) AS updatedAt,
               m.position AS position
          FROM messages m
-        WHERE m.run_status IS NOT NULL
+        WHERE m.run_status IS NOT NULL AND m.branch_visible = 1
           AND m.run_id IS NOT NULL
         ORDER BY m.position ASC`,
     )
@@ -2055,6 +2075,7 @@ function listPartitionsAwaitingInput(
     `SELECT 1
        FROM messages reply
       WHERE reply.conversation_id = ?
+        AND reply.branch_visible = 1
         AND reply.role = 'user'
         AND (
           reply.created_at > ?
@@ -2086,6 +2107,7 @@ export function listProjectsAwaitingInput(db: SqliteDb) {
          FROM messages m
          JOIN conversations c ON c.id = m.conversation_id
         WHERE m.role = 'assistant'
+          AND m.branch_visible = 1
           AND ${AWAITING_INPUT_MARKER_PREFILTER}
         ORDER BY m.created_at DESC, m.position DESC`,
     )
@@ -2103,6 +2125,7 @@ export function listConversationsAwaitingInput(db: SqliteDb) {
               m.content AS content
          FROM messages m
         WHERE m.role = 'assistant'
+          AND m.branch_visible = 1
           AND ${AWAITING_INPUT_MARKER_PREFILTER}
         ORDER BY m.created_at DESC, m.position DESC`,
     )
@@ -2311,6 +2334,7 @@ export function listConversations(db: SqliteDb, projectId: string) {
                  created_at AS createdAt, updated_at AS updatedAt
            FROM conversations
            WHERE project_id = ?
+             AND side_parent_id IS NULL
              AND id NOT LIKE 'comment-anchor-%'
         ),
         latest_runs AS (
@@ -2331,7 +2355,7 @@ export function listConversations(db: SqliteDb, projectId: string) {
                      ) AS rn
                 FROM messages m
                 JOIN project_conversations c ON c.id = m.conversation_id
-               WHERE m.role = 'assistant'
+               WHERE m.role = 'assistant' AND m.branch_visible = 1
                  AND m.run_status IS NOT NULL
             )
            WHERE rn = 1
@@ -2341,6 +2365,7 @@ export function listConversations(db: SqliteDb, projectId: string) {
                  COUNT(*) AS messageCount
             FROM messages m
             JOIN project_conversations c ON c.id = m.conversation_id
+           WHERE m.branch_visible = 1
            GROUP BY m.conversation_id
         ),
         total_run_durations AS (
@@ -2353,6 +2378,7 @@ export function listConversations(db: SqliteDb, projectId: string) {
            GROUP BY m.conversation_id
         )
         SELECT c.id, c.projectId, c.title, c.sessionMode, c.executionPermission,
+               EXISTS(SELECT 1 FROM conversations side WHERE side.side_parent_id = c.id) AS hasSideDialogue,
                c.createdAt, c.updatedAt, c.pinnedAt, c.archivedAt, c.groupId, c.unreadAt, c.readAt,
                COALESCE(mc.messageCount, 0) AS messageCount,
                lr.latestRunStatus, lr.latestRunStartedAt,
@@ -2425,6 +2451,7 @@ export function getFirstProjectConversation(db: SqliteDb, projectId: string) {
       `SELECT id
          FROM conversations
         WHERE project_id = ?
+          AND side_parent_id IS NULL
         ORDER BY created_at ASC, rowid ASC
         LIMIT 1`,
     )
@@ -2442,7 +2469,8 @@ export function getConversation(db: SqliteDb, id: string) {
               pinned_at AS pinnedAt, archived_at AS archivedAt,
               group_id AS groupId, unread_at AS unreadAt, read_at AS readAt,
               created_at AS createdAt, updated_at AS updatedAt,
-              (SELECT COUNT(*) FROM messages WHERE conversation_id = conversations.id) AS messageCount
+              EXISTS(SELECT 1 FROM conversations side WHERE side.side_parent_id = conversations.id) AS hasSideDialogue,
+              (SELECT COUNT(*) FROM messages WHERE conversation_id = conversations.id AND branch_visible = 1) AS messageCount
          FROM conversations WHERE id = ?`,
     )
     .get(id) as DbRow | undefined;
@@ -2466,6 +2494,7 @@ function normalizeConversation(r: DbRow) {
     projectId: r.projectId,
     title: r.title ?? null,
     sessionMode: normalizeConversationSessionMode(r.sessionMode),
+    ...(r.hasSideDialogue ? { hasSideDialogue: true } : {}),
     executionPermission: isChatExecutionPermission(r.executionPermission) ? r.executionPermission : null,
     pinnedAt: r.pinnedAt == null ? null : Number(r.pinnedAt),
     archivedAt: r.archivedAt == null ? null : Number(r.archivedAt),
@@ -2498,6 +2527,7 @@ function latestConversationRunSummary(db: SqliteDb, conversationId: string) {
               events_json AS eventsJson
          FROM messages
         WHERE conversation_id = ?
+          AND branch_visible = 1
           AND role = 'assistant'
           AND run_status IS NOT NULL
         ORDER BY position DESC
@@ -2608,6 +2638,22 @@ export function insertConversation(db: SqliteDb, c: DbRow) {
     c.updatedAt,
   );
   return getConversation(db, c.id);
+}
+
+/** One independent, daemon-local chat per main conversation and account. */
+export function boundSideConversation(db: SqliteDb, projectId: string, parentId: string, owner: string, create = true) {
+  return db.transaction(() => {
+    const parent = db.prepare("SELECT id FROM conversations WHERE project_id = ? AND id = ? AND side_parent_id IS NULL AND id NOT LIKE 'comment-anchor-%'").get(projectId, parentId);
+    if (!parent) return null;
+    const existing = db.prepare('SELECT id FROM conversations WHERE side_parent_id = ? AND side_owner = ?').get(parentId, owner) as { id: string } | undefined;
+    if (existing) return getConversation(db, existing.id);
+    if (!create) return null;
+    const id = randomUUID();
+    const now = Date.now();
+    db.prepare(`INSERT INTO conversations (id, project_id, side_parent_id, side_owner, session_mode, execution_permission, created_at, updated_at)
+      VALUES (?, ?, ?, ?, 'chat', 'read-only', ?, ?)`).run(id, projectId, parentId, owner, now, now);
+    return getConversation(db, id);
+  }).immediate();
 }
 
 export function updateConversation(db: SqliteDb, id: string, patch: DbRow) {
@@ -2895,7 +2941,7 @@ export function latestCompletedAssistantMessageId(
       // Advancement detection is unaffected — any later `succeeded` message
       // still wins on `position DESC` and still fails the cursor comparison.
       `SELECT id FROM messages
-        WHERE conversation_id = ? AND role = 'assistant'
+        WHERE conversation_id = ? AND role = 'assistant' AND branch_visible = 1
           AND (id != ? OR id = ?)
           AND (run_status = 'succeeded' OR id = ?)
         ORDER BY position DESC LIMIT 1`,
@@ -2929,7 +2975,7 @@ export function userRequestBeforeAssistantMessage(
       // A missing anchor makes the subquery NULL, so `position < NULL` matches
       // nothing and the caller correctly gets null instead of the latest turn.
       `SELECT content FROM messages
-        WHERE conversation_id = ? AND role = 'user'
+        WHERE conversation_id = ? AND role = 'user' AND branch_visible = 1
           AND position < (SELECT position FROM messages WHERE id = ?)
         ORDER BY position DESC LIMIT 1`,
     )
@@ -2969,7 +3015,7 @@ export function latestTodoWriteInputForConversation(
   const rows = db
     .prepare(
       `SELECT id, events_json AS eventsJson FROM messages
-        WHERE conversation_id = ? AND role = 'assistant' AND id != ?
+        WHERE conversation_id = ? AND role = 'assistant' AND branch_visible = 1 AND id != ?
         ORDER BY position DESC LIMIT ?`,
     )
     .all(conversationId, excludeMessageId, TODO_RECALL_MESSAGE_LOOKBACK) as DbRow[];
@@ -3098,13 +3144,14 @@ function listMessagesUnobserved(db: SqliteDb, conversationId: string) {
               created_at AS createdAt, started_at AS startedAt, ended_at AS endedAt,
               position
          FROM messages
-        WHERE conversation_id = ?
+        WHERE conversation_id = ? AND branch_visible = 1
         ORDER BY position ASC`,
     );
   const eventBatches = readConversationMessageEventBatches(db, conversationId);
   // One query for the whole conversation. A per-message lookup here would be a
   // straight N+1 on every transcript read.
   const artifactRefs = conversationChatArtifactRefs(db, conversationId);
+  const versions = messageBranchVersions(db, conversationId);
   // Rows are normalized one at a time, so only one row's stored event log is
   // held at full size at once: rows written before the run-event payload
   // budget can be MBs each, and normalizing bounds them (see
@@ -3115,14 +3162,16 @@ function listMessagesUnobserved(db: SqliteDb, conversationId: string) {
   const rows = typeof messages.iterate === 'function'
     ? (messages.iterate(conversationId) as Iterable<DbRow>)
     : (messages.all(conversationId) as DbRow[]);
-  const normalized = [];
+  const normalized: Array<ReturnType<typeof normalizeMessage> & Pick<ChatMessage, 'branchVersionIds'>> = [];
   for (const message of rows) {
-    normalized.push(normalizeMessage(
+    const item = normalizeMessage(
       db,
       message,
       eventBatches.get(String(message.id)) ?? [],
       artifactRefs.get(String(message.id)) ?? [],
-    ));
+    );
+    const branchVersionIds = versions.get(String(message.id));
+    normalized.push(branchVersionIds ? { ...item, branchVersionIds } : item);
   }
   return normalized;
 }
@@ -3383,7 +3432,8 @@ export function upsertMessage(db: SqliteDb, conversationId: string, m: DbRow) {
     const createdAt = typeof m.createdAt === 'number' && Number.isFinite(m.createdAt)
       ? m.createdAt
       : now;
-    // 28 values: id, conversation_id, role, content, agent_id, agent_name,
+    // 28 values followed by the active parent selected inside the insert.
+    // id, conversation_id, role, content, agent_id, agent_name,
     // run_id, run_status, result_delivery_state, last_run_event_id, events_json, attachments_json,
     // comment_attachments_json, produced_files_json, trace_object_files_json,
     // feedback_json, pre_turn_file_names_json, session_mode, run_context_json,
@@ -3398,8 +3448,11 @@ export function upsertMessage(db: SqliteDb, conversationId: string, m: DbRow) {
           trace_object_files_json, feedback_json, pre_turn_file_names_json,
           session_mode, run_context_json, task_analytics_json,
           applied_plugin_snapshot_json, forked_into_json, cancel_origin,
-          telemetry_finalized_at, started_at, ended_at, position, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          telemetry_finalized_at, started_at, ended_at, position, created_at, branch_parent_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+         (SELECT id FROM messages WHERE conversation_id = ? AND branch_visible = 1
+           AND EXISTS (SELECT 1 FROM conversations WHERE id = ? AND message_branches_enabled = 1)
+           ORDER BY position DESC LIMIT 1))`,
     ).run(
       m.id,
       conversationId,
@@ -3429,6 +3482,8 @@ export function upsertMessage(db: SqliteDb, conversationId: string, m: DbRow) {
       m.endedAt ?? null,
       position,
       createdAt,
+      conversationId,
+      conversationId,
     );
   }
   seedMessageArtifactRefsIfAbsent(db, String(m.id), m.artifactRefs);
@@ -4268,6 +4323,7 @@ export function getLatestConversationIdForProject(
     .prepare(
       `SELECT id FROM conversations
         WHERE project_id = ?
+          AND side_parent_id IS NULL
           AND id NOT LIKE ?
           AND (? IS NULL OR id != ?)
         ORDER BY updated_at DESC, rowid DESC

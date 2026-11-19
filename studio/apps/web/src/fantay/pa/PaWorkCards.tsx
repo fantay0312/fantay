@@ -47,6 +47,7 @@ import {
   workLine,
 } from './pa-model';
 import { usePaStopConfirm } from './PaConfirmHost';
+import { PaPendingViewCard } from './PaViewCard';
 import { PaDisclosure } from './PaDisclosure';
 import { paPendingKey } from './usePaWorkspace';
 import type {
@@ -508,6 +509,7 @@ export function PaNeedsYouCard({
   const expiry = task.status === 'waiting' ? expiresAt(task, data.control) : null;
   const conversation = showConversation ? index.conversations.get(task.conversationId) : undefined;
   const shown = compact ? view.actions.slice(0, 1) : view.actions;
+  const awaitingCard = task.status === 'waiting' && Boolean(task.channelQuestion || task.pendingView);
 
   const click = (action: PaWaitAction) => {
     const result = run(action, task);
@@ -529,7 +531,8 @@ export function PaNeedsYouCard({
       <div className={styles.needsTitle}>{view.title}</div>
       {/* Inside the task's own modal the goal is already the modal title. */}
       {inOwnModal ? null : <div className={styles.needsGoal}>{task.goal}</div>}
-      {view.body ? <div className={styles.needsBody}>{view.body}</div> : null}
+      {awaitingCard ? <PaPendingViewCard key={task.pendingView?.attemptId ?? task.channelQuestion?.attemptId} task={task} />
+        : view.body ? <div className={styles.needsBody}>{view.body}</div> : null}
       {conversation || expiry !== null ? (
         // Where it lives and when it lapses: two quiet lines kept together under the body.
         <div className={styles.needsFoot}>
@@ -540,7 +543,7 @@ export function PaNeedsYouCard({
         </div>
       ) : null}
       <div className={styles.cardActions} data-card-actions="">
-        {shown.map((action, position) => {
+        {shown.filter(action => !awaitingCard || action === 'stop').map((action, position) => {
           const key = pendingKey(action, task.id);
           return (
             <Button

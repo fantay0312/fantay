@@ -12,7 +12,7 @@ import {
   createFakeAgentRuntimes,
   FAKE_AGENT_RUNTIME_IDS,
 } from '@/playwright/fake-agents';
-import { trackRunRequests } from '@/playwright/mock-factory';
+import { routeTokenToSeaStatus, trackRunRequests } from '@/playwright/mock-factory';
 import type { FakeAcpHandshakeRuntime, FakeAgentId } from '@/playwright/fake-agents';
 import { T } from '@/timeouts';
 
@@ -162,6 +162,59 @@ test('[P1] execution plan connector stops before completed status markers', asyn
 
   expect(geometry.connectorContent).not.toBe('none');
   expect(geometry.connectorStart).toBeGreaterThanOrEqual(geometry.markerBottom);
+});
+
+test('[P1] main chat edits and regenerates in place and restores each branch tail', async ({ page }) => {
+  await routeTokenToSeaStatus(page);
+  await createProject(page, 'Message version smoke', 'codex', 'chat');
+  await expectWorkspaceReady(page);
+  const location = page.url();
+  const { projectId, conversationId } = await currentProjectContext(page);
+  const transcript = () => listConversationMessages(page, projectId, conversationId);
+  const settle = async () => {
+    await expect.poll(async () => (await transcript()).at(-1)?.runStatus, { timeout: T.long })
+      .toBe('succeeded');
+  };
+
+  await sendPrompt(page, 'Original branch question');
+  await settle();
+  await sendPrompt(page, 'Original branch follow-up');
+  await settle();
+  const original = await transcript();
+  const messages = page.getByTestId('user-message');
+  const originalQuestion = messages.filter({ hasText: 'Original branch question' });
+  await originalQuestion.hover();
+  await originalQuestion.getByRole('button', { name: /^(Edit|编辑)$/ }).click();
+  const editor = messages.filter({ has: page.getByRole('textbox', { name: /^(Edit|编辑)$/ }) });
+  await editor.getByRole('textbox').fill('Revised branch question');
+  const [editRun] = await Promise.all([
+    page.waitForResponse(isCreateRunResponse),
+    editor.getByRole('button', { name: /^(Send|发送)$/ }).click(),
+  ]);
+  expect(editRun.ok(), await editRun.text()).toBe(true);
+  expect(editRun.request().postDataJSON().priorTranscript).not.toContain('Original branch follow-up');
+  await settle();
+  await expect(messages.filter({ hasText: 'Original branch follow-up' })).toHaveCount(0);
+  const revised = messages.filter({ hasText: 'Revised branch question' });
+  await revised.getByRole('button', { name: /Previous version|上一个版本/ }).click();
+  await expect(messages.filter({ hasText: 'Original branch follow-up' })).toBeVisible();
+
+  const [regeneratedRun] = await Promise.all([
+    page.waitForResponse(isCreateRunResponse),
+    page.getByRole('button', { name: /Regenerate reply|重新生成回复/ }).first().click(),
+  ]);
+  expect(regeneratedRun.ok(), await regeneratedRun.text()).toBe(true);
+  expect(regeneratedRun.request().postDataJSON().priorTranscript).not.toContain('Original branch follow-up');
+  await settle();
+  expect((await transcript()).map(message => message.id)).not.toContain(original[1]?.id);
+  await expect(messages.filter({ hasText: 'Original branch follow-up' })).toHaveCount(0);
+  await page.getByTestId('assistant-message-versions')
+    .getByRole('button', { name: /Previous version|上一个版本/ }).click();
+  await expect(messages.filter({ hasText: 'Original branch follow-up' })).toBeVisible();
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(messages.filter({ hasText: 'Original branch follow-up' })).toBeVisible();
+  expect((await transcript()).map(message => message.id)).toEqual(original.map(message => message.id));
+  expect(new URL(page.url()).pathname.split('/files/')[0]).toBe(new URL(location).pathname);
 });
 
 test('[P0] local OD Next active canary follows one public task across physical runs', async ({ page }) => {

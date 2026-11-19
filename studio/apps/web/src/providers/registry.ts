@@ -2778,6 +2778,7 @@ export async function fetchProjectFileText(
   projectId: string,
   name: string,
   options?: {
+    preserveUtf8Bom?: boolean;
     cache?: RequestCache;
     cacheBustKey?: string | number;
     signal?: AbortSignal;
@@ -2809,6 +2810,9 @@ export async function fetchProjectFileText(
         url: requestUrl,
       });
       return null;
+    }
+    if (options?.preserveUtf8Bom) {
+      return new TextDecoder('utf-8', { ignoreBOM: true, fatal: true }).decode(await resp.arrayBuffer());
     }
     return await resp.text();
   } catch (err) {

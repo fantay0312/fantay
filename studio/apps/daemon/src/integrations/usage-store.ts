@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import { mkdirSync, chmodSync } from 'node:fs';
 import path from 'node:path';
 import type {
-  AiUsageActivityDay, AiUsageBucket, AiUsageContext, AiUsageDimension, AiUsageMetric, AiUsageRecord, AiUsageSummary, AiUsageTotals,
+  AiUsageActivityDay, AiUsageBucket, AiUsageContext, AiUsageDimension, AiUsageMetric, AiUsageRecord, AiUsageScope, AiUsageSummary, AiUsageTotals,
 } from '@open-design/contracts';
 
 type Json = Record<string, unknown>;
@@ -16,7 +16,8 @@ export function usdMicros(value: unknown): number | null {
   return Number.isSafeInteger(amount) ? amount : null;
 }
 const usd = (micros: number | null): string | null => micros === null ? null : (micros / 1_000_000).toFixed(6);
-interface Stored extends AiUsageContext { accountId: string; requestKey: string; provider: string; model: string; kind: string; status: string; externalRunId?: string; inputTokens: number | null; outputTokens: number | null; cachedTokens: number | null; charged: number | null; refunded: number | null; reported: number | null; reserved: number | null; createdAt: number; updatedAt: number }
+interface Stored extends AiUsageContext { accountId: string; requestKey: string; provider: string; model: string; kind: string; status: string; externalRunId?: string; origin?: 'fantay' | 'external'; sessionId?: string; granularity?: 'request'|'session'; requestCount?: number; estimated?: number | null; inputTokens: number | null; outputTokens: number | null; cachedTokens: number | null; charged: number | null; refunded: number | null; reported: number | null; reserved: number | null; createdAt: number; updatedAt: number }
+const requestCount = (row: Stored) => row.requestCount ?? (row.granularity === 'session' ? 0 : 1);
 const DAY_MS = 86_400_000;
 const HOUR_MS = 3_600_000;
 const PENDING_STATUSES = new Set(['prepared','reserved','queued','running','processing','pending','needs_review']);
@@ -59,12 +60,17 @@ export function resolveUsageRange(timeZone: string, input: { days?: number; from
 export const usageDayLowerBound = (day: string) => dayStart(day) - 15 * HOUR_MS;
 
 export interface AiUsageSummaryOptions {
+  scope?: AiUsageScope;
+  /** Native sessions already represented by Fantay message/receipt records. */
+  fantaySessions?: Set<string> | undefined;
   /** Inclusive local start day, `YYYY-MM-DD`; needs `to`. */
   from?: string;
   /** Inclusive local end day, `YYYY-MM-DD`; needs `from`. */
   to?: string;
   /** Only requests from this provider. */
   provider?: string;
+  /** A native session, paired with provider to avoid cross-agent ID collisions. */
+  sessionId?: string;
   /** How many of the newest requests to list (default 100). */
   limit?: number;
   /** Also return the 53-week activity series. */
@@ -72,13 +78,14 @@ export interface AiUsageSummaryOptions {
   now?: number;
 }
 
-const emptyTotals = (): AiUsageTotals => ({ requests:0,inputTokens:0,outputTokens:0,cachedTokens:0,chargedUsd:'0.000000',refundedUsd:'0.000000',reportedUsd:'0.000000',reservedUsd:'0.000000',pending:0,unknown:0,failed:0,withTokens:0 });
+const emptyTotals = (): AiUsageTotals => ({ requests:0,inputTokens:0,outputTokens:0,cachedTokens:0,chargedUsd:'0.000000',refundedUsd:'0.000000',reportedUsd:'0.000000',reservedUsd:'0.000000',estimatedUsd:'0.000000',estimatedRequests:0,pending:0,unknown:0,failed:0,withTokens:0 });
 
 function totals(items: Stored[]): AiUsageTotals {
   const out = emptyTotals();
-  let charged = 0, refunded = 0, reported = 0, reserved = 0;
+  let charged = 0, refunded = 0, reported = 0, reserved = 0, estimated = 0;
   for (const row of items) {
-    out.requests++;
+    out.requests += requestCount(row);
+    if(row.granularity==='session')out.sessionRecords=(out.sessionRecords??0)+1;
     out.inputTokens += row.inputTokens ?? 0;
     out.outputTokens += row.outputTokens ?? 0;
     out.cachedTokens += row.cachedTokens ?? 0;
@@ -86,14 +93,18 @@ function totals(items: Stored[]): AiUsageTotals {
     charged += row.charged ?? 0;
     refunded += row.refunded ?? 0;
     reported += row.reported ?? 0;
+    if (row.estimated != null && row.charged === null && row.reported === null) {
+      estimated += row.estimated;
+      out.estimatedRequests = (out.estimatedRequests ?? 0) + 1;
+    }
     if (PENDING_STATUSES.has(row.status)) {
       reserved += row.reserved ?? 0;
       out.pending++;
     }
     if (FAILED_STATUSES.has(row.status)) out.failed++;
-    if (row.charged === null && row.reported === null || row.status === 'needs_review') out.unknown++;
+    if (row.charged === null && row.reported === null || row.status === 'needs_review') out.unknown+=Math.max(1,requestCount(row));
   }
-  return { ...out, chargedUsd: usd(charged)!, refundedUsd: usd(refunded)!, reportedUsd: usd(reported)!, reservedUsd: usd(reserved)! };
+  return { ...out, chargedUsd: usd(charged)!, refundedUsd: usd(refunded)!, reportedUsd: usd(reported)!, reservedUsd: usd(reserved)!, estimatedUsd: usd(estimated)! };
 }
 
 /** Requests, reported tokens (input + output) and known cost (charged + reported) in exact microdollars. */
@@ -103,7 +114,7 @@ class MetricTally {
   cost = 0;
   unknown = 0;
   add(row: Stored) {
-    this.requests++;
+    this.requests += requestCount(row);
     this.tokens += (row.inputTokens ?? 0) + (row.outputTokens ?? 0);
     this.cost += (row.charged ?? 0) + (row.reported ?? 0);
     if (row.charged === null && row.reported === null || row.status === 'needs_review') this.unknown++;
@@ -158,7 +169,7 @@ export class AiUsageStore {
     this.db.exec('CREATE TABLE IF NOT EXISTS requests (account_id TEXT NOT NULL, request_key TEXT NOT NULL, external_id TEXT, kind TEXT NOT NULL, project_id TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, data TEXT NOT NULL, PRIMARY KEY(account_id,request_key)); CREATE UNIQUE INDEX IF NOT EXISTS receipt_identity ON requests(account_id,kind,external_id) WHERE external_id IS NOT NULL; CREATE INDEX IF NOT EXISTS usage_project ON requests(project_id,created_at); CREATE INDEX IF NOT EXISTS usage_account_created ON requests(account_id,created_at DESC);');
     this.stmtGet = this.db.prepare('SELECT data FROM requests WHERE account_id=? AND request_key=?');
     this.stmtKeyForExternal = this.db.prepare('SELECT request_key AS key FROM requests WHERE account_id=? AND kind=? AND external_id=?');
-    this.stmtSave = this.db.prepare('INSERT INTO requests VALUES (@accountId,@requestKey,@externalRunId,@kind,@projectId,@createdAt,@updatedAt,@data) ON CONFLICT(account_id,request_key) DO UPDATE SET external_id=excluded.external_id,project_id=excluded.project_id,updated_at=excluded.updated_at,data=excluded.data');
+    this.stmtSave = this.db.prepare('INSERT INTO requests VALUES (@accountId,@requestKey,@externalRunId,@kind,@projectId,@createdAt,@updatedAt,@data) ON CONFLICT(account_id,request_key) DO UPDATE SET external_id=excluded.external_id,project_id=excluded.project_id,created_at=excluded.created_at,updated_at=excluded.updated_at,data=excluded.data');
     this.stmtDelete = this.db.prepare('DELETE FROM requests WHERE account_id=? AND request_key=?');
     this.stmtPending = this.db.prepare('SELECT data FROM requests WHERE account_id=? AND external_id IS NOT NULL AND created_at>=? ORDER BY updated_at ASC LIMIT 100');
     this.stmtMaxUpdated = this.db.prepare('SELECT MAX(updated_at) AS at FROM requests WHERE account_id=?');
@@ -215,17 +226,21 @@ export class AiUsageStore {
     if (row.status === 'pending') row.status = failed ? 'failed' : 'unknown';
     row.updatedAt = Date.now(); this.save(row);
   }
-  recordLocal(input: { key: string; provider: string; model: string; context: AiUsageContext; usage: Json; reportedUsd?: unknown; status?: string; at: number }) {
+  recordLocal(input: { key: string; provider: string; model: string; context: AiUsageContext; usage: Json; reportedUsd?: unknown; estimatedUsd?: unknown; origin?: 'fantay' | 'external'; sessionId?: string; granularity?: 'request'|'session'; requestCount?: number; status?: string; at: number }) {
+    if(input.granularity==='session'&&!input.requestCount&&!Number(input.usage.input_tokens)&&!Number(input.usage.output_tokens)&&!Number(input.usage.cache_read_input_tokens)&&!Number(input.usage.cache_creation_input_tokens)&&!(usdMicros(input.reportedUsd)??0)){
+      this.stmtDelete.run('local',input.key);return;
+    }
     const existing = this.get('local',input.key);
     const row: Stored = existing ?? {
       accountId:'local',requestKey:input.key,provider:input.provider,model:input.model,kind:'cli',status:'pending',
-      ...input.context,inputTokens:null,outputTokens:null,cachedTokens:null,charged:null,refunded:null,reported:null,reserved:null,
+      ...input.context,origin:input.origin ?? 'fantay',...(input.sessionId ? {sessionId:input.sessionId} : {}),inputTokens:null,outputTokens:null,cachedTokens:null,charged:null,refunded:null,reported:null,reserved:null,
       createdAt:input.at,updatedAt:input.at,
     };
     const nextInput = count(input.usage.input_tokens ?? input.usage.prompt_tokens ?? input.usage.inputTokens) ?? row.inputTokens;
     const nextOutput = count(input.usage.output_tokens ?? input.usage.completion_tokens ?? input.usage.outputTokens) ?? row.outputTokens;
     const nextCached = count(input.usage.cache_read_input_tokens ?? input.usage.cached_tokens) ?? row.cachedTokens;
     const nextReported = usdMicros(input.reportedUsd) ?? row.reported;
+    const nextEstimated = input.origin === 'external' ? usdMicros(input.estimatedUsd) : usdMicros(input.estimatedUsd) ?? row.estimated ?? null;
     const nextStatus = input.status ?? 'completed';
     if (
       existing &&
@@ -233,6 +248,9 @@ export class AiUsageStore {
       existing.outputTokens === nextOutput &&
       existing.cachedTokens === nextCached &&
       existing.reported === nextReported &&
+      (existing.estimated ?? null) === nextEstimated &&
+      existing.model === input.model &&
+      existing.granularity === input.granularity && existing.requestCount === input.requestCount && existing.createdAt === input.at &&
       existing.status === nextStatus
     ) {
       return;
@@ -241,7 +259,12 @@ export class AiUsageStore {
     row.outputTokens = nextOutput;
     row.cachedTokens = nextCached;
     row.reported = nextReported;
+    row.estimated = nextEstimated;
+    row.model = input.model;
     row.status = nextStatus;
+    if(input.granularity)row.granularity=input.granularity;
+    if(input.requestCount!==undefined)row.requestCount=input.requestCount;
+    row.createdAt=input.at;
     row.updatedAt = Date.now();
     this.save(row);
   }
@@ -259,7 +282,7 @@ export class AiUsageStore {
   }
   /**
    * One read model for the dashboard and `od usage`. Rows are bucketed by their local calendar day in `timeZone`;
-   * a cost that was never reported stays out of every sum (and is counted in `unknown`), it is never estimated.
+   * Unreported costs remain unknown. Optional token-value estimates are summed separately from charges/reports.
    */
   summary(
     accountId: string | null,
@@ -280,10 +303,12 @@ export class AiUsageStore {
     const scoped = (this.stmtScoped
       .all(accountId ?? 'local', 'local', lower, upper) as { data: string }[])
       .map(row => JSON.parse(row.data) as Stored)
+      .filter(row => row.origin !== 'external' || (options.scope === 'device' && !options.fantaySessions?.has(`${row.provider}:${row.sessionId}`)))
       .filter(row => (!projectId || row.projectId === projectId) && (!row.projectId || !allowedProjects || allowedProjects.has(row.projectId)))
       .map(row => ({ row, ...clock(row.createdAt) }));
     const provider = options.provider || null;
-    const filtered = provider ? scoped.filter(item => item.row.provider === provider) : scoped;
+    const filtered = scoped.filter(item => (!provider || item.row.provider === provider)
+      && (!options.sessionId || item.row.sessionId === options.sessionId));
     const within = (day: string) => day >= from && day <= to;
     const inRange = filtered.filter(item => within(item.day));
     const rows = inRange.map(item => item.row);
@@ -333,19 +358,26 @@ export class AiUsageStore {
     }
 
     return {
-      days: range.days, from, to, bucket, timeZone, provider,
+      days: range.days, from, to, bucket, timeZone, provider, scope: options.scope ?? 'fantay', sessionId: options.sessionId ?? null,
       account: accountId ? 'signed-in' : 'local',
-      coverageSince: rows.length ? Math.min(...rows.map(row => row.createdAt)) : null,
+      coverageSince: rows.length ? rows.reduce((earliest, row) => Math.min(earliest, row.createdAt), Infinity) : null,
       totals: totals(rows),
       daily: [...dailyRows].map(([day, items]) => ({ day, totals: totals(items) })).sort((a, b) => a.day.localeCompare(b.day)),
       models: group(rows, row => JSON.stringify([row.provider, row.model])).map(([, items]) => ({ provider: items[0]!.provider, model: items[0]!.model, totals: totals(items) })).sort(byTokens),
       projects: group(rows, row => row.projectId ?? '').map(([id, items]) => ({ projectId: id || null, totals: totals(items) })).sort(byTokens),
       providers: group(rows, row => row.provider).map(([id, items]) => ({ provider: id, totals: totals(items) })).sort(byTokens),
+      sessions: group(rows.filter(row => row.sessionId), row => JSON.stringify([row.provider, row.sessionId])).map(([, items]) => ({
+        sessionId: items[0]!.sessionId!, provider: items[0]!.provider,
+        models: [...new Set(items.map(row => row.model))].sort(),
+        firstUsedAt: items.reduce((at, row) => Math.min(at, row.createdAt), Infinity),
+        lastUsedAt: items.reduce((at, row) => Math.max(at, row.createdAt), 0),
+        totals: totals(items),
+      })).sort((a, b) => b.lastUsedAt - a.lastUsedAt || a.sessionId.localeCompare(b.sessionId)),
       availableProviders: [...available].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([id, requests]) => ({ provider: id, requests })),
       series: [...buckets].sort(([a], [b]) => a.localeCompare(b)).map(([start, tally]) => tally.bucket(start)),
       hours: hours.map(tally => tally.metric()),
       recent: rows.slice(0, Math.max(0, Math.min(1000, options.limit ?? 100)))
-        .map(({ accountId: _account, charged, refunded, reported, reserved, ...row }) => ({ ...row, chargedUsd: usd(charged), refundedUsd: usd(refunded), reportedUsd: usd(reported), reservedUsd: usd(reserved) })),
+        .map(({ accountId: _account, charged, refunded, reported, reserved, estimated, ...row }) => ({ ...row, chargedUsd: usd(charged), refundedUsd: usd(refunded), reportedUsd: usd(reported), reservedUsd: usd(reserved), estimatedUsd: usd(estimated ?? null) })),
       ...(activity ? { activity } : {}),
     };
   }

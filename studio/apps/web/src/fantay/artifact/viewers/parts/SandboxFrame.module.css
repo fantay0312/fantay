@@ -1,0 +1,20 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The script-less frame fills its box and scrolls itself. Its ground is drawn inside (the document's
+   stylesheet), so the element itself is transparent and has no edge. */
+
+.frame {
+  display: block;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+}
+
+/* Reached with the keyboard: the ring sits inside the stage, like the image viewer's. */
+.frame:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: -2px;
+}

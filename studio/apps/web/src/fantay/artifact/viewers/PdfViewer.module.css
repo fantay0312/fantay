@@ -1,0 +1,388 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* A PDF: white pages in one column on the shared sheet ground (parts/Sheets.module.css gives the
+   ground, the padding, the rhythm between pages and each sheet's edge). This file adds what only a
+   PDF has: the bitmap, the selectable text over it, link hit areas, the find field, the password
+   form. The text-layer rules follow pdf.js's own contract (web/pdf_viewer.css @ v6.5.438,
+   Apache-2.0, Mozilla Foundation): the layer is positioned in percentages and sized from one
+   variable, so a zoom only changes `--total-scale-factor`. */
+
+.stage {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Added to the shared `.scroller`. */
+.scroller {
+  outline: none;
+  /* A classic scrollbar must not change the width "fit width" is computed from. */
+  scrollbar-gutter: stable;
+  /* Only the text of a page can be selected, never the ground or an empty sheet. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.scroller:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--focus-ring-color);
+}
+
+/* Stands in for the pages above or below the ones that are mounted, so the scrollbar is honest. */
+.spacer {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ── one page ────────────────────────────────────────────────────────────────────────────────── */
+
+.page {
+  --total-scale-factor: 1;
+}
+
+.bitmap {
+  position: absolute;
+  inset: 0;
+}
+
+/* The bitmap is stretched to the sheet: while a zoom settles the old drawing stays, scaled. */
+.bitmap > canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.pageNotice {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  margin: 0;
+  padding: 16px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  opacity: 0.55;
+  text-align: center;
+  place-items: center;
+}
+
+/* ── text layer (pdf.js contract) ────────────────────────────────────────────────────────────── */
+
+.textLayer {
+  --min-font-size: 1;
+  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
+  --scale-round-x: 1px;
+  --scale-round-y: 1px;
+
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: clip;
+  color-scheme: only light;
+  caret-color: CanvasText;
+  forced-color-adjust: none;
+  letter-spacing: normal;
+  line-height: 1;
+  text-align: initial;
+  text-size-adjust: none;
+  transform-origin: 0 0;
+  /* The ground is not selectable; the layer is, so a drag may start between two lines. */
+  user-select: text;
+  -webkit-user-select: text;
+  word-spacing: normal;
+}
+
+.textLayer[data-main-rotation='90'] {
+  transform: rotate(90deg) translateY(-100%);
+}
+
+.textLayer[data-main-rotation='180'] {
+  transform: rotate(180deg) translate(-100%, -100%);
+}
+
+.textLayer[data-main-rotation='270'] {
+  transform: rotate(270deg) translateX(-100%);
+}
+
+.textLayer :is(span, br) {
+  position: absolute;
+  color: transparent;
+  cursor: text;
+  transform-origin: 0% 0%;
+  user-select: text;
+  -webkit-user-select: text;
+  white-space: pre;
+}
+
+.textLayer > span {
+  --font-height: 0;
+  --scale-x: 1;
+  --rotate: 0deg;
+
+  z-index: 1;
+  font-size: calc(var(--text-scale-factor) * var(--font-height));
+  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+}
+
+.textLayer ::selection {
+  background: color-mix(in srgb, var(--info) 30%, transparent);
+  color: transparent;
+}
+
+.textLayer br::selection {
+  background: transparent;
+}
+
+/* Gives a dragged selection somewhere to end between two lines (see pdf/text-selection.ts). */
+.endOfContent {
+  position: absolute;
+  inset: 100% 0 0;
+  z-index: 0;
+  display: block;
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.textLayer.selecting .endOfContent {
+  top: 0;
+}
+
+/* ── links ───────────────────────────────────────────────────────────────────────────────────── */
+
+.links {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.link {
+  position: absolute;
+  border-radius: 2px;
+  cursor: pointer;
+  outline: none;
+  pointer-events: auto;
+  transition: background-color var(--motion-micro) var(--ease-out-quint);
+}
+
+.link:hover {
+  background: color-mix(in srgb, var(--info) 14%, transparent);
+}
+
+.link:focus-visible {
+  background: color-mix(in srgb, var(--info) 14%, transparent);
+  box-shadow: 0 0 0 2px var(--focus-ring-color);
+}
+
+/* "Link address copied": said where the click happened, then gone. */
+.hint {
+  position: absolute;
+  z-index: 6;
+  max-width: calc(100% - 24px);
+  padding: 5px 9px;
+  overflow: hidden;
+  border-radius: var(--radius-control);
+  background: var(--ink);
+  box-shadow: var(--shadow-float);
+  color: var(--paper);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  opacity: 0;
+  pointer-events: none;
+  text-overflow: ellipsis;
+  transform: translate(-50%, calc(-100% - 4px));
+  transition:
+    opacity var(--motion-exit) var(--ease-out-quint),
+    transform var(--motion-exit) var(--ease-out-quint);
+  white-space: nowrap;
+}
+
+.hint[data-show] {
+  opacity: 1;
+  transform: translate(-50%, calc(-100% - 8px));
+  transition-duration: var(--motion-enter);
+}
+
+/* ── find ────────────────────────────────────────────────────────────────────────────────────── */
+
+.find {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  z-index: 5;
+  width: min(336px, calc(100% - 28px));
+  border-radius: var(--radius-chip);
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+  color: var(--ink);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px);
+  transition:
+    opacity var(--motion-exit) var(--ease-out-quint),
+    transform var(--motion-exit) var(--ease-out-quint),
+    visibility 0s linear var(--motion-exit);
+  visibility: hidden;
+}
+
+.find[data-open] {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+  transition:
+    opacity var(--motion-enter) var(--ease-out-quint),
+    transform var(--motion-enter) var(--ease-out-quint),
+    visibility 0s;
+  visibility: visible;
+}
+
+.findRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 36px;
+  padding: 0 6px 0 11px;
+}
+
+.findIcon {
+  flex: none;
+  color: var(--ink-faint);
+}
+
+.findInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  margin-left: 7px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Said only when a very long document was not searched to its end. */
+.findNote {
+  margin: 0;
+  padding: 0 11px 9px 32px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.findCount {
+  flex: none;
+  padding: 0 6px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.findCount[data-none] {
+  color: var(--ink-soft);
+}
+
+/* ── password ────────────────────────────────────────────────────────────────────────────────── */
+
+/* Laid out like the frame's own notices, with the field where their button is. */
+.lock {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 0;
+  padding: 32px 24px;
+  overflow: auto;
+  text-align: center;
+  animation: pdf-lock-in var(--motion-enter) var(--ease-out-quint) both;
+}
+
+.lockGlyph {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 6px;
+  border-radius: var(--radius-card);
+  background: var(--paper);
+  color: var(--ink-soft);
+  place-items: center;
+}
+
+.lockTitle {
+  max-width: 420px;
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.lockText {
+  max-width: 360px;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.lockForm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: min(300px, 100%);
+  margin-top: 12px;
+}
+
+.lockField {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.lockError {
+  min-height: 18px;
+  margin: 2px 0 0;
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+@keyframes pdf-lock-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@container artifact (max-width: 460px) {
+  .find {
+    top: 8px;
+    right: 8px;
+    width: calc(100% - 16px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link,
+  .hint,
+  .find,
+  .find[data-open] {
+    transition: none;
+  }
+
+  .lock {
+    animation: none;
+  }
+}

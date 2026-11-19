@@ -1,0 +1,251 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The appearance picker (Soul UI spec 7.6): a 304 px form column and a 256 px live preview, stacked with the preview
+   first when the container is narrower than 560. Chrome is ink; colour appears only in the swatches and the preview,
+   which are theme islands painted from `--pa-skin-*`. */
+
+.root {
+  container-type: inline-size;
+  min-width: 0;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 304px 256px;
+  align-items: start;
+  column-gap: 16px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.label {
+  margin-bottom: 8px;
+}
+
+/* ── theme swatches: four per row, the name under each ── */
+
+.themes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px 8px;
+}
+
+.themeCell {
+  flex-direction: column;
+  justify-content: flex-start;
+  width: 100%;
+  height: auto;
+  min-width: 0;
+  padding: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink-soft);
+  white-space: normal;
+}
+
+.themeCell:hover {
+  background: transparent;
+  color: var(--ink);
+}
+
+.themeCell > [data-slot='button-label'] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.ring {
+  display: block;
+  border-radius: var(--radius-control);
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition: outline-color var(--pa-dur-quick) var(--pa-ease);
+}
+
+.themeCell:hover .ring {
+  outline-color: var(--line);
+}
+
+.themeCell[aria-pressed='true'] .ring {
+  outline-color: var(--ink);
+}
+
+.themeName {
+  display: -webkit-box;
+  width: 100%;
+  overflow: hidden;
+  font-size: var(--type-caption);
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: center;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.themeCell[aria-pressed='true'] .themeName {
+  color: var(--ink);
+}
+
+/* ── accent colour (stage 2): quick picks, the colour well and the hex field on one line, the guard's note under it.
+   The colours come inline from TS (`--pa-swatch`, `--pa-dot`, `--pa-dot-ground`); like the theme swatches they are
+   preview islands, everything around them stays ink. ── */
+
+.accentRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  min-width: 0;
+}
+
+.swatches {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatch,
+.swatch:hover {
+  width: 20px;
+  height: 20px;
+  min-width: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--pa-swatch);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+.swatch {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition: outline-color var(--pa-dur-quick) var(--pa-ease);
+}
+
+.swatch:hover {
+  outline-color: var(--line);
+}
+
+.swatch[aria-pressed='true'] {
+  outline-color: var(--ink);
+}
+
+.well {
+  flex: none;
+  box-sizing: border-box;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  cursor: pointer;
+  appearance: none;
+}
+
+.well::-webkit-color-swatch-wrapper {
+  padding: 3px;
+}
+
+.well::-webkit-color-swatch {
+  border: 0;
+  border-radius: 5px;
+}
+
+.well::-moz-color-swatch {
+  border: 0;
+  border-radius: 5px;
+}
+
+.well:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+.hex {
+  flex: 1 1 auto;
+  min-width: 72px;
+}
+
+.accentNote {
+  min-height: 18px;
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+.accentNote[data-invalid] {
+  color: var(--accent-ink);
+}
+
+.dots {
+  display: inline-flex;
+  gap: 8px;
+  margin-inline-start: 8px;
+  vertical-align: -1px;
+}
+
+.dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--pa-dot);
+  box-shadow:
+    0 0 0 2px var(--pa-dot-ground),
+    0 0 0 3px var(--line);
+}
+
+/* 去添加 inside a switch row's hint: a text link on the hint's line (a margin, not a space, after a full stop). */
+.hintLink {
+  height: auto;
+  margin-inline-start: 4px;
+  vertical-align: baseline;
+}
+
+/* ── live preview ── */
+
+.previewCol {
+  position: sticky;
+  top: 0;
+  min-width: 0;
+}
+
+.preview {
+  box-sizing: border-box;
+  min-height: 280px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+@container (max-width: 559px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 16px;
+  }
+
+  .previewCol {
+    position: static;
+    order: -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring,
+  .swatch {
+    transition: none;
+  }
+}

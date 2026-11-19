@@ -10,10 +10,11 @@ import { useI18n, useT } from '../../i18n';
 import { Button, Dot, Icon, IconButton, Popover, PopoverContent, PopoverTrigger, Tooltip, cn, toast } from '../ui';
 import { PaAvatar } from './PaAvatar';
 import { PaMarkdown } from './PaMarkdown';
-import { agentName } from './PaTurnTail';
+import { PaViewCard } from './PaViewCard';
+import { PaReceipt, PaTurnTail, agentName, tailKindOf } from './PaTurnTail';
 import { usePa } from './pa-context';
 import { isFantay, memoryScopeName, unwrapStructured } from './pa-model';
-import type { PaAttempt, PaMessage as PaMessageRecord } from './pa-types';
+import type { PaAttempt, PaConversation, PaGroup, PaMessage as PaMessageRecord, PaTurn } from './pa-types';
 import styles from './PaConversation.module.css';
 
 /** Replies longer than this are clamped to 24 lines behind a fade (spec §6.3). */
@@ -77,6 +78,64 @@ export interface PaMessageProps {
 
 export function PaMessage(props: PaMessageProps) {
   return props.message.senderId === 'owner' ? <OwnerMessage {...props} /> : <AgentMessage {...props} />;
+}
+
+function roleOf(group: PaGroup | null, turn: PaTurn, senderId: string): 'moderator' | 'reviewer' | null {
+  if (!group || senderId === 'owner') return null;
+  const task = turn.task;
+  if (task?.kind === 'project' && task.participantIds.length > 1) {
+    if (task.participantIds[task.participantIds.length - 1] === senderId) return 'reviewer';
+  }
+  if (group.moderatorId === senderId) return 'moderator';
+  const reviewer =
+    group.reviewerId ??
+    (group.mode === 'review' ? [...group.memberIds].reverse().find((id) => id !== group.moderatorId) ?? null : null);
+  return reviewer === senderId ? 'reviewer' : null;
+}
+
+export interface PaTurnBodyProps {
+  turn: PaTurn;
+  conversation: PaConversation;
+  group: PaGroup | null;
+  latest: boolean;
+  /** The transcript's entrance bookkeeping: true while the keyed element is new. */
+  entering(key: string): boolean;
+  onJump(messageId: string): void;
+}
+
+/** One turn's messages and its tail (spec §6.3, §6.4). The work transcript renders every turn with it; a companion
+ *  transcript renders its work turns with it inside the task block (Soul UI spec §4.4.14). */
+export function PaTurnBody({ turn, conversation, group, latest, entering, onJump }: PaTurnBodyProps) {
+  const tailKind = turn.task ? tailKindOf(turn.task) : null;
+  const tailEntering = turn.task ? entering(`tail:${turn.key}:${tailKind}`) : false;
+  const lastMessage = turn.messages[turn.messages.length - 1];
+  // A discussion receipt joins the last reply's footer row instead of adding a row of its own under it.
+  const receiptInline = tailKind === 'receipt' && lastMessage != null && lastMessage.senderId !== 'owner';
+  return (
+    <>
+      {turn.messages.map((message, i) => (
+        <PaMessage
+          key={message.id}
+          message={message}
+          conversationId={conversation.id}
+          clustered={group != null}
+          clusterStart={i === 0 || turn.messages[i - 1]!.senderId !== message.senderId}
+          role={roleOf(group, turn, message.senderId)}
+          attempts={turn.attempts}
+          entering={entering(`m:${message.id}`)}
+          onJump={onJump}
+          receipt={
+            receiptInline && turn.task && message === lastMessage ? (
+              <PaReceipt task={turn.task} turn={turn} latest={latest} entering={tailEntering} />
+            ) : undefined
+          }
+        />
+      ))}
+      {turn.task ? (
+        <PaTurnTail turn={turn} conversation={conversation} latest={latest} entering={tailEntering} receiptInline={receiptInline} />
+      ) : null}
+    </>
+  );
 }
 
 function HoverRow({ message, conversationId, reply }: { message: PaMessageRecord; conversationId: string; reply: boolean }) {
@@ -290,6 +349,9 @@ function AgentMessage({ message, conversationId, clustered, clusterStart, role, 
   const agent = index.agents.get(message.senderId) ?? null;
   const name = agentName(index, attempts, message.senderId);
   const refs = message.memoryRefs ?? [];
+  const openView = message.viewCard?.interactive && message.taskId &&
+    index.tasks.get(message.taskId)?.pendingView?.attemptId === message.attemptId &&
+    index.tasks.get(message.taskId)?.status === 'waiting';
   return (
     <div
       className={styles.agentMessage}
@@ -329,7 +391,9 @@ function AgentMessage({ message, conversationId, clustered, clusterStart, role, 
         </div>
       ) : null}
       <div className={clustered ? styles.indent : undefined}>
-        <AgentBody content={message.content} />
+        {message.viewCard
+          ? openView ? null : <PaViewCard card={message.viewCard} answer={message.viewAnswer} />
+          : <AgentBody content={message.content} />}
         {/* Evidence belongs to the text it supports: its own line under the prose, at the start, always visible,
             never mixed with the hover chrome (an earlier turn's hidden receipt would push it off the edge). */}
         {refs.length > 0 ? (

@@ -2,7 +2,7 @@ import type { Express, Request, Response } from 'express';
 import { paChannelInputSchema } from '@open-design/contracts';
 import type { PersonalAgentChannels } from '../services/personal-agent-channels.js';
 import { PaError } from '../storage/personal-agent-store.js';
-import { PaChannelTransportError } from '../integrations/pa-channel-transport.js';
+import { channelRecord, PaChannelTransportError } from '../integrations/pa-channel-transport.js';
 
 /** Registered after the /api/pa local-origin gate. */
 export function registerPersonalAgentChannelRoutes(app: Express, channels: PersonalAgentChannels): void {
@@ -14,8 +14,24 @@ export function registerPersonalAgentChannelRoutes(app: Express, channels: Perso
   app.get('/api/pa/channels', handle(() => channels.snapshot()));
   app.get('/api/pa/channels/local-feishu-apps', handle(() => channels.localFeishuApps()));
   app.post('/api/pa/channels', handle(req => channels.create(paChannelInputSchema.parse(req.body))));
+  app.post('/api/pa/channels/:id/bindings', handle(req => channels.createBinding(String(req.params.id), paChannelInputSchema.parse(req.body))));
   app.patch('/api/pa/channels/:id', handle(req => channels.update(String(req.params.id), paChannelInputSchema.parse(req.body), revision(req.body?.revision))));
+  app.delete('/api/pa/channels/:id', handle(async req => { await channels.remove(String(req.params.id)); return { ok: true }; }));
   app.post('/api/pa/channels/:id/feishu', handle(req => channels.configureFeishu(String(req.params.id), req.body ?? {})));
+  app.post('/api/pa/channels/:id/im', handle(req => channels.configureIm(String(req.params.id), channelRecord(req.body))));
+  app.post('/api/pa/channels/:id/feishu-registration', handle(req => channels.beginFeishuRegistration(String(req.params.id))));
+  app.get('/api/pa/channels/:id/feishu-registration', handle(req => channels.feishuRegistration(String(req.params.id))));
+  app.delete('/api/pa/channels/:id/feishu-registration', handle(req => {
+    const id = String(req.params.id);
+    channels.cancelFeishuRegistration(id);
+    return channels.feishuRegistration(id);
+  }));
+  app.get('/api/pa/channels/:id/feishu-registration/qr.png', async (req, res) => {
+    try {
+      const image = await channels.feishuRegistrationQr(String(req.params.id));
+      res.set({ 'Content-Type': 'image/png', 'Cache-Control': 'no-store', 'Cross-Origin-Resource-Policy': 'same-origin' }).send(image);
+    } catch { res.status(410).end(); }
+  });
   app.post('/api/pa/channels/:id/connect', handle(async req => { await channels.reconnect(String(req.params.id)); return channels.snapshot(); }));
   app.post('/api/pa/channels/:id/disconnect', handle(req => channels.disconnect(String(req.params.id), req.body?.forget === true)));
   app.post('/api/pa/channels/:id/pair', handle(req => channels.pairing(String(req.params.id))));

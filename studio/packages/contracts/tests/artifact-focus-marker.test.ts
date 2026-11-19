@@ -1,15 +1,20 @@
 import { describe, it, expect } from 'vitest';
 import {
+  ARTIFACT_FOCUS_TOOLS,
   MAX_ARTIFACT_FOCUS_SHOW,
+  MAX_ARTIFACT_FOCUS_URL_LENGTH,
   foldArtifactFocusSelections,
   declaredArtifactCards,
   narrowProducedFilesToFocus,
   normalizeArtifactFocusPath,
+  normalizeArtifactFocusTool,
+  normalizeArtifactFocusUrl,
   parseArtifactFocusMarker,
   parseArtifactFocusPathList,
   renderArtifactFocusInstruction,
   renderArtifactFocusMarkerExample,
   stripArtifactFocusMarkers,
+  type ArtifactFocusSelection,
 } from '../src/api/artifact-focus-marker';
 
 /**
@@ -145,6 +150,220 @@ describe('parseArtifactFocusMarker', () => {
   });
 });
 
+describe('normalizeArtifactFocusTool', () => {
+  it('accepts every listed tool, whatever the case or padding', () => {
+    for (const tool of ARTIFACT_FOCUS_TOOLS) {
+      expect(normalizeArtifactFocusTool(tool)).toBe(tool);
+      expect(normalizeArtifactFocusTool(`  ${tool.toUpperCase()} `)).toBe(tool);
+    }
+  });
+
+  it('forgives the two spellings models write instead of the hyphen', () => {
+    expect(normalizeArtifactFocusTool('design_system')).toBe('design-system');
+    expect(normalizeArtifactFocusTool('DesignSystem')).toBe('design-system');
+  });
+
+  it('refuses anything else rather than guessing', () => {
+    for (const unknown of ['terminal', 'editor', 'design system', 'codes', '', '   ', null, undefined, 3, ['code']]) {
+      expect(normalizeArtifactFocusTool(unknown), `${JSON.stringify(unknown)} must be refused`).toBeNull();
+    }
+  });
+});
+
+describe('normalizeArtifactFocusUrl — the untrusted-address boundary', () => {
+  it('keeps an ordinary http(s) address', () => {
+    expect(normalizeArtifactFocusUrl('https://example.com/docs')).toBe('https://example.com/docs');
+    expect(normalizeArtifactFocusUrl('http://localhost:5173/app?tab=2#top')).toBe(
+      'http://localhost:5173/app?tab=2#top',
+    );
+    expect(normalizeArtifactFocusUrl('  https://example.com/docs  ')).toBe('https://example.com/docs');
+  });
+
+  /*
+   * What comes back is the parser's serialization, so what was validated is
+   * exactly what gets loaded — and a second pass changes nothing, which is what
+   * lets the daemon, the stored event and the web agree on one string.
+   */
+  it('returns the canonical spelling, and normalizing twice is a no-op', () => {
+    const once = normalizeArtifactFocusUrl('HTTPS://Example.COM');
+    expect(once).toBe('https://example.com/');
+    expect(normalizeArtifactFocusUrl(once)).toBe(once);
+  });
+
+  /*
+   * Why the serialization and not the input: these spellings read as one site
+   * to a person (or to a naive `split('@')`) and load another. Handing back the
+   * parser's own reading means the string shown and the string loaded cannot
+   * disagree, whichever component reads it next.
+   */
+  it('hands back the parser\'s reading of a spelling that could be read two ways', () => {
+    // A backslash is a path separator for http(s): the host is example.com.
+    expect(normalizeArtifactFocusUrl('https://example.com\\@evil.example/')).toBe(
+      'https://example.com/@evil.example/',
+    );
+    // Extra slashes are skipped, not turned into an empty host.
+    expect(normalizeArtifactFocusUrl('https:///example.com/a')).toBe('https://example.com/a');
+    // An internationalized host comes back in its ASCII form, so a look-alike
+    // letter cannot pass for the name it imitates.
+    expect(normalizeArtifactFocusUrl('https://аpple.com/')).toBe('https://xn--pple-43d.com/');
+    // The plain credential form is refused outright rather than rewritten.
+    expect(normalizeArtifactFocusUrl('https://example.com@evil.example/')).toBeNull();
+  });
+
+  /* Each of these is an address the host would otherwise NAVIGATE to. */
+  it('refuses everything that is not a plain http(s) address with a host', () => {
+    for (const hostile of [
+      'javascript:alert(1)',
+      'data:text/html,<script>x</script>',
+      'file:///etc/passwd',
+      'ftp://example.com/x',
+      'chrome://settings',
+      '//example.com/x',
+      'example.com/docs',
+      'index.html',
+      'http:example.com',
+      'http:\\\\example.com',
+      'https://',
+      'https://user:pass@example.com/',
+      'https://user@example.com/',
+      'https://example.com/a b',
+      'https://example.com/\nmalicious',
+      'https://exa\tmple.com/',
+      'https://example.com/\u0000',
+      `https://example.com/${'a'.repeat(MAX_ARTIFACT_FOCUS_URL_LENGTH)}`,
+      '',
+      '   ',
+    ]) {
+      expect(normalizeArtifactFocusUrl(hostile), `${JSON.stringify(hostile)} must be refused`).toBeNull();
+    }
+  });
+
+  it('refuses non-strings rather than coercing them', () => {
+    expect(normalizeArtifactFocusUrl(null)).toBeNull();
+    expect(normalizeArtifactFocusUrl(undefined)).toBeNull();
+    expect(normalizeArtifactFocusUrl(new URL('https://example.com/'))).toBeNull();
+  });
+});
+
+describe('parseArtifactFocusMarker — tool and url', () => {
+  it('reads tool next to open', () => {
+    const parsed = parseArtifactFocusMarker(`<od-focus key="${KEY}" tool="code" open="src/app.ts"/>`);
+    expect(parsed.key).toBe(KEY);
+    expect(parsed.tool).toBe('code');
+    expect(parsed.open).toBe('src/app.ts');
+    expect(parsed.url).toBeUndefined();
+  });
+
+  it('a marker with tool and neither open nor show is a valid marker', () => {
+    for (const tool of ['code', 'files', 'board', 'design-system', 'preview'] as const) {
+      const parsed = parseArtifactFocusMarker(`<od-focus key="${KEY}" tool="${tool}"/>`);
+      expect(parsed.key).toBe(KEY);
+      expect(parsed.tool).toBe(tool);
+      expect(parsed.open).toBeNull();
+      expect(parsed.show).toEqual([]);
+    }
+  });
+
+  it('reads url next to tool="browser"', () => {
+    const parsed = parseArtifactFocusMarker(
+      `<od-focus key="${KEY}" tool="browser" url="https://example.com/docs"/>`,
+    );
+    expect(parsed.tool).toBe('browser');
+    expect(parsed.url).toBe('https://example.com/docs');
+    expect(parsed.open).toBeNull();
+  });
+
+  it('tolerates single quotes, no quotes and a different attribute order', () => {
+    expect(
+      parseArtifactFocusMarker(`<od-focus url='https://example.com/a/b' tool='browser' key='${KEY}'/>`),
+    ).toMatchObject({ key: KEY, tool: 'browser', url: 'https://example.com/a/b' });
+    // Bare: the address keeps its slashes and stops at the tag's own `/>`.
+    expect(
+      parseArtifactFocusMarker(`<od-focus key=${KEY} tool=browser url=https://example.com/a/b/>`),
+    ).toMatchObject({ key: KEY, tool: 'browser', url: 'https://example.com/a/b' });
+    expect(
+      parseArtifactFocusMarker(`<od-focus key=${KEY} url=https://example.com/a tool=Browser>`),
+    ).toMatchObject({ key: KEY, tool: 'browser', url: 'https://example.com/a' });
+  });
+
+  /*
+   * 「An unknown tool value is dropped and the rest of the marker behaves
+   * exactly as before」— compared field by field against the same marker
+   * without the attribute, so "as before" is checked rather than restated.
+   */
+  it('drops an unknown tool and leaves the rest of the marker exactly as it was', () => {
+    const without = parseArtifactFocusMarker(
+      `<od-focus key="${KEY}" open="index.html" show="index.html, report.md"/>`,
+    );
+    const withUnknown = parseArtifactFocusMarker(
+      `<od-focus key="${KEY}" tool="terminal" open="index.html" show="index.html, report.md"/>`,
+    );
+    expect(withUnknown).toEqual(without);
+    expect('tool' in withUnknown).toBe(false);
+  });
+
+  it('keeps url only for the browser tool', () => {
+    const parsed = parseArtifactFocusMarker(
+      `<od-focus key="${KEY}" tool="code" open="src/app.ts" url="https://example.com/"/>`,
+    );
+    expect(parsed.tool).toBe('code');
+    expect(parsed.open).toBe('src/app.ts');
+    expect('url' in parsed).toBe(false);
+    // …and never without a tool at all.
+    expect('url' in parseArtifactFocusMarker(`<od-focus key="${KEY}" url="https://example.com/"/>`)).toBe(false);
+  });
+
+  it('drops a bad url but keeps the browser tool it came with', () => {
+    for (const bad of ['javascript:alert(1)', 'file:///etc/passwd', 'https://user:pw@example.com/', 'index.html']) {
+      const parsed = parseArtifactFocusMarker(`<od-focus key="${KEY}" tool="browser" url="${bad}"/>`);
+      expect(parsed.tool, `${bad} must not cost the tool`).toBe('browser');
+      expect('url' in parsed, `${bad} must be dropped`).toBe(false);
+    }
+  });
+
+  /*
+   * A query string is made of `name=value` pairs, and the attribute regexes
+   * match a name anywhere in the tag. Without cutting the address out first,
+   * `?open=readme.md` becomes the marker's `open` — which the daemon then
+   * holds, waiting for a file, and the browser never opens.
+   */
+  it('never reads the address\'s query string as the marker\'s own attributes', () => {
+    const parsed = parseArtifactFocusMarker(
+      `<od-focus url="https://example.com/s?key=zzzz9999&open=readme.md&show=a.md&tool=code" tool="browser" key="${KEY}"/>`,
+    );
+    expect(parsed.key).toBe(KEY);
+    expect(parsed.tool).toBe('browser');
+    expect(parsed.open).toBeNull();
+    expect(parsed.rawOpen).toBe('');
+    expect(parsed.show).toEqual([]);
+    expect(parsed.url).toBe('https://example.com/s?key=zzzz9999&open=readme.md&show=a.md&tool=code');
+  });
+
+  /*
+   * The other direction of the same hazard. `tool` and `url` arrived after
+   * markers were already being written, so a path that happens to contain
+   * `tool=` or `url=` must parse exactly as it did before they existed.
+   */
+  it('never grows a tool or url out of a path\'s own value', () => {
+    // `tool=code` sits last so a name-anywhere match would read a VALID tool.
+    const value = 'pages/view.html?url=x&tool=code';
+    const parsed = parseArtifactFocusMarker(`<od-focus key="${KEY}" open="${value}"/>`);
+    // The value is read whole — nothing was cut out of it.
+    expect(parsed.rawOpen).toBe(value);
+    expect(parsed.open).toBe(value);
+    expect('tool' in parsed).toBe(false);
+    expect('url' in parsed).toBe(false);
+  });
+
+  it('is still stripped whole, whatever it carries', () => {
+    expect(
+      stripArtifactFocusMarkers(
+        `前。<od-focus key="${KEY}" tool="browser" url="https://example.com/a?b=1&c=2"/>后。`,
+      ),
+    ).toBe('前。后。');
+  });
+});
+
 describe('stripArtifactFocusMarkers — the marker never reaches the reader', () => {
   it('removes the tag and every attribute fragment with it', () => {
     const out = stripArtifactFocusMarkers(
@@ -211,6 +430,33 @@ describe('renderArtifactFocusMarkerExample — prompt and parser cannot drift', 
       `<od-focus key="${KEY}" open="index.html"/>`,
     );
   });
+
+  it('writes tool and url in the wire format, and they read back', () => {
+    const code = renderArtifactFocusMarkerExample(KEY, { tool: 'code', open: 'src/app.ts' });
+    expect(code).toBe(`<od-focus key="${KEY}" tool="code" open="src/app.ts"/>`);
+    expect(parseArtifactFocusMarker(code)).toMatchObject({ key: KEY, tool: 'code', open: 'src/app.ts' });
+
+    const browser = renderArtifactFocusMarkerExample(KEY, { tool: 'browser', url: 'https://example.com/docs' });
+    expect(browser).toBe(`<od-focus key="${KEY}" tool="browser" url="https://example.com/docs"/>`);
+    expect(parseArtifactFocusMarker(browser)).toMatchObject({
+      key: KEY,
+      tool: 'browser',
+      url: 'https://example.com/docs',
+    });
+
+    expect(renderArtifactFocusMarkerExample(KEY, { tool: 'files' })).toBe(
+      `<od-focus key="${KEY}" tool="files"/>`,
+    );
+  });
+
+  it('never writes a url the parser would drop', () => {
+    expect(
+      renderArtifactFocusMarkerExample(KEY, { tool: 'code', open: 'src/app.ts', url: 'https://example.com/' }),
+    ).toBe(`<od-focus key="${KEY}" tool="code" open="src/app.ts"/>`);
+    expect(renderArtifactFocusMarkerExample(KEY, { url: 'https://example.com/' })).toBe(
+      `<od-focus key="${KEY}"/>`,
+    );
+  });
 });
 
 describe('foldArtifactFocusSelections — last wins, per field', () => {
@@ -231,6 +477,92 @@ describe('foldArtifactFocusSelections — last wins, per field', () => {
 
   it('no events folds to an empty selection', () => {
     expect(foldArtifactFocusSelections([])).toEqual({});
+  });
+});
+
+/**
+ * `tool` is not last-wins on its own: it says how the SAME marker's target is
+ * shown, so it follows `open` rather than outliving it.
+ */
+describe('foldArtifactFocusSelections — tool follows its marker\'s open', () => {
+  it('an event with open carries its tool into the fold', () => {
+    expect(foldArtifactFocusSelections([{ open: 'src/app.ts', tool: 'code' }])).toEqual({
+      open: 'src/app.ts',
+      tool: 'code',
+    });
+  });
+
+  /*
+   * The case the rule exists for. Per-field last-wins would leave
+   * `{ open: 'index.html', tool: 'code' }` — the page shown in the code tool,
+   * which no marker ever asked for.
+   */
+  it('a later open without a tool clears the earlier tool', () => {
+    expect(
+      foldArtifactFocusSelections([{ open: 'src/app.ts', tool: 'code' }, { open: 'index.html' }]),
+    ).toEqual({ open: 'index.html' });
+  });
+
+  it('a later open with another tool replaces it', () => {
+    expect(
+      foldArtifactFocusSelections([
+        { open: 'index.html', tool: 'preview' },
+        { open: 'src/app.ts', tool: 'code' },
+      ]),
+    ).toEqual({ open: 'src/app.ts', tool: 'code' });
+  });
+
+  it('a tool without open sets the tool and leaves open alone', () => {
+    expect(foldArtifactFocusSelections([{ open: 'index.html' }, { tool: 'files' }])).toEqual({
+      open: 'index.html',
+      tool: 'files',
+    });
+    expect(
+      foldArtifactFocusSelections([
+        { open: 'index.html' },
+        { tool: 'browser', url: 'https://example.com/docs' },
+      ]),
+    ).toEqual({ open: 'index.html', tool: 'browser', url: 'https://example.com/docs' });
+  });
+
+  it('a show-only event touches neither open nor tool', () => {
+    expect(
+      foldArtifactFocusSelections([{ open: 'src/app.ts', tool: 'code' }, { show: ['src/app.ts'] }]),
+    ).toEqual({ open: 'src/app.ts', tool: 'code', show: ['src/app.ts'] });
+    expect(
+      foldArtifactFocusSelections([{ tool: 'board' }, { show: ['a.png', 'b.png'] }]),
+    ).toEqual({ tool: 'board', show: ['a.png', 'b.png'] });
+  });
+
+  it('the address goes when its tool goes', () => {
+    const browser: ArtifactFocusSelection = { tool: 'browser', url: 'https://example.com/docs' };
+    expect(foldArtifactFocusSelections([browser, { tool: 'files' }])).toEqual({ tool: 'files' });
+    expect(foldArtifactFocusSelections([browser, { open: 'index.html' }])).toEqual({ open: 'index.html' });
+    // A later browser marker with no address means "the browser, wherever it is".
+    expect(foldArtifactFocusSelections([browser, { tool: 'browser' }])).toEqual({ tool: 'browser' });
+  });
+
+  /*
+   * Events come back from storage, so a value this build does not know is
+   * possible. It is read as absent — which for an event with `open` means the
+   * tool is cleared, the same as a marker that never named one.
+   */
+  it('reads a stored tool or address it does not know as absent', () => {
+    const stored = [
+      { open: 'src/app.ts', tool: 'code' },
+      { open: 'index.html', tool: 'terminal' },
+    ] as unknown as ArtifactFocusSelection[];
+    expect(foldArtifactFocusSelections(stored)).toEqual({ open: 'index.html' });
+
+    const unknownAlone = [{ open: 'index.html' }, { tool: 'terminal' }] as unknown as ArtifactFocusSelection[];
+    expect(foldArtifactFocusSelections(unknownAlone)).toEqual({ open: 'index.html' });
+
+    expect(
+      foldArtifactFocusSelections([
+        { tool: 'browser', url: 'javascript:alert(1)' },
+        { tool: 'code', url: 'https://example.com/' },
+      ]),
+    ).toEqual({ tool: 'code' });
   });
 });
 
@@ -461,5 +793,64 @@ describe('renderArtifactFocusInstruction — what the model is actually told', (
 
   it('is empty without a key — an unkeyed marker is never accepted, so never taught', () => {
     expect(renderArtifactFocusInstruction('')).toBe('');
+  });
+
+  /*
+   * The tool block. Every example line is fed back through the parser, so the
+   * prompt cannot teach a spelling the daemon then drops — the drift that
+   * `renderArtifactFocusMarkerExample` exists to rule out, checked for `tool`
+   * and `url` the way the lines above check it for `open` and `show`.
+   */
+  describe('workspace tools', () => {
+    const lines = body.split('\n');
+    const start = lines.indexOf('Workspace tools:');
+    const examples = lines.filter((line) => line.startsWith('<od-focus') && line.includes(' tool="'));
+
+    it('teaches the tools in one block, after the artifact rules', () => {
+      expect(start).toBeGreaterThan(0);
+      expect(lines.filter((line) => line === 'Workspace tools:')).toHaveLength(1);
+      expect(body.indexOf('Artifact focus:')).toBeLessThan(body.indexOf('Workspace tools:'));
+    });
+
+    it('shows one parseable example per tool, each with this turn\'s key', () => {
+      const taught = examples.map((line) => parseArtifactFocusMarker(line.slice(0, line.indexOf('/>') + 2)));
+      for (const parsed of taught) expect(parsed.key).toBe(KEY);
+      // `preview` is the default and is taught as "leave tool out", not as a line.
+      expect(taught.map((parsed) => parsed.tool)).toEqual(
+        ARTIFACT_FOCUS_TOOLS.filter((tool) => tool !== 'preview'),
+      );
+      expect(taught.find((parsed) => parsed.tool === 'code')?.open).toBe('src/app.ts');
+      expect(taught.find((parsed) => parsed.tool === 'browser')?.url).toBe('https://example.com/');
+    });
+
+    it('says when each tool fits, in the model\'s terms', () => {
+      const block = lines.slice(start).join('\n');
+      expect(block).toMatch(/tool="code"[^\n]*source work/);
+      expect(block).toMatch(/tool="browser"[^\n]*web page/);
+      expect(block).toMatch(/tool="files"[^\n]*no single main one/);
+      expect(block).toMatch(/tool="board"[^\n]*side by side/);
+      expect(block).toMatch(/tool="design-system"[^\n]*design system changed/);
+    });
+
+    /*
+     * The default has to be restated, or the block reads as "always pick a
+     * tool" and every page turn starts opening the code tool.
+     */
+    it('keeps previewing as the default and one tool marker as the norm', () => {
+      expect(body).toMatch(/Leave tool out for a page, document, deck or image/);
+      expect(body).toMatch(/One tool marker per turn is the norm/);
+    });
+
+    /*
+     * This text is re-sent on every turn (the key is a per-run nonce, so it can
+     * never sit in the cached prompt head). The block is eight lines today; the
+     * ceiling leaves room to reword one, not to grow a paragraph per tool.
+     */
+    it('stays compact', () => {
+      const end = lines.findIndex((line, index) => index > start && line.startsWith("This turn's key is"));
+      const block = lines.slice(start, end);
+      expect(block).toHaveLength(8);
+      expect(block.join('\n').length).toBeLessThan(900);
+    });
   });
 });

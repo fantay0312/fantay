@@ -19,14 +19,23 @@ export type PaCollection =
   | "memories"
   | "memory_versions"
   | "memory_candidates"
+  | "episodes"
   | "goals"
   | "routines"
   | "channels"
   | "channel_inbox"
   | "channel_outbox"
   | "channel_pairings"
+  | "channel_attachments"
   | "approvals"
+  | "characters" | "lorebooks" | "personas" | "presets" | "chat_settings" | "chat_state" | "soul_traces"
+  | "soul_speech"
+  | "org_library"
   | "settings";
+const SNAPSHOT_COLLECTIONS: ReadonlySet<PaCollection> = new Set([
+  "agents", "groups", "conversations", "messages", "tasks", "attempts", "artifacts",
+  "memories", "memory_candidates", "goals", "routines", "settings",
+]);
 export class PaError extends Error {
   constructor(
     message: string,
@@ -64,6 +73,10 @@ export class PaStore {
   private readonly stmtListTaskAttempts: PaStmt;
   private readonly stmtActionableInbox: PaStmt;
   private readonly stmtActionableOutbox: PaStmt;
+  private readonly stmtConversationMessages: PaStmt;
+  private readonly stmtTaskByRequest: PaStmt;
+  /** Bumped by every write to a collection the /api/pa snapshot reads. */
+  changes = 0;
 
   subscribe(listener: (taskId: string | null, kind: string) => void): () => void {
     this.listeners.add(listener);
@@ -77,6 +90,7 @@ export class PaStore {
     CREATE UNIQUE INDEX IF NOT EXISTS pa_request_id ON pa_records(json_extract(data,'$.requestId')) WHERE collection='tasks';
     CREATE INDEX IF NOT EXISTS pa_attempt_task ON pa_records(json_extract(data,'$.taskId')) WHERE collection='attempts';
     CREATE INDEX IF NOT EXISTS pa_channel_state ON pa_records(collection, json_extract(data,'$.state')) WHERE collection IN ('channel_inbox','channel_outbox');
+    CREATE INDEX IF NOT EXISTS pa_message_conversation ON pa_records(json_extract(data,'$.conversationId')) WHERE collection='messages';
     CREATE TABLE IF NOT EXISTS pa_events (
       sequence INTEGER PRIMARY KEY AUTOINCREMENT, event_id TEXT UNIQUE NOT NULL,
       task_id TEXT, kind TEXT NOT NULL, at INTEGER NOT NULL, data TEXT NOT NULL
@@ -105,6 +119,8 @@ export class PaStore {
     this.stmtInsertAudit = db.prepare<unknown[]>("INSERT INTO pa_audit(event_id,previous_hash,hash) VALUES(?,?,?)");
     this.stmtCountTaskAttempts = db.prepare<unknown[]>("SELECT COUNT(*) AS count FROM pa_records WHERE collection='attempts' AND json_extract(data,'$.taskId')=?");
     this.stmtListTaskAttempts = db.prepare<unknown[]>("SELECT data FROM pa_records WHERE collection='attempts' AND json_extract(data,'$.taskId')=? ORDER BY rowid");
+    this.stmtConversationMessages = db.prepare<unknown[]>("SELECT data FROM pa_records WHERE collection='messages' AND json_extract(data,'$.conversationId')=? ORDER BY rowid");
+    this.stmtTaskByRequest = db.prepare<unknown[]>("SELECT data FROM pa_records WHERE collection='tasks' AND json_extract(data,'$.requestId')=?");
     this.stmtActionableInbox = db.prepare<unknown[]>(
       "SELECT data FROM pa_records WHERE collection='channel_inbox' AND (json_extract(data,'$.state')='pending' OR (json_extract(data,'$.state')='accepted' AND json_extract(data,'$.taskId') IS NOT NULL)) ORDER BY rowid",
     );
@@ -131,6 +147,15 @@ export class PaStore {
     return (this.stmtListTaskAttempts.all(taskId) as Array<{ data: string }>).map(
       (row) => JSON.parse(row.data) as T,
     );
+  }
+  listConversationMessages<T extends PaEntity>(conversationId: string): T[] {
+    return (this.stmtConversationMessages.all(conversationId) as Array<{ data: string }>).map(
+      (row) => JSON.parse(row.data) as T,
+    );
+  }
+  taskByRequest<T extends PaEntity>(requestId: string): T | null {
+    const row = this.stmtTaskByRequest.get(requestId) as { data: string } | undefined;
+    return row ? (JSON.parse(row.data) as T) : null;
   }
   listActionableChannelInbox<T extends PaEntity>(): T[] {
     return (this.stmtActionableInbox.all() as Array<{ data: string }>).map(
@@ -161,6 +186,7 @@ export class PaStore {
       updatedAt: now,
     } as T;
     this.stmtInsert.run(collection, id, 1, JSON.stringify(record));
+    if (SNAPSHOT_COLLECTIONS.has(collection)) this.changes += 1;
     return record;
   }
   update<T extends PaEntity>(
@@ -197,10 +223,12 @@ export class PaStore {
         409,
         "PA_REVISION_CONFLICT",
       );
+    if (SNAPSHOT_COLLECTIONS.has(collection)) this.changes += 1;
     return next;
   }
   remove(collection: PaCollection, id: string): void {
     this.stmtDelete.run(collection, id);
+    if (SNAPSHOT_COLLECTIONS.has(collection)) this.changes += 1;
   }
   event(
     taskId: string | null,

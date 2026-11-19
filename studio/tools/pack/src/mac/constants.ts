@@ -1,7 +1,10 @@
 // Intermediate artifact filenames are shared with the existing pack and launcher tooling.
 export const MAC_ARTIFACT_PREFIX = "Fantaydesign";
+export const MAC_NATIVE_SEARCH_EXECUTABLE =
+  `node_modules/@fantay/native-web-search/runtime/darwin-${process.arch}/smart-search`;
 
 export const INTERNAL_PACKAGES = [
+  { directory: "native-tool/web_search", name: "@fantay/native-web-search" },
   { directory: "packages/fantay-tokens", name: "@fantay/tokens" },
   { directory: "packages/tokentosea", name: "@fantay/tokentosea" },
   { directory: "packages/release", name: "@open-design/release" },

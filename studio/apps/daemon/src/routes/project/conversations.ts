@@ -1,5 +1,7 @@
 import type { Express } from 'express';
-import { isChatExecutionPermission, type ChatSessionMode } from '@open-design/contracts';
+import {
+  isChatExecutionPermission, type ChatSessionMode, type SelectChatMessageBranchRequest,
+} from '@open-design/contracts';
 import { readAnalyticsContext } from '../../analytics.js';
 import { nextForkedConversationTitle } from '../../conversation-fork-title.js';
 import { backfillBrandExtractionTranscriptForProject } from '../../brands/index.js';
@@ -8,6 +10,8 @@ import type { BoundWorkspaceResourceMutationGate } from '../../collab/workspace-
 import type { AuthorizeProjectRequest } from '../../collab/project-request-authority.js';
 import { TERMINAL_RUN_STATUSES } from '../../runtimes/runs.js';
 import { strategyTaskTurnsForRunIds } from '../../strategies/task-store.js';
+import { holdsConversation } from '../../strategies/od-next/task-handoff.js';
+import { MessageBranchConflict, selectMessageBranch } from '../../storage/message-branches.js';
 import { getProjectGroup } from '../../project-organization.js';
 
 import { registerProjectCommentRoutes } from './comments.js';
@@ -340,9 +344,9 @@ export function registerProjectConversationRoutes(app: Express, ctx: RegisterPro
     if (action !== 'read' && action !== 'archive') return sendApiError(res, 400, 'BAD_REQUEST', 'Expected read or archive');
     const now = Date.now();
     if (action === 'read') {
-      db.prepare("UPDATE conversations SET read_at = ?, unread_at = NULL WHERE project_id = ? AND id NOT LIKE 'comment-anchor-%'").run(now, req.params.id);
+      db.prepare("UPDATE conversations SET read_at = ?, unread_at = NULL WHERE project_id = ? AND side_parent_id IS NULL AND id NOT LIKE 'comment-anchor-%'").run(now, req.params.id);
     } else {
-      db.prepare("UPDATE conversations SET archived_at = COALESCE(archived_at, ?), pinned_at = NULL WHERE project_id = ? AND id NOT LIKE 'comment-anchor-%'").run(now, req.params.id);
+      db.prepare("UPDATE conversations SET archived_at = COALESCE(archived_at, ?), pinned_at = NULL WHERE project_id = ? AND side_parent_id IS NULL AND id NOT LIKE 'comment-anchor-%'").run(now, req.params.id);
     }
     res.json({ conversations: listConversations(db, req.params.id) });
   });
@@ -406,12 +410,38 @@ export function registerProjectConversationRoutes(app: Express, ctx: RegisterPro
     }
     // Stop any live agent run for this conversation before the row is gone,
     // otherwise the CLI subprocess is orphaned and keeps billing (#5468).
-    await cancelRunsOwnedBy(design.runs, { conversationId: req.params.cid });
+    const children = db.prepare('SELECT id FROM conversations WHERE side_parent_id = ?').all(req.params.cid) as { id: string }[];
+    await Promise.all([req.params.cid, ...children.map(child => child.id)].map(conversationId => cancelRunsOwnedBy(design.runs, { conversationId })));
     deleteConversationAndRepairTeamCommentAnchor(db, req.params.id, req.params.cid);
     res.json({ ok: true });
   });
 
   // ---- Messages -------------------------------------------------------------
+
+  app.post('/api/projects/:id/conversations/:cid/messages/:mid/select-branch', async (req, res) => {
+    if (!await authorizeProjectRequest(
+      req, res, req.params.id, { mode: 'write', capability: 'writeFiles' },
+    )) return;
+    if (!getRoutableConversation(req.params.id, req.params.cid)) {
+      return sendApiError(res, 404, 'CONVERSATION_NOT_FOUND', 'Conversation not found');
+    }
+    const expectedLeafId = (req.body as Partial<SelectChatMessageBranchRequest> | undefined)?.expectedLeafId;
+    if (typeof expectedLeafId !== 'string' || !expectedLeafId) {
+      return sendApiError(res, 400, 'BAD_REQUEST', 'Expected the current message leaf');
+    }
+    if (design.runs.list({ conversationId: req.params.cid }).some(holdsConversation)) {
+      return sendApiError(res, 409, 'RUN_IN_PROGRESS', 'Wait for the active reply before switching versions.');
+    }
+    try {
+      selectMessageBranch(db, req.params.cid, req.params.mid, expectedLeafId);
+    } catch (error) {
+      if (error instanceof MessageBranchConflict) {
+        return sendApiError(res, 409, 'MESSAGE_BRANCH_CONFLICT', error.message);
+      }
+      throw error;
+    }
+    res.json({ ok: true });
+  });
 
   app.get('/api/projects/:id/conversations/:cid/messages', async (req, res) => {
     if (!await authorizeProjectRequest(req, res, req.params.id, { mode: 'read' })) return;

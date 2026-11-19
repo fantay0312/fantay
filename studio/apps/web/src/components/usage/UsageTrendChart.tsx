@@ -206,10 +206,10 @@ export function UsageTrendChart({ data, zh, today, projectNames, allowProjectSpl
         </div>
         {compact ? null : (
           <div className={styles.controls}>
-            <Segmented className={styles.fill} value={metric} onValueChange={value => setMetric(value as UsageMetricKind)} aria-label={zh ? '图表指标' : 'Chart metric'}>
+            <Segmented size="sm" className={styles.fill} value={metric} onValueChange={value => setMetric(value as UsageMetricKind)} aria-label={zh ? '图表指标' : 'Chart metric'}>
               {(['tokens', 'cost', 'requests'] as const).map(kind => <SegmentedItem key={kind} value={kind}>{metricName(kind, zh)}</SegmentedItem>)}
             </Segmented>
-            <Segmented className={styles.fill} value={split} onValueChange={value => setSplit(value as UsageSplit)} aria-label={zh ? '拆分维度' : 'Split by'}>
+            <Segmented size="sm" className={styles.fill} value={split} onValueChange={value => setSplit(value as UsageSplit)} aria-label={zh ? '拆分维度' : 'Split by'}>
               <SegmentedItem value="model">{zh ? '按模型' : 'By model'}</SegmentedItem>
               <SegmentedItem value="provider">{zh ? '按来源' : 'By source'}</SegmentedItem>
               {allowProjectSplit ? <SegmentedItem value="project">{zh ? '按项目' : 'By project'}</SegmentedItem> : null}

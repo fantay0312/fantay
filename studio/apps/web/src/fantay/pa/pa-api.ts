@@ -2,7 +2,12 @@
 export const PA_ACCESS_REQUIRED = 'fantay-pa-access-required';
 let accessToken = '';
 export function setPaAccessToken(value: string): void { accessToken = value; }
-function paAccessHeader(): Record<string, string> { return accessToken ? { Authorization: `Bearer ${accessToken}` } : {}; }
+/** The enterprise access token as a header; the Memory Center client sends it too. */
+export function paAccessHeader(): Record<string, string> { return accessToken ? { Authorization: `Bearer ${accessToken}` } : {}; }
+/** Asks the workspace for the enterprise access token (again). */
+export function signalPaAccessRequired(): void {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(PA_ACCESS_REQUIRED));
+}
 export class PaRequestError extends Error {
   constructor(
     message: string,
@@ -24,8 +29,7 @@ export async function paRequest<T>(path = "", method = "GET", body?: unknown, si
   });
   const result = await response.json().catch(() => ({}));
   if (!response.ok) {
-    if (result?.error?.code === 'PA_ENTERPRISE_AUTH' && typeof window !== 'undefined')
-      window.dispatchEvent(new Event(PA_ACCESS_REQUIRED));
+    if (result?.error?.code === 'PA_ENTERPRISE_AUTH') signalPaAccessRequired();
     throw new PaRequestError(
       result?.error?.message ?? `Fantay request failed (${response.status})`,
       typeof result?.error?.code === 'string' ? result.error.code : null,
@@ -53,10 +57,26 @@ export async function downloadPaArtifact(id: string, name: string): Promise<void
     const result = await response.json().catch(() => ({}));
     throw new PaRequestError(result?.error?.message ?? `Fantay request failed (${response.status})`, null, response.status);
   }
-  const url = URL.createObjectURL(await response.blob());
+  savePaBlob(name, await response.blob());
+}
+
+/** Hands the viewer a file to save under `name`. */
+export function savePaBlob(name: string, blob: Blob): void {
+  const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
   anchor.download = name;
   anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** A portrait URL. `data:` URLs pass through unchanged, so lab fixtures can use inline SVG portraits. */
+export function paSoulAssetUrl(id: string | null | undefined): string | null {
+  if (!id) return null;
+  return id.startsWith('data:') ? id : `/api/pa/soul/assets/${encodeURIComponent(id)}`;
+}
+
+/** A generated speech file's URL. `data:` URLs pass through unchanged (the lab's generated tone). */
+export function paSoulSpeechUrl(id: string): string {
+  return id.startsWith('data:') ? id : `/api/pa/soul/speech/${encodeURIComponent(id)}`;
 }

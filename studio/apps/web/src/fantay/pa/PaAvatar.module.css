@@ -99,6 +99,18 @@
   box-shadow: 0 0 0 2px var(--pa-avatar-collar, var(--paper));
 }
 
+/* A character portrait in a cluster slot (rooms of characters): the image fills the disc. */
+.portraitFace {
+  background: var(--sub);
+}
+
+.portraitImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .more {
   background: var(--sub);
   color: var(--ink-soft);

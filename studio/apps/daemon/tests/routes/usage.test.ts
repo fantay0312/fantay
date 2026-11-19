@@ -23,5 +23,5 @@ it('serves account-scoped and authorized project usage from the same read model'
   expect(all.totals).toMatchObject({requests:1,inputTokens:12});expect(all.projects.map(row=>row.projectId)).toEqual(['film']);
   const ranged=await (await fetch(`${base}/api/usage?from=2026-01-01&to=2026-01-31&provider=tokentosea&limit=0&activity=1&timeZone=UTC`)).json() as {from:string;to:string;provider:string;recent:unknown[];activity?:{days:unknown[]}};
   expect(ranged).toMatchObject({from:'2026-01-01',to:'2026-01-31',provider:'tokentosea',recent:[]});expect(Array.isArray(ranged.activity?.days)).toBe(true);
-  for(const query of ['from=2026-01-02&to=2026-01-01','from=2026-02-30&to=2026-03-01','from=2025-01-01&to=2026-12-31','from=2026-01-01','limit=1001','provider='])expect((await fetch(`${base}/api/usage?${query}`)).status).toBe(400);
+  for(const query of ['scope=invalid','scope=device&projectId=film','from=2026-01-02&to=2026-01-01','from=2026-02-30&to=2026-03-01','from=2025-01-01&to=2026-12-31','from=2026-01-01','limit=1001','provider='])expect((await fetch(`${base}/api/usage?${query}`)).status).toBe(400);
 });

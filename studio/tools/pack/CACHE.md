@@ -66,6 +66,12 @@ The build recipe explicitly sets `OD_WEB_TYPECHECK=external`; this recipe is
 part of the workspace node key. Local ordinary `next build` still checks its
 production-only tsconfig. Declaration outputs remain part of the cache contract.
 
+The workspace closure includes `native-tool/web_search`. Its source key covers
+the complete vendored engine, adapter and pinned build dependencies, and records
+the host architecture. Runtime output, temporary build files and Python caches
+are excluded from source hashing. The prepared self-contained search runtime is
+a workspace output and is restored with its TypeScript adapter on cache hits.
+
 ## Determinant rules
 
 The Windows resource-tree key includes the contents of every path in

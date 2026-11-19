@@ -114,7 +114,6 @@ interface Props {
   onUpload: () => void;
   onUploadFiles: (files: File[]) => void;
   onPaste: () => void;
-  onNewSketch: () => void;
   onOpenBrowser?: () => void;
   onCreateDesignSystem?: () => void;
   onCreateDesignSystemFromProject?: () => void;
@@ -124,7 +123,7 @@ interface Props {
   /** Opens the "Select from library" picker to pull registry assets in. */
   onSelectFromLibrary?: () => void;
   // Reports the folder the panel is currently viewing so the parent can create
-  // new files (upload / paste / new sketch / dropped files) under it instead
+  // new files (upload / paste / dropped files) under it instead
   // of the project root. Fires whenever the user navigates folders.
   onCurrentDirChange?: (dir: string) => void;
   uploadError?: string | null;
@@ -498,7 +497,6 @@ export function DesignFilesPanel({
   onUpload,
   onUploadFiles,
   onPaste,
-  onNewSketch,
   onOpenBrowser,
   onCreateDesignSystem,
   onCreateDesignSystemFromProject,
@@ -557,7 +555,7 @@ export function DesignFilesPanel({
   const projectMenuRef = useRef<HTMLDivElement | null>(null);
 
   // Keep the parent's create-target in sync with the folder being viewed, so
-  // uploads / pastes / new sketches / dropped files land in the open folder
+  // uploads / pastes / dropped files land in the open folder
   // rather than the project root.
   useEffect(() => {
     onCurrentDirChange?.(currentDir);
@@ -1511,20 +1509,6 @@ export function DesignFilesPanel({
         {/* Keep starter actions discoverable in shared read-only
             projects, but disable every project mutation in place. */}
         <div className="df-empty-actions">
-          <Button
-            variant="primary"
-            size="default"
-            className="df-empty-cta df-empty-cta-primary"
-            data-testid={beforeFirstListing ? undefined : 'design-files-empty-new-sketch'}
-            disabled={viewerOnly}
-            onClick={onNewSketch}
-            title={viewerOnly
-              ? t('fileViewer.readonlySharedNoExport')
-              : t('designFiles.newSketch')}
-          >
-            <Icon name="pencil" size={13} />
-            <span>{t('designFiles.newSketch')}</span>
-          </Button>
           {/* `onPaste` is a historical prop name — the action creates
               a new blank Markdown document. */}
           <Button

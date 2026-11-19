@@ -18,7 +18,8 @@
 /* ── Model menu: every channel cascades into a flyout; TokenToSea groups models by supplier ── */
 .menu, .suppliers, .models { min-width: 0; max-width: calc(100vw - 24px); max-height: min(560px, var(--radix-dropdown-menu-content-available-height, calc(100dvh - 24px))); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: var(--composer-menu-pad); border: 1px solid var(--line); background: var(--surface); color: var(--ink); box-shadow: var(--float-shadow); }
 .menu { width: min(300px, calc(100vw - 24px)); }
-.suppliers { width: min(220px, calc(100vw - 24px)); }
+.suppliers { width: min(270px, calc(100vw - 24px)); }
+.offerPrice { max-width: 49%; font-size: 11px; line-height: 1.4; font-variant-numeric: tabular-nums; color: var(--ink-soft); text-align: end; }
 .models { width: min(300px, calc(100vw - 24px)); }
 .caption { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 6px 8px 4px; font-size: 12px; font-weight: 500; line-height: 16px; color: var(--ink-faint); }
 .caption .channelIcon { flex-basis: 14px; width: 14px; height: 14px; }

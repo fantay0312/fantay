@@ -1,0 +1,1267 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Shared Soul building blocks (Soul UI spec §8.7, §4.4). Two colour worlds: the transcript pieces (bubble, narration,
+   separator, story frame, typing bubble, lines under a reply, preview, swatch) read `--pa-skin-*` only; the chrome
+   pieces (tag, tag input, stepper, chips, state bar and value, care frame) read base tokens and `--pa-soul-*`.
+   Motion follows the PA grammar (pa.css): enter 240, exit 160, swap 300, quint ease; nothing scales below .97.
+   Local properties: none are read before they are declared here, except the inline --pa-bar and --pa-reveal-delay. */
+
+/* ── tag ── */
+
+.tag {
+  display: inline-flex;
+  flex: none;
+  box-sizing: border-box;
+  align-items: center;
+  gap: 4px;
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-tag);
+  font-family: var(--font-ui);
+  font-size: var(--type-caption);
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+  vertical-align: middle;
+  user-select: none;
+}
+
+.tag[data-tone='neutral'] {
+  background: var(--pa-soul-tag-bg);
+  color: var(--pa-soul-tag-ink);
+}
+
+.tag[data-tone='outline'] {
+  border-color: var(--line);
+  color: var(--ink-soft);
+}
+
+.tag[data-tone='solid'] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.tag[data-tone='warn'] {
+  background: var(--pa-needs-bg);
+  color: var(--warning-ink);
+}
+
+/* On a theme paper (story cards, the transcript): hairline tags in the paper's meta ink; solid takes the accent. */
+.tag[data-skin][data-tone='neutral'],
+.tag[data-skin][data-tone='outline'] {
+  border-color: var(--pa-skin-line);
+  background: transparent;
+  color: var(--pa-skin-meta);
+}
+
+.tag[data-skin][data-tone='solid'] {
+  background: var(--pa-skin-accent);
+  color: var(--pa-skin-accent-ink);
+}
+
+.tagIcon {
+  display: inline-grid;
+  flex: none;
+  width: 12px;
+  height: 12px;
+  place-items: center;
+}
+
+.tagIcon svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* ── tag input ── */
+
+.tagInput {
+  display: flex;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 3px 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  cursor: text;
+  transition:
+    border-color var(--pa-dur-quick) var(--pa-ease),
+    box-shadow var(--pa-dur-quick) var(--pa-ease);
+}
+
+.tagInput:focus-within {
+  border-color: var(--brand);
+  box-shadow: var(--shadow-elevation-1-focus);
+}
+
+.tagInput[data-disabled] {
+  cursor: not-allowed;
+  opacity: var(--disabled-opacity);
+}
+
+.tagChip {
+  max-width: 100%;
+}
+
+.tagChipText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tagField {
+  flex: 1 1 72px;
+  min-width: 72px;
+  height: 24px;
+  padding-inline: 2px;
+  font-size: var(--type-body);
+}
+
+/* ── stepper ── */
+
+.stepper {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+.stepperValue {
+  box-sizing: border-box;
+  min-width: 40px;
+  padding: 0 4px;
+  border-radius: var(--radius-row);
+  color: var(--ink);
+  font-size: var(--type-body);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  line-height: 28px;
+  text-align: center;
+  white-space: nowrap;
+  outline: none;
+}
+
+.stepperValue:focus-visible {
+  box-shadow: 0 0 0 2px var(--focus-ring-color);
+}
+
+.stepper[data-disabled] .stepperValue {
+  opacity: var(--disabled-opacity);
+}
+
+/* ── choice and play chips (tray) ── */
+
+.trayChip {
+  max-width: 100%;
+  animation: soul-chip-in var(--pa-dur-enter) var(--pa-ease) backwards;
+  animation-delay: calc(var(--pa-reveal-delay) * 18ms);
+}
+
+.chipText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── state bar and value (monochrome) ── */
+
+.bar {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 44px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--pa-soul-bar-track);
+}
+
+.bar[data-size='md'] {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  height: 6px;
+  border-radius: 3px;
+}
+
+.barFill {
+  display: block;
+  width: calc(var(--pa-bar) * 100%);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--pa-soul-bar-fill);
+  transition: width var(--pa-dur-swap) var(--pa-ease);
+}
+
+.stateValue {
+  display: inline-flex;
+  flex: none;
+  align-items: baseline;
+  gap: 6px;
+  font-size: var(--type-label);
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.stateLabel {
+  color: var(--ink-faint);
+}
+
+.stateText {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+/* ── story-card frame (roll, draw, event): a card on the paper, never shaped like a bubble ── */
+
+.story {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 360px;
+  margin: 12px auto;
+  padding: 10px 14px;
+  border: 1px solid var(--pa-skin-line);
+  border-radius: var(--radius-card);
+  background: var(--pa-skin-card-bg);
+  color: var(--pa-skin-ink);
+  font-family: var(--font-ui);
+  transition:
+    background-color var(--pa-dur-enter) var(--pa-ease),
+    border-color var(--pa-dur-enter) var(--pa-ease),
+    color var(--pa-dur-enter) var(--pa-ease);
+}
+
+.story[data-enter] {
+  animation: soul-card-in var(--pa-dur-enter) var(--pa-ease) backwards;
+}
+
+.storyCaption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  color: var(--pa-skin-meta);
+  font-size: var(--type-label);
+  line-height: 16px;
+}
+
+/* ── bubble ──
+   Radius by position (incoming; outgoing mirrors): single R R R T · first R R R J · middle J R R J · last J R R T, in
+   the order top-start, top-end, bottom-end, bottom-start. Logical corners, so RTL mirrors with the text. */
+
+.bubble {
+  position: relative;
+  box-sizing: border-box;
+  width: fit-content;
+  min-width: 0;
+  max-width: min(72%, 520px);
+  padding: 8px 12px;
+  border: 1px solid var(--pa-skin-in-border);
+  border-start-start-radius: var(--pa-skin-radius);
+  border-start-end-radius: var(--pa-skin-radius);
+  border-end-end-radius: var(--pa-skin-radius);
+  border-end-start-radius: var(--pa-skin-radius);
+  background: var(--pa-skin-in-bg);
+  color: var(--pa-skin-in-ink);
+  font-family: var(--pa-skin-font);
+  font-size: var(--pa-skin-size);
+  font-weight: 400;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  transition:
+    background-color var(--pa-dur-enter) var(--pa-ease),
+    border-color var(--pa-dur-enter) var(--pa-ease),
+    color var(--pa-dur-enter) var(--pa-ease),
+    opacity var(--pa-dur-quick) var(--pa-ease);
+}
+
+.bubble[data-side='out'] {
+  border-color: var(--pa-skin-out-border);
+  background: var(--pa-skin-out-bg);
+  color: var(--pa-skin-out-ink);
+  font-weight: var(--pa-skin-out-weight);
+}
+
+.bubble[data-side='in'][data-position='first'],
+.bubble[data-side='in'][data-position='middle'] {
+  border-end-start-radius: var(--pa-skin-radius-join);
+}
+
+.bubble[data-side='in'][data-position='single'],
+.bubble[data-side='in'][data-position='last'] {
+  border-end-start-radius: var(--pa-skin-radius-tail);
+}
+
+.bubble[data-side='in'][data-position='middle'],
+.bubble[data-side='in'][data-position='last'] {
+  border-start-start-radius: var(--pa-skin-radius-join);
+}
+
+.bubble[data-side='out'][data-position='first'],
+.bubble[data-side='out'][data-position='middle'] {
+  border-end-end-radius: var(--pa-skin-radius-join);
+}
+
+.bubble[data-side='out'][data-position='single'],
+.bubble[data-side='out'][data-position='last'] {
+  border-end-end-radius: var(--pa-skin-radius-tail);
+}
+
+.bubble[data-side='out'][data-position='middle'],
+.bubble[data-side='out'][data-position='last'] {
+  border-start-end-radius: var(--pa-skin-radius-join);
+}
+
+/* A reply rendered as one rich bubble (table, list, code fence) may use the whole text column. */
+.bubble[data-rich] {
+  max-width: 100%;
+}
+
+.bubble[data-pending] {
+  opacity: 0.6;
+}
+
+.bubble[data-dimmed] {
+  opacity: 0.45;
+}
+
+.bubble[data-hidden] {
+  border-style: dashed;
+  border-color: var(--pa-skin-line);
+  opacity: 0.55;
+}
+
+.bubble[data-editing] {
+  outline: 2px solid var(--pa-skin-accent);
+  outline-offset: 2px;
+}
+
+.bubble[data-enter] {
+  animation: soul-rise var(--pa-dur-enter) var(--pa-ease) backwards;
+}
+
+/* A chat column narrower than 520 (when the transcript declares an inline-size container). */
+@container (max-width: 519px) {
+  .bubble:not([data-rich]),
+  .narration {
+    max-width: 78%;
+  }
+}
+
+/* ── narration line: a split bubble that is only action, unboxed at the bubble indent ── */
+
+.narration {
+  box-sizing: border-box;
+  width: fit-content;
+  min-width: 0;
+  max-width: min(72%, 520px);
+  padding: 2px 12px;
+  color: var(--pa-skin-soft);
+  font-family: var(--pa-skin-font);
+  font-size: calc(var(--pa-skin-size) - 0.5px);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  transition: color var(--pa-dur-enter) var(--pa-ease);
+}
+
+/* Like the bubbles, the line never aligns itself: the cluster puts it at the start or the end. */
+.narration[data-side='out'] {
+  text-align: end;
+}
+
+/* ── separator: date or time between hairlines ── */
+
+.separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 16px 0 14px;
+  color: var(--pa-skin-meta);
+  font-family: var(--pa-skin-display-font);
+  font-size: var(--type-label);
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+  text-align: center;
+  user-select: none;
+}
+
+.separator::before,
+.separator::after {
+  flex: none;
+  width: 24px;
+  height: 1px;
+  background: var(--pa-skin-line);
+  content: '';
+}
+
+/* ── typing bubble (only while a real turn runs) ── */
+
+.typing {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 8px;
+  animation: soul-typing-in var(--pa-dur-enter) var(--pa-ease) backwards;
+}
+
+.typingPortrait {
+  display: inline-flex;
+  flex: none;
+}
+
+.typingLine {
+  display: flex;
+  min-width: 0;
+  min-height: 32px;
+  align-items: center;
+  gap: 8px;
+}
+
+.typingBubble {
+  display: inline-flex;
+  box-sizing: border-box;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--pa-skin-in-border);
+  border-start-start-radius: var(--pa-skin-radius);
+  border-start-end-radius: var(--pa-skin-radius);
+  border-end-end-radius: var(--pa-skin-radius);
+  border-end-start-radius: var(--pa-skin-radius-tail);
+  background: var(--pa-skin-in-bg);
+  color: var(--pa-skin-in-ink);
+  transition:
+    background-color var(--pa-dur-enter) var(--pa-ease),
+    border-color var(--pa-dur-enter) var(--pa-ease);
+}
+
+/* Stage 2 (streaming) passes the partial text; stage 1 never does. */
+.typingBubble[data-text] {
+  flex: 0 1 auto;
+  justify-content: flex-start;
+  max-width: min(72%, 520px);
+  height: auto;
+  min-height: 32px;
+  padding: 8px 12px;
+  font-family: var(--pa-skin-font);
+  font-size: var(--pa-skin-size);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--pa-skin-in-soft);
+  opacity: 0.35;
+  animation: soul-typing-dot var(--pa-loop-typing) linear infinite;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 160ms;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 320ms;
+}
+
+/* 停止: on hover or focus of the row, always without hover, and for good once the turn has run 8 s
+   (`data-pinned` on the slot, or on the node passed as `trailing`). */
+.typingTrailing {
+  display: inline-flex;
+  flex: none;
+  opacity: 0;
+  transition: opacity var(--pa-dur-quick) var(--pa-ease);
+}
+
+.typing:hover .typingTrailing,
+.typing:focus-within .typingTrailing,
+.typingTrailing[data-pinned],
+.typingTrailing:has(> [data-pinned]) {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .typingTrailing {
+    opacity: 1;
+  }
+}
+
+/* ── live text (stage 2): the reply as it is written, in the bubbles a stored reply uses ──
+   The body mirrors a stored cluster (portrait 36 + 8, parts 3 apart, a part row of bubble + trailing action), so the
+   stored message takes the place of the live bubbles without a jump. A bubble that grows is the same element and does
+   not animate; a new part fades in (--pa-dur-quick). The caret is a 2 px bar after the last character of the last part
+   (the plain path's last paragraph, the markdown path's last paragraph, heading or list item); a part that ends in a
+   code block or table shows none. A stopped or failed draft is the same bubbles at .6, mounted without motion so the
+   text stays where it was. Local property: --live-caret. */
+
+.liveBody {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+}
+
+.live {
+  --live-caret: var(--pa-skin-in-soft);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+  transition: opacity var(--pa-dur-quick) var(--pa-ease);
+}
+
+.live .narration {
+  --live-caret: var(--pa-skin-soft);
+}
+
+.live[data-tone='stopped'],
+.live[data-tone='failed'] {
+  opacity: 0.6;
+}
+
+.livePart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  animation: soul-fade-in var(--pa-dur-quick) var(--pa-ease) backwards;
+}
+
+.typing[data-tone='stopped'],
+.typing[data-tone='failed'],
+.typing[data-tone='stopped'] .livePart,
+.typing[data-tone='failed'] .livePart {
+  animation: none;
+}
+
+.liveText {
+  min-width: 0;
+}
+
+.livePlain {
+  white-space: pre-line;
+}
+
+/* Where the transcript's lines under a reply start (its .lineWrap: 4 px in; past the rule in the journal). */
+.liveFooter {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding-inline: 4px;
+}
+
+.caret,
+.liveText[data-caret] :global([data-slot='soul-text']) > p:last-child::after,
+.liveText[data-caret] :global(.prose-block) > :last-child:not(ul, ol, pre, table, blockquote, hr, div)::after,
+.liveText[data-caret] :global(.prose-block) > :is(ul, ol):last-child > li:last-child::after {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-inline-start: 3px;
+  border-radius: 1px;
+  background: var(--live-caret);
+  content: '';
+  vertical-align: -0.16em;
+  animation: soul-caret var(--pa-loop-caret) ease-in-out infinite;
+}
+
+/* ── voice bar (stage 2): play / pause, a seekable track, the time; 28 high ──
+   Inside an incoming bubble it reads the bubble's own ink (a hairline above separates it from the text); on the paper
+   (journal, or a message without a box) the paper's meta ink, line and accent. The track is a 20 px hit area around a
+   4 px rail; the thumb shows on hover, focus and drag. Local properties: --voice-ink, --voice-soft, --voice-track,
+   --voice-fill; --pa-voice (0–1) is set inline. */
+
+.voice {
+  --voice-ink: var(--pa-skin-in-ink);
+  --voice-soft: var(--pa-skin-in-soft);
+  --voice-track: color-mix(in srgb, var(--pa-skin-in-ink) 18%, transparent);
+  --voice-fill: var(--pa-skin-in-ink);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 28px;
+  color: var(--voice-soft);
+  font-family: var(--font-ui);
+  font-size: var(--type-label);
+  font-weight: 400;
+  line-height: 16px;
+}
+
+.voice[data-surface='bubble'] {
+  margin-top: 8px;
+  padding-top: 4px;
+  border-top: 1px solid color-mix(in srgb, var(--voice-ink) 12%, transparent);
+}
+
+.voice[data-surface='bubble'][data-side='out'] {
+  --voice-ink: var(--pa-skin-out-ink);
+  --voice-soft: var(--pa-skin-out-soft);
+  --voice-track: color-mix(in srgb, var(--pa-skin-out-ink) 22%, transparent);
+  --voice-fill: var(--pa-skin-out-ink);
+}
+
+.voice[data-surface='paper'] {
+  --voice-ink: var(--pa-skin-ink);
+  --voice-soft: var(--pa-skin-meta);
+  --voice-track: var(--pa-skin-line);
+  --voice-fill: var(--pa-skin-accent);
+}
+
+/* The toggle's glyph lines up with the text above it. */
+.voice .voiceToggle {
+  flex: none;
+  margin-inline-start: -6px;
+  color: var(--voice-ink);
+}
+
+.voice .voiceToggle:hover {
+  background: color-mix(in srgb, var(--voice-ink) 10%, transparent);
+  color: var(--voice-ink);
+}
+
+.voiceLead {
+  display: inline-grid;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-inline-start: -6px;
+  place-items: center;
+}
+
+.voiceNote {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.voiceTrack {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 96px;
+  max-width: 220px;
+  height: 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  outline: none;
+  touch-action: none;
+}
+
+.voiceTrack[aria-disabled] {
+  cursor: default;
+}
+
+.voiceTrack:focus-visible {
+  box-shadow: 0 0 0 2px var(--focus-ring-color);
+}
+
+.voiceTrack::before {
+  position: absolute;
+  top: 50%;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: 2px;
+  background: var(--voice-track);
+  content: '';
+  inset-inline: 0;
+}
+
+.voiceFill {
+  position: absolute;
+  top: 50%;
+  width: calc(var(--pa-voice) * 100%);
+  height: 4px;
+  margin-top: -2px;
+  border-radius: 2px;
+  background: var(--voice-fill);
+  inset-inline-start: 0;
+}
+
+.voiceThumb {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin-top: -5px;
+  margin-inline-start: -5px;
+  border-radius: 50%;
+  background: var(--voice-fill);
+  inset-inline-start: calc(var(--pa-voice) * 100%);
+  opacity: 0;
+  transform: scale(0.8);
+  transition:
+    opacity var(--pa-dur-quick) var(--pa-ease),
+    transform var(--pa-dur-quick) var(--pa-ease);
+}
+
+/* timeupdate arrives about four times a second: a short glide keeps the fill from stepping, except under a drag. */
+.voiceTrack:not([data-dragging]) .voiceFill {
+  transition: width 250ms linear;
+}
+
+.voiceTrack:not([data-dragging]) .voiceThumb {
+  transition:
+    opacity var(--pa-dur-quick) var(--pa-ease),
+    transform var(--pa-dur-quick) var(--pa-ease),
+    inset-inline-start 250ms linear;
+}
+
+.voiceTrack:hover .voiceThumb,
+.voiceTrack:focus-visible .voiceThumb,
+.voiceTrack[data-dragging] .voiceThumb {
+  opacity: 1;
+  transform: none;
+}
+
+.voiceTrack[aria-disabled] .voiceThumb {
+  opacity: 0;
+}
+
+.voiceTime {
+  flex: none;
+  color: var(--voice-soft);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.voiceError {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  color: var(--voice-soft);
+}
+
+.voiceError::before {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-ink);
+  content: '';
+}
+
+.voice .voiceRetry {
+  color: var(--voice-ink);
+  font-size: var(--type-label);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  text-underline-offset: 3px;
+}
+
+/* ── lines under a reply: delta, candidate, failed (12, the paper's meta ink, min-height 24) ── */
+
+.metaLine {
+  display: flex;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  min-width: 0;
+  min-height: 24px;
+  color: var(--pa-skin-meta);
+  font-family: var(--font-ui);
+  font-size: var(--type-label);
+  line-height: 16px;
+  overflow-wrap: anywhere;
+  animation: soul-fade-in var(--pa-dur-enter) var(--pa-ease) backwards;
+}
+
+.metaLine[data-align='end'] {
+  justify-content: flex-end;
+  text-align: end;
+}
+
+.metaLine[data-tone='failed']::before {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-ink);
+  content: '';
+}
+
+.metaLine :global([data-slot='button'][data-variant='link']):not(.deltaButton) {
+  color: var(--pa-skin-meta);
+  font-size: var(--type-label);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  text-underline-offset: 3px;
+}
+
+.metaLine :global([data-slot='button'][data-variant='link']:hover):not(.deltaButton) {
+  color: var(--pa-skin-ink);
+  text-decoration-color: currentColor;
+}
+
+/* The whole delta line is one link-styled button: no underline at rest, wraps instead of clipping. */
+.deltaButton {
+  justify-content: flex-start;
+  max-width: 100%;
+  min-height: 24px;
+  color: var(--pa-skin-meta);
+  font-size: var(--type-label);
+  font-weight: 400;
+  line-height: 16px;
+  text-align: start;
+  white-space: normal;
+  text-decoration: none;
+}
+
+.deltaButton:hover {
+  color: var(--pa-skin-ink);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  text-underline-offset: 3px;
+}
+
+.deltaButton > :global([data-slot='button-label']) {
+  display: inline;
+  overflow-wrap: anywhere;
+}
+
+/* ── care card: app tokens only, never the theme ── */
+
+.care {
+  display: flex;
+  box-sizing: border-box;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 520px;
+  margin-top: 6px;
+  margin-inline-start: auto;
+  padding: 9px 6px 9px 12px;
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--type-body);
+  line-height: 1.55;
+  animation: soul-fade-in var(--pa-dur-enter) var(--pa-ease) backwards;
+}
+
+.careBody {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-block: 2px;
+}
+
+/* ── theme swatch: the paper with one incoming and one outgoing mini bubble ── */
+
+.swatch {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  flex: none;
+  width: 70px;
+  height: 44px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+
+.swatchIn,
+.swatchOut {
+  position: absolute;
+  box-sizing: border-box;
+  height: 10px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.swatchIn {
+  top: 8px;
+  width: 30px;
+  inset-inline-start: 8px;
+  border-color: var(--pa-skin-in-border);
+  background: var(--pa-skin-in-bg);
+}
+
+.swatchOut {
+  bottom: 8px;
+  width: 26px;
+  inset-inline-end: 8px;
+  border-color: var(--pa-skin-out-border);
+  background: var(--pa-skin-out-bg);
+}
+
+/* ── preview chat (appearance modal): the transcript's own pieces on a tiny stage ── */
+
+.preview {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  column-gap: 8px;
+  row-gap: 3px;
+  min-width: 0;
+}
+
+.previewWide {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.previewWide > .separator {
+  margin: 2px 0 12px;
+}
+
+.previewWide > .story {
+  margin: 11px auto 9px;
+}
+
+.previewPortrait {
+  display: inline-flex;
+  grid-column: 1;
+}
+
+.previewIncoming {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  grid-column: 2;
+  gap: 3px;
+  min-width: 0;
+}
+
+.previewIncoming > .bubble,
+.previewIncoming > .narration {
+  max-width: 88%;
+}
+
+.previewOutgoing {
+  display: flex;
+  justify-content: flex-end;
+  grid-column: 1 / -1;
+  margin-top: 11px;
+}
+
+.previewOutgoing > .bubble {
+  max-width: 80%;
+}
+
+.previewDelta {
+  grid-column: 2;
+  min-width: 0;
+}
+
+/* The transcript's action style (SoulRoleplayText): Latin slants, CJK stays upright. */
+.previewAction {
+  font-style: italic;
+  font-synthesis-style: none;
+}
+
+.rollHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rollLabel {
+  color: var(--pa-skin-ink);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.rollNotation {
+  color: var(--pa-skin-soft);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+.rollBody {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.die {
+  display: inline-grid;
+  box-sizing: border-box;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid var(--pa-skin-line);
+  border-radius: var(--radius-tag);
+  color: var(--pa-skin-ink);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rollModifier {
+  color: var(--pa-skin-soft);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rollTotal {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-inline-start: auto;
+  color: var(--pa-skin-meta);
+  font-size: 12px;
+}
+
+.rollTotalValue {
+  color: var(--pa-skin-ink);
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* The journal's head line over the incoming entry; the bubble layout has none. */
+.previewHead {
+  display: none;
+}
+
+.previewHeadName {
+  font-weight: 600;
+}
+
+.previewHeadTime {
+  color: var(--pa-skin-meta);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.previewHeadTime::before {
+  margin-inline-end: 6px;
+  content: '·';
+}
+
+/* ── journal (手帐, stage 2): the same pieces as entries on the paper ──
+   Under any [data-pa-layout='journal'] ancestor (the companion chat column, or the preview island). An incoming part
+   loses its box: text in the paper's ink with a 2 px accent rule on its inline start; narration hangs off the same
+   margin on a hairline-coloured rule, so the parts of one reply read as one continuous margin line (the transcript
+   closes the gaps between them). The colours are paper-side only (ink, soft, meta, accent, line), never the incoming
+   bubble's, which in deepsea light are light-on-dark. An outgoing part stays a note on the outgoing fill, with small
+   square corners and a 1 px edge. A date is a left-aligned label with the hairline running to the right. The typing
+   dots and the live text take the same treatment. */
+
+:global([data-pa-layout='journal']) .bubble[data-side='in'][data-position] {
+  max-width: min(92%, 600px);
+  padding-block: 4px;
+  padding-inline: 12px 0;
+  border: 0;
+  border-inline-start: 2px solid color-mix(in srgb, var(--pa-skin-accent) 72%, transparent);
+  border-radius: 0;
+  background: transparent;
+  color: var(--pa-skin-ink);
+}
+
+:global([data-pa-layout='journal']) .bubble[data-side='in'][data-position][data-rich] {
+  max-width: 100%;
+}
+
+:global([data-pa-layout='journal']) .bubble[data-side='in'][data-position][data-hidden] {
+  border-inline-start-style: dashed;
+  border-inline-start-color: var(--pa-skin-line);
+}
+
+:global([data-pa-layout='journal']) .narration[data-side='in'] {
+  max-width: min(92%, 600px);
+  padding-block: 4px;
+  padding-inline: 12px 0;
+  border-inline-start: 2px solid var(--pa-skin-line);
+}
+
+:global([data-pa-layout='journal']) .bubble[data-side='out'][data-position] {
+  border-color: color-mix(in srgb, var(--pa-skin-out-ink) 14%, var(--pa-skin-out-bg));
+  border-radius: 3px;
+}
+
+:global([data-pa-layout='journal']) .separator {
+  justify-content: flex-start;
+  gap: 12px;
+  margin: 22px 0 14px;
+  font-size: 13px;
+  text-align: start;
+}
+
+:global([data-pa-layout='journal']) .separator::before {
+  display: none;
+}
+
+:global([data-pa-layout='journal']) .separator::after {
+  flex: 1 1 auto;
+  width: auto;
+}
+
+/* The typing row lines up with a journal cluster (portrait 48 + 12), so the stored entry replaces it in place. */
+:global([data-pa-layout='journal']) .typing {
+  gap: 12px;
+}
+
+:global([data-pa-layout='journal']) .typingPortrait {
+  padding-top: 2px;
+}
+
+:global([data-pa-layout='journal']) .typingBubble {
+  min-width: 0;
+  height: 26px;
+  padding-block: 0;
+  padding-inline: 12px 0;
+  border: 0;
+  border-inline-start: 2px solid color-mix(in srgb, var(--pa-skin-accent) 72%, transparent);
+  border-radius: 0;
+  background: transparent;
+}
+
+:global([data-pa-layout='journal']) .liveFooter {
+  padding-inline: 14px 0;
+}
+
+:global([data-pa-layout='journal']) .dot {
+  background: var(--pa-skin-soft);
+}
+
+:global([data-pa-layout='journal']) .live {
+  --live-caret: var(--pa-skin-soft);
+  gap: 0;
+}
+
+:global([data-pa-layout='journal']) .previewIncoming {
+  gap: 0;
+}
+
+:global([data-pa-layout='journal']) .previewHead {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 4px;
+  color: var(--pa-skin-ink);
+  font-family: var(--pa-skin-display-font);
+  font-size: 12.5px;
+  line-height: 18px;
+}
+
+:global([data-pa-layout='journal']) .previewWide > .separator {
+  margin: 2px 0 12px;
+}
+
+/* ── motion ──
+   Entrances have no `to` keyframe and fill backwards only: they end on the element's own opacity, so a pending
+   bubble (.6), a hidden one (.55) and a resting suggestion chip (.6) keep their state after rising in. */
+
+@keyframes soul-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes soul-typing-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes soul-chip-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes soul-card-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+@keyframes soul-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes soul-typing-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+
+/* The live caret: a soft pulse rather than a hard blink. */
+@keyframes soul-caret {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.15;
+  }
+}
+
+/* Reduced motion: only short opacity changes remain; dots rest at .6; no translate, scale, stagger or bar glide. */
+@media (prefers-reduced-motion: reduce) {
+  .bubble[data-enter],
+  .story[data-enter],
+  .typing,
+  .trayChip,
+  .metaLine,
+  .care {
+    animation: soul-fade-in 120ms linear backwards;
+    animation-delay: 0ms;
+  }
+  .dot {
+    animation: none;
+    opacity: 0.6;
+  }
+  .bubble,
+  .story,
+  .narration,
+  .typingBubble,
+  .barFill {
+    transition: opacity 120ms linear;
+  }
+}
+
+/* Reduced motion, stage 2: the caret rests at .6, a new live part only fades, the voice fill and thumb jump. */
+@media (prefers-reduced-motion: reduce) {
+  .livePart {
+    animation: soul-fade-in 120ms linear backwards;
+  }
+  .caret,
+  .liveText[data-caret] :global([data-slot='soul-text']) > p:last-child::after,
+  .liveText[data-caret] :global(.prose-block) > :last-child:not(ul, ol, pre, table, blockquote, hr, div)::after,
+  .liveText[data-caret] :global(.prose-block) > :is(ul, ol):last-child > li:last-child::after {
+    animation: none;
+    opacity: 0.6;
+  }
+  .voiceFill,
+  .voiceThumb,
+  .voiceTrack:not([data-dragging]) .voiceFill,
+  .voiceTrack:not([data-dragging]) .voiceThumb {
+    transition: opacity 120ms linear;
+  }
+}

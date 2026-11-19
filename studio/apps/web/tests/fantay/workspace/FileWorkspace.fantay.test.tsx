@@ -13,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { WorkspaceContextItem } from '@open-design/contracts';
 
 import { FileWorkspace } from '../../../src/components/FileWorkspace';
+import { resetActiveArtifactsForTests, useActiveArtifact } from '../../../src/fantay/artifact/cards/active-artifact';
 import type { FantayFileEditorContext } from '../../../src/fantay/editors/file-editors';
 import { resetEditorContextsForTests, setEditorContext } from '../../../src/fantay/editors/editor-context-store';
 import type { FantayBoardHostProps } from '../../../src/fantay/workspace/board-host-contract';
@@ -237,6 +238,24 @@ describe('FileWorkspace — Fantay workspace', () => {
     expect(layer).toHaveStyle({ display: 'none' });
     expect(screen.getByTestId('board-stub')).toHaveAttribute('data-active', 'false');
     expect(screen.queryByTestId('fantay-board-zoom')).toBeNull();
+  });
+
+  it('opens side chat from the tools page in a single closable tab and keeps the chat mounted when switching tools', () => {
+    const onTabs = vi.fn();
+    render(<Host files={STATIC_FILES} onTabs={onTabs} renderSideDialogue={visible => <div data-testid="side-dialogue-content" hidden={!visible}>Dialogue</div>} />);
+    openTool('side-dialogue');
+    const panel = screen.getByTestId('side-dialogue-content');
+    expect(panel.closest('.ws-body')).not.toBeNull();
+    expect(screen.getByRole('tab', { name: 'Side chat' })).toHaveAttribute('aria-selected', 'true');
+    openTool('files');
+    expect(panel.hidden).toBe(true);
+    openTool('side-dialogue');
+    const tab = screen.getByRole('tab', { name: 'Side chat' });
+    expect(screen.getByTestId('side-dialogue-content')).toBe(panel);
+    expect(panel.hidden).toBe(false);
+    expect(onTabs.mock.lastCall?.[0].tabs.filter((id: string) => id === '__side_dialogue__')).toHaveLength(1);
+    fireEvent.click(within(tab).getByLabelText('Close tab'));
+    expect(screen.queryByTestId('side-dialogue-content')).toBeNull();
   });
 
   it('opens the existing browser from the tools menu and keeps it in the board tab strip', async () => {
@@ -466,6 +485,34 @@ describe('FileWorkspace — Fantay workspace', () => {
     view.rerender(<Host files={[file('notes.md', 'text', 'text/markdown', 2)]} initialTabs={{ tabs: [], active: '__board__' }} />);
     await waitFor(() => expect(screen.queryByTestId('share-panel-stub')).toBeNull());
     expect(screen.getByTestId('fantay-board-share')).toHaveAttribute('aria-disabled', 'true');
+  });
+  it('publishes the front artifact tab name for chat product cards and clears on root tabs or unmount', async () => {
+    function ActiveProbe() {
+      const active = useActiveArtifact('project-1');
+      return <span data-testid="active-artifact-probe">{active ?? 'none'}</span>;
+    }
+
+    const view = render(
+      <>
+        <ActiveProbe />
+        <Host initialTabs={{ tabs: ['index.html', 'notes.md'], active: 'notes.md' }} />
+      </>,
+    );
+    await waitFor(() => expect(screen.getByTestId('active-artifact-probe').textContent).toBe('notes.md'));
+
+    view.rerender(
+      <>
+        <ActiveProbe />
+        <Host
+          initialTabs={{ tabs: ['index.html', 'notes.md'], active: 'notes.md' }}
+          openRequest={{ name: '__board__', nonce: 1 }}
+        />
+      </>,
+    );
+    await waitFor(() => expect(screen.getByTestId('active-artifact-probe').textContent).toBe('none'));
+
+    view.unmount();
+    resetActiveArtifactsForTests();
   });
 });
 

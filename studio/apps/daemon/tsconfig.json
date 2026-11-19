@@ -7,7 +7,7 @@
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-    "allowJs": false,
+    "allowJs": true,
     "checkJs": false,
     "outDir": "dist",
     "rootDir": "src",
@@ -22,7 +22,8 @@
   },
   "include": [
     "src/**/*.ts",
-    "src/**/*.tsx"
+    "src/**/*.tsx",
+    "src/integrations/vendor/ds-bot-im/**/*.js"
   ],
   "exclude": ["node_modules", "dist"]
 }

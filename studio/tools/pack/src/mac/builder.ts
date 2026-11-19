@@ -1,6 +1,7 @@
 import { assertPackagedSidecarRuntime } from "../resources/runtime-manifest.js";
 import { MAC_PREBUNDLED_DAEMON_CLI_RELATIVE_PATH, MAC_PREBUNDLED_DAEMON_SIDECAR_RELATIVE_PATH, MAC_PREBUNDLED_WEB_SIDECAR_RELATIVE_PATH } from "./prebundle.js";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { constants } from "node:fs";
+import { access, mkdir, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 
@@ -18,6 +19,7 @@ import {
   ELECTRON_BUILDER_FILE_PATTERNS,
   MAC_ELECTRON_LANGUAGES,
   MAC_ARTIFACT_PREFIX,
+  MAC_NATIVE_SEARCH_EXECUTABLE,
   WEB_STANDALONE_HOOK_CONFIG_ENV,
   WEB_STANDALONE_RESOURCE_NAME,
 } from "./constants.js";
@@ -150,7 +152,8 @@ export async function runElectronBuilder(
       extendInfo: {
         // The builder uses productName for CFBundleName and the Electron helpers.
         CFBundleDisplayName: identity.displayName,
-        NSMicrophoneUsageDescription: "Fantay uses the microphone when you record a message to transcribe on this device.",
+        ...(packageVersion !== packagedVersion ? { CFBundleShortVersionString: packagedVersion } : {}),
+        NSMicrophoneUsageDescription: "Fantay uses the microphone for voice input. Recordings are sent to your selected speech recognition service.",
         NSHumanReadableCopyright: `Copyright © ${new Date().getFullYear()} Fantay`,
       },
       gatekeeperAssess: false,
@@ -215,4 +218,8 @@ export async function runElectronBuilder(
     arch: resolveNodePtyRuntimeArch(process.arch),
     platform: "darwin",
   });
+  await access(
+    join(paths.appPath, "Contents", "Resources", "app", MAC_NATIVE_SEARCH_EXECUTABLE),
+    constants.X_OK,
+  );
 }

@@ -1,0 +1,135 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* 记忆引擎: the settings recipe — section heading, one hairline group per choice, a full-width switch
+   inside, fields under it. Failed provider text is --accent-ink; nothing here is warm. */
+
+.level {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 16px;
+}
+
+.levelName {
+  font-size: var(--type-copy);
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.levelNote {
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.failed {
+  color: var(--accent-ink);
+}
+
+.keyToggle {
+  height: auto;
+  font-size: inherit;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+/* ── advanced numbers and upkeep rows: label + hint left, the control right ───────────── */
+
+.advanced {
+  margin-inline: -4px;
+}
+
+.advancedGroup {
+  margin: 4px 4px 0;
+}
+
+.numberRow,
+.upkeepRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;
+  padding: 10px 16px;
+}
+
+.upkeepText {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.upkeepLabel {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.upkeepHint {
+  font-size: var(--type-body);
+  line-height: 1.45;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.upkeepCheck {
+  margin-top: 6px;
+}
+
+/* ── local models: one row per model under the switch, divided by a hairline, never a card ── */
+
+.model {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.modelMeta {
+  font-size: var(--type-label);
+  line-height: 1.45;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.modelReady {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--type-body);
+  line-height: 20px;
+  color: var(--ink-soft);
+}
+
+.modelProgress {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+}
+
+.modelProgressBar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 120px;
+}
+
+.number {
+  flex: none;
+  width: 96px;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A provider or download failure: the plain sentence, then the service's own text folded. */
+.failure {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}

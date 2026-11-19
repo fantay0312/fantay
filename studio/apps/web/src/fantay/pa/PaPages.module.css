@@ -75,6 +75,10 @@
 
 .segLabel {
   min-width: 0;
+  overflow: hidden;
+  /* A label longer than its equal segment ends in an ellipsis instead of running into the next one; the count
+     beside it (.segCount, flex: none) always stays whole. */
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -291,6 +295,11 @@
   border-radius: var(--radius-card);
   background: var(--surface);
   overflow: hidden;
+}
+
+/* The 想记下 candidates sit straight under the page head: the same 16 px step as the filter below them. */
+.head + .memList {
+  margin-top: 16px;
 }
 
 .memRow {

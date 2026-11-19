@@ -6,6 +6,7 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -70,6 +71,7 @@ import { buildVisualAnnotationAttachment, commentTargetDisplayName } from '../co
 import { Icon, type IconName } from "./Icon";
 import { ChatCloseIcon, ChatFileIcon, ChatSendArrowIcon } from "./chat/primitives/icons";
 import { ComposerPlusMenu, PLUS_SUBMENU_RESOURCE_KIND, type PlusMenuSubmenu } from './ComposerPlusMenu';
+import { VoiceInputButton } from './composer/VoiceInputButton';
 import { LibraryPicker } from './LibraryPicker';
 import { MaterialPickerDialog, type MaterialPickMode } from './materials/MaterialPickerDialog';
 import { isWebsiteMaterial, materialPathBasename } from './materials/material-model';
@@ -322,7 +324,12 @@ interface ComposerSendSnapshot {
   quotes: ChatQuote[];
 }
 
+export type ComposerActions = (submit: (fallback: string, send: Props['onSend']) => void) => ReactNode;
+
 interface Props {
+  extraActions?: ComposerActions;
+  receiveWorkspaceEvents?: boolean;
+  surfaceVisible?: boolean;
   /**
    * 正文取词(设计稿组件 23)攒下的引用。输入框上方那枚「N 条注释」芯片就是它,
    * 发送时作为引文前缀带给 agent。
@@ -598,6 +605,9 @@ function dataTransferContainsDirectory(dataTransfer: DataTransfer): boolean {
 export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
   function ChatComposer(
     {
+      extraActions,
+      receiveWorkspaceEvents = true,
+      surfaceVisible = true,
       projectId,
       projectFiles,
       activeProjectFileName = null,
@@ -654,6 +664,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
     ref
   ) {
     const { locale, t } = useI18n();
+    const mentionListId = useId();
     const analytics = useAnalytics();
     const { workspaceContext } = useProjectCollabContext();
     const activeFileContext =
@@ -662,6 +673,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
         : null;
     const activeFileDisplayName = activeFileContext ? lastPathSegment(activeFileContext) : null;
     const [draft, setDraft] = useState(() => initialDraft ?? loadComposerDraft(draftStorageKey) ?? "");
+    const [voiceActive, setVoiceActive] = useState(false);
     /*
      * 刷新之后要回来的**整份**负载。读一次就够 —— 会话一换,`ProjectView` 会拿
      * `${project.id}:${activeConversationId}` 当 key 把整棵 ChatPane 重挂,
@@ -2658,6 +2670,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
     }
 
     useEffect(() => {
+      if (!receiveWorkspaceEvents) return;
       function onAnnotation(e: Event) {
         const detail = (e as CustomEvent<AnnotationEventDetail>).detail;
         if (!detail) return;
@@ -2828,6 +2841,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
       window.addEventListener(ANNOTATION_EVENT, onAnnotation);
       return () => window.removeEventListener(ANNOTATION_EVENT, onAnnotation);
     }, [
+      receiveWorkspaceEvents,
       commentAttachments,
       draft,
       onSend,
@@ -2849,6 +2863,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
     // "添加到对话" capture, which writes the PNG via writeProjectBase64File
     // before notifying the composer. Mirrors ANNOTATION_EVENT's pattern above.
     useEffect(() => {
+      if (!receiveWorkspaceEvents) return;
       function onStageAttachment(e: Event) {
         const detail = (e as CustomEvent<StageAttachmentEventDetail>).detail;
         const attachments = detail?.attachments?.filter(
@@ -2861,7 +2876,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
       }
       window.addEventListener(STAGE_ATTACHMENT_EVENT, onStageAttachment);
       return () => window.removeEventListener(STAGE_ATTACHMENT_EVENT, onStageAttachment);
-    }, [staged]);
+    }, [staged, receiveWorkspaceEvents]);
 
     useEffect(() => {
       if (!streamingAnnotationSendPending || !streamingAnnotationSendPendingRef.current) return;
@@ -3414,7 +3429,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
      * 而引用**是折进正文的**,所以同一时刻它非空。同一个问题、两处各算各的,
      * 早晚会分叉;分叉之后症状出现在离原因最远的地方(用户看到的是「按钮坏了」)。
      */
-    const canSend = !sendDisabled && hasComposerPayload;
+    const canSend = !sendDisabled && !voiceActive && hasComposerPayload;
     /**
      * 摆到台面上的那枚「已应用插件」芯片(OPEND-2412)。
      *
@@ -3547,6 +3562,11 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
         onDragLeave={() => setDragActive(false)}
         onDrop={inputDisabled ? undefined : handleDrop}
       >
+        {extraActions?.((fallback, send) => {
+          if (inputDisabled || sendDisabled || voiceActive || uploading || composedSendPendingRef.current) return;
+          const prompt = composeOutgoingPrompt(draft.trim()) || fallback;
+          beginComposedSend(() => send(prompt, staged, currentCommentAttachments(), currentRunContextMeta()));
+        })}
         {designToolboxOpen ? (
           <div className="composer-toolbox-standalone">
             {/* Click-catcher backdrop. A <div> (not a <button>) so it never
@@ -3760,8 +3780,9 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
               popoverOpen={Boolean(mention) || Boolean(slash && filteredSlash.length > 0)}
               onPopoverKey={handlePopoverKey}
               comboboxAria={{
+                listId: mentionListId,
                 expanded: Boolean(mention),
-                activeId: mention ? `mention-opt-${mentionIndex}` : null,
+                activeId: mention ? `${mentionListId}-${mentionIndex}` : null,
               }}
             />
             {placeholderScenarios.length > 0 ? (
@@ -3779,6 +3800,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
             boundaryRef={composerRootRef}
           >
             <MentionPopover
+                    listId={mentionListId}
               files={filteredFiles}
               workspaceContexts={filteredWorkspaceContexts}
               plugins={filteredPlugins}
@@ -3981,6 +4003,8 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
                   switch it (ChatPane.handleNextStepPromptAction) — it just is
                   not chosen from here any more. */}
               {footerAccessory}
+              {surfaceVisible && <VoiceInputButton key={draftStorageKey} disabled={inputDisabled || composedSendPending}
+                onActiveChange={setVoiceActive} onTranscript={text => { editorRef.current?.insertText(text); editorRef.current?.focus(); }} />}
               {/* One cell for send / stop / preparing (see `sendCellMode`). Each mode keeps the
                   test id, label and classes its own button used to carry, so `chat-send` and
                   `chat-send-pending` still exist only in their own state. Disabled send omits
@@ -6558,6 +6582,7 @@ function SlashPopover({
 }
 
 function MentionPopover({
+  listId,
   files,
   workspaceContexts,
   connectors,
@@ -6576,6 +6601,7 @@ function MentionPopover({
   onPickMcp,
   onPickConnector,
 }: {
+  listId: string;
   files: ProjectFile[];
   workspaceContexts: WorkspaceContextItem[];
   connectors: ConnectorDetail[];
@@ -6639,7 +6665,7 @@ function MentionPopover({
           </button>
         ))}
       </div>
-      <div className="mention-results" ref={ref} role="listbox" id="mention-listbox">
+      <div className="mention-results" ref={ref} role="listbox" id={listId}>
         {!hasVisibleResults ? (
           <div className="mention-empty">
             {query ? (
@@ -6660,7 +6686,7 @@ function MentionPopover({
               return (
                 <button
                   key={`file-${key}`}
-                  id={`mention-opt-${flat}`}
+                  id={`${listId}-${flat}`}
                   role="option"
                   aria-selected={active}
                   className={`mention-item${active ? ' is-active' : ''}`}
@@ -6693,7 +6719,7 @@ function MentionPopover({
               return (
                 <button
                   key={`workspace-${item.kind}-${item.id}`}
-                  id={`mention-opt-${flat}`}
+                  id={`${listId}-${flat}`}
                   role="option"
                   aria-selected={active}
                   className={`mention-item mention-item--workspace${active ? ' is-active' : ''}`}
@@ -6727,7 +6753,7 @@ function MentionPopover({
               return (
                 <button
                   key={`plugin-${p.id}`}
-                  id={`mention-opt-${flat}`}
+                  id={`${listId}-${flat}`}
                   role="option"
                   aria-selected={active}
                   className={`mention-item mention-item--plugin${active ? ' is-active' : ''}`}
@@ -6760,7 +6786,7 @@ function MentionPopover({
               return (
                 <button
                   key={`skill-${skill.id}`}
-                  id={`mention-opt-${flat}`}
+                  id={`${listId}-${flat}`}
                   role="option"
                   aria-selected={rowActive}
                   className={`mention-item${rowActive ? ' is-active' : ''}`}
@@ -6792,7 +6818,7 @@ function MentionPopover({
               return (
                 <button
                   key={`mcp-${server.id}`}
-                  id={`mention-opt-${flat}`}
+                  id={`${listId}-${flat}`}
                   role="option"
                   aria-selected={active}
                   className={`mention-item${active ? ' is-active' : ''}`}
@@ -6824,7 +6850,7 @@ function MentionPopover({
               return (
                 <button
                   key={`connector-${connector.id}`}
-                  id={`mention-opt-${flat}`}
+                  id={`${listId}-${flat}`}
                   role="option"
                   aria-selected={active}
                   className={`mention-item${active ? ' is-active' : ''}`}

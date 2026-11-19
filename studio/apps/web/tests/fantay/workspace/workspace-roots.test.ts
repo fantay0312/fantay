@@ -7,6 +7,7 @@ import {
   PROJECT_DESIGN_SYSTEM_TAB,
 } from '../../../src/fantay/workspace/board-host-contract';
 import {
+  WORKSPACE_CODE_TAB,
   WORKSPACE_DESIGN_FILES_TAB,
   WORKSPACE_DESIGN_SYSTEM_TAB,
   fantayRootFor,
@@ -48,9 +49,10 @@ describe('workspace roots', () => {
     expect(PROJECT_DESIGN_SYSTEM_TAB).toBe('__project_design_system__');
   });
 
-  it('recognizes only the two Fantay root tab ids', () => {
+  it('recognizes only the Fantay root tab ids', () => {
     expect(isFantayRootTabId(BOARD_TAB)).toBe(true);
     expect(isFantayRootTabId(PROJECT_DESIGN_SYSTEM_TAB)).toBe(true);
+    expect(isFantayRootTabId(WORKSPACE_CODE_TAB)).toBe(true);
     expect(isFantayRootTabId(DESIGN_FILES_TAB)).toBe(false);
     expect(isFantayRootTabId(DESIGN_SYSTEM_TAB)).toBe(false);
     expect(isFantayRootTabId('index.html')).toBe(false);
@@ -59,6 +61,9 @@ describe('workspace roots', () => {
   it('renders the project design-system tab only with the shell on', () => {
     expect(isRenderableFantayRootTab(PROJECT_DESIGN_SYSTEM_TAB, true)).toBe(true);
     expect(isRenderableFantayRootTab(PROJECT_DESIGN_SYSTEM_TAB, false)).toBe(false);
+    expect(isRenderableFantayRootTab(WORKSPACE_CODE_TAB, true)).toBe(true);
+    expect(isRenderableFantayRootTab(WORKSPACE_CODE_TAB, false)).toBe(false);
+    expect(fantayRootFor(WORKSPACE_CODE_TAB)).toBe('files');
     expect(isRenderableFantayRootTab('index.html', true)).toBe(false);
   });
 

@@ -51,13 +51,13 @@ it('keeps the active channel in a cascading submenu instead of expanding models 
  expect(screen.queryByRole('menu')).toBeNull();
 });
 
-it('groups TokenToSea models into supplier submenus and preserves exact catalog route ids', () => {
+it('groups TokenToSea routes by model and preserves the selected supplier and channel', () => {
  const tokentoseaModels=[
   {id:'official:deepseek-flash',label:'DeepSeek Flash'},
   {id:'official:deepseek-v4-pro',label:'DeepSeek V4 Pro'},
   {id:'supplier:suanlizhixuan/claude/claude-opus-5-5',label:'算力智选 · Claude Opus 5.5'},
   {id:'supplier:suanlizhixuan/claude/claude-sonnet-5-5',label:'算力智选 · Claude Sonnet 5.5'},
-  {id:'supplier:tokentide/aws/claude-opus-5-5',label:'TokenTide · Claude Opus 5.5'},
+  {id:'supplier:tokentide/aws/claude-opus-5-5',label:'TokenTide · Claude Opus 5.5',channelOffer:{modelKey:'claude-opus-5-5',modelName:'Claude Opus 5.5',supplier:'TokenTide',channel:'aws',inputMultiplier:'0.4',outputMultiplier:'0.6'}},
   {id:'official:qwen3.8-max',label:'Qwen3.8 Max'},
  ];
  const config={skillId:null,designSystemId:null,mode:'daemon',agentId:'tokentosea',enabledAgents:['tokentosea','claude'],agentModels:{tokentosea:{model:'supplier:suanlizhixuan/claude/claude-opus-5-5'}},apiKey:'',baseUrl:'',model:'',apiProtocolConfigs:{}} as AppConfig;
@@ -68,30 +68,25 @@ it('groups TokenToSea models into supplier submenus and preserves exact catalog 
  const change=vi.fn();
  render(<I18nProvider initial="zh-CN"><MovieChannelSwitcher config={config} agents={agents} onConfigChange={change} onOpenSettings={vi.fn()}/></I18nProvider>);
 
- // Trigger chip and root row still display the full supplier + model label.
- const trigger=screen.getByRole('button',{name:'TokenToSea · 算力智选 · Claude Opus 5.5'});
+ const trigger=screen.getByRole('button',{name:'TokenToSea · Claude Opus 5.5'});
  fireEvent.pointerDown(trigger,{button:0,ctrlKey:false});
  const rootMenu=screen.getByRole('menu');
  expect(within(rootMenu).queryAllByRole('menuitemradio')).toHaveLength(0);
- expect(within(rootMenu).getByRole('menuitem',{name:'TokenToSea'}).textContent).toContain('算力智选 · Claude Opus 5.5');
+ expect(within(rootMenu).getByRole('menuitem',{name:'TokenToSea'}).textContent).toContain('Claude Opus 5.5');
  expect(within(rootMenu).getByRole('menuitem',{name:'Claude Code'})).toBeTruthy();
 
- // Level 2: TokenToSea supplier groups, with the active model's supplier marked active.
+ // Both Opus routes share one model row.
  fireEvent.click(within(rootMenu).getByRole('menuitem',{name:'TokenToSea'}));
  const supplierMenu=screen.getByRole('menu',{name:'TokenToSea'});
  expect(within(supplierMenu).getAllByRole('menuitem').map(item=>item.textContent)).toEqual([
-  'DeepSeek2',
-  '算力智选2',
-  'TokenTide1',
-  'Qwen1',
+  'DeepSeek Flash1','DeepSeek V4 Pro1','Claude Opus 5.52','Claude Sonnet 5.51','Qwen3.8 Max1',
  ]);
- expect(within(supplierMenu).getByRole('menuitem',{name:'算力智选'}).hasAttribute('data-active')).toBe(true);
- expect(within(supplierMenu).getByRole('menuitem',{name:'TokenTide'}).hasAttribute('data-active')).toBe(false);
+ expect(within(supplierMenu).getByRole('menuitem',{name:'Claude Opus 5.5'}).hasAttribute('data-active')).toBe(true);
+ expect(within(supplierMenu).getByRole('menuitem',{name:'DeepSeek Flash'}).hasAttribute('data-active')).toBe(false);
 
- // Level 3: Supplier model submenu strips redundant supplier prefix and submits raw route id.
- fireEvent.click(within(supplierMenu).getByRole('menuitem',{name:'TokenTide'}));
- const tokenTideMenu=screen.getByRole('menu',{name:'TokenTide'});
- const opusRow=within(tokenTideMenu).getByRole('menuitemradio',{name:'Claude Opus 5.5'});
+ fireEvent.click(within(supplierMenu).getByRole('menuitem',{name:'Claude Opus 5.5'}));
+ const tokenTideMenu=screen.getByRole('menu',{name:'Claude Opus 5.5'});
+ const opusRow=within(tokenTideMenu).getByRole('menuitemradio',{name:/TokenTide · aws.*输入 0.4× · 输出 0.6×/});
  fireEvent.click(opusRow);
  expect(change).toHaveBeenCalledWith(expect.objectContaining({
   mode:'daemon',
@@ -116,9 +111,9 @@ it('switches from another active channel into TokenToSea through its supplier su
  fireEvent.pointerDown(screen.getByRole('button',{name:'Claude Code · Claude Sonnet 5.5'}),{button:0,ctrlKey:false});
  fireEvent.click(screen.getByRole('menuitem',{name:'TokenToSea'}));
  const supplierMenu=screen.getByRole('menu',{name:'TokenToSea'});
- expect(within(supplierMenu).getByRole('menuitem',{name:'算力智选'}).hasAttribute('data-active')).toBe(false);
- fireEvent.click(within(supplierMenu).getByRole('menuitem',{name:'算力智选'}));
- fireEvent.click(within(screen.getByRole('menu',{name:'算力智选'})).getByRole('menuitemradio',{name:'Claude Opus 5.5'}));
+ expect(within(supplierMenu).getByRole('menuitem',{name:'Claude Opus 5.5'}).hasAttribute('data-active')).toBe(false);
+ fireEvent.click(within(supplierMenu).getByRole('menuitem',{name:'Claude Opus 5.5'}));
+ fireEvent.click(within(screen.getByRole('menu',{name:'Claude Opus 5.5'})).getByRole('menuitemradio',{name:/算力智选 · claude/}));
  expect(change).toHaveBeenCalledWith(expect.objectContaining({
   mode:'daemon',
   agentId:'tokentosea',
@@ -145,7 +140,7 @@ it('pre-expands TokenToSea and the active supplier submenu when opened from RunC
  render(<I18nProvider initial="zh-CN"><MovieChannelSwitcher config={config} agents={agents} onConfigChange={vi.fn()} onOpenSettings={vi.fn()}/></I18nProvider>);
 
  fireEvent.click(screen.getByRole('button',{name:'推理强度 · 高 · 速度 · 标准'}));
- fireEvent.click(screen.getByRole('button',{name:'切换模型 · TokenTide · Claude Opus 5.5'}));
- const tokenTideMenu=screen.getByRole('menu',{name:'TokenTide'});
- expect(within(tokenTideMenu).getByRole('menuitemradio',{name:'Claude Opus 5.5'}).getAttribute('aria-checked')).toBe('true');
+ fireEvent.click(screen.getByRole('button',{name:'切换模型 · Claude Opus 5.5'}));
+ const tokenTideMenu=screen.getByRole('menu',{name:'Claude Opus 5.5'});
+ expect(within(tokenTideMenu).getByRole('menuitemradio',{name:/TokenTide · aws/}).getAttribute('aria-checked')).toBe('true');
 });

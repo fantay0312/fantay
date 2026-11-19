@@ -110,7 +110,7 @@ describe('toolForKey', () => {
   it('knows nothing about other keys', () => {
     expect(toolForKey('q')).toBeNull();
     expect(toolForKey('Escape')).toBeNull();
-    expect(toolForKey('p')).toBeNull();
+    expect(toolForKey('p')).toBe('pen');
   });
 
   it('has no duplicate keys; draw and place sets are disjoint', () => {

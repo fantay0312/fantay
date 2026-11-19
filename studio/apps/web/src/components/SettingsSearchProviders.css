@@ -1,0 +1,117 @@
+.search-provider-settings {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+  padding-block: 24px;
+}
+.search-settings-views,
+.search-settings-actions,
+.search-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.search-settings-controls,
+.search-provider-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.search-settings-controls {
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+.search-setting-field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+}
+.search-setting-field > label {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+.search-setting-field > p,
+.search-command-description {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.search-setting-field input,
+.search-setting-field textarea {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 11px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+.search-setting-field textarea {
+  resize: vertical;
+}
+.search-setting-field input:focus-visible,
+.search-setting-field textarea:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
+}
+.search-input-row {
+  flex-wrap: nowrap;
+}
+.search-input-row input {
+  flex: 1;
+}
+.search-settings-actions {
+  position: sticky;
+  bottom: 0;
+  padding-block: 12px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  z-index: 1;
+}
+.search-settings-error {
+  color: var(--danger, #b42318);
+  margin: 0;
+}
+.search-tool-result {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+  min-width: 0;
+}
+.search-account-connection {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding-block: 4px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.search-account-connection p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.search-tool-result pre {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.65;
+  max-height: 480px;
+  overflow: auto;
+}
+@media (max-width: 960px) {
+  .search-settings-controls,
+  .search-provider-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

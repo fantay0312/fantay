@@ -1,0 +1,636 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* A message in a reading column on the interface paper. The header is type, not a form: the subject
+   at 20/600, the sender's name in ink with the address quieter beside it, the date at the right, then
+   short labelled rows of recipients. Attachments are a quiet tone group under the header. An HTML body
+   is the message's own white page (a sheet with the ring, white in both themes), whose inset is taken
+   out of the gutter so its words line up with the header's; a plain-text body is set on the paper.
+   Narrow panels drop the gutter to 24 and then 16px, put the date on its own line, and let the sheet
+   run edge to edge. */
+
+.stage {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.scroller {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  outline: none;
+  scrollbar-color: var(--line) transparent;
+  scrollbar-width: thin;
+}
+
+.scroller:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: -2px;
+}
+
+.column {
+  --gutter: 40px;
+  --mail-inset: 20px;
+  box-sizing: content-box;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 32px var(--gutter) 96px;
+  opacity: 0;
+}
+
+.column[data-ready] {
+  opacity: 1;
+  transition: opacity var(--motion-enter) var(--ease-out-quint);
+}
+
+/* ── header ──────────────────────────────────────────────────────────────────────────────────── */
+
+.head {
+  margin: 0 0 24px;
+}
+
+.subject {
+  margin: 0 0 14px;
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  text-spacing-trim: trim-start;
+  text-wrap: pretty;
+}
+
+.subject[data-missing] {
+  color: var(--ink-faint);
+}
+
+.fromRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 16px;
+  row-gap: 2px;
+  margin: 0 0 6px;
+}
+
+.sender {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.senderName {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.senderAddress {
+  margin-left: 6px;
+  color: var(--ink-faint);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.senderMissing {
+  color: var(--ink-faint);
+  font-weight: 500;
+}
+
+.date {
+  flex: none;
+  margin-left: auto;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.people {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 2px;
+  margin: 0;
+}
+
+.peopleRow {
+  display: contents;
+}
+
+.peopleLabel {
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.peopleList {
+  min-width: 0;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.peopleSeparator {
+  color: var(--ink-faint);
+}
+
+.person {
+  border-radius: 3px;
+}
+
+.peopleMore {
+  margin-left: 8px;
+  color: var(--ink-faint);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  vertical-align: baseline;
+}
+
+.peopleMore:hover {
+  color: var(--ink);
+}
+
+/* ── attachments ─────────────────────────────────────────────────────────────────────────────── */
+
+.attachments {
+  margin: 0 0 24px;
+}
+
+.attachmentsHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 8px;
+}
+
+.attachmentsCount {
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.saveAll {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.saveAll:hover {
+  color: var(--ink);
+}
+
+.attachmentGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(208px, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.attachmentItem {
+  min-width: 0;
+}
+
+.tile {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 14px;
+  align-items: center;
+  column-gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  margin: 0;
+  padding: 8px 12px 8px 8px;
+  border: 0;
+  border-radius: var(--radius-chip);
+  background: var(--sub);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--motion-micro) var(--ease-out-quint);
+}
+
+.tile:hover {
+  background: var(--paper-deep);
+}
+
+.tile:active {
+  background: var(--paper-deep);
+}
+
+.tile:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+.tileGlyph {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  overflow: hidden;
+  border-radius: var(--radius-control);
+  background: var(--paper);
+  color: var(--ink-soft);
+  place-items: center;
+}
+
+.tileThumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tileText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tileName {
+  display: flex;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.tileBase {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tileExtension {
+  flex: none;
+}
+
+.tileFacts {
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tileIncomplete {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.tileSave {
+  color: var(--ink-faint);
+  opacity: 0;
+  transition: opacity var(--motion-micro) var(--ease-out-quint);
+}
+
+.tile:hover .tileSave,
+.tile:focus-visible .tileSave {
+  opacity: 1;
+}
+
+/* ── notes above the body ────────────────────────────────────────────────────────────────────── */
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 16px;
+}
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.note svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+/* The words, then their one action: beside them while the line has room, else at the start of the
+   next line, under the words rather than indented. */
+.noteBody {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
+  min-width: 0;
+}
+
+/* "显示图片" / "隐藏图片": a step darker than the line, never split. */
+.noteAction {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  vertical-align: baseline;
+}
+
+.noteAction:hover {
+  color: var(--ink);
+}
+
+/* ── an HTML body: the message's own page ────────────────────────────────────────────────────── */
+
+.sheet {
+  position: relative;
+  margin: 0 calc(-1 * var(--mail-inset));
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: white;
+  box-shadow: var(--shadow-ring);
+}
+
+/* The message is wider than the column even when drawn smaller: its right edge says there is more. */
+.sheet[data-sideways]::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 20px;
+  background: linear-gradient(to right, transparent, rgb(0 0 0 / 0.07));
+  content: '';
+  pointer-events: none;
+}
+
+.sheet iframe {
+  display: block;
+  width: 100%;
+  height: 160px;
+  color-scheme: light;
+}
+
+/* The frame made when the reader turns pictures on or off: laid out at the shown one's width, out of
+   sight and out of the flow, until it takes the shown one's place (`email/MailFrame.tsx`). */
+.sheet iframe.frameIncoming {
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ── a plain-text body ───────────────────────────────────────────────────────────────────────── */
+
+.text {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.textLines {
+  margin: 0 0 1em;
+  tab-size: 4;
+  white-space: pre-wrap;
+}
+
+.textLines:last-child {
+  margin-bottom: 0;
+}
+
+.textLines[data-role='attribution'] {
+  margin-bottom: 0.4em;
+  color: var(--ink-faint);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.textLines[data-role='signature'] {
+  color: var(--ink-faint);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.textQuote {
+  margin: 0 0 1em;
+  padding: 0 0 0 14px;
+  border-left: 2px solid var(--line);
+  color: var(--ink-soft);
+}
+
+.textQuote:last-child {
+  margin-bottom: 0;
+}
+
+.textQuote .textQuote {
+  color: var(--ink-faint);
+}
+
+.textLink {
+  border-radius: 2px;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--ink-ghost);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+.textLink:hover {
+  text-decoration-color: currentColor;
+}
+
+.textLink:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+/* ── no body, or a body that cannot be read ──────────────────────────────────────────────────── */
+
+.noBody {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.locked {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 2px;
+  align-items: start;
+  padding: 16px 18px 16px 14px;
+  border-radius: var(--radius-card);
+  background: var(--sub);
+}
+
+.lockedGlyph {
+  display: grid;
+  grid-row: span 2;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-control);
+  background: var(--paper);
+  color: var(--ink-soft);
+  place-items: center;
+}
+
+.lockedTitle {
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.lockedText {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+/* ── where a link goes, and "copied" ─────────────────────────────────────────────────────────── */
+
+.status {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  z-index: 5;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  max-width: min(560px, calc(100% - 16px));
+  padding: 4px 9px;
+  border-radius: var(--radius-row);
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(2px);
+  transition:
+    opacity var(--motion-exit) var(--ease-out-quint),
+    transform var(--motion-exit) var(--ease-out-quint);
+  white-space: nowrap;
+}
+
+.status[data-show] {
+  opacity: 1;
+  transform: none;
+  transition-duration: var(--motion-enter);
+}
+
+.statusAddress {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statusHint {
+  flex: none;
+  color: var(--ink-faint);
+}
+
+.hint {
+  position: absolute;
+  z-index: 6;
+  max-width: calc(100% - 24px);
+  padding: 5px 9px;
+  overflow: hidden;
+  border-radius: var(--radius-control);
+  background: var(--ink);
+  box-shadow: var(--shadow-float);
+  color: var(--paper);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  opacity: 0;
+  pointer-events: none;
+  text-overflow: ellipsis;
+  transform: translate(-50%, calc(-100% - 4px));
+  transition:
+    opacity var(--motion-exit) var(--ease-out-quint),
+    transform var(--motion-exit) var(--ease-out-quint);
+  white-space: nowrap;
+}
+
+.hint[data-show] {
+  opacity: 1;
+  transform: translate(-50%, calc(-100% - 8px));
+  transition-duration: var(--motion-enter);
+}
+
+/* ── narrow panels ───────────────────────────────────────────────────────────────────────────── */
+
+@container artifact (max-width: 560px) {
+  .column {
+    --gutter: 24px;
+    --mail-inset: var(--gutter);
+    padding-top: 24px;
+    padding-bottom: 72px;
+  }
+
+  .sheet {
+    border-radius: 0;
+  }
+}
+
+@container artifact (max-width: 460px) {
+  .column {
+    --gutter: 16px;
+    padding-top: 20px;
+    padding-bottom: 56px;
+  }
+
+  .subject {
+    font-size: 18px;
+  }
+
+  .date {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+
+  .attachmentGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .column[data-ready],
+  .tile,
+  .tileSave,
+  .status,
+  .hint {
+    transition: none;
+  }
+}

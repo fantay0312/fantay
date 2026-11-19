@@ -3,7 +3,7 @@
 // the run-status dot, and two hover actions: a new chat in this project, and a "more" menu with new chat, rename
 // inline, duplicate, pin, move to a group, archive, delete. The rename field replaces the name: Enter commits through App's rename handler, Esc or blur
 // cancels. The row drags onto a sidebar section.
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import {
   Archive,
   ArchiveRestore,
@@ -134,6 +134,7 @@ export interface SidebarProjectRowProps {
   statusTone: SidebarStatusTone;
   statusLabel?: string;
   conversations: SidebarConversationListState;
+  activity?: ReactNode;
   onToggleExpanded(): void;
   onOpen(): void;
   onSelectConversation(conversationId: string): void;
@@ -150,6 +151,7 @@ export function SidebarProjectRow({
   statusTone,
   statusLabel,
   conversations,
+  activity,
   onToggleExpanded,
   onOpen,
   onSelectConversation,
@@ -523,6 +525,7 @@ export function SidebarProjectRow({
         <div className="min-h-0 overflow-hidden">
           {everExpanded ? (
             <>
+              {activity}
               <ConversationSublist
                 state={conversations}
                 visible={visibleItems}

@@ -325,6 +325,7 @@ export function contextBarModelFor(input: ContextBarInput): ContextBarModel {
     case 'shape': {
       if (!readOnly) {
         if (node.data.shape === 'text') widgets.push({ type: 'text-size', nodeId: node.id }, { type: 'text-weight', nodeId: node.id });
+        else if (node.data.shape === 'freehand') widgets.push({ type: 'shape-stroke', nodeId: node.id });
         else {
           widgets.push({ type: 'shape-fill', nodeId: node.id }, { type: 'shape-stroke', nodeId: node.id });
           if (node.data.shape === 'rect') widgets.push({ type: 'shape-radius', nodeId: node.id });

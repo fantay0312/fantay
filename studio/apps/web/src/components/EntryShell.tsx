@@ -1,3 +1,4 @@
+import { MemoryCenterView } from '../fantay/memory/MemoryCenterView';
 import { PersonalAgentWorkspace } from '../fantay/pa/PersonalAgentWorkspace';
 import { WorkbenchView } from '../fantay/workbench/WorkbenchView';
 // EntryShell — the centered-hero entry layout.
@@ -2115,6 +2116,23 @@ export function EntryShell({
                       ...(next.itemId ? { workbenchItemId: next.itemId } : {}),
                     }, options?.replace ? { replace: true } : {},
                   )}
+                />
+              ) : null}
+            </div>
+            <div data-testid="entry-view-memory" data-active={view === 'memory' ? 'true' : 'false'} {...inactiveViewProps(view === 'memory')}>
+              {hasVisitedView('memory', view === 'memory') ? (
+                <MemoryCenterView
+                  active={view === 'memory'}
+                  tab={route.kind === 'home' ? route.memoryTab ?? 'agent' : 'agent'}
+                  projects={projects}
+                  onOpenProject={onOpenProject}
+                  onNavigateTab={(nextTab) =>
+                    navigate(
+                      nextTab === 'agent'
+                        ? { kind: 'home', view: 'memory' }
+                        : { kind: 'home', view: 'memory', memoryTab: nextTab },
+                    )
+                  }
                 />
               ) : null}
             </div>

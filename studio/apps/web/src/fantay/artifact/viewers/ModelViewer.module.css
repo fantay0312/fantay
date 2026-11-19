@@ -1,0 +1,101 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* One model on the canvas ground. The 3D canvas fills the stage and is transparent, so the ground is
+   the frame's own tone in both themes. Two quiet captions sit over it: how to move the model (until
+   the reader has done it once) and what the model had to do without. */
+
+.stage {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.host {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  outline: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.host:active {
+  cursor: grabbing;
+}
+
+.host:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--focus-ring-color);
+}
+
+/* The neutral material and the wireframe take their colours from the theme through these two
+   elements: the 3D code reads their computed colour. Clay is a mid grey: light enough to read as
+   unpainted, dark enough that the studio light still draws its form. */
+.clayProbe,
+.lineProbe {
+  display: none;
+}
+
+.clayProbe {
+  color: color-mix(in srgb, var(--ink) 40%, var(--paper));
+}
+
+:global([data-theme='dark']) .clayProbe {
+  color: color-mix(in srgb, var(--ink) 58%, var(--paper));
+}
+
+.lineProbe {
+  color: var(--ink-soft);
+}
+
+.note,
+.hint {
+  position: absolute;
+  left: 50%;
+  max-width: calc(100% - 32px);
+  margin: 0;
+  padding: 5px 10px;
+  border-radius: var(--radius-chip);
+  background: var(--paper);
+  box-shadow: var(--shadow-ring);
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: none;
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.note {
+  top: 12px;
+  pointer-events: auto;
+}
+
+/* Kept mounted so it can fade out the moment the reader turns the model. */
+.hint {
+  bottom: 14px;
+  opacity: 0;
+  transition: opacity var(--motion-exit) var(--ease-out-quint);
+  white-space: nowrap;
+}
+
+.hint[data-shown] {
+  opacity: 1;
+  transition: opacity var(--motion-enter) var(--ease-out-quint) 400ms;
+}
+
+@container artifact (max-width: 380px) {
+  .hint {
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hint,
+  .hint[data-shown] {
+    transition: none;
+  }
+}

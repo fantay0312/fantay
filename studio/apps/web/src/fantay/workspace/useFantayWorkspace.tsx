@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // FileWorkspace controller of the Fantay workspace (spec 02 §5.6/§7, plan R7/R8/R10, 07 §2.1). It owns the
-// root tabs 画板 / 文件 / 设计系统, the board header pieces, the board layer (mounted once after the first
-// activation and only hidden afterwards), the project design-system body, the open-request routing and
-// the workspace bus handlers (`workspace.openEditor`, `workspace.view`). FileWorkspace keeps every upstream
-// branch: it calls this hook once and places the nodes it returns.
+// root tabs 画板 / 文件 / 设计系统, the board header pieces, the board layer and the 代码 layer (each mounted
+// once after its first activation and only hidden afterwards), the project design-system body, the
+// open-request routing and the workspace bus handlers (`workspace.openEditor`, `workspace.view`).
+// FileWorkspace keeps every upstream branch: it calls this hook once and places the nodes it returns.
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { WorkspaceContextItem } from '@open-design/contracts';
 
@@ -33,11 +33,14 @@ import {
   type FantayBoardHostProps,
   type FantayBoardOpenRequest,
 } from './board-host-contract';
+import { CodeSurface } from './code/CodeSurface';
 import { routeOpenRequestTarget } from './open-request-routing';
 import { ProjectDesignSystemTab } from './ProjectDesignSystemTab';
+import type { TurnFileChange } from './surfaces/surface-types';
 import { MotionStyleHost } from '../motion/MotionEditorHost';
 import { subscribeWorkspaceCommand } from './workspace-bus';
 import {
+  WORKSPACE_CODE_TAB,
   WORKSPACE_DESIGN_FILES_TAB,
   WORKSPACE_DESIGN_SYSTEM_TAB,
   WORKSPACE_START_TAB,
@@ -69,6 +72,10 @@ export interface UseFantayWorkspaceInput {
   conversations: readonly Conversation[];
   activeConversationId: string | null;
   previewComments: readonly PreviewComment[];
+  /** What the latest assistant turn changed; feeds the 代码 surface's 本轮更改 list and changes view. */
+  turnChanges: readonly TurnFileChange[];
+  /** The file the 代码 surface is showing, so FileWorkspace can offer it to the composer as context. */
+  onCodeActiveFileChange(file: ProjectFile | null): void;
   /** R8: FileWorkspace `isDeck` (deck projects size HTML frames as slides). */
   isDeckProject: boolean;
   /** R8 / R2: FileWorkspace `filesAuthoritative` (false while the file list may still be partial). */
@@ -106,6 +113,10 @@ export interface FantayWorkspaceController {
   body: ReactNode | null;
   /** The board (R8): rendered once inside `.ws-body`, mounted after the first activation, hidden while inactive. */
   boardLayer: ReactNode | null;
+  /** enabled && activeTab === WORKSPACE_CODE_TAB */
+  codeActive: boolean;
+  /** The 代码 surface: same mounting rule as the board, so its selection and scroll survive tab switches. */
+  codeLayer: ReactNode | null;
   /** true ⇒ request routed to the board (FileWorkspace must return early). */
   consumeOpenRequest(request: FantayBoardOpenRequest): boolean;
 }
@@ -114,13 +125,14 @@ export interface FantayWorkspaceController {
 interface BoardHostState {
   projectId: string;
   boardMounted: boolean;
+  codeMounted: boolean;
   openRequest: FantayBoardOpenRequest | null;
   focusRequest: FantayBoardFocusRequest | null;
   shareTarget: string | null;
 }
 
 function emptyBoardHostState(projectId: string): BoardHostState {
-  return { projectId, boardMounted: false, openRequest: null, focusRequest: null, shareTarget: null };
+  return { projectId, boardMounted: false, codeMounted: false, openRequest: null, focusRequest: null, shareTarget: null };
 }
 
 type BoardHostPatch = Partial<Omit<BoardHostState, 'projectId'>>;
@@ -147,6 +159,7 @@ export function useFantayWorkspace(input: UseFantayWorkspaceInput): FantayWorksp
     conversations,
     activeConversationId,
     previewComments,
+    turnChanges,
     isDeckProject,
     filesAuthoritative,
     initialMaterializationPending,
@@ -216,6 +229,15 @@ export function useFantayWorkspace(input: UseFantayWorkspaceInput): FantayWorksp
   }, [boardActive, hostState.boardMounted, patchHostState]);
   const boardMounted = boardAvailable && (hostState.boardMounted || boardActive);
 
+  // The 代码 surface follows the same rule: mount on first activation, then only hide.
+  const codeActive = enabled && activeTab === WORKSPACE_CODE_TAB;
+  const codeVisible = codeActive && !initialMaterializationPending;
+  useEffect(() => {
+    if (!codeActive || hostState.codeMounted) return;
+    patchHostState(() => ({ codeMounted: true }));
+  }, [codeActive, hostState.codeMounted, patchHostState]);
+  const codeMounted = enabled && (hostState.codeMounted || codeActive);
+
   // A project switch clears the board selection context FileWorkspace holds (spec 02 §7.4).
   const contextProjectRef = useRef(projectId);
   useEffect(() => {
@@ -284,6 +306,9 @@ export function useFantayWorkspace(input: UseFantayWorkspaceInput): FantayWorksp
   const onUploadFiles = useCallback((picked: File[]) => inputRef.current.uploadFiles(picked), []);
   const onActiveContextChange = useCallback((context: WorkspaceContextItem | null) => {
     inputRef.current.onBoardActiveContextChange(context);
+  }, []);
+  const onCodeActiveFileChange = useCallback((file: ProjectFile | null) => {
+    inputRef.current.onCodeActiveFileChange(file);
   }, []);
   const onShareTargetChange = useCallback((fileName: string | null) => {
     patchHostState(() => ({ shareTarget: fileName }));
@@ -393,6 +418,8 @@ export function useFantayWorkspace(input: UseFantayWorkspaceInput): FantayWorksp
       headerActions: null,
       body: null,
       boardLayer: null,
+      codeActive: false,
+      codeLayer: null,
       consumeOpenRequest,
     };
   }
@@ -430,6 +457,26 @@ export function useFantayWorkspace(input: UseFantayWorkspaceInput): FantayWorksp
         style={{ display: boardVisible ? 'flex' : 'none', flex: '1 1 auto', minHeight: 0, minWidth: 0 }}
       >
         <BoardTabHost key={projectId} {...hostProps} />
+      </div>
+    ) : null,
+    codeActive,
+    codeLayer: codeMounted ? (
+      <div
+        data-testid="fantay-code-layer"
+        data-active={codeVisible ? 'true' : 'false'}
+        aria-hidden={codeVisible ? undefined : true}
+        style={{ display: codeVisible ? 'flex' : 'none', flex: '1 1 auto', minHeight: 0, minWidth: 0 }}
+      >
+        <CodeSurface
+          key={projectId}
+          projectId={projectId}
+          files={files}
+          resolvedDir={resolvedDir}
+          turnChanges={turnChanges}
+          streaming={streaming}
+          onOpenPreview={onOpenFile}
+          onActiveFileChange={onCodeActiveFileChange}
+        />
       </div>
     ) : null,
     consumeOpenRequest,

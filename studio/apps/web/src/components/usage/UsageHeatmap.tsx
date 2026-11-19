@@ -118,7 +118,7 @@ export function UsageHeatmap({ activity, zh, selectedDay, onSelectDay }: {
           <h3 className={styles.title}>{zh ? '活动' : 'Activity'}</h3>
           <p className={styles.caption}>{zh ? '最近 53 周的每日用量，不随上方范围变化' : 'Daily usage over the last 53 weeks, independent of the range above'}</p>
         </div>
-        <Segmented className={styles.fill} value={metric} onValueChange={value => setMetric(value as UsageMetricKind)} aria-label={zh ? '热力图指标' : 'Heatmap metric'}>
+        <Segmented size="sm" className={styles.fill} value={metric} onValueChange={value => setMetric(value as UsageMetricKind)} aria-label={zh ? '热力图指标' : 'Heatmap metric'}>
           <SegmentedItem value="tokens">Token</SegmentedItem>
           <SegmentedItem value="requests">{zh ? '请求' : 'Requests'}</SegmentedItem>
           <SegmentedItem value="cost">{zh ? '费用' : 'Cost'}</SegmentedItem>

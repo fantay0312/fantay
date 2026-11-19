@@ -1,0 +1,183 @@
+name: Publish npm package
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      target_ref:
+        description: "Commit SHA, branch, or tag to publish from"
+        required: true
+      version:
+        description: "Exact npm version to publish, for example 0.1.10-beta.1"
+        required: true
+      npm_tag:
+        description: "npm dist-tag to publish with"
+        required: true
+        default: "next"
+      create_github_release:
+        description: "Create or update the matching GitHub release"
+        required: true
+        default: "true"
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: publish-npm-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    env:
+      MISE_DISABLE_TOOLS: dotnet,swift,pipx:dmgbuild,uv,shellcheck,actionlint
+      NPM_CONFIG_REGISTRY: https://registry.npmjs.org
+    outputs:
+      skip: ${{ steps.stable-bump.outputs.skip }}
+      version: ${{ steps.release.outputs.version }}
+      tag: ${{ steps.release.outputs.tag }}
+      ref: ${{ steps.source.outputs.ref }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.inputs.target_ref || github.ref }}
+          fetch-depth: 2
+
+      - name: Set up the project toolchain
+        uses: jdx/mise-action@v4
+
+      - name: Record immutable source
+        id: source
+        run: echo "ref=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Detect stable release bump commit
+        id: stable-bump
+        if: github.event_name == 'push' && github.ref_type == 'branch'
+        shell: bash
+        run: |
+          current_version="$(node -p "require('./package.json').version")"
+          parent_version=""
+          if git cat-file -e HEAD^1:package.json 2>/dev/null; then
+            parent_version="$(git show HEAD^1:package.json | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version")"
+          fi
+          subject="$(git log -1 --pretty=%s)"
+          version_changed=false
+          legacy_subject=false
+          if [[ -n "$parent_version" && "$current_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ && "$current_version" != "$parent_version" ]]; then
+            version_changed=true
+          fi
+          if [[ "$subject" =~ ^chore\(release\):[[:space:]]+bump[[:space:]]+version[[:space:]]+to[[:space:]]+[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            legacy_subject=true
+          fi
+          if [[ "$version_changed" == "true" || "$legacy_subject" == "true" ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Detected stable release version change; npm latest will be published by the matching v* tag."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Prepare npm release metadata
+        id: release
+        if: steps.stable-bump.outputs.skip != 'true'
+        shell: bash
+        env:
+          DISPATCH_VERSION: ${{ github.event.inputs.version }}
+          DISPATCH_NPM_TAG: ${{ github.event.inputs.npm_tag }}
+        run: |
+          base_version="$(node -p "require('./package.json').version")"
+          package_name="$(node -p "require('./package.json').name")"
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            version="${DISPATCH_VERSION}"
+            tag="${DISPATCH_NPM_TAG}"
+          elif [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            version="${GITHUB_REF_NAME#v}"
+            if [[ "$version" == *-* ]]; then
+              tag="next"
+            else
+              tag="latest"
+            fi
+          else
+            version="$(node npm/scripts/resolve-prerelease-version.js --package "$package_name" --base "$base_version" --id beta)"
+            tag="next"
+          fi
+          if [[ "$tag" == "latest" && "$version" == *-* ]]; then
+            echo "Refusing to publish prerelease version $version with npm dist-tag latest." >&2
+            exit 1
+          fi
+          mise run node npm/scripts/set-package-version.js "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+  binaries:
+    needs: prepare
+    if: needs.prepare.outputs.skip != 'true'
+    uses: ./.github/workflows/npm-binaries.yml
+    with:
+      ref: ${{ needs.prepare.outputs.ref }}
+      version: ${{ needs.prepare.outputs.version }}
+
+  publish:
+    needs: [prepare, binaries]
+    runs-on: ubuntu-latest
+    env:
+      MISE_DISABLE_TOOLS: dotnet,swift,pipx:dmgbuild,uv,shellcheck,actionlint
+      NPM_CONFIG_REGISTRY: https://registry.npmjs.org
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.ref }}
+      - uses: jdx/mise-action@v4
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: npm-cli-*
+          path: .desktop-artifacts/publish-npm
+          merge-multiple: true
+      - name: Publish platform packages before the CLI entry package
+        env:
+          CLI_VERSION: ${{ needs.prepare.outputs.version }}
+          CLI_TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          mise run node npm/scripts/set-package-version.js "$CLI_VERSION"
+          mise run node npm/scripts/publish-binaries.js .desktop-artifacts/publish-npm "$CLI_TAG"
+
+      - name: Create or update GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CREATE_GITHUB_RELEASE: ${{ github.event.inputs.create_github_release }}
+        shell: bash
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" && "${CREATE_GITHUB_RELEASE}" == "false" ]]; then
+            echo "Skipping GitHub release because create_github_release=false."
+            exit 0
+          fi
+          version="${{ needs.prepare.outputs.version }}"
+          npm_tag="${{ needs.prepare.outputs.tag }}"
+          tag_name="v${version}"
+          target="$(git rev-parse HEAD)"
+          # shellcheck disable=SC2016
+          notes_footer="$(printf '\n\n---\n\nnpm package: `%s@%s`\nnpm dist-tag: `%s`\nworkflow run: %s/%s/actions/runs/%s\n' '@konbakuyomu/smart-search' "$version" "$npm_tag" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID")"
+          notes_file=".github/releases/v${version}.md"
+          if [[ -f "$notes_file" ]]; then
+            notes="$(cat "$notes_file")${notes_footer}"
+          else
+            # shellcheck disable=SC2016
+            notes="$(printf 'Release notes for `%s@%s`.\n' '@konbakuyomu/smart-search' "$version")${notes_footer}"
+          fi
+          create_release_args=()
+          edit_release_args=()
+          if [[ "$version" == *-* ]]; then
+            create_release_args=(--prerelease --latest=false)
+            edit_release_args=(--prerelease)
+          fi
+          if gh release view "$tag_name" >/dev/null 2>&1; then
+            gh release edit "$tag_name" --title "$tag_name" --notes "$notes" "${edit_release_args[@]}"
+          else
+            gh release create "$tag_name" --target "$target" --title "$tag_name" --notes "$notes" "${create_release_args[@]}"
+          fi

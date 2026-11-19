@@ -1,3 +1,7 @@
+import { MarkdownModeTabs, type MarkdownViewerMode } from './MarkdownModeTabs';
+import type { MarkdownScrollLayout } from './MarkdownLiveEditor';
+import type { MarkdownDraft } from './markdown-draft';
+import { applyMarkdownChanges, editorMarkdown, isMarkdownImageFile, replaceEditorMarkdown } from './markdown-source';
 import { TokenToSeaSharePanel } from './share/TokenToSeaSharePanel';
 import { validateCommentSaveTarget } from '../comments/validate-save-target';
 import { previewStorageKey, readPreviewStorage, savePreviewStorageMessage } from '../runtime/preview-storage';
@@ -6,7 +10,7 @@ import { indexCommentTargets } from '../comments/target-index';
 import { useShareSourceGuard } from './share/useShareSourceGuard';
 import { useExperienceError } from '../observability/use-experience-error';
 import { daemonErrorCodeProp, failureDetailProps } from '../analytics/failure-detail';
-import { memo, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ClipboardEvent as ReactClipboardEvent, type CSSProperties, type DragEvent as ReactDragEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
+import { lazy, Suspense, memo, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ClipboardEvent as ReactClipboardEvent, type CSSProperties, type DragEvent as ReactDragEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
 import type { ArtifactExportFormat } from '../runtime/chat/artifact-export';
 import { useSharePlan } from './share/useSharePlan';
 import { boundedPublishProgress, type SharePublishFailureKey } from './share/ShareTab';
@@ -123,6 +127,10 @@ import { observeAnalytics } from '../analytics/observe';
 import { MarkdownRenderer, artifactRendererRegistry } from '../artifacts/renderer-registry';
 import { renderMarkdownToSafeHtml } from '../artifacts/markdown';
 import { formAnswersSummary } from '../artifacts/question-form';
+import type { DocumentDiagramOptions } from '../fantay/artifact/embed/markdown-document';
+import { prepareDocumentMath, restoreDocumentMath } from '../fantay/artifact/math/document-math';
+import { loadMathEngine, useMathEngine } from '../fantay/artifact/math/engine';
+import { diagramKindKey } from '../fantay/artifact/viewers/diagram/kinds';
 import {
   artifactExportOriginProps,
   matchingArtifactVersionId,
@@ -172,6 +180,7 @@ import {
   publicFileShareLinkFromRead,
   fetchProjectFileText,
   fetchProjectFileTextPreview,
+  uploadProjectFile,
   uploadProjectFiles,
   liveArtifactPreviewUrl,
   projectFileUrl,
@@ -292,6 +301,10 @@ import { composerHasUnsentWork } from '../comments/composer-unsent-work';
 import { RemixIcon } from './RemixIcon';
 import { projectIsSharedWithWorkspace } from '../collab/project-shared-status';
 import { HandoffButton } from './HandoffButton';
+import { ArtifactViewer as FantayArtifactViewer } from '../fantay/artifact/ArtifactViewer';
+import { ArtifactPath } from '../fantay/artifact/shell/ArtifactShell';
+import { useArtifactViewState } from '../fantay/artifact/use-view-state';
+import { useFantayShellEnabled } from '../fantay/shell/flags';
 import { SocialShareGrid } from './SocialShareGrid';
 import { Toast } from './Toast';
 import {
@@ -354,7 +367,6 @@ import {
   readManualEditStyles,
 } from '../edit-mode/source-patches';
 import { MANUAL_EDIT_STYLE_PROPS, type ManualEditBridgeMessage, type ManualEditHistoryEntry, type ManualEditPatch, type ManualEditStyles, type ManualEditTarget } from '../edit-mode/types';
-import { isRenderableSketchJson, SketchPreview } from './SketchPreview';
 import {
   getHtmlSourceSnapshot,
   htmlSourceSnapshotRefreshKey,
@@ -918,18 +930,37 @@ function markdownCodeBlockLanguage(content: string): MarkdownCodeLanguage | null
   return aliases[raw.toLowerCase()] ?? { lang: raw.toLowerCase(), label: raw.toUpperCase() };
 }
 
-async function highlightMarkdownCodeBlocks(html: string): Promise<string> {
-  if (typeof document === 'undefined') return html;
+/**
+ * Highlights the code blocks of a rendered Markdown document and, when `diagrams` is given, draws
+ * its ```mermaid blocks (the drawing code is loaded only for a document that has one). `shown` is
+ * the preview on screen: a diagram block that stops drawing while it is edited keeps the drawing
+ * it shows there.
+ */
+async function highlightMarkdownCodeBlocks(html: string, diagrams: DocumentDiagramOptions | null = null, shown: string | null = null): Promise<string> {
+  if (typeof document === 'undefined' || !html.includes(MARKDOWN_CODE_BLOCK_ATTR)) return html;
   // renderMarkdownToSafeHtml supplies sanitized markup; parse it in an inert
   // document rather than assigning HTML into a live DOM element.
   const root = new DOMParser().parseFromString(html, 'text/html').body;
   const blocks = Array.from(root.querySelectorAll<HTMLElement>(`[${MARKDOWN_CODE_BLOCK_ATTR}]`));
   if (blocks.length === 0) return html;
   const { highlightCode } = await import('../runtime/shiki');
+  const embeds = diagrams && /<code class="[^"]*\blanguage-mermaid\b/i.test(html)
+    ? await import('../fantay/artifact/embed/markdown-document')
+    : null;
+  const shownFigures = embeds && shown
+    ? embeds.figuresByBlock(new DOMParser().parseFromString(shown, 'text/html').body, `[${MARKDOWN_CODE_BLOCK_ATTR}]`)
+    : [];
+  let diagramIndex = 0;
   let changed = false;
   await Promise.all(blocks.map(async (block) => {
     const code = block.querySelector<HTMLElement>('pre > code');
     if (!code) return;
+    if (embeds && diagrams && embeds.isDiagramCode(code)) {
+      const previous = shownFigures[diagramIndex++] ?? null;
+      if (await embeds.drawDocumentDiagram(block, code, MARKDOWN_CODE_LANGUAGE_ATTR, diagrams, previous)) changed = true;
+      // A block that shows a drawing keeps its source hidden, for the copy button only.
+      if (block.getAttribute(embeds.DIAGRAM_BLOCK_ATTR) !== 'failed' && block.hasAttribute(embeds.DIAGRAM_BLOCK_ATTR)) return;
+    }
     const language = markdownCodeBlockLanguage(code.outerHTML);
     if (!language) return;
     const source = (code.textContent ?? '').replace(/\n$/, '');
@@ -1921,6 +1952,8 @@ export const FileViewer = memo(function FileViewer({
   manualEditEntryAllowed = true,
 }: Props) {
   const t = useT();
+  // The product shell dispatches page, React and Markdown files before the general artifact viewer.
+  const fantayShell = useFantayShellEnabled();
   // Survives a temporary HtmlViewer unmount while workspace authority refreshes.
   const pendingShareUpdateAfterLoginRef = useRef<PendingShareUpdateAfterLogin | null>(null);
   const shareLoginReturnRef = useRef<ShareLoginReturn | null>(null);
@@ -2053,6 +2086,7 @@ export const FileViewer = memo(function FileViewer({
   if (rendererMatch?.renderer.id === 'markdown') {
     return (
       <MarkdownViewer
+        key={JSON.stringify([projectId, file.name])}
         projectId={projectId}
         file={file}
         onFileSaved={onFileSaved}
@@ -2060,6 +2094,9 @@ export const FileViewer = memo(function FileViewer({
         viewerOnly={viewerOnly}
       />
     );
+  }
+  if (fantayShell) {
+    return <FantayArtifactViewer projectId={projectId} file={file} active={workspaceActive} />;
   }
   if (rendererMatch?.renderer.id === 'svg') {
     return <SvgViewer projectId={projectId} file={file} />;
@@ -2074,9 +2111,7 @@ export const FileViewer = memo(function FileViewer({
     return <AudioViewer projectId={projectId} file={file} />;
   }
   if (file.kind === 'sketch') {
-    if (isRenderableSketchJson(file)) {
-      return <SketchViewer projectId={projectId} file={file} />;
-    }
+    if (isJsonFile(file)) return <TextViewer projectId={projectId} file={file} />;
     return <ImageViewer projectId={projectId} file={file} />;
   }
   if (file.kind === 'text' || file.kind === 'code') {
@@ -9906,6 +9941,13 @@ function HtmlViewer({
   const [chromeActionsHost, setChromeActionsHost] = useState<HTMLElement | null>(
     () => (typeof document === 'undefined' ? null : resolveChromeActionsHost()),
   );
+  // Product shell: the file's actions sit at the end of this viewer's own bar and the annotation
+  // tools float over the page, so the tab row carries tabs only. The inherited chrome keeps the
+  // tab-row host and the inline tools; both hosts stay null there.
+  const fantayShell = useFantayShellEnabled();
+  const [fantayActionsHost, setFantayActionsHost] = useState<HTMLElement | null>(null);
+  const [fantayToolsHost, setFantayToolsHost] = useState<HTMLElement | null>(null);
+  const fileActionsHost = fantayShell ? fantayActionsHost : chromeActionsHost;
   useLayoutEffect(() => {
     if (!workspaceActive || typeof document === 'undefined') return;
     setChromeActionsHost(resolveChromeActionsHost());
@@ -17192,6 +17234,7 @@ function HtmlViewer({
   return (
     <div ref={viewerRootRef} className={`viewer html-viewer${inTabPresent ? ' is-tab-present' : ''}${viewerOnly ? ' html-viewer--viewer-only' : ''}`}>
       <div className="viewer-toolbar" style={workspaceActive ? undefined : { visibility: 'hidden' }}>
+        {fantayShell ? <ArtifactPath path={file.name} /> : null}
         <div className="viewer-toolbar-left">
           {showDeckThumbnailRail ? (
             <button
@@ -17306,6 +17349,9 @@ function HtmlViewer({
         <div className="viewer-toolbar-actions">
           {showPreviewToolbarControls ? (
             <div className="viewer-toolbar-inline-actions">
+              {((tools: ReactNode) => (
+                fantayShell ? (fantayToolsHost ? createPortal(tools, fantayToolsHost) : null) : tools
+              ))(<>
               {mode === 'preview' ? (
                 <button
                   type="button"
@@ -17382,6 +17428,7 @@ function HtmlViewer({
                 <span className="viewer-comment-count" aria-hidden>{visibleSideComments.length}</span>
                 {!commentPanelOpen && hasUnreadSideComments ? <span data-testid="comment-unread-dot" aria-hidden style={{ background: 'var(--red)', borderRadius: '50%', height: 7, width: 7, position: 'absolute', right: 2, top: 2 }} /> : null}
               </button>
+              </>)}
               {source !== null && mode === 'preview' ? (
                 <div className="zoom-menu viewer-toolbar-zoom" ref={zoomMenuRef}>
                   <button
@@ -17592,9 +17639,19 @@ function HtmlViewer({
             ) : null}
           </div>
         </div>
+        {fantayShell ? <div className="viewer-fx-file-actions" ref={setFantayActionsHost} /> : null}
       </div>
+      {fantayShell ? (
+        <div
+          className="viewer-fx-tool-island"
+          ref={setFantayToolsHost}
+          role="toolbar"
+          aria-label={t('fileViewer.edit')}
+          hidden={!workspaceActive || !showPreviewToolbarControls}
+        />
+      ) : null}
       {((filePrimaryActions: ReactNode) => (
-        chromeActionsHost
+        fileActionsHost
           ? createPortal(
               <div
                 data-od-file-actions-owner={file.name}
@@ -17602,9 +17659,9 @@ function HtmlViewer({
               >
                 {filePrimaryActions}
               </div>,
-              chromeActionsHost,
+              fileActionsHost,
             )
-          : workspaceActive
+          : workspaceActive && !fantayShell
             ? filePrimaryActions
             : null
       ))(<>
@@ -19411,37 +19468,6 @@ function ImageViewer({
   );
 }
 
-function SketchViewer({
-  projectId,
-  file,
-}: {
-  projectId: string;
-  file: ProjectFile;
-}) {
-  const t = useT();
-  const { workspaceContext } = useProjectCollabContext();
-  return (
-    <div className="viewer image-viewer sketch-viewer">
-      <div className="viewer-toolbar">
-        <div className="viewer-toolbar-left">
-          <span className="viewer-meta">
-            {t('fileViewer.sketchMeta', { size: humanSize(file.size) })}
-          </span>
-        </div>
-        <FileActions projectId={projectId} file={file} />
-      </div>
-      <div className="viewer-body image-body">
-        <SketchPreview
-          projectId={projectId}
-          file={file}
-          className="viewer-sketch-preview"
-          workspaceContext={workspaceContext}
-        />
-      </div>
-    </div>
-  );
-}
-
 function VideoViewer({
   projectId,
   file,
@@ -19838,7 +19864,8 @@ function isJsonFile(file: ProjectFile): boolean {
   return file.name.toLowerCase().endsWith('.json') || file.mime.toLowerCase().startsWith('application/json');
 }
 
-type MarkdownViewerMode = 'edit' | 'split' | 'preview';
+const MarkdownLiveEditor = lazy(() => import('./MarkdownLiveEditor'));
+
 type MarkdownSaveState = 'idle' | 'saving' | 'saved' | 'error';
 type MarkdownScrollPane = 'editor' | 'preview';
 type MarkdownSaveOptions = {
@@ -19882,17 +19909,35 @@ function MarkdownViewer({
 }) {
   const { t, locale } = useI18n();
   const { workspaceContext } = useProjectCollabContext();
-  const [text, setText] = useState<string | null>(null);
+  const [, refreshBuffer] = useState(0);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [readAttempt, retryRead] = useState(0);
   const [copied, setCopied] = useState(false);
   const [downloadMenuOpen, setDownloadMenuOpen] = useState(false);
   const downloadMenuRef = useRef<HTMLDivElement | null>(null);
   useDismissOnOutsideInteraction(downloadMenuOpen, downloadMenuRef, () => setDownloadMenuOpen(false));
-  const [mode, setMode] = useState<MarkdownViewerMode>(viewerOnly ? 'preview' : 'split');
+  const fantayShell = useFantayShellEnabled();
+  const [mountMode, setMountMode] = useState<MarkdownViewerMode>(viewerOnly ? 'preview' : 'split');
+  const [keptMode, setKeptMode] = useArtifactViewState<MarkdownViewerMode>(projectId, file.name, 'markdown-mode', 'live');
+  const lockedPreview = viewerOnly || (fantayShell && file.artifactManifest?.status === 'streaming');
+  const committedMode: MarkdownViewerMode = lockedPreview ? 'preview' : (fantayShell ? keptMode : mountMode);
+  const [pressedMode, setPressedMode] = useState<MarkdownViewerMode | null>(null);
+  const composing = useRef(false);
+  const mode = !lockedPreview && fantayShell && pressedMode ? pressedMode : committedMode;
+  const setMode = fantayShell ? setKeptMode : setMountMode;
+  const desktopEditor = fantayShell && !lockedPreview;
+  const panelId = useId();
+  const pageWash = useRef<HTMLSpanElement>(null);
+  const editorLayout = useRef<MarkdownScrollLayout | null>(null);
+  const [warmSource, setWarmSource] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<MarkdownSaveState>('idle');
   const [savedAt, setSavedAt] = useState<number | null>(null);
-  const [highlightedHtml, setHighlightedHtml] = useState<{ source: string; html: string; themeRevision: number } | null>(null);
+  const [highlightedHtml, setHighlightedHtml] = useState<{ source: string; html: string; themeRevision: number; file: string; diagrams: boolean } | null>(null);
   const [highlightThemeRevision, setHighlightThemeRevision] = useState(0);
-  const [, bumpSavedRevision] = useState(0);
+  /** The preview column's width in steps of 40px: the room a Mermaid block is laid out for. */
+  const [diagramRoom, setDiagramRoom] = useState<number | null>(null);
+  /** The drawing pass failed as a whole (its code did not load): Mermaid blocks stay readable as code. */
+  const [diagramPassFailed, setDiagramPassFailed] = useState(false);
   const editorRef = useRef<HTMLTextAreaElement | null>(null);
   const markdownPreviewPaneRef = useRef<HTMLElement | null>(null);
   const markdownArticleRef = useRef<HTMLElement | null>(null);
@@ -19908,70 +19953,96 @@ function MarkdownViewer({
   const previousModeRef = useRef<MarkdownViewerMode>(viewerOnly ? 'preview' : 'split');
   const saveInFlightRef = useRef(false);
   const pendingSaveAfterFlightRef = useRef<MarkdownSaveOptions | null>(null);
-  const textRef = useRef('');
-  const lastSavedTextRef = useRef<string | null>(null);
+  // Live editing owns its tree and DOM. Keep the newest immutable snapshot without publishing
+  // every keystroke to React. Source/split/reading views materialize the snapshot on entry.
+  type Buffer = string | MarkdownDraft;
+  const bufferRef = useRef<Buffer | null>(null);
+  const lastSavedTextRef = useRef<Buffer | null>(null);
+  const editRevisionRef = useRef(0);
+  const buffer = bufferRef.current;
+  const wantsText = mode === 'preview' || mode === 'split' || (!desktopEditor && mode === 'edit');
+  const text = wantsText ? buffer?.toString() ?? null : null;
+  // Prepare ordinary notes during idle time so the first click can reuse the typeset page.
+  useEffect(() => {
+    if (!desktopEditor || wantsText || buffer === null) return;
+    const length = typeof buffer === 'string' ? buffer.length : buffer.doc.length;
+    if (length > 8192) { setWarmSource(null); return; }
+    const warm = () => {
+      if (bufferRef.current !== buffer) return;
+      const raw = buffer.toString();
+      if (!/(?:!\[|\$|~~~|`{3})/.test(raw)) setWarmSource(raw);
+    };
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(warm, { timeout: 500 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = window.setTimeout(warm, 80);
+    return () => window.clearTimeout(id);
+  }, [buffer, desktopEditor, wantsText]);
+  const savedFileRef = useRef<{ size: number; mtime: number; scope: typeof workspaceContext } | null>(null);
   const loadedFileKeyRef = useRef<string | null>(null);
   const markdownFileKey = `${projectId}::${file.name}`;
   const status = file.artifactManifest?.status ?? 'complete';
   const isStreaming = status === 'streaming';
   const isError = status === 'error';
-  const exportTitle = file.name.replace(/\.mdx?$/i, '') || file.name;
+  const exportTitle = file.name.replace(/\.(?:mdx?|markdown|mdown|mkdn?)$/i, '') || file.name;
   const viewerOnlyDisabledTitle = t('fileViewer.readonlySharedNoExport');
 
   useEffect(() => {
     if (!viewerOnly) return;
-    setMode('preview');
     setDownloadMenuOpen(false);
   }, [viewerOnly]);
 
   useEffect(() => {
     const sameLoadedFile = loadedFileKeyRef.current === markdownFileKey;
-    if (
-      sameLoadedFile &&
-      lastSavedTextRef.current !== null &&
-      textRef.current !== lastSavedTextRef.current
-    ) {
-      return undefined;
+    const editingLocally = () => saveInFlightRef.current || (
+      lastSavedTextRef.current !== null && bufferRef.current !== lastSavedTextRef.current
+    );
+    if (sameLoadedFile && editingLocally()) return;
+    if (sameLoadedFile && savedFileRef.current?.scope === workspaceContext && savedFileRef.current?.mtime === file.mtime && savedFileRef.current.size === file.size) {
+      savedFileRef.current = null;
+      return;
     }
-    if (!sameLoadedFile) setText(null);
+    if (!sameLoadedFile && bufferRef.current !== null) {
+      bufferRef.current = null;
+      refreshBuffer(n => n + 1);
+    }
     copiedMarkdownBlockRef.current = null;
     if (copyBlockTimerRef.current) {
       window.clearTimeout(copyBlockTimerRef.current);
       copyBlockTimerRef.current = null;
     }
     let cancelled = false;
-    void fetchProjectFileText(projectId, file.name, { workspaceContext }).then((next) => {
-      if (cancelled) return;
-      if (
-        loadedFileKeyRef.current === markdownFileKey &&
-        lastSavedTextRef.current !== null &&
-        textRef.current !== lastSavedTextRef.current
-      ) {
-        return;
-      }
-      const loaded = next ?? '';
+    const revisionAtRead = editRevisionRef.current;
+    setLoadFailed(false);
+    void fetchProjectFileText(projectId, file.name, { workspaceContext, preserveUtf8Bom: true }).then((next) => {
+      if (cancelled || revisionAtRead !== editRevisionRef.current) return;
+      if (loadedFileKeyRef.current === markdownFileKey && editingLocally()) return;
+      if (next === null) { setLoadFailed(true); return; }
+      const loaded = next;
       if (
         sameLoadedFile &&
         lastSavedTextRef.current !== null &&
-        textRef.current === lastSavedTextRef.current &&
-        loaded === lastSavedTextRef.current
+        bufferRef.current === lastSavedTextRef.current &&
+        loaded === lastSavedTextRef.current.toString()
       ) {
         loadedFileKeyRef.current = markdownFileKey;
         pendingSaveAfterFlightRef.current = null;
         setSaveState((current) => current === 'saved' ? current : 'idle');
         return;
       }
-      textRef.current = loaded;
+      savedFileRef.current = null;
+      bufferRef.current = loaded;
       lastSavedTextRef.current = loaded;
       loadedFileKeyRef.current = markdownFileKey;
       pendingSaveAfterFlightRef.current = null;
       setSaveState('idle');
-      setText(loaded);
+      refreshBuffer(n => n + 1);
     });
     return () => {
       cancelled = true;
     };
-  }, [projectId, file.name, file.mtime, markdownFileKey]);
+  }, [projectId, file.name, file.mtime, file.size, markdownFileKey, readAttempt, workspaceContext]);
 
   useEffect(() => {
     return () => {
@@ -19997,17 +20068,9 @@ function MarkdownViewer({
   }, []);
 
   const saveMarkdownText = useCallback(
-    (value: string, options: MarkdownSaveOptions = {}) => {
+    (value: Buffer, options: MarkdownSaveOptions = {}) => {
       if (viewerOnly) return;
-      const run = async (nextValue: string, saveOptions: MarkdownSaveOptions): Promise<void> => {
-        if (lastSavedTextRef.current === nextValue) {
-          const showSaving = saveOptions.showSaving !== false;
-          if (textRef.current === nextValue) setSaveState(showSaving ? 'saved' : 'idle');
-          if (saveOptions.refreshFiles !== false && onFileSaved) {
-            void Promise.resolve(onFileSaved()).catch(() => undefined);
-          }
-          return;
-        }
+      const run = async (nextValue: Buffer, saveOptions: MarkdownSaveOptions): Promise<void> => {
         if (saveInFlightRef.current) {
           pendingSaveAfterFlightRef.current = pendingSaveAfterFlightRef.current
             ? mergeMarkdownSaveOptions(pendingSaveAfterFlightRef.current, saveOptions)
@@ -20016,33 +20079,46 @@ function MarkdownViewer({
         }
         saveInFlightRef.current = true;
         const showSaving = saveOptions.showSaving !== false;
-        if (showSaving) setSaveState('saving');
         try {
-          const saved = await writeProjectTextFile(projectId, file.name, nextValue, undefined, workspaceContext);
+          const raw = typeof nextValue === 'string' ? nextValue : await nextValue.diskText();
+          if (lastSavedTextRef.current === nextValue || lastSavedTextRef.current?.toString() === raw) {
+            lastSavedTextRef.current = nextValue;
+            if (bufferRef.current === nextValue) setSaveState(showSaving ? 'saved' : 'idle');
+            if (saveOptions.refreshFiles !== false && onFileSaved) {
+              void Promise.resolve(onFileSaved()).catch(() => undefined);
+            }
+            return;
+          }
+          if (showSaving) setSaveState('saving');
+          // The same project-file endpoint accepts a file part for large documents. Send native
+          // UTF-8 bytes to avoid JSON escaping and the daemon's 4 MiB JSON body limit.
+          const saved = raw.length > 512 * 1024
+            ? await uploadProjectFile(projectId, new File([raw], file.name.split('/').pop()!, { type: 'text/markdown' }), file.name, workspaceContext)
+            : await writeProjectTextFile(projectId, file.name, raw, undefined, workspaceContext);
           if (!saved) throw new Error('write failed');
           // A successful write remains a write when autosave deliberately
           // avoids refreshing the file list. No-op saves emit no receipt.
+          savedFileRef.current = { size: saved.size, mtime: saved.mtime, scope: workspaceContext };
           onFileWritten?.(saved);
           lastSavedTextRef.current = nextValue;
-          bumpSavedRevision((n) => n + 1);
           setSavedAt(Date.now());
-          if (textRef.current === nextValue) setSaveState(showSaving ? 'saved' : 'idle');
+          if (bufferRef.current === nextValue) setSaveState(showSaving ? 'saved' : 'idle');
           if (saveOptions.refreshFiles !== false && onFileSaved) {
             void Promise.resolve(onFileSaved()).catch(() => undefined);
           }
         } catch {
-          if (textRef.current === nextValue) setSaveState('error');
+          if (bufferRef.current === nextValue) setSaveState('error');
         } finally {
           saveInFlightRef.current = false;
           const pending = pendingSaveAfterFlightRef.current;
           if (pending) {
             pendingSaveAfterFlightRef.current = null;
-            const latest = textRef.current;
-            if (latest !== lastSavedTextRef.current) {
+            const latest = bufferRef.current;
+            if (latest !== null && latest !== lastSavedTextRef.current) {
               void run(latest, pending);
             } else {
               const showPendingSaving = pending.showSaving !== false;
-              if (textRef.current === latest) setSaveState(showPendingSaving ? 'saved' : 'idle');
+              if (bufferRef.current === latest) setSaveState(showPendingSaving ? 'saved' : 'idle');
               if (pending.refreshFiles !== false && onFileSaved) {
                 void Promise.resolve(onFileSaved()).catch(() => undefined);
               }
@@ -20052,7 +20128,7 @@ function MarkdownViewer({
       };
       void run(value, options);
     },
-    [file.name, onFileSaved, onFileWritten, projectId, viewerOnly],
+    [file.name, onFileSaved, onFileWritten, projectId, viewerOnly, workspaceContext],
   );
 
   const flushPendingMarkdownSave = useCallback(() => {
@@ -20061,8 +20137,8 @@ function MarkdownViewer({
       window.clearTimeout(saveTimerRef.current);
       saveTimerRef.current = null;
     }
-    const latest = textRef.current;
-    if (lastSavedTextRef.current !== null && latest !== lastSavedTextRef.current) {
+    const latest = bufferRef.current;
+    if (latest !== null && lastSavedTextRef.current !== null && (saveInFlightRef.current || latest !== lastSavedTextRef.current)) {
       saveMarkdownText(latest, { refreshFiles: false, showSaving: false });
     }
   }, [saveMarkdownText, viewerOnly]);
@@ -20073,26 +20149,14 @@ function MarkdownViewer({
     };
   }, [flushPendingMarkdownSave]);
 
-  useEffect(() => {
-    if (text === null) return undefined;
-    textRef.current = text;
-    if (viewerOnly) return undefined;
-    if (text === lastSavedTextRef.current) return undefined;
-    setSaveState((current) => current === 'saved' ? 'idle' : current);
-    if (saveTimerRef.current) {
-      window.clearTimeout(saveTimerRef.current);
-    }
-    saveTimerRef.current = window.setTimeout(() => {
-      saveTimerRef.current = null;
-      saveMarkdownText(textRef.current, { refreshFiles: false, showSaving: false });
-    }, 700);
-    return () => {
-      if (saveTimerRef.current) {
-        window.clearTimeout(saveTimerRef.current);
-        saveTimerRef.current = null;
-      }
-    };
-  }, [saveMarkdownText, text, viewerOnly]);
+  function changeBuffer(next: Buffer): void {
+    if (viewerOnly) return;
+    editRevisionRef.current++;
+    bufferRef.current = next;
+    if (typeof next === 'string' || mode === 'split') refreshBuffer(n => n + 1);
+    if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = window.setTimeout(flushPendingMarkdownSave, 700);
+  }
 
   useEffect(() => {
     const root = document.documentElement;
@@ -20108,37 +20172,31 @@ function MarkdownViewer({
   }, []);
 
   async function copy() {
-    if (text == null) return;
-    const didCopy = await copyTextToClipboard(text);
+    if (bufferRef.current === null) return;
+    const didCopy = await copyTextToClipboard(bufferRef.current.toString());
     if (didCopy) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
     }
   }
 
-  const insertTextAtSelection = useCallback((insert: string) => {
-    setText((current) => {
-      if (viewerOnly) return current;
-      if (current === null) return current;
-      const editor = editorRef.current;
-      if (!editor) return `${current}${insert}`;
-      const start = editor.selectionStart;
-      const end = editor.selectionEnd;
-      const next = `${current.slice(0, start)}${insert}${current.slice(end)}`;
-      window.requestAnimationFrame(() => {
-        const nextCursor = start + insert.length;
-        editor.focus();
-        editor.setSelectionRange(nextCursor, nextCursor);
-      });
-      return next;
+  function insertTextAtSelection(insert: string): void {
+    const editor = editorRef.current;
+    if (viewerOnly || bufferRef.current === null || !editor) return;
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    changeBuffer(applyMarkdownChanges(bufferRef.current.toString(), [{ from: start, to: end, insert }]));
+    window.requestAnimationFrame(() => {
+      editor.focus();
+      editor.setSelectionRange(start + insert.length, start + insert.length);
     });
-  }, [viewerOnly]);
+  }
 
-  const insertImageFiles = useCallback(
-    async (files: File[]): Promise<boolean> => {
-      if (viewerOnly) return false;
+  const uploadMarkdownImages = useCallback(
+    async (files: File[]): Promise<string | null> => {
+      if (viewerOnly) return null;
       const images = files.filter((item) => isMarkdownImageFile(item));
-      if (images.length === 0) return false;
+      if (images.length === 0) return null;
       const targetDir = markdownDirectory(file.name);
       const result = await uploadProjectFiles(projectId, images, targetDir, workspaceContext);
       if (result.uploaded.length > 0) {
@@ -20150,11 +20208,11 @@ function MarkdownViewer({
             return `![${alt}](${path})`;
           })
           .join('\n');
-        insertTextAtSelection(`\n${snippet}\n`);
+        return `\n${snippet}\n`;
       }
-      return true;
+      return null;
     },
-    [file.name, insertTextAtSelection, onFileSaved, projectId, viewerOnly],
+    [file.name, onFileSaved, projectId, viewerOnly, workspaceContext],
   );
 
   function handleEditorPaste(event: ReactClipboardEvent<HTMLTextAreaElement>) {
@@ -20162,7 +20220,7 @@ function MarkdownViewer({
     const files = Array.from(event.clipboardData.files ?? []);
     if (!files.some(isMarkdownImageFile)) return;
     event.preventDefault();
-    void insertImageFiles(files);
+    void uploadMarkdownImages(files).then(snippet => { if (snippet) insertTextAtSelection(snippet); });
   }
 
   function handleEditorDrop(event: ReactDragEvent<HTMLTextAreaElement>) {
@@ -20170,7 +20228,7 @@ function MarkdownViewer({
     const files = Array.from(event.dataTransfer.files ?? []);
     if (!files.some(isMarkdownImageFile)) return;
     event.preventDefault();
-    void insertImageFiles(files);
+    void uploadMarkdownImages(files).then(snippet => { if (snippet) insertTextAtSelection(snippet); });
   }
 
   // The markdown doc auto-saves on a debounce, so the toolbar shows a passive
@@ -20202,20 +20260,44 @@ function MarkdownViewer({
   const showEditor = mode === 'edit' || mode === 'split';
   const showPreview = mode === 'preview' || mode === 'split';
 
+  // Formulas are taken out before Markdown is parsed and typeset in its output (see
+  // `fantay/artifact/math/document-math.ts`); until the engine is loaded they read as their source.
+  // Keep a short rendered page when switching modes. It can be shown again without parsing
+  // and laying out an identical document. Large hidden previews are released.
+  const lastPreviewSource = useRef<string | null>(null);
+  const warmMatches = warmSource !== null && (buffer === warmSource || (typeof buffer === 'object' && buffer?.matches(warmSource)));
+  const previewSource = showPreview ? text : warmMatches ? warmSource : lastPreviewSource.current;
+  useEffect(() => {
+    lastPreviewSource.current = fantayShell && previewSource !== null && previewSource.length <= 32_768 ? previewSource : null;
+  }, [fantayShell, previewSource]);
+  const documentMath = useMemo(() => previewSource === null ? null : prepareDocumentMath(previewSource), [previewSource]);
+  const mathReady = useMathEngine(documentMath !== null && documentMath.formulas.length > 0);
   const baseHtml = useMemo(() => {
-    if (text === null) return null;
+    if (documentMath === null) return null;
     const renderPartial = MarkdownRenderer.renderPartial ?? renderMarkdownToSafeHtml;
     return rewriteMarkdownImageSources(
-      decorateMarkdownCodeBlocks(renderPartial(text)),
+      decorateMarkdownCodeBlocks(restoreDocumentMath(renderPartial(documentMath.markdown), documentMath.formulas)),
       projectId,
       file.name,
       workspaceContext,
     );
-  }, [file.name, projectId, text, workspaceContext]);
-  const html = highlightedHtml?.source === baseHtml && highlightedHtml.themeRevision === highlightThemeRevision
-    ? highlightedHtml.html
-    : baseHtml;
-  const markdownBlockLines = useMemo(() => extractMarkdownBlockLines(text ?? ''), [text]);
+    // `mathReady`: the same text is rendered again once formulas can be typeset.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documentMath, file.name, projectId, workspaceContext, mathReady]);
+  // While a document is being written its Mermaid blocks stay code: a half-written diagram draws
+  // as something else on every chunk.
+  const previewNeedsDiagramWidth = showPreview && !!baseHtml?.includes('language-mermaid');
+  const drawDiagrams = previewNeedsDiagramWidth && !isStreaming && diagramRoom !== null;
+  const highlightIsCurrent = highlightedHtml !== null
+    && highlightedHtml.source === baseHtml
+    && highlightedHtml.themeRevision === highlightThemeRevision;
+  // A preview that shows drawings keeps showing them while the next version is prepared, so an
+  // edit elsewhere in the document does not flash every diagram back to its source.
+  const highlightHolds = highlightedHtml !== null && highlightedHtml.diagrams && highlightedHtml.file === markdownFileKey && baseHtml !== null;
+  const html = highlightedHtml !== null && (highlightIsCurrent || highlightHolds) ? highlightedHtml.html : baseHtml;
+  // The preview on screen, for the next pass (a diagram block being edited keeps its drawing).
+  const shownHtmlRef = useRef<{ file: string; html: string } | null>(null);
+  const blockLinesCache = useRef<{ text: string; lines: number[] } | null>(null);
 
   // The cached editor block offsets become stale whenever the source text
   // changes (line positions move) — drop them so the next sync remeasures.
@@ -20229,16 +20311,60 @@ function MarkdownViewer({
       return undefined;
     }
     let cancelled = false;
-    highlightMarkdownCodeBlocks(baseHtml).then((nextHtml) => {
+    const diagrams: DocumentDiagramOptions | null = drawDiagrams
+      ? {
+          availableWidth: diagramRoom,
+          kindLabel: (type) => t(diagramKindKey(type)),
+          failedNote: (line) => (line === null ? t('artifact.embed.diagramFailed') : t('artifact.embed.diagramFailedLine', { line: String(line) })),
+          staleNote: (line) => (line === null ? t('artifact.diagram.staleNoLine') : t('artifact.diagram.stale', { line: String(line) })),
+        }
+      : null;
+    const shown = shownHtmlRef.current;
+    highlightMarkdownCodeBlocks(baseHtml, diagrams, shown?.file === markdownFileKey ? shown.html : null).then((nextHtml) => {
       if (cancelled) return;
-      setHighlightedHtml(nextHtml === baseHtml ? null : { source: baseHtml, html: nextHtml, themeRevision: highlightThemeRevision });
+      setHighlightedHtml(
+        nextHtml === baseHtml
+          ? null
+          : { source: baseHtml, html: nextHtml, themeRevision: highlightThemeRevision, file: markdownFileKey, diagrams: nextHtml.includes('data-markdown-diagram=') },
+      );
+      setDiagramPassFailed(false);
     }).catch(() => {
-      if (!cancelled) setHighlightedHtml(null);
+      if (cancelled) return;
+      setHighlightedHtml(null);
+      setDiagramPassFailed(true);
     });
     return () => {
       cancelled = true;
     };
-  }, [baseHtml, highlightThemeRevision]);
+  }, [baseHtml, highlightThemeRevision, drawDiagrams, diagramRoom, markdownFileKey, t]);
+
+  useEffect(() => {
+    shownHtmlRef.current = html === null ? null : { file: markdownFileKey, html };
+  }, [html, markdownFileKey]);
+
+  // The room a diagram has is the article's width; it is measured in steps so a resize does not
+  // draw on every pixel.
+  useEffect(() => {
+    const article = markdownArticleRef.current;
+    if (!previewNeedsDiagramWidth || !article) return undefined;
+    const measure = (): void => {
+      const box = window.getComputedStyle(article);
+      const width = article.clientWidth - (Number.parseFloat(box.paddingLeft) || 0) - (Number.parseFloat(box.paddingRight) || 0);
+      if (width > 0) setDiagramRoom(Math.floor(width / 40) * 40);
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    let timer = 0;
+    const observer = new ResizeObserver(() => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(measure, 160);
+    });
+    observer.observe(article);
+    return () => {
+      window.clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [previewNeedsDiagramWidth]);
 
   const clearProgrammaticScrollSoon = useCallback(() => {
     if (programmaticScrollClearFrameRef.current) {
@@ -20252,7 +20378,8 @@ function MarkdownViewer({
     });
   }, []);
 
-  const getEditorBlockOffsets = useCallback((): number[] | null => {
+  const getEditorBlockOffsets = useCallback((markdownBlockLines: number[]): number[] | null => {
+    if (desktopEditor) return editorLayout.current?.blockOffsets(markdownBlockLines) ?? null;
     const editor = editorRef.current;
     if (!editor || markdownBlockLines.length === 0) return null;
     const width = editor.clientWidth;
@@ -20260,11 +20387,11 @@ function MarkdownViewer({
     if (cached && cached.width === width && cached.offsets.length === markdownBlockLines.length) {
       return cached.offsets;
     }
-    const offsets = measureEditorBlockOffsets(editor, markdownBlockLines, textRef.current);
+    const offsets = measureEditorBlockOffsets(editor, markdownBlockLines, bufferRef.current?.toString() ?? '');
     if (!offsets) return null;
     editorBlockOffsetsRef.current = { width, offsets };
     return offsets;
-  }, [markdownBlockLines]);
+  }, [desktopEditor]);
 
   // Align the panes by matching each top-level markdown block's source line to
   // its rendered element, then interpolating scroll position between those
@@ -20273,8 +20400,10 @@ function MarkdownViewer({
   const computeMarkdownSyncTarget = useCallback(
     (sourcePane: MarkdownScrollPane, source: HTMLElement, target: HTMLElement): number => {
       const previewPane = markdownPreviewPaneRef.current;
-      if (markdownBlockLines.length > 0 && previewPane) {
-        const editorOffsets = getEditorBlockOffsets();
+      if (text && previewPane) {
+        if (blockLinesCache.current?.text !== text) blockLinesCache.current = { text, lines: extractMarkdownBlockLines(text) };
+        const markdownBlockLines = blockLinesCache.current.lines;
+        const editorOffsets = getEditorBlockOffsets(markdownBlockLines);
         const previewOffsets = editorOffsets
           ? measurePreviewBlockOffsets(previewPane, markdownBlockLines.length)
           : null;
@@ -20290,15 +20419,18 @@ function MarkdownViewer({
       }
       return markdownScrollTopForRatio(target, markdownScrollRatio(source));
     },
-    [getEditorBlockOffsets, markdownBlockLines],
+    [getEditorBlockOffsets, text],
   );
 
   const applyMarkdownScrollSync = useCallback(
     (sourcePane: MarkdownScrollPane, targetPane: MarkdownScrollPane) => {
-      const source = sourcePane === 'editor' ? editorRef.current : markdownPreviewPaneRef.current;
-      const target = targetPane === 'editor' ? editorRef.current : markdownPreviewPaneRef.current;
+      const source = sourcePane === 'editor' ? (editorLayout.current?.scroller ?? editorRef.current) : markdownPreviewPaneRef.current;
+      const target = targetPane === 'editor' ? (editorLayout.current?.scroller ?? editorRef.current) : markdownPreviewPaneRef.current;
       if (mode !== 'split' || !source || !target) return;
-      const targetTop = computeMarkdownSyncTarget(sourcePane, source, target);
+      // At the top the mapping is exactly zero, including when both panes fit on screen.
+      // Measuring a hidden textarea mirror here would force layout for the whole window.
+      const targetTop = source.scrollTop <= 0 || markdownScrollRange(target) === 0
+        ? 0 : computeMarkdownSyncTarget(sourcePane, source, target);
       if (Math.abs(target.scrollTop - targetTop) < 1) return;
       programmaticScrollRef.current = { pane: targetPane, top: targetTop };
       target.scrollTop = targetTop;
@@ -20337,7 +20469,7 @@ function MarkdownViewer({
   }, []);
 
   const handleMarkdownEditorScroll = useCallback(() => {
-    const editor = editorRef.current;
+    const editor = editorLayout.current?.scroller ?? editorRef.current;
     if (!editor || shouldIgnoreMarkdownScroll('editor', editor)) return;
     activeMarkdownScrollPaneRef.current = 'editor';
     scheduleMarkdownScrollSync('editor', 'preview');
@@ -20356,7 +20488,7 @@ function MarkdownViewer({
 
   useEffect(() => {
     const article = markdownArticleRef.current;
-    if (!article) return;
+    if (!article || !html?.includes(MARKDOWN_CODE_BLOCK_ATTR)) return;
     ensureMarkdownCodeBlockControls(article, t);
     if (copiedMarkdownBlockRef.current?.isConnected) {
       setMarkdownCodeBlockCopiedState(copiedMarkdownBlockRef.current, true, t);
@@ -20379,7 +20511,8 @@ function MarkdownViewer({
       previousModeRef.current = mode;
       return;
     }
-    const sourcePane = activeMarkdownScrollPaneRef.current ?? (previousModeRef.current === 'preview' ? 'preview' : 'editor');
+    const sourcePane = previousModeRef.current === 'preview' ? 'preview' : activeMarkdownScrollPaneRef.current;
+    activeMarkdownScrollPaneRef.current = sourcePane;
     const targetPane = sourcePane === 'preview' ? 'editor' : 'preview';
     scheduleMarkdownScrollSync(sourcePane, targetPane);
     previousModeRef.current = mode;
@@ -20413,32 +20546,53 @@ function MarkdownViewer({
     }, 1800);
   }
 
+  function renderLiveFragment(source: string, width: number): string | Promise<string> {
+    const math = prepareDocumentMath(source);
+    const html = () => rewriteMarkdownImageSources(
+      decorateMarkdownCodeBlocks(restoreDocumentMath(renderMarkdownToSafeHtml(math.markdown), math.formulas)),
+      projectId, file.name, workspaceContext,
+    );
+    if (math.formulas.length) return loadMathEngine().then(html);
+    const safe = html();
+    if (!safe.includes('data-markdown-code-block')) return safe;
+    return highlightMarkdownCodeBlocks(safe, {
+      availableWidth: Math.max(100, width),
+      kindLabel: type => t(diagramKindKey(type)),
+      failedNote: line => line === null ? t('artifact.embed.diagramFailed') : t('artifact.embed.diagramFailedLine', { line: String(line) }),
+      staleNote: line => line === null ? t('artifact.diagram.staleNoLine') : t('artifact.diagram.stale', { line: String(line) }),
+    });
+  }
+
+  const lastMotionMode = useRef(mode);
+  useLayoutEffect(() => {
+    const before = lastMotionMode.current;
+    lastMotionMode.current = mode;
+    const wash = pageWash.current;
+    if (!fantayShell || !wash?.animate || before === mode || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    // Fade a single solid overlay rather than rasterizing/translating the text and editor.
+    // The destination can receive focus, selection and input from the first frame.
+    const animation = wash.animate([{ opacity: 0.20 }, { opacity: 0 }], {
+      duration: 110, easing: 'cubic-bezier(0.23, 1, 0.32, 1)',
+    });
+    return () => animation.cancel();
+  }, [mode, fantayShell]);
+
+  const modes: MarkdownViewerMode[] = fantayShell && !viewerOnly && !isStreaming
+    ? ['live', 'preview', 'split', 'edit'] : fantayShell ? ['preview'] : ['edit', 'split', 'preview'];
   return (
-    <div className="viewer text-viewer">
+    <div className="viewer text-viewer" data-markdown-document={mode}>
       <div className="viewer-toolbar">
+        {fantayShell ? <ArtifactPath path={file.name} /> : null}
         <div className="viewer-toolbar-left">
           {isStreaming ? <span className="viewer-meta">{t('fileViewer.markdownStreamingMeta')}</span> : null}
           {isError ? <span className="viewer-meta">{t('fileViewer.markdownErrorMeta')}</span> : null}
-          <div className="viewer-tabs markdown-mode-tabs" role="tablist" aria-label={t('fileViewer.markdownViewMode')}>
-            {(['edit', 'split', 'preview'] as const).map((item) => (
-              <button
-                key={item}
-                type="button"
-                role="tab"
-                aria-selected={mode === item}
-                className={`viewer-tab ${mode === item ? 'active' : ''}`}
-                disabled={viewerOnly && item !== 'preview'}
-                title={viewerOnly && item !== 'preview' ? viewerOnlyDisabledTitle : undefined}
-                onClick={() => setMode(item)}
-              >
-                {item === 'edit'
-                  ? t('fileViewer.source')
-                  : item === 'split'
-                    ? t('fileViewer.split')
-                    : t('fileViewer.preview')}
-              </button>
-            ))}
-          </div>
+          <MarkdownModeTabs modes={modes} selected={committedMode} label={t('fileViewer.markdownViewMode')}
+            labels={{ live: t('fileViewer.edit'), edit: t('fileViewer.source'), preview: t('fileViewer.preview'), split: t('fileViewer.split') }}
+            panelId={panelId} animated={fantayShell} readOnly={viewerOnly} disabledTitle={viewerOnlyDisabledTitle}
+            onPressPreview={next => {
+              // Do not interrupt an active IME candidate or start heavy rendering on a mere press.
+              if (next === null || (!composing.current && buffer && (typeof buffer === 'string' ? buffer.length : buffer.doc.length) <= 32_768)) setPressedMode(next);
+            }} onSelect={setMode} />
         </div>
         <div className="viewer-toolbar-actions">
           {viewerOnly ? (
@@ -20450,7 +20604,7 @@ function MarkdownViewer({
               type="button"
               className="viewer-action markdown-autosave markdown-autosave-error"
               onClick={() => {
-                if (text !== null) saveMarkdownText(text);
+                if (bufferRef.current !== null) saveMarkdownText(bufferRef.current);
               }}
               title={t('fileViewer.save')}
             >
@@ -20478,7 +20632,7 @@ function MarkdownViewer({
             <Icon name={copied ? 'check' : 'copy'} size={13} />
             <span>{copied ? t('fileViewer.copied') : t('fileViewer.copy')}</span>
           </button>
-          {text !== null ? (
+          {buffer !== null ? (
             <div className="share-menu chrome-share-menu" ref={downloadMenuRef}>
               <button
                 type="button"
@@ -20503,7 +20657,7 @@ function MarkdownViewer({
                     onClick={() => {
                       if (viewerOnly) return;
                       setDownloadMenuOpen(false);
-                      exportAsMd(text, exportTitle);
+                      if (bufferRef.current !== null) exportAsMd(bufferRef.current.toString(), exportTitle);
                     }}
                   >
                     <span className="share-menu-icon"><RemixIcon name="file-line" size={15} /></span>
@@ -20515,25 +20669,39 @@ function MarkdownViewer({
           ) : null}
         </div>
       </div>
-      <div className={`viewer-body markdown-workbench markdown-workbench-${mode}`}>
-        {text === null || html === null ? (
+      <div id={panelId} role="tabpanel" onCompositionStartCapture={() => { composing.current = true; }}
+        onCompositionEndCapture={() => { composing.current = false; }} aria-labelledby={panelId + '-' + mode}
+        className={`viewer-body markdown-workbench markdown-workbench-${mode}`}>
+        {loadFailed && buffer === null ? (
+          <div className="viewer-empty"><button type="button" onClick={() => retryRead(n => n + 1)}>{t('artifact.state.viewerFailed')} · {t('preview.retry')}</button></div>
+        ) : buffer === null || (showPreview && html === null) ? (
           <div className="viewer-empty">{t('fileViewer.loading')}</div>
         ) : (
           <>
-            {showEditor ? (
+            {desktopEditor ? (
+              <Suspense fallback={<div className="viewer-empty">{t('fileViewer.loading')}</div>}>
+                <MarkdownLiveEditor active={mode !== 'preview'} source={mode === 'edit' || mode === 'split'}
+                  layoutRef={editorLayout} onScroll={handleMarkdownEditorScroll}
+                  onScrollIntent={() => activateMarkdownScrollPane('editor')} value={buffer} label={t('fileViewer.markdownEditor')}
+                  hint={t('fileViewer.markdownEditorPlaceholder')} render={renderLiveFragment}
+                  onChange={changeBuffer}
+                  onSave={flushPendingMarkdownSave} onImages={uploadMarkdownImages} />
+              </Suspense>
+            ) : null}
+            {!desktopEditor && showEditor && text !== null ? (
               <section className="markdown-editor-pane" aria-label={t('fileViewer.markdownEditor')}>
                 <textarea
                   ref={editorRef}
                   className="markdown-editor"
-                  value={text}
+                  value={editorMarkdown(text)}
                   aria-label={t('fileViewer.markdownEditor')}
                   placeholder={t('fileViewer.markdownEditorPlaceholder')}
                   spellCheck
-                  autoFocus
+                  autoFocus={!fantayShell}
                   onFocus={() => activateMarkdownScrollPane('editor')}
                   onChange={(event) => {
                     activateMarkdownScrollPane('editor');
-                    setText(event.currentTarget.value);
+                    changeBuffer(replaceEditorMarkdown(bufferRef.current?.toString() ?? '', event.currentTarget.value));
                   }}
                   onScroll={handleMarkdownEditorScroll}
                   onPaste={handleEditorPaste}
@@ -20541,8 +20709,9 @@ function MarkdownViewer({
                 />
               </section>
             ) : null}
-            {showPreview ? (
-              <div className="markdown-preview-pane-wrap">
+            {(showPreview || (fantayShell && previewSource !== null && html !== null)) ? (
+              <div className="markdown-preview-pane-wrap" data-md-layer="preview" data-pane-visible={showPreview}
+                hidden={!showPreview && !fantayShell} aria-hidden={!showPreview || undefined}>
                 <section
                   ref={markdownPreviewPaneRef}
                   className="markdown-preview-pane"
@@ -20560,21 +20729,19 @@ function MarkdownViewer({
                   <article
                     ref={markdownArticleRef}
                     className="markdown-rendered"
+                    data-diagrams={drawDiagrams && !diagramPassFailed ? '' : undefined}
                     onClick={(event) => void handleMarkdownBodyClick(event)}
-                    dangerouslySetInnerHTML={{ __html: html }}
+                    dangerouslySetInnerHTML={{ __html: html ?? '' }}
                   />
                 </section>
               </div>
             ) : null}
           </>
         )}
+        {fantayShell && <span ref={pageWash} className="md-mode-wash" aria-hidden="true" />}
       </div>
     </div>
   );
-}
-
-function isMarkdownImageFile(file: File): boolean {
-  return file.type.startsWith('image/') || /\.(png|jpe?g|gif|webp|svg)$/i.test(file.name);
 }
 
 function markdownImageAlt(name: string): string {

@@ -1,0 +1,88 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* One picture on the canvas ground. The viewport scrolls; the plane is at least as large as the
+   viewport and centres the frame, so a small picture sits in the middle and a large one pans. */
+
+.viewport {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  outline: none;
+  overscroll-behavior: contain;
+  /* Scrollbars would jump in and out while zooming; panning is by drag and by trackpad. */
+  scrollbar-width: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.viewport:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--focus-ring-color);
+}
+
+.viewport[data-pannable] {
+  cursor: grab;
+}
+
+.viewport[data-dragging] {
+  cursor: grabbing;
+}
+
+.plane {
+  display: grid;
+  box-sizing: border-box;
+  width: max-content;
+  min-width: 100%;
+  height: max-content;
+  min-height: 100%;
+  padding: 24px;
+  place-items: center;
+}
+
+/* The picture's own rectangle. The checker is its ground, so it shows through transparent pixels
+   and nowhere else; the ring gives a white picture an edge on a light canvas. */
+.frame {
+  --checker-a: #ffffff;
+  --checker-b: #ececec;
+
+  position: relative;
+  flex: none;
+  border-radius: 2px;
+  background-color: var(--checker-a);
+  background-image: conic-gradient(var(--checker-b) 25%, transparent 0 50%, var(--checker-b) 0 75%, transparent 0);
+  background-size: 16px 16px;
+  box-shadow: var(--shadow-ring);
+  opacity: 0;
+  transition: opacity var(--motion-exit) var(--ease-out-quint);
+}
+
+:global([data-theme='dark']) .frame {
+  --checker-a: #2c2c2c;
+  --checker-b: #252525;
+}
+
+.frame[data-ready] {
+  opacity: 1;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.frame[data-pixel] .image {
+  image-rendering: pixelated;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frame {
+    transition: none;
+  }
+}

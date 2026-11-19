@@ -208,8 +208,30 @@ export type DaemonAgentPayload =
    *
    * A turn with no marker emits no event, and the client must keep its existing
    * inference exactly as-is — "no event" never means "show nothing".
+   *
+   * `tool` is the workspace surface the marker asked for, already checked
+   * against `ARTIFACT_FOCUS_TOOLS`; `url` is an http(s) address for the browser
+   * surface and only ever accompanies `tool: 'browser'`. `tool` rides on the
+   * same event as its marker's `open` (so it waits for the same bytes), and a
+   * marker with `tool` and no `open` is emitted as soon as its key checks out.
+   *
+   * Three things a per-event consumer must know. Events can arrive in a
+   * different order than the markers were written (one kind waits on bytes,
+   * the other does not); what holds is that they fold to the written order. To
+   * keep that, an `open` that was still waiting when a later tool-only marker
+   * arrived is emitted with that later marker's `tool` and `url`, so `tool` on
+   * an `open` event is authoritative. A marker that repeats the previous
+   * `open` or tool event exactly emits nothing. And `tool: 'browser'` may come
+   * without `url` (none written, or the address was refused): open the browser
+   * without navigating.
    */
-  | { type: 'artifact_focus'; open?: string; show?: string[] }
+  | {
+      type: 'artifact_focus';
+      open?: string;
+      show?: string[];
+      tool?: import('../api/artifact-focus-marker.js').ArtifactFocusTool;
+      url?: string;
+    }
   | { type: 'conversation_title'; title: string }
   | { type: 'thinking_delta'; delta: string }
   | { type: 'thinking_start' }

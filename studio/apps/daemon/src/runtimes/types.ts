@@ -8,6 +8,7 @@ export type RuntimeEnv = NodeJS.ProcessEnv | Record<string, string>;
 export type RuntimeModelOption = {
   id: string;
   label: string;
+  channelOffer?: NonNullable<import('@open-design/contracts').AgentModelOption['channelOffer']>;
   /** The provider's one-line copy, when its catalog has one (today: speed-tier descriptions). */
   description?: string;
   enabled?: boolean;

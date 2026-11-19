@@ -555,6 +555,7 @@ export interface ModelMetadata {
 export interface AgentModelOption {
   id: string;
   label: string;
+  channelOffer?: import('@open-design/contracts').AgentModelOption['channelOffer'];
   enabled?: boolean;
   default?: boolean;
   inputPriceUsdPerMillion?: number;

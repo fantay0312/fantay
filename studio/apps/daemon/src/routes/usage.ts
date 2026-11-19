@@ -1,5 +1,6 @@
 import type { Express, Request, Response, RequestHandler } from 'express';
 import type { TokenToSeaRuntime } from '../integrations/tokentosea-runtime.js';
+import type { AiUsageLocalScan } from '@open-design/contracts';
 import {
   USAGE_ACTIVITY_DAYS, USAGE_MAX_RANGE_DAYS, isUsageDay, resolveUsageRange, usageDayLowerBound,
 } from '../integrations/usage-store.js';
@@ -10,6 +11,8 @@ export interface RegisterUsageRoutesDeps {
   authorizeProject(req:Request,res:Response,id:string):Promise<boolean>;
   canReadProject(req:Request,id:string):Promise<boolean>;
   syncLocal(since:number,projectId?:string):void;
+  syncDevice?(since:number,provider?:string):Promise<AiUsageLocalScan>;
+  fantaySessions?():Set<string>;
   projectName?(id:string):string|undefined;
 }
 
@@ -23,12 +26,17 @@ const text = (value: unknown) => typeof value === 'string' ? value : undefined;
  *   timeZone=<IANA zone>     the zone days and hours are counted in
  *   projectId=<id>           one project (must be readable)
  *   provider=<id>            one provider / agent
+ *   sessionId=<id>           one native session; requires provider
+ *   scope=fantay|device      Fantay only (default), or supported local agent logs plus Fantay
  *   limit=0…1000             how many recent requests to list (default 100)
  *   activity=1               also return the 53-week daily activity series
  */
 export function registerUsageRoutes(app:Express,deps:RegisterUsageRoutesDeps){
   app.get('/api/usage',deps.requireLocalDaemonRequest,async(req,res)=>{
     const projectId = text(req.query.projectId);
+    const scope = req.query.scope ?? 'fantay';
+    if (scope !== 'fantay' && scope !== 'device') { res.status(400).json({ error: 'scope must be fantay or device' }); return; }
+    if (scope === 'device' && projectId) { res.status(400).json({ error: 'Device usage cannot be limited to a Fantay project' }); return; }
     const timeZone = text(req.query.timeZone) ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
     try { new Intl.DateTimeFormat('en-CA', { timeZone }).format(); } catch { res.status(400).json({ error: 'Invalid time zone' }); return; }
     if (req.query.projectId !== undefined && !projectId) { res.status(400).json({ error: 'Choose a valid project' }); return; }
@@ -43,6 +51,10 @@ export function registerUsageRoutes(app:Express,deps:RegisterUsageRoutesDeps){
 
     const provider = text(req.query.provider);
     if (req.query.provider !== undefined && (!provider || provider.length > 200)) { res.status(400).json({ error: 'Choose a valid provider' }); return; }
+    const sessionId = text(req.query.sessionId);
+    if (req.query.sessionId !== undefined && (!sessionId?.trim() || sessionId.length > 512 || /[\u0000-\u001f]/.test(sessionId) || !provider)) {
+      res.status(400).json({ error: 'Choose a valid sessionId and provider' }); return;
+    }
     const limit = req.query.limit === undefined ? 100 : Number(req.query.limit);
     if (!Number.isInteger(limit) || limit < 0 || limit > 1000) { res.status(400).json({ error: 'limit must be an integer from 0 to 1000' }); return; }
     const activity = req.query.activity === '1' || req.query.activity === 'true';
@@ -55,6 +67,8 @@ export function registerUsageRoutes(app:Express,deps:RegisterUsageRoutesDeps){
         activity ? Date.now() - (USAGE_ACTIVITY_DAYS + 1) * DAY_MS : Infinity,
       );
       deps.syncLocal(since, projectId);
+      const localScan = scope === 'device' ? await deps.syncDevice?.(since, sessionId ? provider : undefined) : undefined;
+      const fantaySessions = scope === 'device' ? deps.fantaySessions?.() : undefined;
       const respond = async () => {
         const user = deps.runtime.current()?.user;
         if (user) void deps.runtime.reconcileUsage().catch(() => undefined);
@@ -62,7 +76,7 @@ export function registerUsageRoutes(app:Express,deps:RegisterUsageRoutesDeps){
         const allowed = new Set<string>();
         for (const id of deps.runtime.usage.projectIds(user?.id ?? null)) if (await deps.canReadProject(req, id)) allowed.add(id);
         const summary = deps.runtime.usage.summary(user?.id ?? null, range.days, projectId, allowed, timeZone, {
-          from: range.from, to: range.to, ...(provider ? { provider } : {}), limit, activity,
+          from: range.from, to: range.to, ...(provider ? { provider } : {}), ...(sessionId ? { sessionId } : {}), limit, activity, scope, fantaySessions,
         });
         const projectNames = new Map<string, string | undefined>();
         const resolveName = (id: string) => {
@@ -75,7 +89,7 @@ export function registerUsageRoutes(app:Express,deps:RegisterUsageRoutesDeps){
           const name = row.projectId ? resolveName(row.projectId) : undefined;
           if (name) row.projectName = name;
         }
-        res.json(summary);
+        res.json({ ...summary, ...(localScan ? { localScan } : {}) });
       };
       if (req.get('X-Fantay-CLI') === '1' && !deps.runtime.current()?.user) {
         try { await deps.runtime.backgroundInWorkspace('', respond); } catch { await respond(); }

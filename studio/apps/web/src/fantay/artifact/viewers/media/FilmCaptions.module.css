@@ -1,0 +1,37 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The subtitle line. Like the controls it sits on the picture, so it is fixed light-on-dark. */
+
+.captions {
+  position: absolute;
+  right: 0;
+  bottom: 14px;
+  left: 0;
+  padding: 0 16px;
+  line-height: 1.45;
+  pointer-events: none;
+  text-align: center;
+  transition: bottom var(--motion-enter) var(--ease-out-quint);
+}
+
+/* Above the scrubber and the button row. */
+.captions[data-raised] {
+  bottom: 62px;
+}
+
+.line {
+  display: inline-block;
+  max-width: 100%;
+  padding: 2px 8px;
+  border-radius: var(--radius-tag);
+  background: rgba(0, 0, 0, 0.66);
+  color: #ffffff;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .captions {
+    transition: none;
+  }
+}

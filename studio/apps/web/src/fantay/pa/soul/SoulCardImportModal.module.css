@@ -1,0 +1,300 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Card import (Soul UI spec §7.2). Step 1: the dashed drop zone (220 high) under an optional callout. Step 2: the
+   card's identity row, three equal hairline columns 可用 · 已保留 · 需另行处理 (each list scrolls inside 240 px), the
+   note and one settings row. The frame (header, body, footer) comes from PaModals.module.css. Chrome is ink; the only
+   colour is the card's own portrait or its monogram paper. */
+
+.body {
+  gap: 14px;
+}
+
+/* ── step 1 ───────────────────────────────────────────────────────────────────────────── */
+
+.pick {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.callout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  line-height: 1.5;
+}
+
+/* EmptyState `dashed` brings the dashed frame; two classes win over its padding and border colour utilities. */
+.pick .zone {
+  box-sizing: border-box;
+  justify-content: center;
+  min-height: 220px;
+  transition:
+    border-color var(--pa-dur-quick) var(--pa-ease),
+    background-color var(--pa-dur-quick) var(--pa-ease);
+}
+
+.pick .zone[data-over] {
+  border-color: var(--ink-ghost);
+  background-color: color-mix(in srgb, var(--sub) 60%, transparent);
+}
+
+.reading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  border: 1.5px dashed var(--line);
+  border-radius: var(--radius-modal);
+}
+
+.readingText {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ink-soft);
+}
+
+.fileInput {
+  display: none;
+}
+
+/* ── step 2: identity ─────────────────────────────────────────────────────────────────── */
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.identityText {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* The title input pads its text by 8 px; pull it back so the name lines up with the tags under it. */
+.nameInput {
+  max-width: 420px;
+  margin-inline-start: -8px;
+  font-size: 15px;
+}
+
+.targetName {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 24px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.identityMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.tokens {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── step 2: columns ──────────────────────────────────────────────────────────────────── */
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+
+.columnHead {
+  display: flex;
+  flex: none;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 14px 9px;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--ink);
+}
+
+.count {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.list {
+  height: 240px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--ink);
+}
+
+.item + .item {
+  border-top: 1px solid var(--line-soft);
+}
+
+.itemLabel {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.size {
+  flex: none;
+  font-size: 12px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.key {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.review {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.reviewHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.reviewAction {
+  font-size: 12px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.reviewSummary {
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+/* Stage 2 CHARX rows: a label over its detail (立绘 × n over the mood names; the files row over its paths). */
+.stacked {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+}
+
+.detail {
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.files {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.file {
+  font-size: 12px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+
+.filePath {
+  font-family: var(--font-mono);
+  color: var(--ink-soft);
+}
+
+/* The reason moves to the next line whole rather than breaking inside a word; a path may break anywhere. */
+.fileReason {
+  display: inline-block;
+  color: var(--ink-faint);
+}
+
+.none {
+  padding: 10px 14px;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--ink-faint);
+}
+
+.note {
+  margin: -2px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.modelControl {
+  width: 300px;
+  max-width: 55%;
+}
+
+.replaced {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 680px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .list {
+    height: auto;
+    max-height: 160px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pick .zone {
+    transition: none;
+  }
+}

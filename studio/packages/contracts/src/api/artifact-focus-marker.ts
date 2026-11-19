@@ -63,6 +63,24 @@
  * `open` was never part of either ruling and keeps its own fallback: a turn
  * without a marker still auto-opens by the host's rank/mtime inference.
  *
+ * **`tool` — which workspace tool, not only which file.** Previewing one file
+ * is the right answer for a page or a document and the wrong one for source
+ * work, a web page, or a pile of loose outputs. The same marker therefore
+ * carries an optional `tool` (`ARTIFACT_FOCUS_TOOLS`) naming the side-panel
+ * surface, plus `url` for the built-in browser:
+ *
+ *     <od-focus key="a7f3c91ed2b40561" tool="code" open="src/app.ts"/>
+ *     <od-focus key="a7f3c91ed2b40561" tool="browser" url="https://example.com/docs"/>
+ *     <od-focus key="a7f3c91ed2b40561" tool="files"/>
+ *
+ * It is an attribute rather than a second tag for the reason the key exists:
+ * one nonce, one strip rule, one event. `tool` says how the *same marker's*
+ * target is shown, so it travels with that marker's `open` instead of being
+ * last-wins on its own — see `foldArtifactFocusSelections`. An unknown `tool`
+ * is dropped and the rest of the marker is read as if it had not been written;
+ * `url` is read only next to `tool="browser"` and only as an http(s) address
+ * (`normalizeArtifactFocusUrl`), because the host navigates to it.
+ *
  * The fallback is a guess, and a declaration always beats it, so
  * `renderArtifactFocusInstruction` stays load-bearing rather than decorative —
  * it is the only thing that will ever cause a model to emit one. Its wording is
@@ -101,6 +119,39 @@ export const OD_FOCUS_OPEN_ATTR_RE = /\bopen\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"
 
 /** `show="…"` — the comma-separated deliverables that deserve a card. */
 export const OD_FOCUS_SHOW_ATTR_RE = /\bshow\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>/]+))/i;
+
+/**
+ * `tool="…"` — the workspace tool the side panel should put in front.
+ *
+ * Same value forms as `open` / `show`. The name is anchored on the whitespace
+ * that separates attributes rather than on `\b`: these two attributes arrived
+ * after markers were already in the wild, and a path such as
+ * `open="page.html?tool=x"` must keep meaning what it meant — it must not grow
+ * a `tool` out of its own value.
+ */
+export const OD_FOCUS_TOOL_ATTR_RE = /(?<=\s)tool\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>/]+))/i;
+
+/**
+ * `url="…"` — the page the built-in browser loads; read only next to
+ * `tool="browser"`. Anchored like `tool`, for the same reason.
+ *
+ * Same three quoting styles as the others, with one difference in the bare
+ * form: a path stops at `/` so the tag's own `/>` is never swallowed, but an
+ * address is made of slashes. The bare form therefore runs to the next
+ * whitespace, quote, or the tag's closing `>` / `/>`.
+ */
+export const OD_FOCUS_URL_ATTR_RE = /(?<=\s)url\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+?)(?=[\s"']|\/?>|$))/i;
+
+/**
+ * The workspace tools a marker may name. The web's surface ids mirror this
+ * list (`apps/web/src/fantay/workspace/surfaces/surface-types.ts`).
+ */
+export const ARTIFACT_FOCUS_TOOLS = ['preview', 'code', 'browser', 'files', 'board', 'design-system'] as const;
+
+export type ArtifactFocusTool = (typeof ARTIFACT_FOCUS_TOOLS)[number];
+
+/** Longest address we will hand to the browser tab; the same ceiling a board link has. */
+export const MAX_ARTIFACT_FOCUS_URL_LENGTH = 2048;
 
 /**
  * Ceiling on the `show` list. The whole point is a *shorter* list than the
@@ -190,6 +241,67 @@ export function parseArtifactFocusPathList(raw: unknown): string[] {
   return out;
 }
 
+/**
+ * Normalize a declared `tool` to one of `ARTIFACT_FOCUS_TOOLS`, or `null`.
+ *
+ * Case and the two spellings models reach for instead of the hyphen
+ * (`design_system`, `designsystem`) are forgiven; anything else is refused
+ * rather than guessed at, so an unknown tool leaves the marker meaning exactly
+ * what it meant before this attribute existed.
+ */
+export function normalizeArtifactFocusTool(raw: unknown): ArtifactFocusTool | null {
+  if (typeof raw !== 'string') return null;
+  const value = raw.trim().toLowerCase();
+  const canonical = value === 'design_system' || value === 'designsystem' ? 'design-system' : value;
+  return (ARTIFACT_FOCUS_TOOLS as readonly string[]).includes(canonical)
+    ? (canonical as ArtifactFocusTool)
+    : null;
+}
+
+/**
+ * Normalize a declared `url` into an address the built-in browser may load, or
+ * `null`.
+ *
+ * This is the **untrusted-input boundary for an address the host navigates
+ * to**, so like the path boundary it rejects rather than repairs:
+ *
+ *  · anything that is not `http:` / `https:` with a host — no `file:`, no
+ *    `javascript:`, no `data:`, no scheme-relative `//host`;
+ *  · embedded credentials (`https://user:pass@host`), the classic way to make
+ *    an address read as one site and load another;
+ *  · whitespace and control characters, which the URL parser would otherwise
+ *    delete silently and so change what was written;
+ *  · anything past `MAX_ARTIFACT_FOCUS_URL_LENGTH`.
+ *
+ * Returns the parser's own serialization, not the input: what was validated is
+ * then byte-for-byte what gets loaded, whatever a later parser would have made
+ * of the original spelling (`https://example.com` comes back as
+ * `https://example.com/`). Serializing is idempotent, so the daemon, the
+ * persisted event, and the web all agree on one string.
+ *
+ * `URL` is the WHATWG global shared by Node and browsers, the same one
+ * `isSafeBoardUrl` relies on — not a Node- or DOM-only API.
+ */
+export function normalizeArtifactFocusUrl(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const value = raw.trim();
+  if (!value || value.length > MAX_ARTIFACT_FOCUS_URL_LENGTH) return null;
+  if (/[\s\u0000-\u001f\u007f-\u009f]/.test(value)) return null;
+  // Spelled out before parsing so `http:example.com` and `http:\\host`, which
+  // the parser would quietly repair into a host, are refused as written.
+  if (!/^https?:\/\//i.test(value)) return null;
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+  if (!url.hostname) return null;
+  if (url.username || url.password) return null;
+  return url.href.length <= MAX_ARTIFACT_FOCUS_URL_LENGTH ? url.href : null;
+}
+
 /** One parsed `<od-focus …>` tag. `open`/`show` are absent when unusable. */
 export interface ParsedArtifactFocusMarker {
   /** The key as written, or `''`. Callers compare it against the turn nonce. */
@@ -198,6 +310,14 @@ export interface ParsedArtifactFocusMarker {
   open: string | null;
   /** Normalized project-relative paths; `[]` when absent/unusable. */
   show: string[];
+  /** The workspace tool the marker named; absent when none or not a known one. */
+  tool?: ArtifactFocusTool;
+  /** Address for the browser tab; only ever present next to `tool: 'browser'`. */
+  url?: string;
+}
+
+function attributeValue(match: RegExpExecArray | null): string {
+  return (match?.[1] ?? match?.[2] ?? match?.[3] ?? '').trim();
 }
 
 /**
@@ -208,15 +328,29 @@ export interface ParsedArtifactFocusMarker {
  */
 export function parseArtifactFocusMarker(tag: string): ParsedArtifactFocusMarker & { rawOpen: string; rawShow: string } {
   const source = typeof tag === 'string' ? tag : '';
-  const keyMatch = OD_FOCUS_KEY_ATTR_RE.exec(source);
-  const openMatch = OD_FOCUS_OPEN_ATTR_RE.exec(source);
-  const showMatch = OD_FOCUS_SHOW_ATTR_RE.exec(source);
-  const rawOpen = (openMatch?.[1] ?? openMatch?.[2] ?? openMatch?.[3] ?? '').trim();
-  const rawShow = (showMatch?.[1] ?? showMatch?.[2] ?? showMatch?.[3] ?? '').trim();
+  const urlMatch = OD_FOCUS_URL_ATTR_RE.exec(source);
+  /*
+   * The attribute regexes match a name anywhere in the tag, and a query string
+   * is made of names: `?key=…&open=1&tool=x`. Left in place, an address would
+   * be read as the marker's own `open` — which the daemon then holds, waiting
+   * for a file that will never exist, and the browser never opens. Cut the url
+   * attribute out so the others only ever see the marker's own attributes.
+   */
+  const rest = urlMatch
+    ? `${source.slice(0, urlMatch.index)} ${source.slice(urlMatch.index + urlMatch[0].length)}`
+    : source;
+  const keyMatch = OD_FOCUS_KEY_ATTR_RE.exec(rest);
+  const rawOpen = attributeValue(OD_FOCUS_OPEN_ATTR_RE.exec(rest));
+  const rawShow = attributeValue(OD_FOCUS_SHOW_ATTR_RE.exec(rest));
+  const tool = normalizeArtifactFocusTool(attributeValue(OD_FOCUS_TOOL_ATTR_RE.exec(rest)));
+  // An address means nothing to any other tool, so it is not even validated.
+  const url = tool === 'browser' ? normalizeArtifactFocusUrl(attributeValue(urlMatch)) : null;
   return {
     key: keyMatch?.[1] ?? '',
     open: normalizeArtifactFocusPath(rawOpen),
     show: parseArtifactFocusPathList(rawShow),
+    ...(tool ? { tool } : {}),
+    ...(url ? { url } : {}),
     rawOpen,
     rawShow,
   };
@@ -244,10 +378,14 @@ export function stripArtifactFocusMarkers(text: string): string {
  */
 export function renderArtifactFocusMarkerExample(
   key: string,
-  parts: { open?: string; show?: readonly string[] },
+  parts: { open?: string; show?: readonly string[]; tool?: ArtifactFocusTool; url?: string },
 ): string {
   const attrs = [`key="${key}"`];
+  if (parts.tool) attrs.push(`tool="${parts.tool}"`);
   if (parts.open) attrs.push(`open="${parts.open}"`);
+  // Written only where the parser reads it, so an example can never teach a
+  // combination that is then dropped.
+  if (parts.url && parts.tool === 'browser') attrs.push(`url="${parts.url}"`);
   if (parts.show && parts.show.length > 0) {
     attrs.push(`show="${parts.show.slice(0, MAX_ARTIFACT_FOCUS_SHOW).join(', ')}"`);
   }
@@ -285,9 +423,16 @@ export function renderArtifactFocusMarkerExample(
  *    document and image the turn wrote, which over-lists whenever the turn had
  *    one real deliverable among several, and lists nothing at all when
  *    everything it wrote was a dependency.
+ *  · **Which tool, when a preview is the wrong one.** One line per tool, each a
+ *    full example, because the host's own inference (file kind, the turn's tool
+ *    calls) covers the common cases and this block only has to say when the
+ *    model knows better. It closes by restating the default — no `tool` — so
+ *    the block cannot be read as "always pick one".
  */
 export function renderArtifactFocusInstruction(key: string): string {
   if (typeof key !== 'string' || !key) return '';
+  const toolLine = (parts: { tool: ArtifactFocusTool; open?: string; url?: string }, when: string) =>
+    `${renderArtifactFocusMarkerExample(key, parts)} — ${when}`;
   return [
     'Artifact focus:',
     'The moment a file this turn created OR changed has real content in it — not while it is still empty, and not held back until the end of the turn — emit one marker naming it:',
@@ -298,6 +443,14 @@ export function renderArtifactFocusInstruction(key: string): string {
     'Changing an existing file is delivering it. A turn that only edited `index.html` and created nothing still declares `index.html`. "Did I create this file" is not the question — "what should the user look at now" is.',
     '`show` NARROWS: it cuts this turn\'s file list down to what matters. Declare nothing and the host answers for you — it keeps the pages, documents and images this turn wrote and drops the stylesheets, scripts, icons and data files — which is a worse answer than yours whenever the turn touched more than one real deliverable, and no answer at all on a turn whose every written file was one of those dependencies. Nothing becomes unreachable either way: every file stays in the project file list.',
     'Paths are relative to the project root, and `open` must be a file this turn wrote. Emit the marker again to change your mind: the last value of each attribute wins, and `open` and `show` are independent of each other.',
+    'Workspace tools:',
+    'The same marker can put a tool in the user\'s side panel when that serves the task better than previewing one file. Add tool:',
+    toolLine({ tool: 'code', open: 'src/app.ts' }, 'source work: the user should read code or review this turn\'s edits.'),
+    toolLine({ tool: 'browser', url: 'https://example.com' }, 'a web page the user should see or act on.'),
+    toolLine({ tool: 'files' }, 'many loose outputs with no single main one.'),
+    toolLine({ tool: 'board' }, 'images, video or layouts to compare side by side.'),
+    toolLine({ tool: 'design-system' }, 'the project\'s design system changed.'),
+    'Leave tool out for a page, document, deck or image: open alone previews it. One tool marker per turn is the norm; when nothing needs showing, emit none.',
     `This turn's key is ${key}: copy it verbatim, never reuse an earlier one, and never invent one.`,
     'The marker is protocol, not prose: do not mention it, do not explain it, and do not wrap it in a code fence.',
   ].join('\n');
@@ -309,6 +462,10 @@ export interface ArtifactFocusSelection {
   open?: string;
   /** Project-relative paths that deserve a card, when the turn declared them. */
   show?: string[];
+  /** The workspace tool the side panel should show, when the turn named one. */
+  tool?: ArtifactFocusTool;
+  /** Address for the built-in browser; only ever present next to `tool: 'browser'`. */
+  url?: string;
 }
 
 /**
@@ -318,14 +475,41 @@ export interface ArtifactFocusSelection {
  * Per-field rather than per-event: a turn that says `open` early and `show`
  * late must end up with both. Folding whole events would let the late
  * `show`-only event blank the early `open`.
+ *
+ * `tool` is the exception to "per field", because it is not a fact of its own:
+ * it says how the *same marker's* target is shown. So:
+ *
+ *  · an event that carries `open` sets `tool` to that event's tool, and
+ *    **clears it when the event has none**. `tool="code" open="src/app.ts"`
+ *    followed by a plain `open="index.html"` means "preview the page", not
+ *    "show the page in the code tool" — a tool must not outlive the target it
+ *    described;
+ *  · an event that carries `tool` without `open` sets `tool` and leaves `open`
+ *    alone: `tool="files"` after an earlier `open` changes which tool is in
+ *    front, not which file the turn opened;
+ *  · an event with neither (`show` only) touches neither.
+ *
+ * `url` belongs to its `tool` and is replaced or cleared together with it, so
+ * a folded selection never carries an address next to a tool that is not the
+ * browser. Values are re-checked with the contract normalizers: events are read
+ * back from storage, and a stored value this build does not know is treated as
+ * absent rather than passed on.
  */
 export function foldArtifactFocusSelections(
   events: readonly ArtifactFocusSelection[],
 ): ArtifactFocusSelection {
   const folded: ArtifactFocusSelection = {};
   for (const event of events) {
-    if (typeof event?.open === 'string' && event.open) folded.open = event.open;
+    const hasOpen = typeof event?.open === 'string' && event.open.length > 0;
+    const tool = normalizeArtifactFocusTool(event?.tool);
+    if (hasOpen) folded.open = event.open as string;
     if (Array.isArray(event?.show) && event.show.length > 0) folded.show = [...event.show];
+    if (!hasOpen && !tool) continue;
+    const url = tool === 'browser' ? normalizeArtifactFocusUrl(event?.url) : null;
+    if (tool) folded.tool = tool;
+    else delete folded.tool;
+    if (url) folded.url = url;
+    else delete folded.url;
   }
   return folded;
 }

@@ -1,0 +1,999 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* 记忆 page. It sits in the shared page frame (resource-pages.css: the 22/32 title, 32px controls, the
+   brand page action) and borrows the 设计系统 workbench shape: a 264px list and a detail pane that hang from
+   one hairline and reach the window's foot, each scrolling on its own. Hairlines, not nested cards; warm
+   colour only for what waits for you; motion is ease-out quint, 200 ms in and 140 ms out. */
+
+/* ── page ─────────────────────────────────────────────────────────────────────────────────── */
+
+.root {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.header {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  min-height: var(--page-control-h);
+}
+
+.headText {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+}
+
+.inventory {
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inventorySkeleton {
+  align-self: center;
+  width: 120px;
+}
+
+.headerActions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
+}
+
+/* 待处理: the page's one warm control. It stays mounted and folds away at zero, so it can leave as softly
+   as it arrived and the actions beside it slide over instead of jumping. */
+.inboxAction {
+  gap: 7px;
+  height: var(--page-control-h);
+  max-width: 220px;
+  padding: 0 12px;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+  box-shadow: none;
+  color: var(--warning-ink);
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transition:
+    background-color 140ms var(--ease-out-quint),
+    max-width 200ms var(--ease-out-quint),
+    padding 200ms var(--ease-out-quint),
+    margin 200ms var(--ease-out-quint),
+    opacity 200ms var(--ease-out-quint),
+    visibility 0s;
+}
+
+.inboxAction:hover:not([data-disabled]) {
+  background: color-mix(in srgb, var(--warning) 20%, transparent);
+  color: var(--warning-ink);
+}
+
+.inboxAction[data-state='hidden'] {
+  max-width: 0;
+  margin-inline-end: -8px;
+  padding-inline: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    background-color 140ms var(--ease-out-quint),
+    max-width 140ms var(--ease-out-quint),
+    padding 140ms var(--ease-out-quint),
+    margin 140ms var(--ease-out-quint),
+    opacity 140ms var(--ease-out-quint),
+    visibility 0s linear 140ms;
+}
+
+.quietAction {
+  gap: 6px;
+  height: var(--page-control-h);
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  transition:
+    background-color 140ms var(--ease-out-quint),
+    color 140ms var(--ease-out-quint);
+}
+
+.quietAction:hover:not([data-disabled]) {
+  background: var(--sub);
+  box-shadow: none;
+  color: var(--ink);
+}
+
+.warmDot {
+  display: inline-block;
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--warning);
+}
+
+.disabledNote {
+  margin-top: 12px;
+}
+
+/* Both panes hang from one painted hairline; the list's own end rule meets it in a T. */
+.split {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: 264px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 420px;
+  margin-top: 14px;
+  box-shadow: inset 0 1px 0 var(--line-soft);
+}
+
+.pageError {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 16px;
+  text-align: center;
+}
+
+/* ── navigator ────────────────────────────────────────────────────────────────────────────── */
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-inline-end: 1px solid var(--line-soft);
+}
+
+.navFilterWrap {
+  flex: none;
+  padding: 12px 12px 10px 0;
+}
+
+/* Filled fields that wake on focus, as on the library pages. */
+.navFilter,
+.search {
+  width: 100%;
+  border: 1px solid transparent;
+  background: var(--sub);
+  box-shadow: none;
+  transition:
+    background-color 140ms var(--ease-out-quint),
+    border-color 140ms var(--ease-out-quint);
+}
+
+.navFilter:focus-within,
+.search:focus-within {
+  border-color: var(--line);
+  background: var(--surface);
+  box-shadow: none;
+}
+
+.navScroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 12px 24px 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.navGroup + .navGroup {
+  margin-top: 12px;
+}
+
+.navGroupTitle {
+  margin: 0;
+  padding: 4px 8px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.navList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.navRow {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  border-radius: var(--radius-row);
+  transition: background-color 120ms var(--ease-out-quint);
+}
+
+.navRow:hover {
+  background: var(--sub);
+}
+
+/* Selection reads like the app sidebar's active row, and it is instant. */
+.navRow[data-selected],
+.navRow[data-selected]:hover {
+  background: var(--paper-deep);
+}
+
+.navItem {
+  flex: 1 1 auto;
+  justify-content: flex-start;
+  gap: 8px;
+  min-width: 0;
+  height: 32px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-row);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 400;
+  text-align: start;
+}
+
+.navItem > [data-slot='button-label'] {
+  flex: 1 1 auto;
+  gap: 8px;
+  min-width: 0;
+}
+
+.navItem:hover:not([data-disabled]) {
+  background: transparent;
+  color: var(--ink);
+}
+
+.navRow[data-selected] .navItem {
+  color: var(--ink);
+}
+
+.navItem:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: -2px;
+}
+
+/* A project's face lines up with its chats' glyphs: 4 + 20 chevron + 4. */
+.navRow[data-kind='project'] .navItem {
+  padding-inline-start: 4px;
+}
+
+.navRow[data-depth='1'] .navItem {
+  height: 30px;
+  padding-inline-start: 28px;
+}
+
+.navChevron {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-inline-start: 4px;
+  color: var(--ink-faint);
+}
+
+.navChevron:hover:not([data-disabled]) {
+  background: transparent;
+  color: var(--ink);
+}
+
+.navChevronIcon {
+  transition: transform 200ms var(--ease-out-quint);
+}
+
+.navChevron[aria-expanded='true'] .navChevronIcon {
+  transform: rotate(90deg);
+}
+
+.navChevronSpace {
+  flex: none;
+  width: 20px;
+  margin-inline-start: 4px;
+}
+
+.navFace {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+}
+
+/* A translucent ink wash, so the glyph tile stays visible on the row's hover and selected fills alike. */
+.glyph {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  color: var(--ink-soft);
+}
+
+.glyphBare {
+  background: transparent;
+  color: var(--ink-faint);
+}
+
+.navLabel {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The sublabel gives way first, then the name. */
+.navSub {
+  flex: 0 100 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navTrail {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: auto;
+  padding-inline-start: 6px;
+}
+
+.navCount {
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A project's chats unfold on the grid-rows track: 200 ms open, 140 ms closed, out of the tab order when shut. */
+.navChildren {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-rows 140ms var(--ease-out-quint),
+    opacity 140ms var(--ease-out-quint),
+    visibility 0s linear 140ms;
+}
+
+.navChildren[data-open] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    grid-template-rows 200ms var(--ease-out-quint),
+    opacity 200ms var(--ease-out-quint),
+    visibility 0s;
+}
+
+.navChildrenInner {
+  min-height: 0;
+  padding-top: 1px;
+  overflow: hidden;
+}
+
+.navSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.navSkeletonRow {
+  height: 28px;
+  border-radius: var(--radius-row);
+}
+
+.navEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px 8px;
+}
+
+.navEmptyText {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/* ── pane ─────────────────────────────────────────────────────────────────────────────────── */
+
+.pane {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.paneInner {
+  max-width: 960px;
+  padding: 20px 4px 40px 28px;
+  animation: memPaneIn 200ms var(--ease-out-quint) both;
+}
+
+@keyframes memPaneIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes memFadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+.scopeHead {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.scopeTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 30px;
+}
+
+.scopeFace {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+}
+
+.scopeTitle {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 26px;
+  letter-spacing: -0.015em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scopeKind {
+  flex: 0 1000 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scopeLink {
+  flex: none;
+  gap: 4px;
+  height: 28px;
+  margin-inline-start: auto;
+  padding: 0 8px;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.readers {
+  max-width: 64ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.scopeMeta {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* A bot's two memory controls: plain inline controls under the sentence, wrapping on a narrow pane. */
+.policyRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 28px;
+  margin-top: 8px;
+}
+
+.policyItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+}
+
+.policyLabel {
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+label.policyLabel {
+  cursor: pointer;
+}
+
+.policySelect {
+  min-width: 112px;
+}
+
+.needsYou {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 4px 4px 4px 12px;
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+  color: var(--warning-ink);
+  font-size: 12.5px;
+  line-height: 20px;
+}
+
+.needsYouText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.needsYouAction {
+  flex: none;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--radius-row);
+  color: var(--warning-ink);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.needsYouAction:hover:not([data-disabled]) {
+  background: color-mix(in srgb, var(--warning) 16%, transparent);
+  color: var(--warning-ink);
+}
+
+/* The tab strip stays in reach while a long list scrolls under it. */
+.tabs {
+  margin-top: 18px;
+}
+
+.tabList {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  background: var(--paper);
+}
+
+.tabTrigger {
+  gap: 6px;
+  height: 36px;
+  font-size: 13px;
+}
+
+.tabCount {
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabBody {
+  padding-top: 16px;
+}
+
+.controls {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+/* Seven segments share the row equally while each label fits; when the pane is narrow (the 1000px window
+   with the sidebar open leaves ~410px) a segment never shrinks below its own label, so none is cut, and the
+   others give up the difference. */
+.segItem {
+  flex: 1 1 0;
+  min-width: max-content;
+  padding-inline: 8px;
+}
+
+@container (max-width: 520px) {
+  .segItem {
+    padding-inline: 5px;
+  }
+}
+
+/* ── lists ────────────────────────────────────────────────────────────────────────────────── */
+
+/* One hairline group; rows are divided by hairlines inside it. */
+.list {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  transition: background-color 120ms var(--ease-out-quint);
+}
+
+.row + .row {
+  border-top: 1px solid var(--line-soft);
+}
+
+.row:hover,
+.row:has([data-state='open']) {
+  background: var(--sub);
+}
+
+.rowMain {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  padding: 12px 6px 12px 14px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink);
+  font-weight: 400;
+  text-align: start;
+  white-space: normal;
+}
+
+.rowMain > [data-slot='button-label'] {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+  width: 100%;
+}
+
+.rowMain:hover:not([data-disabled]) {
+  background: transparent;
+}
+
+.rowMain:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: -2px;
+}
+
+.rowText {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.row[data-status='archived'] .rowText,
+.row[data-status='superseded'] .rowText,
+.row[data-status='rejected'] .rowText {
+  color: var(--ink-soft);
+}
+
+.rowRedacted {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+.rowMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  min-width: 0;
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.metaSep {
+  opacity: 0.6;
+}
+
+.metaKind,
+.metaState {
+  color: var(--ink-soft);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.metaPart {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.metaSource {
+  min-width: 0;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.warmTag {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-tag);
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+  color: var(--warning-ink);
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Not recalled right now (outside its validity window): a state, not a call to act, so it stays ink. */
+.quietTag {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-tag);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.pinMark {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.rowSide {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 10px 0 0;
+}
+
+.restoreAction {
+  height: 28px;
+}
+
+/* The ⋯ menu appears on hover or focus; on a touch screen it simply stays. */
+.rowMenu {
+  opacity: 0;
+  transition:
+    opacity 120ms var(--ease-out-quint),
+    background-color 120ms var(--ease-out-quint);
+}
+
+.row:hover .rowMenu,
+.row:focus-within .rowMenu,
+.rowMenu[data-state='open'] {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .rowMenu {
+    opacity: 1;
+  }
+}
+
+.more {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.stateBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 16px;
+  text-align: center;
+}
+
+.stateText {
+  max-width: 48ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.empty {
+  width: 100%;
+  border-radius: var(--radius-card);
+}
+
+/* ── 对话片段 ──────────────────────────────────────────────────────────────────────────────── */
+
+.chunk {
+  padding: 12px 14px;
+}
+
+.chunk + .chunk {
+  border-top: 1px solid var(--line-soft);
+}
+
+.chunkHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  min-width: 0;
+}
+
+.chunkTitle {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chunkMeta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chunkText {
+  margin: 8px 0 0;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.chunkFolded {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+}
+
+.chunkToggle {
+  height: 24px;
+  margin-top: 4px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ── skeletons: the same blocks as the content, so nothing moves when it arrives ─────────── */
+
+.skeletonRow {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 15px 14px;
+}
+
+.skeletonRow + .skeletonRow {
+  border-top: 1px solid var(--line-soft);
+}
+
+.skeletonLong {
+  width: 86%;
+}
+
+.skeletonMid {
+  width: 58%;
+}
+
+.skeletonMeta {
+  width: 32%;
+  height: 10px;
+}
+
+.skeletonFace {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+}
+
+.skeletonTitle {
+  width: 140px;
+  height: 16px;
+}
+
+.skeletonTabs {
+  height: 37px;
+  margin: 18px 0 16px;
+  box-shadow: inset 0 -1px 0 var(--line-soft);
+}
+
+/* ── narrower windows (the 1000px desktop minimum and up) ─────────────────────────────────── */
+
+@media (max-width: 1100px) {
+  .split {
+    grid-template-columns: 232px minmax(0, 1fr);
+  }
+
+  .paneInner {
+    padding-inline-start: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paneInner {
+    animation: memFadeIn 140ms var(--ease-out-quint) both;
+  }
+
+  .navChildren,
+  .navChildren[data-open],
+  .navChevronIcon,
+  .inboxAction,
+  .inboxAction[data-state='hidden'] {
+    transition: none;
+  }
+}

@@ -1,18 +1,18 @@
 {
-  "id": "fantay-20261029-tokentosea-sharing",
-  "title": "Fantay creation update",
-  "body": "Skill discovery selects guidance for your creative goal and carries it into revisions.\nPublish links and anchored comments with your TokenToSea account; stop and resume the same link.\nMotion preview and export include audio-jump prevention and synchronized playback.\nThe interface, startup animation and desktop app now share the Fantay name.",
+  "id": "fantay-26.1114.1",
+  "title": "Fantay 26.1114.1",
+  "body": "Calendar versions use year, month/day and daily sequence, starting with 26.1114.1.\nSwitch AI usage between Fantay only and supported agents on this device.\nKeep actual charges, reported costs and estimated local token value separate.\nRelease summaries, manga, repository notes and website data share one authored record.",
   "linkUrl": "https://design.tokentosea.com",
   "ctaLabel": "Visit Fantay",
   "locales": {
     "zh-CN": {
-      "title": "Fantay 创作功能更新",
-      "body": "智能路由：根据创作目标选择技能，并在后续修改中延续创作方向\n分享与评论：使用 TokenToSea 账号发布链接与定位评论，支持停止和恢复同一链接\n动画预览与导出：已集成音频防跳播与音画同步修复\n统一品牌：界面、启动动画和桌面应用名称统一为 Fantay",
+      "title": "Fantay 26.1114.1",
+      "body": "版本规则：采用年、月日、当日序号，例如 26.1114.1。\nAI 用量：切换「仅 Fantay / 本机全部」，读取受支持的本地 Agent 日志。\n费用明细：实际扣费、渠道报告与本地 Token 估算价值分别显示。\n更新记录：版本摘要、漫画、仓库详细日志与网站数据共用同一份内容。",
       "ctaLabel": "查看 Fantay"
     },
     "zh-TW": {
-      "title": "Fantay 創作功能更新",
-      "body": "智慧路由：根據創作目標選擇技能，並在後續修改中延續創作方向\n分享與評論：使用 TokenToSea 帳號發布連結與定位評論，支援停止和恢復同一連結\n動畫預覽與匯出：已整合音訊防跳播與影音同步修復\n統一品牌：介面、啟動畫面和桌面應用程式名稱統一為 Fantay",
+      "title": "Fantay 26.1114.1",
+      "body": "版本規則：採用年、月日、當日序號，例如 26.1114.1。\nAI 用量：切換「僅 Fantay / 本機全部」，讀取支援的本機 Agent 紀錄。\n費用明細：實際扣費、通路回報與本機 Token 估算價值分開顯示。\n更新紀錄：版本摘要、漫畫、儲存庫詳細日誌與網站資料共用同一份內容。",
       "ctaLabel": "查看 Fantay"
     }
   }

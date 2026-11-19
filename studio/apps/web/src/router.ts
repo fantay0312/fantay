@@ -17,6 +17,8 @@ export type EntryHomeView =
   | 'home'
   // Fantay 工作台: creator desk (灵感 · 内容 · 排期 · 复盘 · 风格) at /workbench/<page>[/<itemId>].
   | 'workbench'
+  // Fantay 记忆: every scope's memories at /memory; old /memory/<tab> links still open the page.
+  | 'memory'
   | 'onboarding'
   | 'projects'
   | 'tasks'
@@ -46,6 +48,11 @@ export type EntryHomeView =
 export type PluginCatalogTab = 'plugins' | 'skills';
 export type ResourceModule = 'materials' | 'skills' | 'mcp' | 'tutorials';
 
+/** The memory page's former tab segments. They still parse so old links open the page; the page itself
+ *  chooses what it shows from in-page state. */
+export const MEMORY_CENTER_TABS = ['agent', 'project', 'private', 'group', 'inspector', 'ledger'] as const;
+export type MemoryCenterTab = (typeof MEMORY_CENTER_TABS)[number];
+
 export type Route =
   | {
       kind: 'home';
@@ -64,6 +71,8 @@ export type Route =
       workbenchPage?: WorkbenchPage;
       /** 工作台 item whose production studio is open. */
       workbenchItemId?: string;
+      /** A former 记忆 tab segment from an old link; the page opens the same way with or without it. */
+      memoryTab?: MemoryCenterTab;
       /** Full-page movie workspace; the library has no project selected. */
       movieProjectId?: string;
       creationMode?: 'movie';
@@ -94,7 +103,7 @@ export type Route =
   // Community template gallery — browse and remix shared design templates.
   | { kind: 'community' }
   // A page a tool plugin adds to the sidebar (`fantay/plugins`): /tools/<pluginId>/<pageId>.
-  | { kind: 'tool'; pluginId: string; pageId: string };
+  | { kind: 'tool'; pluginId: string; pageId: string; itemId?: string };
 
 export function parseRoute(pathname: string): Route {
   const parts = pathname.replace(/\/+$/, '').split('/').filter(Boolean);
@@ -107,6 +116,16 @@ export function parseRoute(pathname: string): Route {
       kind: 'home', view: 'workbench',
       ...(page ? { workbenchPage: page } : {}),
       ...(page && parts[2] ? { workbenchItemId: decodeURIComponent(parts[2]) } : {}),
+    };
+  }
+  if (parts[0] === 'memory') {
+    const tab = (MEMORY_CENTER_TABS as readonly string[]).includes(parts[1] ?? '')
+      ? (parts[1] as MemoryCenterTab)
+      : undefined;
+    return {
+      kind: 'home',
+      view: 'memory',
+      ...(tab ? { memoryTab: tab } : {}),
     };
   }
   if (parts[0] === 'onboarding') {
@@ -197,8 +216,11 @@ export function parseRoute(pathname: string): Route {
   if (parts[0] === 'collab-demo') {
     return { kind: 'collab-demo', projectId: parts[1] ? decodeURIComponent(parts[1]) : null };
   }
-  if (parts[0] === 'tools' && parts[1] && parts[2] && parts.length === 3) {
-    return { kind: 'tool', pluginId: decodeURIComponent(parts[1]), pageId: decodeURIComponent(parts[2]) };
+  if (parts[0] === 'tools' && parts[1] && parts[2] && parts.length <= 4) {
+    return {
+      kind: 'tool', pluginId: decodeURIComponent(parts[1]), pageId: decodeURIComponent(parts[2]),
+      ...(parts[3] ? { itemId: decodeURIComponent(parts[3]) } : {}),
+    };
   }
   if (parts[0] === 'community') {
     // Community is now a rail destination inside the entry shell so the nav rail
@@ -242,6 +264,9 @@ export function buildPath(route: Route): string {
       if (route.workbenchItemId) return `/workbench/${route.workbenchPage ?? 'inspiration'}/${encodeURIComponent(route.workbenchItemId)}`;
       return route.workbenchPage && route.workbenchPage !== 'inspiration' ? `/workbench/${route.workbenchPage}` : '/workbench';
     }
+    if (route.view === 'memory') {
+      return route.memoryTab && route.memoryTab !== 'agent' ? `/memory/${route.memoryTab}` : '/memory';
+    }
     if (route.embeddedMovie) return route.movieProjectId ? `/movie-app/${encodeURIComponent(route.movieProjectId)}` : '/movie-app';
     if (route.creationMode === 'movie') return route.movieProjectId ? `/create/animation/${encodeURIComponent(route.movieProjectId)}` : '/create/animation';
     if (route.view === 'onboarding') return '/onboarding';
@@ -277,7 +302,10 @@ export function buildPath(route: Route): string {
     return route.projectId ? `/collab-demo/${encodeURIComponent(route.projectId)}` : '/collab-demo';
   }
   if (route.kind === 'community') return '/community';
-  if (route.kind === 'tool') return `/tools/${encodeURIComponent(route.pluginId)}/${encodeURIComponent(route.pageId)}`;
+  if (route.kind === 'tool') {
+    const path = `/tools/${encodeURIComponent(route.pluginId)}/${encodeURIComponent(route.pageId)}`;
+    return route.itemId ? `${path}/${encodeURIComponent(route.itemId)}` : path;
+  }
   if (route.kind === 'design-system-create') return '/design-systems/create';
   if (route.kind === 'design-system-detail') {
     return `/design-systems/${encodeURIComponent(route.designSystemId)}`;

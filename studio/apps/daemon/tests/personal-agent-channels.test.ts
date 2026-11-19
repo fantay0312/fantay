@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { paChannelInputSchema, type PaChannel, type PaChannelOutbox, type PaTask, type PaControl } from '@open-design/contracts';
+import { paChannelInputSchema, type PaChannel, type PaChannelInput, type PaChannelOutbox, type PaTask, type PaControl } from '@open-design/contracts';
 import { closeDatabase, openDatabase, type SqliteDb } from '../src/db.js';
 import { PersonalAgentService } from '../src/services/personal-agent-service.js';
 import { PersonalAgentChannels } from '../src/services/personal-agent-channels.js';
@@ -30,8 +30,8 @@ beforeEach(() => {
   channels = new PersonalAgentChannels({ core, dataDir: dir, credentialStore: credentials, transportFactory: () => transport });
 });
 afterEach(async () => { vi.restoreAllMocks(); await channels.close(); await core.shutdown(); closeDatabase(); rmSync(dir, { recursive: true, force: true }); });
-async function connected(type: 'feishu' | 'weixin' = 'feishu', extra: Partial<PaChannel> = {}) {
-  const created = channels.create(paChannelInputSchema.parse({ type, name: 'Test channel', targetKind: 'group', targetId: core.snapshot().groups[0]!.id }));
+async function connected(type: PaChannel['type'] = 'feishu', extra: Partial<PaChannel> = {}, route: Partial<PaChannelInput> = {}) {
+  const created = channels.create(paChannelInputSchema.parse({ type, name: 'Test channel', targetKind: 'group', targetId: core.snapshot().groups[0]!.id, ...route }));
   const channel = core.store.update<PaChannel>('channels', created.id, { enabled: true, credentialConfigured: true, allowedSenderIds: ['owner'], remoteChatId: 'chat', tenantId: 'tenant', ...extra });
   const privateRecord = core.store.require<PaChannel & { credentialRef: string }>('channels', created.id);
   credentials.set({ schemaVersion: 1, connectorId: privateRecord.credentialRef, accountLabel: 'Test', credentials: { token: 'TEST_ONLY_TOKEN', ownerId: 'owner', provider: type }, updatedAt: new Date().toISOString() });
@@ -44,7 +44,237 @@ function inbound(id = 'message-one', text = 'Please summarize this brief', extra
 }
 async function finishTask() { await vi.waitFor(() => expect(core.snapshot().tasks.at(-1)?.status).toBe('completed'), { timeout: 5000 }); await channels.tick(); }
 
+describe('Feishu bot registration', () => {
+  const verificationUrl = 'https://open.feishu.cn/page/launcher?user_code=SYNTHETIC';
+  const registered = { client_id: 'cli_registered1', client_secret: 'SYNTHETIC_FEISHU_APP_SECRET', user_info: { tenant_brand: 'lark' as const } };
+
+  function setup(registerFeishu: NonNullable<ConstructorParameters<typeof PersonalAgentChannels>[0]['registerFeishu']>) {
+    const transportFactory = vi.fn(() => transport);
+    channels = new PersonalAgentChannels({ core, dataDir: dir, credentialStore: credentials, registerFeishu, transportFactory });
+    const channel = channels.create(paChannelInputSchema.parse({
+      type: 'feishu', name: 'Launch assistant', targetKind: 'agent', targetId: core.snapshot().agents[0]!.id,
+    }));
+    return { channel, transportFactory };
+  }
+
+  it('shows the authorization link and local QR, saves credentials once and starts the existing transport', async () => {
+    let approve!: (value: typeof registered) => void;
+    const register = vi.fn<NonNullable<ConstructorParameters<typeof PersonalAgentChannels>[0]['registerFeishu']>>(
+      async (_name, _signal, ready) => {
+        ready({ url: verificationUrl, expireIn: 300 });
+        return new Promise(resolve => { approve = resolve; });
+      },
+    );
+    const { channel, transportFactory } = setup(register);
+    expect(channels.beginFeishuRegistration(channel.id)).toMatchObject({ status: 'waiting', authorizationUrl: verificationUrl });
+    expect(channels.beginFeishuRegistration(channel.id).status).toBe('waiting');
+    expect(register).toHaveBeenCalledTimes(1);
+    expect((await channels.feishuRegistrationQr(channel.id)).subarray(1, 4).toString()).toBe('PNG');
+    approve(registered);
+    await vi.waitFor(() => expect(channels.snapshot().channels[0]?.status).toBe('connected'));
+    const result = channels.feishuRegistration(channel.id);
+    expect(result).toMatchObject({ status: 'confirmed', authorizationUrl: null, botUrl: 'https://applink.larksuite.com/client/bot/open?appId=cli_registered1' });
+    expect(transportFactory.mock.calls).toHaveLength(1);
+    expect(credentials.get(`pa-channel:${channel.id}`)?.credentials).toMatchObject({ brand: 'lark', appId: registered.client_id, appSecret: registered.client_secret });
+    expect(JSON.stringify([result, channels.snapshot()])).not.toContain(registered.client_secret);
+    expect(channels.snapshot().channels[0]?.allowedSenderIds).toEqual([]);
+    await expect(channels.feishuRegistrationQr(channel.id)).rejects.toMatchObject({ status: 410 });
+    expect(() => channels.beginFeishuRegistration(channel.id)).toThrow();
+  });
+
+  it('fences cancellation and discards a late authorization result', async () => {
+    let approve!: (value: typeof registered) => void;
+    let registrationSignal!: AbortSignal;
+    const { channel, transportFactory } = setup(async (_name, signal, ready) => {
+      registrationSignal = signal;
+      ready({ url: verificationUrl, expireIn: 300 });
+      return new Promise(resolve => { approve = resolve; });
+    });
+    channels.beginFeishuRegistration(channel.id);
+    channels.cancelFeishuRegistration(channel.id);
+    approve(registered);
+    await Promise.resolve();
+    expect(registrationSignal.aborted).toBe(true);
+    expect(channels.feishuRegistration(channel.id)).toMatchObject({ status: 'cancelled', authorizationUrl: null });
+    expect(transportFactory).not.toHaveBeenCalled();
+    expect(credentials.get(`pa-channel:${channel.id}`)).toBeFalsy();
+  });
+});
+
 describe('PA channel admission and delivery', () => {
+  it('transcribes an admitted raw audio attachment once before dispatching the original turn', async () => {
+    const transcribeAudio = vi.fn(async () => ({ text: '请准备新品发布清单' }));
+    channels = new PersonalAgentChannels({ core, dataDir: dir, credentialStore: credentials, transportFactory: () => transport, transcribeAudio });
+    const channel = await connected('telegram');
+    const attachment = { audio: true as const, data: Buffer.from('OggS synthetic audio') };
+    channels.accept(channel.id, inbound('untrusted-audio', '', { senderId: 'outsider', attachments: [attachment] }));
+    const authorized = inbound('authorized-audio', '', { attachments: [attachment] });
+    channels.accept(channel.id, authorized);
+    channels.accept(channel.id, authorized);
+    await finishTask();
+    expect(transcribeAudio).toHaveBeenCalledTimes(1);
+    expect(execute.mock.calls[0]?.[1]).toContain('请准备新品发布清单');
+    expect(core.snapshot().tasks).toHaveLength(1);
+    expect(JSON.stringify(core.store.list('channel_attachments'))).not.toContain(Buffer.from(attachment.data).toString('base64'));
+  });
+
+  it('relays a view card summary and resumes the same task after one desktop submission', async () => {
+    const channel = await connected('telegram');
+    const view = { type: 'form', id: 'details', fields: [{ id: 'audience', label: 'Audience' }] };
+    execute.mockResolvedValueOnce({ text: JSON.stringify({ channelView: { title: 'Campaign brief', view } }), usage: { visibility: 'unknown' } });
+    channels.accept(channel.id, inbound('view-card', 'Prepare the campaign brief'));
+    await vi.waitFor(() => expect(core.snapshot().tasks.at(-1)?.pendingView?.title).toBe('Campaign brief'));
+    await channels.tick();
+    expect(transport.send.mock.calls.some(([message]) => message.text.includes('Campaign brief') && message.text.includes('填写视图卡片'))).toBe(true);
+    const task = core.snapshot().tasks.at(-1)!;
+    const input = { kind: 'view', attemptId: task.pendingView!.attemptId, action: 'details', values: { fields: { audience: 'New subscribers' } } } as const;
+    core.answerTaskCard(task.id, input);
+    expect(() => core.answerTaskCard(task.id, input)).toThrow(/已经处理/);
+    await finishTask();
+    expect(core.snapshot().tasks).toHaveLength(1);
+    expect(execute.mock.calls.at(-1)?.[1]).toContain('New subscribers');
+    expect(core.snapshot().messages.find(message => message.id === input.attemptId)?.viewAnswer).toEqual({
+      action: 'details', values: { fields: { audience: 'New subscribers' } },
+    });
+  });
+
+  it.each(['dingtalk', 'wecom', 'qq', 'telegram', 'discord', 'slack'] as const)('pairs a %s bot and handles private work with the shared channel lifecycle', async type => {
+    const channel = await connected(type, { allowedSenderIds: [], remoteChatId: null, tenantId: null });
+    const pairing = channels.pairing(channel.id);
+    channels.accept(channel.id, inbound('new-pair', pairing.code, { tenantId: null }));
+    await channels.tick();
+    channels.accept(channel.id, inbound('new-task', 'Summarize the brief', { tenantId: null }));
+    await finishTask();
+    expect(channels.snapshot().channels[0]).toMatchObject({ type, allowedSenderIds: ['owner'], remoteChatId: 'chat', status: 'connected' });
+    expect(transport.send.mock.calls.some(([message]) => message.text.includes('A verified channel answer'))).toBe(true);
+  });
+
+  it('routes a second chat to a different target over the same bot, and revokes it with the parent', async () => {
+    const [ownerAgent, groupAgent] = core.snapshot().agents;
+    const main = await connected('telegram', {}, { targetKind: 'agent', targetId: ownerAgent!.id });
+    const binding = channels.createBinding(main.id, paChannelInputSchema.parse({
+      type: 'telegram', name: 'Second chat', targetKind: 'agent', targetId: groupAgent!.id,
+    }));
+    const pairing = channels.pairing(binding.id);
+    const group = { direct: false, mentioned: true, chatId: 'group', tenantId: null };
+    channels.accept(main.id, inbound('group-pair', pairing.code, group));
+    await channels.tick();
+    channels.accept(main.id, inbound('work-group', 'Compare these choices', group));
+    await finishTask();
+    expect(core.snapshot().tasks.at(-1)).toMatchObject({ channelId: binding.id, participantIds: [groupAgent!.id] });
+    expect(transport.send.mock.calls.some(([message]) => message.chatId === 'group' && message.direct === false)).toBe(true);
+    expect(channels.snapshot().channels.find(channel => channel.id === main.id)?.remoteChatId).toBe('chat');
+    await channels.disconnect(main.id, true);
+    expect(channels.snapshot().channels.find(channel => channel.id === binding.id)).toMatchObject({ enabled: false, remoteChatId: null });
+  });
+
+  it('answers the latest question by number and resumes the same task', async () => {
+    const agent = core.snapshot().agents[0]!;
+    const channel = await connected('telegram', {}, { targetKind: 'agent', targetId: agent.id });
+    execute.mockResolvedValueOnce({ text: '{"channelQuestion":{"prompt":"Which audience?","options":["New users","Experts"]}}', usage: { visibility: 'unknown' } });
+    channels.accept(channel.id, inbound('ask', 'Draft a short guide', { tenantId: null }));
+    await vi.waitFor(() => expect(core.snapshot().tasks.at(-1)?.channelQuestion?.prompt).toBe('Which audience?'));
+    await channels.tick();
+    expect(transport.send.mock.calls.some(([message]) => message.text.includes('2. Experts') && message.buttons?.[1]?.label === 'Experts')).toBe(true);
+    channels.accept(channel.id, inbound('answer', '2', { tenantId: null }));
+    await finishTask();
+    expect(core.snapshot().tasks).toHaveLength(1);
+    expect(core.snapshot().tasks[0]?.channelQuestion).toBeUndefined();
+    expect(execute.mock.calls.at(-1)?.[1]).toContain('Experts');
+  });
+
+  it('checks the originating card message before accepting an in-channel project approval', async () => {
+    const channel = await connected('telegram', {}, { allowRemoteApproval: true });
+    channels.accept(channel.id, inbound('project-card', '/project Create a verified brief', { tenantId: null }));
+    await channels.tick();
+    const card = transport.send.mock.calls.map(([message]) => message).find(message => message.buttons?.length)!;
+    const click = { tenantId: null, action: card.buttons![0]!.data, actionMessageId: `receipt-${card.requestId}` };
+    channels.accept(channel.id, inbound('bad-click', '', { ...click, actionMessageId: 'wrong-card' }));
+    await channels.tick();
+    expect(core.snapshot().tasks).toHaveLength(0);
+    channels.accept(channel.id, inbound('good-click', '', click));
+    await finishTask();
+    expect(core.snapshot().tasks).toHaveLength(1);
+    expect(core.snapshot().tasks[0]?.kind).toBe('project');
+  });
+
+  it('presents images and text attachments to the model only for an admitted sender', async () => {
+    const channel = await connected('telegram');
+    const attachments = [{ name: 'brief.txt', data: Buffer.from('WITNESS_DOCUMENT') },
+      { data: Buffer.from('89504e470d0a1a0a0000', 'hex') }];
+    channels.accept(channel.id, inbound('wrong-sender-media', '', { attachments, senderId: 'outsider' }));
+    await channels.tick();
+    expect(execute).not.toHaveBeenCalled();
+    channels.accept(channel.id, inbound('media', '', { attachments }));
+    await finishTask();
+    expect(execute.mock.calls[0]?.[1]).toContain('WITNESS_DOCUMENT');
+    expect(execute.mock.calls[0]?.[4]?.images?.[0]?.mediaType).toBe('image/png');
+    expect(JSON.stringify(channels.snapshot())).not.toContain('WITNESS_DOCUMENT');
+  });
+
+  it('creates a persistent team from a paired Feishu direct chat and sends it follow-up work', async () => {
+    const coordinator = core.snapshot().agents[0]!;
+    const groupsBefore = core.snapshot().groups.length;
+    const channel = await connected('feishu', {}, { targetKind: 'agent', targetId: coordinator.id, allowTeam: true });
+    execute.mockResolvedValueOnce({
+      text: JSON.stringify({ name: 'Launch studio', members: [{ name: 'Writer', role: 'Draft the copy' }, { name: 'Designer', role: 'Create the visual direction' }] }),
+      usage: { visibility: 'unknown' },
+    });
+    const request = inbound('create-team', '/team Build a team with a writer and designer for the launch');
+    channels.accept(channel.id, request);
+    channels.accept(channel.id, request);
+    await finishTask();
+    const snapshot = core.snapshot();
+    const team = snapshot.groups.find(group => group.name === 'Launch studio')!;
+    expect(snapshot.groups).toHaveLength(groupsBefore + 1);
+    expect(snapshot.tasks[0]).toMatchObject({ kind: 'team', participantIds: [coordinator.id] });
+    expect(team).toMatchObject({ mode: 'collaboration', moderatorId: coordinator.id });
+    expect(team.memberIds).toHaveLength(3);
+    expect(snapshot.agents.find(agent => agent.name === 'Writer')).toMatchObject({ model: coordinator.model, tools: ['respond'] });
+    expect(transport.send.mock.calls.some(([message]) => message.text.includes('/team-run Launch studio |'))).toBe(true);
+
+    channels.accept(channel.id, inbound('use-team', '/team-run Launch studio | Draft a tagline'));
+    await channels.tick();
+    await finishTask();
+    const work = core.snapshot().tasks.at(-1)!;
+    expect(work).toMatchObject({ kind: 'discussion', goal: 'Draft a tagline', participantIds: team.memberIds });
+    expect(core.snapshot().conversations.find(item => item.id === work.conversationId)).toMatchObject({ groupId: team.id, channelId: channel.id, allowProject: false, allowSharedMemory: false });
+    expect(execute).toHaveBeenCalledTimes(4);
+  });
+
+  it('requires explicit Feishu team permission and a paired direct chat, and rejects untrusted plan fields', async () => {
+    const coordinator = core.snapshot().agents[0]!;
+    let channel = await connected('feishu', {}, { targetKind: 'agent', targetId: coordinator.id });
+    channels.accept(channel.id, inbound('opt-out', '/team Build a team'));
+    await channels.tick();
+    expect(execute).not.toHaveBeenCalled();
+    channel = await channels.update(channel.id, { ...channel, allowTeam: true }, channels.snapshot().channels[0]!.revision);
+    channels.accept(channel.id, inbound('group-team', '/team Build a team', { direct: false, mentioned: true }));
+    channels.accept(channel.id, inbound('unauthorized-team', '/team Build a team', { senderId: 'outsider' }));
+    await channels.tick();
+    expect(execute).not.toHaveBeenCalled();
+
+    const count = core.snapshot().agents.length;
+    execute.mockResolvedValueOnce({ text: '{"name":"Bad team","members":[{"name":"Writer","role":"Draft copy","tools":["create_project"]}]}', usage: { visibility: 'unknown' } });
+    channels.accept(channel.id, inbound('bad-plan', '/team Build a team'));
+    await vi.waitFor(() => expect(core.snapshot().tasks.at(-1)?.status).toBe('failed'));
+    expect(core.snapshot().agents).toHaveLength(count);
+    expect(core.snapshot().groups.some(group => group.name === 'Bad team')).toBe(false);
+  });
+
+  it('keeps a suspended model from creating a team after channel permission is revoked', async () => {
+    const coordinator = core.snapshot().agents[0]!;
+    const channel = await connected('feishu', {}, { targetKind: 'agent', targetId: coordinator.id, allowTeam: true });
+    let finishModel!: (value: Awaited<ReturnType<PaModelRuntime['execute']>>) => void;
+    execute.mockImplementationOnce(async () => new Promise(resolve => { finishModel = resolve; }));
+    channels.accept(channel.id, inbound('revoked-team', '/team Build a team'));
+    await vi.waitFor(() => expect(finishModel).toBeTypeOf('function'));
+    await channels.update(channel.id, { ...channel, allowTeam: false }, channels.snapshot().channels[0]!.revision);
+    finishModel({ text: '{"name":"Revoked team","members":[{"name":"Writer","role":"Draft copy"}]}', usage: { visibility: 'unknown' } });
+    await vi.waitFor(() => expect(core.snapshot().tasks.at(-1)?.status).toBe('cancelled'));
+    expect(core.snapshot().groups.some(group => group.name === 'Revoked team')).toBe(false);
+  });
+
   it('deduplicates authenticated events and never exposes credentials in public snapshots', async () => {
     const channel = await connected();
     const message = inbound(); channels.accept(channel.id, message); channels.accept(channel.id, message);
@@ -82,6 +312,53 @@ describe('PA channel admission and delivery', () => {
     core.saveMemory({ content: 'GROUP_MEMORY', source: 'owner', scope: 'group', scopeId: core.snapshot().groups[0]!.id });
     const channel = await connected(); channels.accept(channel.id, inbound()); await finishTask();
     for (const call of execute.mock.calls) { expect(call[1]).not.toContain('PRIVATE_MEMORY'); expect(call[1]).not.toContain('AGENT_MEMORY'); expect(call[1]).not.toContain('GROUP_MEMORY'); }
+  });
+  it('answers a channel in chat mode with the character reply itself, once per turn, without private memory', async () => {
+    const agent = core.createAgent({ name: '小月', role: '陪伴聊天的朋友', avatar: '', enabled: true, tools: ['respond'], model: { runtime: 'claude', modelId: 'sonnet' } });
+    core.soul.saveCharacter(agent.id, { description: '住在窗边工作室，说话轻声慢气。' });
+    core.saveMemory({ content: 'PRIVATE_MEMORY', source: 'owner', scope: 'private', scopeId: null });
+    core.saveMemory({ content: 'AGENT_MEMORY', source: 'owner', scope: 'agent', scopeId: agent.id });
+    const channel = await connected('feishu', {}, { targetKind: 'agent', targetId: agent.id, chatMode: 'companion' });
+    const sent = () => transport.send.mock.calls.map(call => call[0].text);
+    // Finished chat turns leave the snapshot, so they are read from the store.
+    const chatTasks = () => core.store.list<PaTask>('tasks').filter(task => task.kind === 'chat');
+    const model = execute.getMockImplementation()!;
+
+    // Two messages before the turn starts are one turn and one reply: no receipt, no task id, no footer.
+    await core.setControl({ paused: true });
+    execute.mockImplementation(async () => ({ text: '你回来啦。\n<turn_meta>\nmood: 开心\nremember: fact | 用户今天很累\n</turn_meta>', usage: { visibility: 'unknown' } }));
+    channels.accept(channel.id, inbound('chat-1', '今天有点累'));
+    channels.accept(channel.id, inbound('chat-2', '想和你说说话'));
+    await channels.tick();
+    expect(chatTasks()).toHaveLength(1);
+    expect(sent()).toEqual([]);
+    await core.setControl({ paused: false });
+    await vi.waitFor(() => expect(chatTasks()[0]?.status).toBe('completed'), { timeout: 5000 });
+    await channels.tick(); await channels.tick();
+    expect(sent()).toEqual(['你回来啦。']);
+    for (const call of execute.mock.calls) { expect(call[1]).not.toContain('PRIVATE_MEMORY'); expect(call[1]).not.toContain('AGENT_MEMORY'); }
+    expect(core.store.list('memory_candidates')).toHaveLength(0);
+    const conversation = core.snapshot().conversations.find(item => item.channelId === channel.id)!;
+    expect(core.soul.modeOf(conversation)).toBe('companion');
+
+    // /task still runs a work task with its receipt; a reply that did not finish is reported as the app's.
+    execute.mockImplementation(model);
+    channels.accept(channel.id, inbound('task-1', '/task Please summarize this brief'));
+    await channels.tick();
+    expect(core.store.list<PaTask>('tasks').at(-1)).toMatchObject({ kind: 'discussion', goal: 'Please summarize this brief' });
+    expect(sent().at(-1)).toContain('已记录任务');
+    execute.mockImplementation(async () => { throw new Error('model offline'); });
+    channels.accept(channel.id, inbound('chat-3', '你还在吗'));
+    await channels.tick();
+    await vi.waitFor(() => expect(chatTasks().at(-1)?.status).toBe('failed'), { timeout: 5000 });
+    await channels.tick(); await channels.tick();
+    expect(sent().at(-1)).toBe('Fantay：这条消息没有收到回复，请再发一次。');
+    execute.mockImplementation(model);
+  });
+  it('keeps a channel in work mode when its target has no character card, whatever the switch says', async () => {
+    const channel = await connected('feishu', {}, { chatMode: 'companion' });
+    channels.accept(channel.id, inbound()); await finishTask();
+    expect(core.snapshot().tasks.at(-1)?.kind).toBe('discussion');
   });
   it('waits for a scoped project approval and rejects changed goal parameters', async () => {
     const channel = await connected(); channels.accept(channel.id, inbound('project', '/project Build a local document')); await channels.tick();

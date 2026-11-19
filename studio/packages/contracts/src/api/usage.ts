@@ -1,5 +1,27 @@
 export interface AiUsageContext { projectId?: string; workspaceId?: string; conversationId?: string; localRunId?: string; mediaTaskId?: string }
+export type AiUsageScope = 'fantay' | 'device';
+export interface AiUsageLocalSource {
+  provider: string;
+  status: 'ready' | 'not-found' | 'partial' | 'error' | 'unsupported';
+  files: number;
+  records: number;
+  /** Machine-readable reasons. No private filesystem paths or log content. */
+  issues?: Array<'scan-limit' | 'file-limit' | 'invalid-record' | 'history-overlap' | 'permission' | 'unsupported-format' | 'incomplete-usage'>;
+  pricingSource?: 'local-model-catalog';
+  homes?: number;
+}
+export interface AiUsageLocalScan {
+  scannedAt: number;
+  sources: AiUsageLocalSource[];
+  /** Public rate catalog; estimates are token value, not subscription charges. */
+  pricing: { source: string; fetchedAt: number | null };
+}
 export interface AiUsageRecord extends AiUsageContext {
+  origin?: 'fantay' | 'external';
+  sessionId?: string;
+  granularity?: 'request' | 'session';
+  requestCount?: number;
+  estimatedUsd?: string | null;
   projectName?: string;
   requestKey: string; provider: string; model: string; kind: string; status: string;
   externalRunId?: string; inputTokens: number | null; outputTokens: number | null; cachedTokens: number | null;
@@ -7,6 +29,9 @@ export interface AiUsageRecord extends AiUsageContext {
   reservedUsd: string | null; createdAt: number; updatedAt: number;
 }
 export interface AiUsageTotals {
+  sessionRecords?: number;
+  estimatedUsd?: string;
+  estimatedRequests?: number;
   requests: number; inputTokens: number; outputTokens: number; cachedTokens: number;
   chargedUsd: string; refundedUsd: string; reportedUsd: string; reservedUsd: string;
   pending: number; unknown: number;
@@ -40,7 +65,21 @@ export interface AiUsageActivityDay extends AiUsageMetric {
   unknown: number;
 }
 
+/** A native session's usage within the requested date range, independent of the recent-request limit. */
+export interface AiUsageSession {
+  sessionId: string;
+  provider: string;
+  models: string[];
+  firstUsedAt: number;
+  lastUsedAt: number;
+  totals: AiUsageTotals;
+}
+
 export interface AiUsageSummary {
+  scope?: AiUsageScope;
+  sessionId?: string | null;
+  sessions?: AiUsageSession[];
+  localScan?: AiUsageLocalScan;
   /** Number of calendar days in the range, `from` and `to` included. */
   days: number;
   /** Inclusive local date range (`YYYY-MM-DD`) in `timeZone`. */

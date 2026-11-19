@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// 任务 page (spec §9): a summary sentence, a full-width four-way filter, and per segment the
-// needs-you cards, the active rows, a day log of ended work, or the delivered projects.
+// 任务 page (spec §9) under the 工作 title and its tab strip (Soul UI spec §6.3): a summary sentence, a full-width
+// four-way filter, and per segment the needs-you cards, the active rows, a day log of ended work, or the delivered
+// projects.
 import { useMemo, useState, type ReactNode } from 'react';
 import { Activity, FolderOpen, ShieldCheck, type LucideIcon } from 'lucide-react';
 import { useI18n, useT } from '../../i18n';
@@ -9,6 +10,7 @@ import { Button, EmptyState, Icon, MetaLine, Segmented, SegmentedItem, Skeleton,
 import { PaApprovalCard, PaDayLog, PaDeliveryCard, PaNeedsYouCard, PaTaskRow } from './PaWorkCards';
 import { PaArtifactRow, formatDay } from './PaTaskModal';
 import { usePa } from './pa-context';
+import { SoulWorkTabs } from './soul/SoulWorkTabs';
 import type { PaArtifact, PaChannelInbox, PaChannelOutbox, PaTask, PaTasksFilter } from './pa-types';
 import styles from './PaPages.module.css';
 
@@ -40,7 +42,7 @@ export function PaTasksPage() {
   const { locale } = useI18n();
   const [days, setDays] = useState(7);
 
-  const tasks = useMemo(() => [...index.tasks.values()], [index]);
+  const tasks = useMemo(() => [...index.workTasks.values()], [index]);
   const needs = index.needs;
   const approvals = useMemo(
     () => needs.flatMap((need): PaChannelInbox[] => (need.kind === 'approval' ? [need.inbox] : [])),
@@ -229,7 +231,7 @@ export function PaTasksPage() {
       <div className={styles.inner}>
         <header className={styles.head}>
           <div className={styles.headText}>
-            <h1 className={styles.title}>{t('pa.tasks')}</h1>
+            <h1 className={styles.title}>{t('pa.soul.shell.work.title')}</h1>
             <p className={styles.summary}>
               {t('pa.tasks.summary', {
                 active: runningCount,
@@ -240,6 +242,7 @@ export function PaTasksPage() {
             </p>
           </div>
         </header>
+        <SoulWorkTabs />
         <Segmented
           size="md"
           className={cn('flex w-full', styles.filter)}

@@ -1,6 +1,6 @@
 import type { Server } from 'node:http';
 import { randomUUID } from 'node:crypto';
-import { chmod, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -11,7 +11,12 @@ import { register } from 'prom-client';
 // provider inference is a separate pipeline and must not spend provider budget.
 vi.mock('../src/memory-llm.js', async importOriginal => {
   const actual = await importOriginal<typeof import('../src/memory-llm.js')>();
-  return { ...actual, extractWithLLM: vi.fn(async () => []), distillAnnotationsToMemory: vi.fn(async () => []) };
+  return {
+    ...actual,
+    extractWithLLM: vi.fn(async () => []),
+    distillAnnotationsToMemory: vi.fn(async () => []),
+    completeWithMemoryProvider: vi.fn(async () => null),
+  };
 });
 
 type Started = { url: string; server: Server; shutdown?: () => Promise<void> | void };
@@ -44,13 +49,14 @@ beforeEach(async () => {
   started = await startServer({ port: 0, returnServer: true }) as unknown as Started;
   const cli = join(dataDir, 'controlled-claude.ts');
   await writeFile(cli, `#!/usr/bin/env node
-import { writeSync } from 'node:fs';
+import { openSync, writeSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 if (process.argv.includes('--version')) { console.log('claude 0.0.0-memory-contract'); process.exit(0); }
 if (process.argv.includes('--help')) { console.log('Usage: claude -p --input-format stream-json --output-format stream-json --include-partial-messages'); process.exit(0); }
 if (process.argv.includes('auth')) { console.log(JSON.stringify({ loggedIn: true })); process.exit(0); }
 if (process.argv.includes('--thinking-display')) { console.error('unknown option --thinking-display'); process.exit(1); }
-createInterface({ input: process.stdin }).once('line', () => {
+createInterface({ input: process.stdin }).once('line', (line) => {
+  writeSync(openSync(${JSON.stringify(join(dataDir, 'claude-stdin.jsonl'))}, 'a'), line + '\\n');
   for (const frame of [
     { type: 'system', subtype: 'init', session_id: 'memory-contract-session', model: 'claude-memory-contract' },
     { type: 'assistant', message: { id: 'memory-contract-reply', role: 'assistant', content: [{ type: 'text', text: 'Lesson prepared.' }], stop_reason: 'end_turn' } },
@@ -113,12 +119,19 @@ async function send(message: string, current?: { currentPrompt: string | null })
 // These are actual HTTP/run/heuristic records. Only background provider work
 // is mocked; the next suite separately proves the real LLM record writer.
 describe('memory extraction records preserve their producing chat origin', () => {
-  it('threads the authoritative daemon run identity to heuristic records and child-close extraction', async () => {
-    const { extractWithLLM } = await import('../src/memory-llm.js');
+  it('threads the authoritative daemon run identity to heuristic records, and child-close learning goes to the memory engine', async () => {
+    const { extractWithLLM, completeWithMemoryProvider } = await import('../src/memory-llm.js');
     const background = vi.mocked(extractWithLLM);
+    const engineModel = vi.mocked(completeWithMemoryProvider);
     background.mockClear();
+    engineModel.mockClear();
     const runId = await send('Remember: use cobalt blue for project headings');
-    await vi.waitFor(() => expect(background).toHaveBeenCalledTimes(1));
+    // 从对话中学习 is on, so the engine distils the turn with this run's agent; the extractor pass is replaced.
+    await vi.waitFor(() => expect(engineModel).toHaveBeenCalledTimes(1));
+    expect(engineModel.mock.calls[0]?.[0]).toBe(dataDir);
+    expect(engineModel.mock.calls[0]?.[1].user).toContain('Remember: use cobalt blue for project headings');
+    expect(engineModel.mock.calls[0]?.[2]).toMatchObject({ chatAgentId: 'claude' });
+    expect(background).not.toHaveBeenCalled();
     const run = await api<{ assistantMessageId: string }>(`/api/runs/${runId}`);
     expect(run.assistantMessageId).toEqual(expect.any(String));
     const origin = { projectId, conversationId, runId, assistantMessageId: run.assistantMessageId };
@@ -126,7 +139,58 @@ describe('memory extraction records preserve their producing chat origin', () =>
     const record = extractions.find(item => item.kind === 'heuristic' && (item.writtenCount ?? 0) > 0);
     expect(record, 'actual heuristic wrote a real memory entry before checking ownership').toMatchObject({ phase: 'success', writtenCount: 1 });
     expect(record?.extractionOrigin).toEqual(origin);
-    expect(background.mock.calls[0]?.[2]).toMatchObject({ extractionOrigin: origin });
+  });
+
+  it('puts what a sibling conversation of the project said into the turn the agent receives', async () => {
+    const sibling = await api<{ conversation: { id: string } }>(`/api/projects/${projectId}/conversations`, 'POST', {
+      title: 'Heading colours',
+    });
+    const siblingId = sibling.conversation.id;
+    for (const [index, [role, content]] of [
+      ['user', 'Project headings use cobalt blue #1F4FD8 at 28px'],
+      ['assistant', 'Noted: cobalt blue #1F4FD8 for project headings'],
+    ].entries()) {
+      await api(`/api/projects/${projectId}/conversations/${siblingId}/messages/sibling-m${index}`, 'PUT', {
+        id: `sibling-m${index}`, role, content,
+      });
+    }
+    const question = 'Which cobalt blue did we choose for the project headings?';
+    // The recall rides the chat turn's user body; an OD Next strategy run sends its frozen task text instead.
+    vi.stubEnv('OD_NEXT_STRATEGY_ROLLOUT', 'off');
+    try {
+      await send(question, { currentPrompt: question });
+    } finally {
+      vi.unstubAllEnvs();
+    }
+    const stdin = await readFile(join(dataDir!, 'claude-stdin.jsonl'), 'utf8');
+    expect(stdin).toContain('<memory>');
+    expect(stdin).toContain('cobalt blue #1F4FD8 at 28px');
+  });
+
+  it('puts it into an OD Next request too, frozen with the rest of the task text', async () => {
+    const sibling = await api<{ conversation: { id: string } }>(`/api/projects/${projectId}/conversations`, 'POST', {
+      title: 'Heading colours',
+    });
+    const siblingId = sibling.conversation.id;
+    // "checklist" and "verification" are words the OD Next instruction guard refuses; recalled text is quoted
+    // as a fact, so a conversation that used them must not stop the request from being prepared.
+    for (const [index, [role, content]] of [
+      ['user', 'Project headings use cobalt blue #1F4FD8 at 28px, and add a checklist with a verification step'],
+      ['assistant', 'Noted: cobalt blue #1F4FD8 for project headings'],
+    ].entries()) {
+      await api(`/api/projects/${projectId}/conversations/${siblingId}/messages/sibling-m${index}`, 'PUT', {
+        id: `sibling-m${index}`, role, content,
+      });
+    }
+    const question = 'Which cobalt blue did we choose for the project headings?';
+    // No rollout override: a fresh project's run takes the OD Next strategy path, which is the default.
+    await send(question, { currentPrompt: question });
+    const stdin = await readFile(join(dataDir!, 'claude-stdin.jsonl'), 'utf8');
+    expect(stdin, 'this run must be an OD Next request for the case to mean anything').toContain('user_first_prompt');
+    expect(stdin).toContain('kind=\\"fact\\" name=\\"recalled-memory\\"');
+    expect(stdin).toContain('<memory>');
+    expect(stdin).toContain('cobalt blue #1F4FD8 at 28px');
+    expect(stdin).toContain('add a checklist with a verification step');
   });
 
   it('preserves the existing explicit HTTP project/conversation fields without inventing a run', async () => {

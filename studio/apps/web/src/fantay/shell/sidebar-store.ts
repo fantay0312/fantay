@@ -6,7 +6,7 @@
 // Every storage access is wrapped: private windows and locked-down webviews keep working for the session.
 import { useSyncExternalStore } from 'react';
 
-export type FantaySidebarSectionId = 'pinned' | 'projects' | `group:${string}`;
+export type FantaySidebarSectionId = 'pinned' | 'projects' | 'timeline-recent' | `group:${string}`;
 
 export const SIDEBAR_COLLAPSED_STORAGE_KEY = 'fantay.shell.sidebar.collapsed';
 export const SIDEBAR_SECTIONS_STORAGE_KEY = 'fantay.shell.sidebar.sections';
@@ -14,7 +14,7 @@ export const SIDEBAR_EXPANDED_PROJECTS_STORAGE_KEY = 'fantay.shell.sidebar.expan
 export const SIDEBAR_EXPANDED_PROJECTS_LIMIT = 30;
 
 function isSectionId(key: string): key is FantaySidebarSectionId {
-  return key === 'pinned' || key === 'projects' || key.startsWith('group:');
+  return key === 'pinned' || key === 'projects' || key === 'timeline-recent' || key.startsWith('group:');
 }
 
 export interface SidebarRevealRequest {

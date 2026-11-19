@@ -1,0 +1,227 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Roleplay text inside a bubble or on the paper (Soul UI spec §4.4.5). Actions are softer and italic where the face
+   has a true italic (`font-synthesis-style: none`: Latin slants, CJK never fakes a slant); speech keeps the ink.
+   Markdown (agent text with lists, tables, code, links, bold) renders through PaMarkdown; the upstream prose colours
+   are re-pointed at the side's skin so a dark bubble on a light paper stays readable. Local properties:
+   --rp-soft (action / secondary), --rp-link, --rp-quote, --rp-rule (hairlines inside the bubble). */
+
+.root {
+  --rp-soft: var(--pa-skin-soft);
+  --rp-link: var(--pa-skin-accent);
+  --rp-quote: var(--pa-skin-accent);
+  --rp-rule: color-mix(in srgb, currentColor 18%, transparent);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.root[data-side='in'] {
+  --rp-soft: var(--pa-skin-in-soft);
+  --rp-link: var(--pa-skin-link);
+  --rp-quote: var(--pa-skin-quote);
+}
+
+.root[data-side='out'] {
+  --rp-soft: var(--pa-skin-out-soft);
+  --rp-link: currentColor;
+  --rp-quote: var(--pa-skin-out-soft);
+}
+
+/* Journal (stage 2): incoming text sits on the paper, not on the incoming fill, so actions, links and the quote bar
+   take the paper's soft ink and accent (the incoming-bubble values are light-on-dark in deepsea light). */
+:global([data-pa-layout='journal']) .root[data-side='in'] {
+  --rp-soft: var(--pa-skin-soft);
+  --rp-link: var(--pa-skin-accent);
+  --rp-quote: var(--pa-skin-accent);
+}
+
+/* ── plain path: paragraphs of tokens ── */
+
+.p {
+  margin: 0;
+  white-space: pre-line;
+}
+
+.p + .p {
+  margin-top: 0.55em;
+}
+
+.action {
+  color: var(--rp-soft);
+  font-style: italic;
+  font-synthesis-style: none;
+}
+
+/* ── markdown path ── */
+
+.markdown:global(.prose-block) {
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+.markdown:global(.prose-block) > :first-child {
+  margin-top: 0;
+}
+
+.markdown:global(.prose-block) > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown:global(.prose-block) :global(.md-p + .md-p) {
+  margin-top: 0.55em;
+}
+
+.markdown:global(.prose-block) em {
+  color: var(--rp-soft);
+  font-style: italic;
+  font-synthesis-style: none;
+}
+
+.markdown:global(.prose-block) strong {
+  color: inherit;
+}
+
+.markdown:global(.prose-block) :global(.md-h) {
+  margin: 0.9em 0 0.35em;
+  color: inherit;
+  font-size: 1.08em;
+  letter-spacing: 0;
+}
+
+.markdown:global(.prose-block) :global(.md-ul),
+.markdown:global(.prose-block) :global(.md-ol) {
+  margin: 0.4em 0;
+  padding-inline-start: 1.3em;
+}
+
+.markdown:global(.prose-block) :global(.md-ul li),
+.markdown:global(.prose-block) :global(.md-ol li) {
+  margin: 0.15em 0;
+  line-height: inherit;
+}
+
+.markdown:global(.prose-block) :global(.md-ul li::marker),
+.markdown:global(.prose-block) :global(.md-ol li::marker) {
+  color: var(--rp-soft);
+}
+
+.markdown:global(.prose-block) :global(.md-link) {
+  border-bottom: 0;
+  color: var(--rp-link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.markdown:global(.prose-block) :global(.md-link:hover) {
+  color: var(--rp-link);
+  text-decoration-thickness: 2px;
+}
+
+.markdown:global(.prose-block) :global(.md-quote) {
+  margin: 0.4em 0;
+  padding: 0;
+  padding-inline-start: 10px;
+  border-left: 0;
+  border-inline-start: 2px solid var(--rp-quote);
+  color: var(--rp-soft);
+}
+
+.markdown:global(.prose-block) :global(.md-inline-code) {
+  color: inherit;
+  font-weight: 500;
+}
+
+.markdown:global(.prose-block) :global(.md-code-block),
+.markdown:global(.prose-block) :global(.md-table-wrap) {
+  margin: 0.5em 0;
+  border-color: var(--rp-rule);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, currentColor 4%, transparent);
+  box-shadow: none;
+}
+
+.markdown:global(.prose-block) :global(.md-code-header) {
+  border-bottom-color: var(--rp-rule);
+}
+
+.markdown:global(.prose-block) :global(.md-code-lang),
+.markdown:global(.prose-block) :global(.md-code-action) {
+  color: var(--rp-soft);
+}
+
+.markdown:global(.prose-block) :global(.md-code-action:hover) {
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  color: inherit;
+}
+
+.markdown:global(.prose-block) :global(.md-code) {
+  padding: 10px 12px;
+  color: inherit;
+  font-size: 12.5px;
+}
+
+.markdown:global(.prose-block) :global(.md-table) {
+  font-size: inherit;
+}
+
+.markdown:global(.prose-block) :global(.md-table th),
+.markdown:global(.prose-block) :global(.md-table td) {
+  padding: 6px 10px;
+  border-color: var(--rp-rule);
+}
+
+.markdown:global(.prose-block) :global(.md-table thead th) {
+  background: color-mix(in srgb, currentColor 6%, transparent);
+  color: inherit;
+}
+
+.markdown:global(.prose-block) :global(.md-table tbody tr:nth-child(even) td),
+.markdown:global(.prose-block) :global(.md-table tbody tr:hover td) {
+  background: transparent;
+}
+
+.markdown:global(.prose-block) :global(.md-hr) {
+  margin: 0.8em 0;
+  border-top-color: var(--rp-rule);
+}
+
+/* ── imported card markup: one folded row, shown as inert text ── */
+
+.markup {
+  margin: 0.35em 0;
+}
+
+.markup :global([data-slot='button']) {
+  height: 26px;
+  padding-inline: 2px;
+  color: inherit;
+}
+
+.markup :global([data-slot='button']:hover) {
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.markup :global([data-slot='button-label']) > span,
+.markup :global([data-slot='button-label']) svg {
+  color: var(--rp-soft);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.markupBody {
+  max-height: 240px;
+  margin: 2px 0 4px;
+  padding: 8px 10px;
+  overflow: auto;
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  color: var(--rp-soft);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

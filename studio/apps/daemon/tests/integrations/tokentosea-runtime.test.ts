@@ -48,6 +48,22 @@ async function serve(runtime: TokenToSeaRuntime, protocol: 'openai' | 'anthropic
   return `http://127.0.0.1:${(server.address() as AddressInfo).port}${route}`;
 }
 describe('TokenToSea runtime', () => {
+  it('keeps native search requests on the run account and rejects revoked search tokens', async () => {
+    const { runtime, inSession, signed } = fixture();
+    let revoke = () => {};
+    await inSession(alice, async () => { revoke = runtime.bindToolToken('search-run-token', 60_000); });
+    await inSession(bob, async () => {});
+    const accountForSearch = () => new Promise<string | null>(resolve => {
+      runtime.middleware({
+        headers: { authorization: 'Bearer search-run-token', host: '127.0.0.1:7456' },
+        originalUrl: '/api/search/search', socket: { remoteAddress: '127.0.0.1' },
+      } as never, {} as never, () => resolve(runtime.current()?.user?.id ?? null));
+    });
+    expect(await accountForSearch()).toBe('issuer|alice');
+    revoke();
+    signed.delete(alice);
+    expect(await accountForSearch()).toBeNull();
+  });
   it.each(['openai', 'anthropic'] as const)('ends a stalled %s stream with a readable non-retryable billing error', async protocol => {
     vi.useFakeTimers();
     try {

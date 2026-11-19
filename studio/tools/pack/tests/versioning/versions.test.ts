@@ -5,6 +5,8 @@ import { electronBuilderVersionForAppVersion, versionCoreForAppVersion, versionF
 describe("tools-pack version helpers", () => {
   it("keeps runtime app versions intact for electron-builder", () => {
     expect(electronBuilderVersionForAppVersion("0.8.0")).toBe("0.8.0");
+    expect(electronBuilderVersionForAppVersion("26.0101.1")).toBe("26.101.1");
+    expect(electronBuilderVersionForAppVersion("26.1114.1")).toBe("26.1114.1");
     expect(electronBuilderVersionForAppVersion("0.8.0-beta.6")).toBe("0.8.0-beta.6");
     expect(electronBuilderVersionForAppVersion("0.8.0-preview.1")).toBe("0.8.0-preview.1");
     expect(electronBuilderVersionForAppVersion("0.8.0-prerelease.2")).toBe("0.8.0-prerelease.2");

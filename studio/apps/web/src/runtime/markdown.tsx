@@ -10,11 +10,27 @@
  *
  * Output is a React fragment of typed elements — no dangerouslySetInnerHTML,
  * so untrusted text can't smuggle markup through.
+ *
+ * Two things in a message are drawn instead of shown as their source:
+ *  - formulas (`$…$`, `$$…$$`, `\(…\)`, `\[…\]`, a ```math fence), typeset by the shared KaTeX
+ *    engine (`fantay/artifact/math`). They are taken out of the text before it is parsed (a mark
+ *    stands in for each, so `x_i` is not read as italic) and put back where plain text is emitted.
+ *    The only markup set as HTML is what KaTeX built with `trust` off; text that is not a formula
+ *    it can set stays exactly as written;
+ *  - a closed ```mermaid fence, drawn by the same code as the diagram viewer and sanitised there.
+ *    A fence that is still being streamed, and one that does not draw, is shown as code.
  */
-import { Fragment, useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { Fragment, Suspense, lazy, useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { useT } from '../i18n';
 import { copyToClipboard } from '../lib/copy-to-clipboard';
 import { Icon } from '../components/Icon';
+import embedStyles from '../fantay/artifact/embed/embed.module.css';
+import type { DiagramFigureOutcome } from '../fantay/artifact/embed/DiagramFigure';
+import { MathView } from '../fantay/artifact/math/MathView';
+import { mathMark, mayHoldMath, replaceMath, splitMathMarks } from '../fantay/artifact/math/find-math';
+import { diagramKindKey } from '../fantay/artifact/viewers/diagram/kinds';
+
+const DiagramFigure = lazy(() => import('../fantay/artifact/embed/DiagramFigure'));
 
 export type MarkdownLinkClickHandler = (
   href: string,
@@ -47,15 +63,67 @@ export interface RenderMarkdownOptions {
   images?: 'render' | 'link';
   /** With `images: 'link'`: the link's visible text. Defaults to the alt text, else the src. */
   imageLinkLabel?: (image: { src: string; alt: string }) => ReactNode;
+  /** Typeset formulas. On unless `false`. */
+  math?: boolean;
+  /** Draw closed ```mermaid fences. On unless `false`. */
+  diagrams?: boolean;
+}
+
+interface MarkedFormula {
+  tex: string;
+  display: boolean;
+  /** The text as written, delimiters included. */
+  written: string;
+}
+
+/** The options plus what one render carries: the formulas its marks stand for. */
+interface RenderContext extends RenderMarkdownOptions {
+  formulas?: readonly MarkedFormula[];
+}
+
+const MATH_DELIMITERS = { backslash: true } as const;
+
+/**
+ * Takes the formulas out of a message and leaves a mark where each was. A display formula on lines
+ * of its own becomes a paragraph of its own; one inside a sentence, a list item or a table cell
+ * stays where it is, so the block around it is not broken apart.
+ */
+function markFormulas(input: string): { text: string; formulas: MarkedFormula[] } {
+  const formulas: MarkedFormula[] = [];
+  const mark = (tex: string, display: boolean, written: string): string => {
+    formulas.push({ tex, display, written });
+    return mathMark(formulas.length - 1);
+  };
+  const text = replaceMath(
+    input,
+    (tex, written, alone) => (alone ? `\n\n${mark(tex, true, written)}\n\n` : mark(tex, true, written)),
+    (tex, written) => mark(tex, false, written),
+    MATH_DELIMITERS,
+  );
+  return { text, formulas };
 }
 
 export function renderMarkdown(input: string, options?: RenderMarkdownOptions): ReactNode {
-  const blocks = parseBlocks(input);
+  const marked = options?.math !== false && mayHoldMath(input, MATH_DELIMITERS) ? markFormulas(input) : null;
+  const context: RenderContext | undefined = marked && marked.formulas.length > 0 ? { ...options, formulas: marked.formulas } : options;
+  const blocks = parseBlocks(marked ? marked.text : input);
   return (
     <>
-      {blocks.map((b, i) => renderBlock(b, i, options))}
+      {blocks.map((b, i) => renderBlock(b, i, context))}
     </>
   );
+}
+
+/** Plain text with its formulas put back: strings and typeset formulas, in order. */
+function withFormulas(text: string, baseKey: string, context?: RenderContext): ReactNode[] {
+  const formulas = context?.formulas;
+  if (!formulas) return [<Fragment key={baseKey}>{text}</Fragment>];
+  const parts = splitMathMarks(text);
+  return parts.map((part, index) => {
+    if (typeof part === 'string') return <Fragment key={`${baseKey}-${index}`}>{part}</Fragment>;
+    const formula = formulas[part];
+    return formula ? <MathView key={`${baseKey}-${index}`} tex={formula.tex} display={formula.display} written={formula.written} /> : null;
+  });
 }
 
 type TableAlign = 'left' | 'right' | 'center' | null;
@@ -66,7 +134,8 @@ type Block =
   | { kind: 'ul'; items: string[] }
   | { kind: 'ol'; items: string[] }
   | { kind: 'bq'; text: string }
-  | { kind: 'code'; lang: string | null; body: string }
+  /** `closed`: the fence has its closing line (false while the block is still being streamed). */
+  | { kind: 'code'; lang: string | null; body: string; closed: boolean }
   | { kind: 'codeComment'; comment: CodeCommentDirective }
   | { kind: 'table'; aligns: TableAlign[]; headers: string[]; rows: string[][] }
   | { kind: 'hr' };
@@ -173,8 +242,9 @@ function parseBlocks(input: string): Block[] {
         i++;
       }
       // Skip the closing fence (if present).
-      if (i < lines.length) i++;
-      out.push({ kind: 'code', lang, body: buf.join('\n') });
+      const closed = i < lines.length;
+      if (closed) i++;
+      out.push({ kind: 'code', lang, body: buf.join('\n'), closed });
       continue;
     }
     // ATX heading.
@@ -259,7 +329,7 @@ function parseBlocks(input: string): Block[] {
   return out;
 }
 
-function renderBlock(block: Block, key: number, options?: RenderMarkdownOptions): ReactNode {
+function renderBlock(block: Block, key: number, options?: RenderContext): ReactNode {
   if (block.kind === 'p') {
     return <p key={key} className="md-p">{renderInline(block.text, options)}</p>;
   }
@@ -306,6 +376,18 @@ function renderBlock(block: Block, key: number, options?: RenderMarkdownOptions)
     );
   }
   if (block.kind === 'code') {
+    const lang = block.lang?.toLowerCase() ?? null;
+    const complete = block.closed && block.body.trim() !== '';
+    if (lang === 'mermaid' && complete && options?.diagrams !== false) {
+      return <MarkdownDiagramBlock key={key} body={block.body} />;
+    }
+    if (lang === 'math' && complete && options?.math !== false) {
+      return (
+        <p key={key} className="md-p">
+          <MathView tex={block.body.trim()} display written={block.body} />
+        </p>
+      );
+    }
     return (
       <MarkdownCodeBlock
         key={key}
@@ -316,7 +398,7 @@ function renderBlock(block: Block, key: number, options?: RenderMarkdownOptions)
     );
   }
   if (block.kind === 'codeComment') {
-    return <CodeCommentBlock key={key} comment={block.comment} />;
+    return <CodeCommentBlock key={key} comment={block.comment} context={options} />;
   }
   if (block.kind === 'table') {
     const { aligns, headers, rows } = block;
@@ -397,18 +479,20 @@ function parsePositiveInt(value: string | undefined): number | undefined {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 }
 
-function CodeCommentBlock({ comment }: { comment: CodeCommentDirective }) {
+function CodeCommentBlock({ comment, context }: { comment: CodeCommentDirective; context?: RenderContext }) {
   const location = codeCommentLocation(comment);
+  // The directive's own text keeps its formulas; links and pictures in it follow the defaults.
+  const inline: RenderContext | undefined = context?.formulas ? { formulas: context.formulas } : undefined;
   return (
     <article className="md-code-comment" data-priority={comment.priority ?? undefined}>
       <div className="md-code-comment-head">
         <span className="md-code-comment-icon" aria-hidden>!</span>
-        <strong>{renderInline(comment.title)}</strong>
+        <strong>{renderInline(comment.title, inline)}</strong>
         {comment.priority ? (
           <span className="md-code-comment-priority">P{comment.priority}</span>
         ) : null}
       </div>
-      <p className="md-code-comment-body">{renderInline(comment.body)}</p>
+      <p className="md-code-comment-body">{renderInline(comment.body, inline)}</p>
       <code className="md-code-comment-file">{location}</code>
     </article>
   );
@@ -420,6 +504,92 @@ function codeCommentLocation(comment: CodeCommentDirective): string {
     return `${comment.file}:${comment.start}-${comment.end}`;
   }
   return `${comment.file}:${comment.start}`;
+}
+
+/** Copies `text`; the flag is true for a moment after a copy that worked. */
+function useCopied(text: string): [boolean, () => Promise<void>] {
+  const [copied, setCopied] = useState(false);
+  const resetTimerRef = useRef<number | null>(null);
+  useEffect(() => () => {
+    if (resetTimerRef.current != null) window.clearTimeout(resetTimerRef.current);
+  }, []);
+  const copy = useCallback(async () => {
+    const ok = await copyToClipboard(text);
+    if (!ok) return;
+    setCopied(true);
+    if (resetTimerRef.current != null) window.clearTimeout(resetTimerRef.current);
+    resetTimerRef.current = window.setTimeout(() => {
+      setCopied(false);
+      resetTimerRef.current = null;
+    }, 1600);
+  }, [text]);
+  return [copied, copy];
+}
+
+/**
+ * A closed ```mermaid fence: the diagram, with its source one click away, in the same frame as a
+ * code block (kind where the language is, copy on the right). The drawing code is a chunk of its
+ * own; until it is there, and when the text does not draw, the block is the code it was written as,
+ * with one line saying why.
+ */
+function MarkdownDiagramBlock({ body }: { body: string }) {
+  const t = useT();
+  const [view, setView] = useState<'diagram' | 'source'>('diagram');
+  const [outcome, setOutcome] = useState<{ body: string; result: DiagramFigureOutcome } | null>(null);
+  const [copied, handleCopy] = useCopied(body);
+  const copyLabel = copied ? t('fileViewer.copied') : t('fileViewer.copy');
+  const result = outcome !== null && outcome.body === body ? outcome.result : null;
+  const failed = result?.status === 'failed';
+  const showSource = view === 'source' || failed;
+  const kind = result?.status === 'drawn' ? t(diagramKindKey(result.type)) : null;
+  const toggleLabel = showSource ? t('artifact.diagram.viewDiagram') : t('artifact.notebook.viewSource');
+  const onOutcome = useCallback((next: DiagramFigureOutcome) => setOutcome({ body, result: next }), [body]);
+  const source = <HighlightedCode body={body} lang="mermaid" syntaxHighlight />;
+
+  return (
+    <div className="md-code-block md-diagram-block" data-md-diagram={failed ? 'failed' : showSource ? 'source' : 'diagram'}>
+      <div className="md-code-header">
+        <span className="md-code-lang">{kind ?? 'mermaid'}</span>
+        <div className="md-code-actions">
+          {failed ? null : (
+            <button
+              type="button"
+              className="md-code-action md-code-action-icon"
+              onClick={() => setView((current) => (current === 'diagram' ? 'source' : 'diagram'))}
+              aria-label={toggleLabel}
+              title={toggleLabel}
+            >
+              <Icon name={showSource ? 'eye' : 'file-code'} size={13} />
+            </button>
+          )}
+          <button
+            type="button"
+            className="md-code-action"
+            onClick={() => { void handleCopy(); }}
+            aria-label={copyLabel}
+            title={copyLabel}
+          >
+            <Icon name={copied ? 'check' : 'copy'} size={12} />
+            <span>{copyLabel}</span>
+          </button>
+        </div>
+      </div>
+      {failed ? (
+        <p className={embedStyles.note} role="note">
+          {result.line !== null ? t('artifact.embed.diagramFailedLine', { line: String(result.line) }) : t('artifact.embed.diagramFailed')}
+        </p>
+      ) : null}
+      <div className="md-code-body">
+        {showSource ? (
+          source
+        ) : (
+          <Suspense fallback={source}>
+            <DiagramFigure source={body} label={kind ?? t('artifact.diagram.kind.other')} onOutcome={onOutcome} />
+          </Suspense>
+        )}
+      </div>
+    </div>
+  );
 }
 
 // Long blocks past this many lines start collapsed, matching Lobe's
@@ -436,43 +606,12 @@ function MarkdownCodeBlock({
   syntaxHighlight: boolean;
 }) {
   const t = useT();
-  const [copied, setCopied] = useState(false);
-  const [highlightedHtml, setHighlightedHtml] = useState<string | null>(null);
-  const resetTimerRef = useRef<number | null>(null);
+  const [copied, handleCopy] = useCopied(body);
   const copyLabel = copied ? t('fileViewer.copied') : t('fileViewer.copy');
 
   const lineCount = body.split('\n').length;
   const collapsible = lineCount > CODE_COLLAPSE_LINE_THRESHOLD;
   const [collapsed, setCollapsed] = useState(collapsible);
-
-  useEffect(() => () => {
-    if (resetTimerRef.current != null) window.clearTimeout(resetTimerRef.current);
-  }, []);
-
-  useEffect(() => {
-    if (!lang || !syntaxHighlight) {
-      setHighlightedHtml(null);
-      return;
-    }
-    let cancelled = false;
-    import('./shiki').then(({ highlightCode }) =>
-      highlightCode(body, lang).then((html) => {
-        if (!cancelled && html) setHighlightedHtml(html);
-      }),
-    ).catch(() => {});
-    return () => { cancelled = true; };
-  }, [body, lang, syntaxHighlight]);
-
-  async function handleCopy() {
-    const ok = await copyToClipboard(body);
-    if (!ok) return;
-    setCopied(true);
-    if (resetTimerRef.current != null) window.clearTimeout(resetTimerRef.current);
-    resetTimerRef.current = window.setTimeout(() => {
-      setCopied(false);
-      resetTimerRef.current = null;
-    }, 1600);
-  }
 
   return (
     <div className="md-code-block" data-collapsed={collapsed ? 'true' : undefined}>
@@ -504,18 +643,39 @@ function MarkdownCodeBlock({
         </div>
       </div>
       <div className="md-code-body">
-        {highlightedHtml ? (
-          <div
-            className="md-code md-code-highlighted"
-            dangerouslySetInnerHTML={{ __html: highlightedHtml }}
-          />
-        ) : (
-          <pre className="md-code">
-            <code data-lang={lang ?? undefined}>{body}</code>
-          </pre>
-        )}
+        <HighlightedCode body={body} lang={lang} syntaxHighlight={syntaxHighlight} />
       </div>
     </div>
+  );
+}
+
+/** A fenced block's text: plain at once, with syntax colours once the highlighter has them. */
+function HighlightedCode({ body, lang, syntaxHighlight }: { body: string; lang: string | null; syntaxHighlight: boolean }) {
+  const [highlightedHtml, setHighlightedHtml] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!lang || !syntaxHighlight) {
+      setHighlightedHtml(null);
+      return;
+    }
+    let cancelled = false;
+    import('./shiki').then(({ highlightCode }) =>
+      highlightCode(body, lang).then((html) => {
+        if (!cancelled && html) setHighlightedHtml(html);
+      }),
+    ).catch(() => {});
+    return () => { cancelled = true; };
+  }, [body, lang, syntaxHighlight]);
+
+  return highlightedHtml ? (
+    <div
+      className="md-code md-code-highlighted"
+      dangerouslySetInnerHTML={{ __html: highlightedHtml }}
+    />
+  ) : (
+    <pre className="md-code">
+      <code data-lang={lang ?? undefined}>{body}</code>
+    </pre>
   );
 }
 
@@ -608,7 +768,7 @@ function unwrapMarkdownDestination(value: string): string {
 // and plain text. We walk the string with a regex that matches whichever
 // delimiter shows up next; everything between delimiters becomes a text
 // span (which itself still gets autolink scanning).
-function renderInline(text: string, options?: RenderMarkdownOptions): ReactNode {
+function renderInline(text: string, options?: RenderContext): ReactNode {
   const out: ReactNode[] = [];
   const onLinkClick = options?.onLinkClick;
   const linkClickHandler = onLinkClick
@@ -684,7 +844,7 @@ function renderInline(text: string, options?: RenderMarkdownOptions): ReactNode 
             rel="noreferrer noopener"
             onClick={linkClickHandler?.(href)}
           >
-            {m[4]}
+            {withFormulas(m[4], 'l', options)}
           </a>,
         );
       } else {
@@ -708,13 +868,13 @@ function renderInline(text: string, options?: RenderMarkdownOptions): ReactNode 
       );
       if (suffix) pushText(out, suffix, key++);
     } else if (m[7]) {
-      out.push(<strong key={key++}>{m[7].slice(2, -2)}</strong>);
+      out.push(<strong key={key++}>{withFormulas(m[7].slice(2, -2), 's', options)}</strong>);
     } else if (m[8]) {
-      out.push(<strong key={key++}>{m[8].slice(2, -2)}</strong>);
+      out.push(<strong key={key++}>{withFormulas(m[8].slice(2, -2), 's', options)}</strong>);
     } else if (m[9]) {
-      out.push(<em key={key++}>{m[9].slice(1, -1)}</em>);
+      out.push(<em key={key++}>{withFormulas(m[9].slice(1, -1), 'e', options)}</em>);
     } else if (m[10]) {
-      out.push(<em key={key++}>{m[10].slice(1, -1)}</em>);
+      out.push(<em key={key++}>{withFormulas(m[10].slice(1, -1), 'e', options)}</em>);
     }
     lastIndex = re.lastIndex;
   }
@@ -728,7 +888,7 @@ function renderInline(text: string, options?: RenderMarkdownOptions): ReactNode 
 // text nodes. Newlines inside a paragraph become explicit <br />s — the
 // upstream parser has already left them in place because chat output
 // often relies on hard line breaks rather than blank-line separation.
-function pushText(out: ReactNode[], text: string, baseKey: number, options?: RenderMarkdownOptions): void {
+function pushText(out: ReactNode[], text: string, baseKey: number, options?: RenderContext): void {
   if (!text) return;
   const onLinkClick = options?.onLinkClick;
   const urlRe = /(https?:\/\/[^\s)]+)/g;
@@ -738,7 +898,7 @@ function pushText(out: ReactNode[], text: string, baseKey: number, options?: Ren
   let k = 0;
   while ((m = urlRe.exec(text))) {
     if (m.index > lastIndex) {
-      segments.push(...withBreaksAndColorSwatches(text.slice(lastIndex, m.index), `${baseKey}-${k++}`));
+      segments.push(...withBreaksAndColorSwatches(text.slice(lastIndex, m.index), `${baseKey}-${k++}`, options));
     }
     const [href, suffix] = splitTrailingAutolinkPunctuation(m[1]!);
     segments.push(
@@ -759,7 +919,7 @@ function pushText(out: ReactNode[], text: string, baseKey: number, options?: Ren
     lastIndex = urlRe.lastIndex;
   }
   if (lastIndex < text.length) {
-    segments.push(...withBreaksAndColorSwatches(text.slice(lastIndex), `${baseKey}-${k++}`));
+    segments.push(...withBreaksAndColorSwatches(text.slice(lastIndex), `${baseKey}-${k++}`, options));
   }
   out.push(<Fragment key={baseKey}>{segments}</Fragment>);
 }
@@ -771,17 +931,17 @@ function splitTrailingAutolinkPunctuation(url: string): [string, string] {
   return trimmed ? [trimmed, match[1]] : [url, ''];
 }
 
-function withBreaksAndColorSwatches(text: string, baseKey: string): ReactNode[] {
+function withBreaksAndColorSwatches(text: string, baseKey: string, context?: RenderContext): ReactNode[] {
   const parts = text.split('\n');
   const out: ReactNode[] = [];
   parts.forEach((part, i) => {
     if (i > 0) out.push(<br key={`${baseKey}-br-${i}`} />);
-    if (part) out.push(...withProseColorSwatches(part, `${baseKey}-t-${i}`));
+    if (part) out.push(...withProseColorSwatches(part, `${baseKey}-t-${i}`, context));
   });
   return out;
 }
 
-function withProseColorSwatches(text: string, baseKey: string): ReactNode[] {
+function withProseColorSwatches(text: string, baseKey: string, context?: RenderContext): ReactNode[] {
   const out: ReactNode[] = [];
   let lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -792,13 +952,13 @@ function withProseColorSwatches(text: string, baseKey: string): ReactNode[] {
     const color = match[2] ?? '';
     const colorIndex = match.index + prefix.length;
     if (colorIndex > lastIndex) {
-      out.push(<Fragment key={`${baseKey}-${key++}`}>{text.slice(lastIndex, colorIndex)}</Fragment>);
+      out.push(...withFormulas(text.slice(lastIndex, colorIndex), `${baseKey}-${key++}`, context));
     }
     out.push(renderColorToken(color, `${baseKey}-${key++}`));
     lastIndex = colorIndex + color.length;
   }
   if (lastIndex < text.length) {
-    out.push(<Fragment key={`${baseKey}-${key++}`}>{text.slice(lastIndex)}</Fragment>);
+    out.push(...withFormulas(text.slice(lastIndex), `${baseKey}-${key++}`, context));
   }
   return out;
 }

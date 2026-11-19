@@ -5,7 +5,7 @@ import type { AgentInfo, AgentModelChoice, ApiProtocol, ApiProtocolConfig, AppCo
 import { AgentIcon } from '../AgentIcon';
 import { agentModelIsSelectable, dropUnavailableServiceTier, effectiveAgentModelChoice, modelServiceTierAvailability, modelServiceTierEfforts, normalizeAgentModelVariantChoice, visibleAgentModels } from '../agentModelSelection';
 import { byokPreflightBlockReason } from '../byok/preflight';
-import { groupModelsByCompany, modelCompany } from '../modelOptions';
+import { channelLabel, channelPrice, groupTokenToSeaModels, modelOffer } from '../tokenToSeaOffers';
 import { isAgentEnabled } from '../../utils/visibleAgents';
 import { fetchProviderModels } from '../../providers/provider-models';
 import { providerModelsCacheKey, configuredProviderModelOptions, type ProviderModelsCache } from '../providerModelsCache';
@@ -40,7 +40,7 @@ export function nativeChannelOptions(config:AppConfig,agents:AgentInfo[],cache:P
         savedAgentChoice(config, agents, agent.id)?.model,
       )
         .filter(model => model.enabled !== false && agentModelIsSelectable(agent, model.id))
-        .map(model => ({ id: model.id, label: model.label ?? model.id, enabled: true })),
+        .map(model => ({ id: model.id, label: model.label ?? model.id, channelOffer: model.channelOffer, enabled: true })),
     })),
     ...savedMovieChannels(config).filter(channel => byokPreflightBlockReason({ ...channel.apiConfig, apiProtocol: channel.protocol }) === null).map((channel, index) => {
       const key = providerModelsCacheKey(channel.protocol, channel.apiConfig.baseUrl, channel.apiConfig.apiKey, channel.apiConfig.apiVersion);
@@ -415,10 +415,13 @@ export function MovieChannelSwitcher({config,agents,onConfigChange,onOpenSetting
   const fetching=useRef(new Set<string>());
   const current=snapshot.channels.find(c=>c.id===snapshot.selectedId);
   const others=snapshot.channels.filter(c=>c.id!==snapshot.selectedId);
-  const label=!current?(zh?'选择模型':'Choose model'):snapshot.modelId==='default'?(zh?'默认':'Default'):current.models.find(m=>m.id===snapshot.modelId)?.label??snapshot.modelId;
+  const selectedOption=current?.models.find(m=>m.id===snapshot.modelId);
+  const selectedOffer=current?.id==='agent:tokentosea'&&selectedOption?modelOffer(selectedOption):null;
+  const label=!current?(zh?'选择模型':'Choose model'):snapshot.modelId==='default'?(zh?'默认':'Default'):selectedOffer?.modelName??selectedOption?.label??snapshot.modelId;
+  const selectedTitle=selectedOffer&&selectedOption?[label,channelLabel(selectedOption,zh,current?.models),channelPrice(selectedOption,zh)].join(' · '):label;
   const controls=useMemo(()=>current?agentRunControls(config,agents,snapshot.modelId):null,[current,config,agents,snapshot.modelId]);
   const tokentoseaModels=snapshot.channels.find(c=>c.id==='agent:tokentosea')?.models;
-  const tokentoseaGroups=useMemo(()=>tokentoseaModels?groupModelsByCompany(tokentoseaModels):[],[tokentoseaModels]);
+  const tokentoseaGroups=useMemo(()=>tokentoseaModels?groupTokenToSeaModels(tokentoseaModels):[],[tokentoseaModels]);
   // A concrete id saved before the daemon folded variants reads as its family here, so it is never "unknown"
   // and never rewritten to the first model; the family form is written once the user changes something.
   const persistedModel = config.mode === 'api' ? config.model : savedAgentChoice(config, agents, config.agentId)?.model;
@@ -442,8 +445,8 @@ export function MovieChannelSwitcher({config,agents,onConfigChange,onOpenSetting
     if(!open||!openingCurrentSub.current)return;
     openingCurrentSub.current=false;
     setExpanded(current?.id??null);
-    setExpandedSupplier(current?.id==='agent:tokentosea'&&tokentoseaGroups.length>1?modelCompany(snapshot.modelId,label).key:null);
-  },[open,current,tokentoseaGroups.length,snapshot.modelId,label]);
+    setExpandedSupplier(current?.id==='agent:tokentosea'?tokentoseaGroups.find(group=>group.options.some(option=>option.id===snapshot.modelId))?.key??null:null);
+  },[open,current,tokentoseaGroups,snapshot.modelId]);
   useEffect(()=>{
     if(!open||expanded!=='agent:tokentosea'){setNestedRightPad(12);return;}
     const sync=()=>setNestedRightPad(computeNestedRightPadding(menuRef.current,supplierMenuRef.current));
@@ -458,12 +461,15 @@ export function MovieChannelSwitcher({config,agents,onConfigChange,onOpenSetting
     const next=selectChannelModel(config,agents,channelId,model,providerModelsCache);
     if(next!==config)onConfigChange(next);
   };
-  const modelRows=(models:{id:string;label:string}[],className:string,stripSupplier=false)=>models.map(model=>{
+  const modelRows=(models:{id:string;label:string}[],className:string,showChannel=false)=>models.map(model=>{
     if(model.id==='default'){
       return <DropdownMenuRadioItem key={model.id} value={model.id} textValue={zh?'默认':'Default'} className={className} description={zh?'使用渠道配置':'Channel settings'}>{zh?'默认':'Default'}</DropdownMenuRadioItem>;
     }
-    const itemLabel=stripSupplier&&/^supplier:/i.test(model.id)&&model.label.includes(' · ')?model.label.slice(model.label.indexOf(' · ')+3):model.label;
-    return <DropdownMenuRadioItem key={model.id} value={model.id} textValue={itemLabel} className={className}><span className={styles.modelLabel} title={model.label}>{itemLabel}</span></DropdownMenuRadioItem>;
+    const itemLabel=showChannel?channelLabel(model,zh,models):model.label;
+    return <DropdownMenuRadioItem key={model.id} value={model.id} textValue={itemLabel} className={className}>
+      <span className={styles.modelLabel} title={showChannel?model.id:model.label}>{itemLabel}</span>
+      {showChannel && <small className={styles.offerPrice}>{channelPrice(model,zh)}</small>}
+    </DropdownMenuRadioItem>;
   });
   const onChannelOpenChange=(channelId:string,value:boolean)=>{
     setExpanded(prev=>{
@@ -475,7 +481,7 @@ export function MovieChannelSwitcher({config,agents,onConfigChange,onOpenSetting
   const renderChannelSubContent=(channel:typeof snapshot.channels[number])=>{
     const isCurrent=channel.id===current?.id;
     const activeValue=isCurrent?snapshot.modelId:'';
-    if(channel.id==='agent:tokentosea'&&tokentoseaGroups.length>1){
+    if(channel.id==='agent:tokentosea'&&tokentoseaGroups.length){
       const rightPad=Math.max(nestedRightPad,computeNestedRightPadding(menuRef.current,supplierMenuRef.current));
       const subCollision=rightPad>12?{top:12,bottom:12,left:12,right:rightPad}:12;
       return <DropdownMenuSubContent ref={supplierMenuRef} className={styles.suppliers} aria-label={channel.label}>
@@ -497,6 +503,7 @@ export function MovieChannelSwitcher({config,agents,onConfigChange,onOpenSetting
               collisionPadding={subCollision}
               hideWhenDetached={rightPad <= 12}
             >
+              <DropdownMenuCaption className={styles.caption}>{zh?'官网价 1× · 标准文本':'Official price 1× · Standard text'}</DropdownMenuCaption>
               <DropdownMenuRadioGroup value={activeValue} onValueChange={model=>select(channel.id,model)}>
                 {modelRows(group.options,styles.modelRow!,true)}
               </DropdownMenuRadioGroup>
@@ -515,7 +522,7 @@ export function MovieChannelSwitcher({config,agents,onConfigChange,onOpenSetting
     <DropdownMenu open={open} onOpenChange={value=>{setOpen(value);if(!value){setExpanded(null);setExpandedSupplier(null);}}}>
       <DropdownMenuTrigger asChild><Button size="sm" variant="ghost" className={styles.trigger} aria-label={`${current?.label??(zh?'选择渠道与模型':'Choose channel and model')} · ${label}`}>
         <span className={styles.dot} data-ready={current?.available===true} />
-        {config.mode==='daemon'&&config.agentId?<AgentIcon id={config.agentId} size={16}/>:<Icon icon={Link} size="sm"/>}<span className={styles.current}>{label}</span>
+        {config.mode==='daemon'&&config.agentId?<AgentIcon id={config.agentId} size={16}/>:<Icon icon={Link} size="sm"/>}<span className={styles.current} title={selectedTitle}>{label}</span>
         <Icon icon={ChevronDown} size="sm" className={styles.chevron}/>
       </Button></DropdownMenuTrigger>
       <DropdownMenuContent ref={menuRef} className={styles.menu} align="end">
@@ -523,7 +530,7 @@ export function MovieChannelSwitcher({config,agents,onConfigChange,onOpenSetting
           <DropdownMenuSubTrigger className={styles.currentGroup} textValue={current.label}>
             <span className={styles.channelIcon} aria-hidden>{current.id.startsWith('agent:')?<AgentIcon id={current.id.slice(6)} size={16}/>:<Icon icon={Link} size="sm"/>}</span>
             <span className={styles.channelLabel} title={current.label}>{current.label}</span>
-            <span className={styles.headModel} title={label} aria-hidden>{label}</span>
+            <span className={styles.headModel} title={selectedTitle} aria-hidden>{label}</span>
           </DropdownMenuSubTrigger>
           {renderChannelSubContent(current)}
         </DropdownMenuSub>:null}

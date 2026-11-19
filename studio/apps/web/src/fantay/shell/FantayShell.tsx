@@ -14,6 +14,8 @@ import { PanelLeft } from 'lucide-react';
 import { getOpenDesignHost } from '@open-design/host';
 
 import { useWorkspaceContext } from '../../collab/useWorkspaceContext';
+import { resolveWorkspaceResourceReadIdentity } from '../../collab/workspace-identity';
+import { timelineStoragePrefix } from '../plugins/builtin/project-timeline/timeline-storage';
 import { ENTRY_SEARCH_OPEN_EVENT, requestEntryNewProject } from '../../components/entryRailBridge';
 import { ProjectDeleteConfirmDialog } from '../../components/project-actions/ProjectDeleteConfirmDialog';
 import { useProjectDeleteFlow } from '../../components/project-actions/useProjectDeleteFlow';
@@ -90,6 +92,7 @@ export interface FantayShellProps {
   clientType: string;
   /** 'darwin' | 'win32' | 'linux' | undefined (web). */
   hostPlatform: string | undefined;
+  accountId?: string;
   /** App `workspaceChromeProjects` (already route-reconciled). */
   projects: readonly Project[];
   projectsLoading: boolean;
@@ -115,7 +118,13 @@ export function FantayShell(props: FantayShellProps) {
   const clientType: FantayClientType = props.clientType === 'desktop' ? 'desktop' : 'web';
   const route = useRoute();
   const { t, locale } = useI18n();
-  const workspaceContext = useWorkspaceContext().context;
+  const workspace = useWorkspaceContext();
+  const workspaceContext = workspace.context;
+  const timelineIdentity = resolveWorkspaceResourceReadIdentity(workspace);
+  const timelineNotesPrefix = props.accountId && !workspace.loading && !workspace.identityChangePending &&
+    (!workspace.failure || workspace.failure === 'unsupported') && (!workspaceContext || timelineIdentity)
+    ? timelineStoragePrefix(timelineIdentity?.context ?? null, props.accountId)
+    : null;
   const materials = useMaterialsDrawer();
   const rootRef = useRef<HTMLDivElement | null>(null);
   const chromeless = isChromelessRoute(route);
@@ -489,6 +498,7 @@ export function FantayShell(props: FantayShellProps) {
       projects,
       projectsLoading,
       workspaceContext,
+      timelineNotesPrefix,
       clientType,
       hostPlatform,
       mode,
@@ -512,6 +522,7 @@ export function FantayShell(props: FantayShellProps) {
       projects,
       projectsLoading,
       workspaceContext,
+      timelineNotesPrefix,
       clientType,
       hostPlatform,
       mode,

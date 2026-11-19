@@ -1,0 +1,50 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Pages on a quiet ground: the shared look of anything made of sheets (PDF pages, Word pages,
+   slides, book pages). The ground is the canvas tone; each sheet is the document's own white paper
+   in both themes, because a document is an object with its own colours, not part of the interface.
+   Viewers compose these classes (`composes: scroller from '../parts/Sheets.module.css'`) or apply
+   them directly, so every paged document sits on the same ground with the same edge and rhythm. */
+
+/* The scrolling ground. Sheets are centred; a sheet wider than the window scrolls sideways. */
+.scroller {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  min-height: 0;
+  padding: 24px;
+  overflow: auto;
+  background: var(--sub);
+  overscroll-behavior: contain;
+}
+
+/* A sheet wider than the ground must start at the left edge, or its left part cannot be reached. */
+.scroller > * {
+  flex: none;
+  margin-inline: auto;
+}
+
+/* One page. Size comes from the viewer (width and height in px at the current zoom). */
+.sheet {
+  position: relative;
+  flex: none;
+  overflow: hidden;
+  border-radius: 2px;
+  background: #ffffff;
+  box-shadow: var(--shadow-ring);
+  color: #181818;
+}
+
+/* A page that has not been drawn yet keeps its place and shows nothing but paper. */
+.sheet[data-pending] {
+  background: #ffffff;
+}
+
+@container artifact (max-width: 460px) {
+  .scroller {
+    gap: 10px;
+    padding: 12px;
+  }
+}

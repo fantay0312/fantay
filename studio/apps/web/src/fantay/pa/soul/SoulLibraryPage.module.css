@@ -1,0 +1,394 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* 角色库 (Soul UI spec §6.2): the page reuses PaPages.module.css (.page, .inner, .head, .title, .groupTitle,
+   .rowGroup, .noMatch, .content); this file adds the 960 measure, the head actions, the line tabs with counts, the tag
+   filter, the shelf heading, the 3:4 character tiles and the hairline rows of the three other tabs. Chrome is ink:
+   colour appears only in the portraits and the monogram covers, which carry their own theme paper. */
+
+/* ── page measure ─────────────────────────────────────────────────────────────────────── */
+
+/* Doubled class: wins over PaPages .inner regardless of stylesheet order. */
+.inner.inner {
+  max-width: calc(960px + 64px);
+}
+
+/* Narrow keeps the PA pages' 32 px gutters and 28 px top: below 720 the roster button sits in the start gutter on
+   the heading's line (PersonalAgentWorkspace .pageRosterButton), so a 24 px gutter would put it against the title. */
+.page[data-narrow] .inner.inner {
+  padding: 28px 32px 40px;
+}
+
+/* ── head ─────────────────────────────────────────────────────────────────────────────── */
+
+.head {
+  align-items: center;
+}
+
+.headActions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.search {
+  width: 200px;
+}
+
+/* Below 900 the search takes its own full-width line under the title. */
+.searchRow {
+  margin-top: 12px;
+}
+
+.searchRow .search {
+  width: 100%;
+}
+
+.buttonIcon {
+  margin-inline-start: -2px;
+}
+
+/* ── tabs ─────────────────────────────────────────────────────────────────────────────── */
+
+.tabs {
+  margin-top: 20px;
+}
+
+.tabList {
+  display: flex;
+  width: 100%;
+  gap: 20px;
+}
+
+.tabCount {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── tag filter ───────────────────────────────────────────────────────────────────────── */
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* The active chip carries an ink ring, so the choice reads without a fill (chrome stays ink). */
+.tags .tagChip[data-on] {
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+
+/* ── sections ─────────────────────────────────────────────────────────────────────────── */
+
+.section + .section,
+.tags + .section {
+  margin-top: 24px;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 28px;
+  margin-bottom: 10px;
+}
+
+.sectionHead > h2 {
+  min-width: 0;
+}
+
+.shelfToggle {
+  flex: none;
+  color: var(--ink-soft);
+}
+
+/* ── character tiles ──────────────────────────────────────────────────────────────────── */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 16px;
+}
+
+.tile {
+  transition: box-shadow var(--pa-dur-quick) var(--pa-ease);
+}
+
+.tile:hover {
+  box-shadow: var(--shadow-elevation-1-hover);
+}
+
+.tile[data-disabled] .cover,
+.tile[data-disabled] .body {
+  opacity: 0.55;
+}
+
+/* TileCover ships 5:3; a portrait wants 3:4. Two classes beat the primitive's aspect utility. */
+.tile .cover {
+  aspect-ratio: 3 / 4;
+  border-bottom-color: var(--line-soft);
+}
+
+/* The whole tile is one target: a transparent button stretched over it, under the hover actions. */
+.tile .open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+}
+
+.tile .open:focus-visible,
+.row .open:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: calc(var(--focus-ring-width) * -1);
+}
+
+.actions {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  z-index: 2;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity var(--pa-dur-quick) var(--pa-ease);
+}
+
+.tile:hover .actions,
+.tile:focus-within .actions,
+.actions:has([data-state='open']) {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .actions {
+    opacity: 1;
+  }
+}
+
+.body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tileName {
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tagline {
+  display: -webkit-box;
+  min-height: 36px;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  min-width: 0;
+  margin-top: 6px;
+}
+
+.meta {
+  flex-wrap: wrap;
+  row-gap: 2px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+/* A card tag may clip; a count never does (O4). */
+.metaText {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metaFixed {
+  flex: none;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Loading tiles at the 3:4 footprint. */
+.skeletonTile > :first-child {
+  aspect-ratio: 3 / 4;
+}
+
+.skeletonTile > :last-child {
+  height: 84px;
+}
+
+/* ── hairline rows (世界书 · 我的人设 · 文风) ─────────────────────────────────────────────── */
+
+.row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  min-height: 56px;
+  padding: 9px 8px 9px 12px;
+  border-radius: var(--radius-control);
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+
+.row:hover,
+.row:has([data-state='open']) {
+  background: var(--sub);
+}
+
+.row .open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+}
+
+.rowLead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.rowText {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rowTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.rowName {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowDesc {
+  overflow: hidden;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowDescClamp {
+  display: -webkit-box;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.rowMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+  margin-top: 2px;
+}
+
+.rowMeta .meta {
+  flex: 0 1 auto;
+}
+
+/* The row menu sits above the stretched row button; quiet until the row is hovered or focused. */
+.rowMenu {
+  position: relative;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity var(--pa-dur-quick) var(--pa-ease);
+}
+
+.row:hover .rowMenu,
+.row:focus-within .rowMenu,
+.rowMenu[data-state='open'] {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .rowMenu {
+    opacity: 1;
+  }
+}
+
+.groupTitle {
+  margin-bottom: 10px;
+}
+
+.quiet {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+.empty {
+  margin-inline: auto;
+}
+
+/* ── delete-definition confirmation ───────────────────────────────────────────────────── */
+
+.confirmCheck {
+  margin-top: 16px;
+}
+
+/* The hidden picker behind the world-book 导入 button. */
+.fileInput {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile,
+  .row,
+  .actions,
+  .rowMenu {
+    transition: opacity 120ms linear;
+  }
+}

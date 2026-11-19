@@ -20,6 +20,22 @@ function placeholders(value: string): string[] {
   return names.sort();
 }
 
+/**
+ * Companion ("soul") copy in Chinese names the character as TA where English interpolates
+ * `{name}`; `tests/fantay/pa/soul-chat.test.tsx` pins that wording. Such a string may use `name`
+ * fewer times than English does, and nothing else: every other placeholder still has to match,
+ * and no locale may name a placeholder English does not have.
+ */
+function expectedPlaceholders(locale: string, key: string, english: string, translated: string): string[] {
+  const expected = placeholders(english);
+  const writesPronoun =
+    (locale === 'zh-CN' || locale === 'zh-TW') && key.startsWith('pa.soul.') && /(^|[^A-Za-z])TA([^A-Za-z]|$)/.test(translated);
+  if (!writesPronoun) return expected;
+  const count = (names: string[]): number => names.filter((name) => name === 'name').length;
+  const kept = Math.min(count(expected), count(placeholders(translated)));
+  return [...expected.filter((name) => name !== 'name'), ...Array<string>(kept).fill('name')].sort();
+}
+
 const dictCache = new Map<Locale, Promise<Dict>>();
 
 function loadDict(locale: Locale): Promise<Dict> {
@@ -178,7 +194,7 @@ describe('i18n locales', () => {
       for (const key of englishKeys) {
         const dictKey = key as keyof Dict;
         expect(placeholders(dict[dictKey]), `${locale}.${key}`).toEqual(
-          placeholders(en[dictKey]),
+          expectedPlaceholders(locale, key, en[dictKey], dict[dictKey]),
         );
       }
     }

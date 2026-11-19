@@ -32,6 +32,8 @@ export const SETTINGS_MODELS_AND_PROVIDERS = 'Models & providers';
 
 /** The tab of that section where media/API-generation credentials are entered — `settings.mediaProviders`. */
 export const SETTINGS_MEDIA_PROVIDERS = 'Media providers';
+export const SETTINGS_SEARCH_PROVIDERS = 'Search providers';
+export const SETTINGS_SEARCH_PROVIDERS_PATH = destinationPath('Settings', SETTINGS_MODELS_AND_PROVIDERS, SETTINGS_SEARCH_PROVIDERS);
 
 /** `Settings → Models & providers → Media providers` — the destination for every missing-credential error. */
 export const SETTINGS_MEDIA_PROVIDERS_PATH = destinationPath(

@@ -31,6 +31,7 @@ import {
   formatDuration,
   formatTokens,
   hueIndex,
+  isChatTask,
   isNeedsYouTask,
   lastPreview,
   memoryScopeName,
@@ -45,6 +46,7 @@ import {
   separatorLabel,
   subjectOf,
   taskPhase,
+  tasksForSubject,
   timeBudgetSpent,
   unavailableParticipant,
   unwrapStructured,
@@ -858,5 +860,67 @@ describe('previews, scope names and status', () => {
       key: 'pa.status.working',
       vars: { goal: '一二三四五六七八九十一二三四五六七八…' },
     });
+  });
+});
+
+describe('chat turns stay out of work surfaces (soul)', () => {
+  const chatTask = (extra: Partial<PaTask> = {}) => task({ id: 'c1', kind: 'chat', ...extra });
+
+  it('keeps every task in `tasks` and only work tasks in `workTasks`', () => {
+    const index = buildIndex(snapshot({ tasks: [task({ id: 'w1' }), chatTask()] }), NO_CHANNELS, []);
+    expect([...index.tasks.keys()]).toEqual(['w1', 'c1']);
+    expect([...index.workTasks.keys()]).toEqual(['w1']);
+    expect(isChatTask(chatTask())).toBe(true);
+    expect(isChatTask(task())).toBe(false);
+  });
+
+  it('ignores chat tasks in needs, subject lists and the status line', () => {
+    const subject = { kind: 'agent' as const, agent: writer };
+    // A failed chat turn that the daemon would resume is not a need; a running one is not "working on a goal".
+    const failed = buildIndex(snapshot({ tasks: [chatTask({ status: 'failed', error: 'x' })] }), NO_CHANNELS, []);
+    expect(failed.needs).toEqual([]);
+    const running = buildIndex(snapshot({ tasks: [chatTask({ status: 'running', goal: '你好呀' })] }), NO_CHANNELS, []);
+    expect(tasksForSubject(running, subject, 'all', '')).toEqual([]);
+    expect(tasksForSubject(running, subject, 'conversation', 'direct')).toEqual([]);
+    expect(agentStatus(running, { control, load: 'ready' }, subject)).toEqual({ tone: 'done', key: 'pa.status.idle', vars: {} });
+    const both = buildIndex(snapshot({ tasks: [task({ id: 'w1', status: 'waiting' }), chatTask({ status: 'queued' })] }), NO_CHANNELS, []);
+    expect(needsYou(both).map((need) => need.kind === 'task' && need.task.id)).toEqual(['w1']);
+    expect(tasksForSubject(both, subject, 'conversation', 'direct').map((item) => item.id)).toEqual(['w1']);
+  });
+
+  it('previews the newest message in context and live work state only', () => {
+    const messages = [
+      message('m1', { senderId: 'a', content: 'first', createdAt: 1, soul: { kind: 'chat', activeVariant: 'm1b' } }),
+      message('m1a', { senderId: 'a', content: 'variant a', createdAt: 2, soul: { kind: 'chat', variantOf: 'm1' } }),
+      message('m1b', { senderId: 'a', content: 'variant b', createdAt: 3, soul: { kind: 'chat', variantOf: 'm1' } }),
+      message('m2', { content: 'hidden owner line', createdAt: 4, soul: { kind: 'chat', hidden: true } }),
+    ];
+    const index = buildIndex(snapshot({ messages, tasks: [chatTask({ status: 'running' })] }), NO_CHANNELS, []);
+    expect(lastPreview(index, direct)).toEqual({ kind: 'text', text: 'variant b', sender: 'a' });
+    const unselected = buildIndex(snapshot({ messages: messages.slice(0, 2) }), NO_CHANNELS, []);
+    expect(lastPreview(unselected, direct)).toEqual({ kind: 'text', text: 'first', sender: 'a' });
+  });
+
+  it('builds a turn of its own for each chat message and none for chat tasks', () => {
+    const index = buildIndex(
+      snapshot({
+        tasks: [task({ id: 'w1', createdAt: 30, status: 'completed' }), chatTask({ id: 'c1', createdAt: 10, status: 'running' })],
+        messages: [
+          message('o1', { taskId: 'c1', createdAt: 10, soul: { kind: 'chat' } }),
+          message('r0', { taskId: 'gone', senderId: 'a', createdAt: 20, soul: { kind: 'chat' } }),
+          message('hidden', { createdAt: 25, soul: { kind: 'chat', hidden: true } }),
+          message('w-goal', { taskId: 'w1', createdAt: 30 }),
+          message('w-reply', { taskId: 'w1', senderId: 'a', createdAt: 40 }),
+        ],
+      }),
+      NO_CHANNELS,
+      [],
+    );
+    const turns = buildTurns(index, 'direct');
+    expect(turns.map((turn) => [turn.key, turn.task?.id ?? null, turn.messages.map((m) => m.id)])).toEqual([
+      ['m:o1', null, ['o1']],
+      ['m:r0', null, ['r0']],
+      ['t:w1', 'w1', ['w-goal', 'w-reply']],
+    ]);
   });
 });

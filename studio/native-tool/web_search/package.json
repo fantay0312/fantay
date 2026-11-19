@@ -1,0 +1,31 @@
+{
+  "name": "@fantay/native-web-search",
+  "version": "0.25.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "runtime", "commands.json", "configuration.json", "LICENSE.smart-search"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare:engine": "mise x -- tsx scripts/prepare-engine.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@open-design/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.39",
+    "@typescript/native": "npm:typescript@7.0.2",
+    "tsx": "4.22.3",
+    "vitest": "4.1.6"
+  },
+  "engines": {"node": "~24"}
+}

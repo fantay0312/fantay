@@ -526,7 +526,15 @@ const KIND_FIELDS: Record<BoardNodeKind, Record<string, FieldSpec>> = {
     size: { check: oneOf(['sm', 'md', 'lg']), nullable: 'clear' },
   },
   shape: {
-    shape: { check: oneOf(['rect', 'ellipse', 'text']), required: true },
+    shape: { check: oneOf(['rect', 'ellipse', 'text', 'freehand']), required: true },
+    points: {
+      check(value, path, issues) {
+        if (checkString(value, path, issues, 3, 40960) && !/^(?:1000|\d{1,3}),(?:1000|\d{1,3})(?: (?:1000|\d{1,3}),(?:1000|\d{1,3}))*$/.test(value as string)) {
+          pushIssue(issues, path, 'invalid-value', 'Expected a list of polyline points.');
+        }
+      },
+      nullable: 'clear',
+    },
     fill: { check: colorOrNone, nullable: 'clear' },
     stroke: { check: colorOrNone, nullable: 'clear' },
     strokeWidth: { check: num(0, 32), nullable: 'clear' },
@@ -680,6 +688,9 @@ export function validateNodeRecord(raw: unknown, path: string, mode: NodeRecordM
       if (draftDefault(kind, key, raw)) continue;
     }
     pushIssue(issues, childPath(path, key), 'required', `${key} is required for ${kind} nodes.`);
+  }
+  if (kind === 'shape' && raw.shape === 'freehand' && raw.points == null) {
+    pushIssue(issues, childPath(path, 'points'), 'required', 'A freehand stroke needs polyline points.');
   }
   return issues.length === before;
 }

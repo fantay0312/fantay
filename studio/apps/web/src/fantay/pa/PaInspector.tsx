@@ -3,6 +3,7 @@
 // surface, an atmospheric subject hero, and three inline tabs — 动态 (needs you → in progress → scheduled routines →
 // done log → channels → this device), 确认 (channel approvals, deliveries, channel status) and 档案 (soul, deliverables,
 // memory, interactive group members). Clicking any agent in the header, transcript or group roster focuses that agent.
+// A companion chat keeps the panel and head but shows the Soul body below the head (soul/SoulInspector: TA · 此刻 · 记忆).
 import type { PaRoutine, PaRoutineInput } from '@open-design/contracts';
 import {
   ChevronLeft,
@@ -27,7 +28,6 @@ import {
   useState,
   type CSSProperties,
   type ReactNode,
-  type UIEvent,
 } from 'react';
 
 import { useDwell } from '../../components/chat/useDwell';
@@ -81,6 +81,8 @@ import type {
 } from './pa-types';
 import { PaAvatar, PaGroupAvatar } from './PaAvatar';
 import { PaMarkdown } from './PaMarkdown';
+import { conversationMode, portraitSrc } from './soul/soul-model';
+import { SoulInspector, markPaneScrolled, memoryFirstLine } from './soul/SoulInspector';
 import { PA_INSPECTOR, PA_ROSTER_WIDTH } from './usePaLayout';
 import {
   PaApprovalCard,
@@ -100,16 +102,6 @@ const MAX_WIDTH = PA_INSPECTOR.max;
 const CHAT_MIN = PA_INSPECTOR.chatMin;
 /** Real wall-clock timestamps exceed one day after epoch; synthetic unit-test stamps (`createdAt: 1`) skip the date tag. */
 const REAL_TIMESTAMP_FLOOR = 86_400_000;
-
-/** A hairline under the tabs appears once the pane has scrolled, so content never slides under the fixed chrome
- *  without an edge. Written straight to the element: a scroll position is not React state. */
-function markScrolled(event: UIEvent<HTMLDivElement>) {
-  const pane = event.currentTarget;
-  const scrolled = pane.scrollTop > 0;
-  if ((pane.dataset.scrolled === 'true') === scrolled) return;
-  if (scrolled) pane.dataset.scrolled = 'true';
-  else delete pane.dataset.scrolled;
-}
 
 export function PaInspector({ conversationId, surface }: { conversationId: string; surface: 'docked' | 'floating' }) {
   const { index, ui } = usePa();
@@ -183,6 +175,10 @@ function InspectorFrame({
 }) {
   const t = useT();
   const { index, ui, nav, layout } = usePa();
+  // A companion chat shows the Soul body (TA · 此刻 · 记忆); an inspected member of a room keeps today's body.
+  const companion = !isOverride && conversationMode(index, conversation) === 'companion';
+  // Work tabs only: a companion tab left in the state (TA, 此刻, 记忆) opens the work tab that holds the same things.
+  const workTab: PaInspectorTab = TAB_ORDER.includes(ui.inspectorTab) ? ui.inspectorTab : ui.inspectorTab === 'scene' ? 'activity' : 'profile';
   const confirmations = confirmationsFor(index, subject);
   const confirmCount = confirmations.approvals.length + confirmations.deliveries.length;
   const hasWaiting = tasksForSubject(index, subject, 'all', conversation.id).some(
@@ -196,13 +192,13 @@ function InspectorFrame({
     containerRef: trackRef,
     indicatorRef: chipRef,
     activeSelector: '[role="tab"][aria-selected="true"]',
-    activeKey: ui.inspectorTab,
-    layoutKey: `${confirmCount > 0}-${hasWaiting}-${subjectId(subject)}`,
+    activeKey: workTab,
+    layoutKey: `${confirmCount > 0}-${hasWaiting}-${subjectId(subject)}-${companion}`,
   });
-  const [tabMotion, setTabMotion] = useState<{ tab: PaInspectorTab; dir: 'next' | 'prev' | null }>({ tab: ui.inspectorTab, dir: null });
-  if (tabMotion.tab !== ui.inspectorTab) {
-    const step = TAB_ORDER.indexOf(ui.inspectorTab) - TAB_ORDER.indexOf(tabMotion.tab);
-    setTabMotion({ tab: ui.inspectorTab, dir: step > 0 ? 'next' : 'prev' });
+  const [tabMotion, setTabMotion] = useState<{ tab: PaInspectorTab; dir: 'next' | 'prev' | null }>({ tab: workTab, dir: null });
+  if (tabMotion.tab !== workTab) {
+    const step = TAB_ORDER.indexOf(workTab) - TAB_ORDER.indexOf(tabMotion.tab);
+    setTabMotion({ tab: workTab, dir: step > 0 ? 'next' : 'prev' });
   }
 
   const rosterColumn = PA_ROSTER_WIDTH[layout.roster];
@@ -225,49 +221,55 @@ function InspectorFrame({
             <span className={styles.backLabel}>{t('pa.inspector.backTo', { name: subjectName(convSubject) })}</span>
           </Button>
         ) : (
-          <span className={styles.headTitle}>{t('pa.inspector.title')}</span>
+          <span className={styles.headTitle}>{companion ? t('pa.soul.inspector.title') : t('pa.inspector.title')}</span>
         )}
         <PanelClose label={paTryT(t, 'pa.state.closeInspector') ?? t('fantay.ui.close')} onClick={close} />
       </div>
-      <InspectorHero conversation={conversation} subject={subject} isOverride={isOverride} />
-      <Tabs
-        value={ui.inspectorTab}
-        onValueChange={(value) => nav.setInspector(true, value as PaInspectorTab)}
-        className={styles.tabs}
-      >
-        <TabsList ref={trackRef} className={styles.track} aria-label={t('pa.inspector.tabs')}>
-          <span ref={chipRef} className={styles.chip} aria-hidden />
-          <TabsTrigger value="activity" className={styles.tab}>
-            <span className={styles.tabLabel}>{t('pa.inspector.activity')}</span>
-            {hasWaiting ? <span className={styles.tabDot} aria-hidden /> : null}
-          </TabsTrigger>
-          <TabsTrigger value="approvals" className={styles.tab}>
-            <span className={styles.tabLabel}>{t('pa.inspector.approvals')}</span>
-            {confirmCount > 0 ? (
-              <>
-                {' '}
-                <span className={styles.tabBadge}>{confirmCount}</span>
-              </>
-            ) : null}
-          </TabsTrigger>
-          <TabsTrigger value="profile" className={styles.tab}>
-            <span className={styles.tabLabel}>{t('pa.inspector.profile')}</span>
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="activity" className={styles.pane} data-dir={tabMotion.dir ?? undefined} onScroll={markScrolled}>
-          <ActivityPane conversation={conversation} subject={subject} isOverride={isOverride} />
-        </TabsContent>
-        <TabsContent value="approvals" className={styles.pane} data-dir={tabMotion.dir ?? undefined} onScroll={markScrolled}>
-          <ApprovalsPane subject={subject} approvals={confirmations.approvals} deliveries={confirmations.deliveries} />
-        </TabsContent>
-        <TabsContent value="profile" className={styles.pane} data-dir={tabMotion.dir ?? undefined} onScroll={markScrolled}>
-          {subject.kind === 'agent' ? (
-            <AgentProfile agent={subject.agent} />
-          ) : (
-            <GroupProfile group={subject.group} conversation={conversation} />
-          )}
-        </TabsContent>
-      </Tabs>
+      {companion ? (
+        <SoulInspector conversation={conversation} subject={subject} />
+      ) : (
+        <>
+          <InspectorHero conversation={conversation} subject={subject} isOverride={isOverride} />
+          <Tabs
+            value={workTab}
+            onValueChange={(value) => nav.setInspector(true, value as PaInspectorTab)}
+            className={styles.tabs}
+          >
+            <TabsList ref={trackRef} className={styles.track} aria-label={t('pa.inspector.tabs')}>
+              <span ref={chipRef} className={styles.chip} aria-hidden />
+              <TabsTrigger value="activity" className={styles.tab}>
+                <span className={styles.tabLabel}>{t('pa.inspector.activity')}</span>
+                {hasWaiting ? <span className={styles.tabDot} aria-hidden /> : null}
+              </TabsTrigger>
+              <TabsTrigger value="approvals" className={styles.tab}>
+                <span className={styles.tabLabel}>{t('pa.inspector.approvals')}</span>
+                {confirmCount > 0 ? (
+                  <>
+                    {' '}
+                    <span className={styles.tabBadge}>{confirmCount}</span>
+                  </>
+                ) : null}
+              </TabsTrigger>
+              <TabsTrigger value="profile" className={styles.tab}>
+                <span className={styles.tabLabel}>{t('pa.inspector.profile')}</span>
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="activity" className={styles.pane} data-dir={tabMotion.dir ?? undefined} onScroll={markPaneScrolled}>
+              <ActivityPane conversation={conversation} subject={subject} isOverride={isOverride} />
+            </TabsContent>
+            <TabsContent value="approvals" className={styles.pane} data-dir={tabMotion.dir ?? undefined} onScroll={markPaneScrolled}>
+              <ApprovalsPane subject={subject} approvals={confirmations.approvals} deliveries={confirmations.deliveries} />
+            </TabsContent>
+            <TabsContent value="profile" className={styles.pane} data-dir={tabMotion.dir ?? undefined} onScroll={markPaneScrolled}>
+              {subject.kind === 'agent' ? (
+                <AgentProfile agent={subject.agent} />
+              ) : (
+                <GroupProfile group={subject.group} conversation={conversation} />
+              )}
+            </TabsContent>
+          </Tabs>
+        </>
+      )}
     </>
   );
 
@@ -490,19 +492,12 @@ function InspectorHero({
         }),
       );
     }
-    meta = (
-      <>
-        <div className={styles.heroModelRow}>
-          <PaModelPicker agent={agent} variant="hero" />
-        </div>
-        {parts.length > 0 ? <HeroMeta parts={parts} /> : null}
-      </>
-    );
+    meta = parts.length > 0 ? <HeroMeta parts={parts} /> : null;
   } else {
     const group = subject.group;
     const cluster = members(index, group);
     kind = cluster.length > 1 ? 'group' : 'disc';
-    avatar = <PaGroupAvatar members={cluster} fantayId={index.fantay?.id ?? null} size={64} />;
+    avatar = <PaGroupAvatar members={cluster} fantayId={index.fantay?.id ?? null} size={64} portraitOf={(agentId) => portraitSrc(index, agentId)} />;
     bio = paTryT(t, `pa.mode.${group.mode}Help`) ?? '';
     const reviewerId = reviewerOf(group);
     meta = (
@@ -1003,14 +998,6 @@ function ApprovalsPane({
 
 function latest(memories: PaMemory[]): number | null {
   return memories.length ? Math.max(...memories.map((memory) => memory.updatedAt)) : null;
-}
-
-function memoryFirstLine(content: string): string {
-  const line = content.split('\n').find((part) => part.trim().length > 0) ?? '';
-  return line
-    .replace(/^\s*(?:#{1,6}\s+|>\s*|[-*+]\s+|\d+\.\s+)/, '')
-    .replace(/[*_`]+/g, '')
-    .trim();
 }
 
 function MemoryCard({

@@ -1,0 +1,17 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Hosts the 代码 surface's editor (absolutely positioned inside) and supplies the variables its
+   theme reads. `isolation` keeps CodeMirror's high z-index layers inside the pane. */
+
+.pane {
+  --code-line-pad: 12px;
+  --code-add: color-mix(in srgb, var(--success) 12%, transparent);
+  --code-add-strong: color-mix(in srgb, var(--success) 28%, transparent);
+  --code-remove: color-mix(in srgb, var(--danger) 10%, transparent);
+  --code-remove-strong: color-mix(in srgb, var(--danger) 24%, transparent);
+
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  isolation: isolate;
+}

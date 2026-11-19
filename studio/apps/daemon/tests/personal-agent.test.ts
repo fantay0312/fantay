@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, unlinkSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { spawn } from "node:child_process";
 import { isProcessGroupAlive } from "@open-design/platform";
@@ -321,12 +321,14 @@ describe("local PersonalAgent", () => {
     ).toContain("重启");
     expect(execute).toHaveBeenCalledTimes(1);
   });
-  it("isolates private memory from groups and reads corrections/deletions from the source", async () => {
+  it("isolates private memory from groups, keeps a corrected text in history and stops recalling an archived memory", async () => {
+    // Pinned: only pinned memories are placed into every prompt; the rest only when relevant.
     const memory = service.saveMemory({
       content: "PRIVATE SECRET PREFERENCE",
       source: "user",
       scope: "private",
       scopeId: null,
+      pinned: true,
     });
     let task = submit();
     await settled(task.id);
@@ -348,7 +350,15 @@ describe("local PersonalAgent", () => {
     expect(execute.mock.lastCall![1]).not.toContain(
       "PRIVATE SECRET PREFERENCE",
     );
+    expect(service.memoryHistory(memory.id).map((entry) => entry.memory.content)).toEqual([
+      "PRIVATE SECRET PREFERENCE",
+      "Corrected preference",
+    ]);
     service.deleteMemory(corrected.id);
+    expect(service.memories().find((item) => item.id === memory.id)).toMatchObject({
+      status: "archived",
+      content: "Corrected preference",
+    });
     task = submit();
     await settled(task.id);
     expect(execute.mock.lastCall![1]).not.toContain("Corrected preference");
@@ -510,16 +520,13 @@ describe("local PersonalAgent", () => {
     });
     expect((await settled(task.id)).status).toBe("cancelled");
   });
-  it("keeps old memory scope and content together when a metadata update fails", () => {
+  it("refuses to move an existing memory to another scope and leaves it unchanged", () => {
     const group = service.snapshot().groups[0]!;
     const memory = service.saveMemory({
       content: "Shared style",
       source: "user",
       scope: "group",
       scopeId: group.id,
-    });
-    vi.spyOn(service.store, "update").mockImplementationOnce(() => {
-      throw new Error("injected database failure");
     });
     expect(() =>
       service.saveMemory(
@@ -532,26 +539,45 @@ describe("local PersonalAgent", () => {
         memory.id,
         memory.revision,
       ),
-    ).toThrow("database failure");
+    ).toThrow(expect.objectContaining({ status: 400, code: "PA_MEMORY_SCOPE_FIXED" }));
     expect(service.memories()[0]).toMatchObject({
       scope: "group",
       content: "Shared style",
+      revision: memory.revision,
     });
+    expect(service.memoryHistory(memory.id)).toHaveLength(1);
   });
-  it("isolates a missing memory file and removes metadata before deleting content", () => {
-    const memory = service.saveMemory({
-      content: "Preference",
-      source: "user",
-      scope: "private",
-      scopeId: null,
-    });
-    const metadata = service.store.require<
-      import("@open-design/contracts").PaMemory & { fileName: string }
-    >("memories", memory.id);
-    unlinkSync(join(dir, "pa", "memory", metadata.fileName));
-    expect(service.snapshot().memories[0]!.content).toBe("");
-    expect(() => service.deleteMemory(memory.id)).not.toThrow();
-    expect(service.snapshot().memories).toHaveLength(0);
+  it("imports the legacy memory rows and files once and leaves them as they are", async () => {
+    await service.shutdown();
+    db.prepare("DELETE FROM mem_meta WHERE key = 'migrated_pa_v1'").run();
+    const memoryDir = join(dir, "pa", "memory");
+    mkdirSync(memoryDir, { recursive: true });
+    writeFileSync(join(memoryDir, "kept-1.md"), "LEGACY PINNED PREFERENCE");
+    const legacy = [
+      service.store.create("memories", {
+        content: "", fileName: "kept-1.md", source: "user", scope: "private", scopeId: null, pinned: true,
+      } as never, "legacy-kept"),
+      service.store.create("memories", {
+        content: "", fileName: "lost-1.md", source: "user", scope: "private", scopeId: null,
+      } as never, "legacy-lost"),
+    ];
+    const rowsBefore = db.prepare("SELECT id, revision, data FROM pa_records WHERE collection = 'memories' ORDER BY id").all();
+    service = create();
+    expect(service.memories().map((item) => [item.id, item.content, item.pinned])).toEqual(
+      expect.arrayContaining([["legacy-kept", "LEGACY PINNED PREFERENCE", true], ["legacy-lost", "", false]]),
+    );
+    expect(service.memory.getRow("legacy-lost")).toMatchObject({ redacted: true });
+    expect(service.memory.getRow("legacy-kept")!.revision).toBe(legacy[0]!.revision);
+    expect(db.prepare("SELECT id, revision, data FROM pa_records WHERE collection = 'memories' ORDER BY id").all()).toEqual(rowsBefore);
+    expect(readFileSync(join(memoryDir, "kept-1.md"), "utf8")).toBe("LEGACY PINNED PREFERENCE");
+    // Imported once: a second start (even without the marker) adds nothing and changes nothing.
+    const count = service.memories().length;
+    await service.shutdown();
+    db.prepare("DELETE FROM mem_meta WHERE key = 'migrated_pa_v1'").run();
+    service = create();
+    expect(service.memories()).toHaveLength(count);
+    await settled(submit().id);
+    expect(execute.mock.lastCall![1]).toContain("LEGACY PINNED PREFERENCE");
   });
   it("does not resurrect deleted memory through a historical model answer", async () => {
     const memory = service.saveMemory({
@@ -559,6 +585,7 @@ describe("local PersonalAgent", () => {
       source: "user",
       scope: "private",
       scopeId: null,
+      pinned: true,
     });
     execute.mockResolvedValueOnce(result("I will use FORGOTTEN PREFERENCE."));
     await settled(submit().id);

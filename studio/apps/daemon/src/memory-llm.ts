@@ -732,6 +732,12 @@ function withTimeout(ms) {
   return controller.signal;
 }
 
+// The provider timeout, plus the caller's own signal when it passed one.
+function callSignal(signal) {
+  const timeout = withTimeout(FETCH_TIMEOUT_MS);
+  return signal ? AbortSignal.any([timeout, signal]) : timeout;
+}
+
 // undici raises a generic `TypeError: fetch failed` on every network
 // error and tucks the real cause under `err.cause` (a Node `Error` or
 // `AggregateError` with `.code` / `.errors`). The settings UI just
@@ -778,7 +784,7 @@ function describeFetchError(err) {
   return detail ? `${head} (${detail})` : head;
 }
 
-async function callAnthropic(provider, system, user) {
+async function callAnthropic(provider, system, user, call = {}) {
   let resp;
   try {
     resp = await fetch(appendVersionedApiPath(provider.baseUrl, '/messages'), {
@@ -790,11 +796,11 @@ async function callAnthropic(provider, system, user) {
       },
       body: JSON.stringify({
         model: provider.model,
-        max_tokens: 1024,
+        max_tokens: call.maxTokens ?? 1024,
         system,
         messages: [{ role: 'user', content: user }],
       }),
-      signal: withTimeout(FETCH_TIMEOUT_MS),
+      signal: callSignal(call.signal),
     });
   } catch (err) {
     throw new Error(describeFetchError(err));
@@ -807,7 +813,7 @@ async function callAnthropic(provider, system, user) {
   return block?.text ?? '';
 }
 
-async function callOpenAI(provider, system, user) {
+async function callOpenAI(provider, system, user, call = {}) {
   let resp;
   try {
     resp = await fetch(
@@ -832,13 +838,13 @@ async function callOpenAI(provider, system, user) {
         },
         body: JSON.stringify({
           model: provider.model,
-          response_format: { type: 'json_object' },
+          ...(call.json === false ? {} : { response_format: { type: 'json_object' } }),
           messages: [
             { role: 'system', content: system },
             { role: 'user', content: user },
           ],
         }),
-        signal: withTimeout(FETCH_TIMEOUT_MS),
+        signal: callSignal(call.signal),
       },
     );
   } catch (err) {
@@ -856,7 +862,7 @@ async function callOpenAI(provider, system, user) {
 // `provider.model` here is the Azure deployment name (the user typed it
 // into the model field — that's what the chat picker calls "Deployment
 // (Model)" too), not the underlying model family.
-async function callAzure(provider, system, user) {
+async function callAzure(provider, system, user, call = {}) {
   const base = String(provider.baseUrl || '').replace(/\/+$/, '');
   const deployment = encodeURIComponent(provider.model);
   const apiVersion = encodeURIComponent(
@@ -872,13 +878,13 @@ async function callAzure(provider, system, user) {
         'api-key': provider.apiKey,
       },
       body: JSON.stringify({
-        response_format: { type: 'json_object' },
+        ...(call.json === false ? {} : { response_format: { type: 'json_object' } }),
         messages: [
           { role: 'system', content: system },
           { role: 'user', content: user },
         ],
       }),
-      signal: withTimeout(FETCH_TIMEOUT_MS),
+      signal: callSignal(call.signal),
     });
   } catch (err) {
     throw new Error(describeFetchError(err));
@@ -895,7 +901,7 @@ async function callAzure(provider, system, user) {
 // `contents[]` with `role` + `parts`, and the API key is a query
 // parameter rather than a header. `responseMimeType: application/json`
 // gets us the strict JSON output the parser expects.
-async function callGoogle(provider, system, user) {
+async function callGoogle(provider, system, user, call = {}) {
   const base = String(provider.baseUrl || '').replace(/\/+$/, '');
   const model = encodeURIComponent(provider.model);
   const url = `${base}/v1beta/models/${model}:generateContent?key=${encodeURIComponent(provider.apiKey)}`;
@@ -907,9 +913,9 @@ async function callGoogle(provider, system, user) {
       body: JSON.stringify({
         systemInstruction: { role: 'system', parts: [{ text: system }] },
         contents: [{ role: 'user', parts: [{ text: user }] }],
-        generationConfig: { responseMimeType: 'application/json' },
+        ...(call.json === false ? {} : { generationConfig: { responseMimeType: 'application/json' } }),
       }),
-      signal: withTimeout(FETCH_TIMEOUT_MS),
+      signal: callSignal(call.signal),
     });
   } catch (err) {
     throw new Error(describeFetchError(err));
@@ -991,7 +997,9 @@ async function callLocalCli(provider, system, user, options) {
   const prompt = [
     system,
     '',
-    'You are running as a background memory extractor. Do not use tools. Return strict JSON only.',
+    options?.json === false
+      ? 'You are running as a background memory helper. Do not use tools. Reply with the requested text only.'
+      : 'You are running as a background memory extractor. Do not use tools. Return strict JSON only.',
     '',
     user,
   ].join('\n');
@@ -1478,6 +1486,74 @@ export async function distillAnnotationsToMemory(dataDir, input, options) {
   );
 }
 
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
+
+// A provider whose text never leaves this machine: an HTTP endpoint on loopback. A local CLI forwards the
+// prompt to its own (usually remote) model, so it does not count.
+function providerIsLocal(provider) {
+  if (provider.transport === 'chat-cli') return false;
+  try {
+    const host = new URL(provider.baseUrl).hostname.toLowerCase();
+    return LOOPBACK_HOSTS.has(host) || host.startsWith('127.');
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * One model call for the memory engine (distilling a turn, judging two memories, drafting a merge) through
+ * the same provider choice as the extractor. Returns null when memory is off, no provider is available, or
+ * the text is `local_only` and the provider is not on this machine. Writes no extraction record; a provider
+ * failure is thrown to the caller.
+ */
+export async function completeWithMemoryProvider(
+  dataDir: string,
+  input: { system: string; user: string },
+  options: {
+    projectRoot?: string | null;
+    chatAgentId?: string | null;
+    chatModel?: string | null;
+    chatProvider?: object | null;
+    maxTokens?: number;
+    dataClass?: 'standard' | 'local_only';
+    signal?: AbortSignal;
+    localCliRunner?: (request: object) => Promise<string>;
+  } = {},
+): Promise<string | null> {
+  const cfg = await readMemoryConfig(dataDir);
+  if (!cfg.enabled) return null;
+  const provider = await pickProvider(
+    options.projectRoot ?? null,
+    dataDir,
+    options.chatAgentId ?? null,
+    options.chatProvider ?? null,
+    options.chatModel ?? null,
+  );
+  if (!provider) return null;
+  if (options.dataClass === 'local_only' && !providerIsLocal(provider)) return null;
+  options.signal?.throwIfAborted();
+  // OpenAI-style JSON mode rejects a request whose instructions never mention JSON, so a plain-text call
+  // (a merge draft) is sent without it.
+  const call = { maxTokens: options.maxTokens, json: /json/i.test(input.system), signal: options.signal };
+  try {
+    if (provider.transport === 'chat-cli') {
+      return await callLocalCli(provider, input.system, input.user, {
+        dataDir,
+        projectRoot: options.projectRoot ?? null,
+        localCliRunner: options.localCliRunner,
+        json: call.json,
+      });
+    }
+    if (provider.kind === 'anthropic') return await callAnthropic(provider, input.system, input.user, call);
+    if (provider.kind === 'azure') return await callAzure(provider, input.system, input.user, call);
+    if (provider.kind === 'google') return await callGoogle(provider, input.system, input.user, call);
+    return await callOpenAI(provider, input.system, input.user, call);
+  } catch (err) {
+    console.warn(`[memory-llm] ${provider.kind} call failed`, err?.message ?? err);
+    throw err;
+  }
+}
+
 export async function extractWithLLM(dataDir, input, options) {
   const changeSource = options?.source ?? 'llm';
   const result = await collectProposedEntries(dataDir, input, options);
@@ -1489,13 +1565,22 @@ export async function extractWithLLM(dataDir, input, options) {
     return [];
   }
 
+  const originProjectId =
+    typeof options?.extractionOrigin?.projectId === 'string' &&
+    options.extractionOrigin.projectId.trim()
+      ? options.extractionOrigin.projectId.trim()
+      : undefined;
+
   const written = [];
   for (const cand of proposed) {
     if (alreadyKnown(existingEntries, cand)) continue;
     try {
+      const draft = toMemoryDraft(cand);
       const entry = await upsertMemoryEntry(
         dataDir,
-        toMemoryDraft(cand),
+        originProjectId && draft.type !== 'user' && draft.type !== 'profile'
+          ? { ...draft, projectId: originProjectId }
+          : draft,
         // Suppress per-entry events; we batch a single 'extract' below
         // so the toast says "Memory updated (3 · LLM)" once.
         { silent: true, source: changeSource },

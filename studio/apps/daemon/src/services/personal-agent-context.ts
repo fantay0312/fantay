@@ -6,6 +6,8 @@ export function paCanReadClass(taskClass: PaDataClass | undefined, entryClass: P
 }
 
 export function paMemoryActive(memory: PaMemory, at = Date.now()): boolean {
+  const status = memory.status ?? "active";
+  if (status === "superseded" || status === "archived") return false;
   return (memory.validFrom ?? 0) <= at && (memory.validUntil == null || memory.validUntil > at);
 }
 
@@ -19,17 +21,35 @@ function terms(text: string): Set<string> {
   return new Set(words);
 }
 
-export function selectPaMemories(memories: PaMemory[], goal: string): PaMemory[] {
+/** Whether a memory shares at least one term with the text; pinned memories are selected even when it does not. */
+export function paMemoryMatches(memory: PaMemory, goal: string): boolean {
   const query = terms(goal);
-  const ranked = memories.map(memory => ({
-    memory,
-    score: [...terms(memory.content)].filter(term => query.has(term)).length,
-  })).sort((a, b) => b.score - a.score || b.memory.updatedAt - a.memory.updatedAt);
+  return [...terms(memory.content)].some(term => query.has(term));
+}
+
+export function selectPaMemories(
+  memories: PaMemory[],
+  goal: string,
+  options: { minScore?: number; limit?: number; budgetBytes?: number } = {},
+): PaMemory[] {
+  const query = terms(goal);
+  const minScore = options.minScore ?? 1;
+  const ranked = memories
+    .map(memory => ({
+      memory,
+      score: [...terms(memory.content)].filter(term => query.has(term)).length,
+    }))
+    .sort(
+      (a, b) =>
+        Number(Boolean(b.memory.pinned)) - Number(Boolean(a.memory.pinned)) ||
+        b.score - a.score ||
+        b.memory.updatedAt - a.memory.updatedAt,
+    );
   const selected: PaMemory[] = [];
-  let remaining = 24 * 1024;
+  let remaining = options.budgetBytes ?? 24 * 1024;
   for (const { memory, score } of ranked) {
-    if (selected.length === 8) break;
-    if (!score && selected.length >= 2) continue;
+    if (options.limit !== undefined && selected.length === options.limit) break;
+    if (!memory.pinned && score < minScore) continue;
     const bytes = Buffer.byteLength(JSON.stringify([memory.content, memory.source]));
     if (bytes > remaining) continue;
     remaining -= bytes;

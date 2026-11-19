@@ -1,0 +1,105 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The run of slides. The ground, the gaps and the sheet itself come from the shared sheet styles
+   (parts/Sheets.module.css); this file only adds what a slide needs on top: its picture, and the
+   few quiet words that can sit under it. */
+
+/* Added to the shared scroller. Positioned, so a slide's offset is measured from this box. */
+.run {
+  position: relative;
+  outline: none;
+  /* A scrollbar that takes room must not change the fitted width as slides load. */
+  scrollbar-gutter: stable;
+}
+
+.run:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--focus-ring-color);
+}
+
+/* One slide and whatever is said under it. As wide as the slide, so the words align with its edge. */
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sheet {
+  /* Selecting or dragging a picture of a slide does nothing useful. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* The slide's picture. It fades in over the white paper the first time it is ready. */
+.picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--motion-exit) var(--ease-out-quint);
+}
+
+.picture[data-ready] {
+  opacity: 1;
+}
+
+/* Inside the sheet, which is white paper in both themes: fixed ink, not a theme token. */
+.failed {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  margin: 0;
+  padding: 16px;
+  color: #6f6f6f;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+  place-items: center;
+}
+
+/* ── under a slide ───────────────────────────────────────────────────────────────────────────── */
+
+.below {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 2px 4px;
+}
+
+.note {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.speaker {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.speakerLabel {
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.speakerText {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .picture {
+    transition: none;
+  }
+}

@@ -78,6 +78,9 @@ describe("win standalone prebundle policy", () => {
       "hyperframes",
       "gsap",
       "node-pty",
+      "onnxruntime-node",
+      "pdfjs-dist",
+      "silk-wasm",
     ]);
     expect(WIN_PREBUNDLE_POLICIES.daemonSidecar.externals).toEqual([
       "@ffmpeg-installer/ffmpeg",
@@ -88,6 +91,9 @@ describe("win standalone prebundle policy", () => {
       "hyperframes",
       "gsap",
       "node-pty",
+      "onnxruntime-node",
+      "pdfjs-dist",
+      "silk-wasm",
     ]);
     expect(WIN_PREBUNDLE_POLICIES.webSidecar.externals).toEqual(["@open-design/sidecar"]);
     expect(WIN_DAEMON_PREBUNDLE_ESM_REQUIRE_BANNER).toContain("createRequire");
@@ -102,7 +108,9 @@ describe("win standalone prebundle policy", () => {
       "hyperframes": "0.8.1",
       "gsap": "3.14.2",
       "node-pty": "1.1.0",
+      "pdfjs-dist": "6.5.438",
       "sharp": "0.35.3",
+      "silk-wasm": "3.7.1",
     });
     expect(WIN_PREBUNDLED_DAEMON_CLI_RELATIVE_PATH).toBe("app/prebundled/daemon/daemon-cli.mjs");
     expect(WIN_PREBUNDLED_DAEMON_SIDECAR_RELATIVE_PATH).toBe("app/prebundled/daemon/daemon-sidecar.mjs");

@@ -166,6 +166,7 @@ export type SidebarNavItemId =
   | 'pa'
   | 'home'
   | 'workbench'
+  | 'memory'
   | 'materials'
   | 'plugins'
   | 'automations'
@@ -190,6 +191,8 @@ export function isSidebarNavItemActive(item: SidebarNavItemId, route: Route, mat
         || route.kind === 'design-system-create'
         || route.kind === 'design-system-detail'
       );
+    case 'memory':
+      return route.kind === 'home' && route.view === 'memory';
     case 'plugins':
       return (
         (route.kind === 'home' && (route.view === 'plugins' || route.view === 'integrations'))

@@ -1,0 +1,41 @@
+.navigation {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--chat-text-muted, var(--chat-text));
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.assistantActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-block: 2px 12px;
+}
+
+.editor {
+  display: grid;
+  width: min(380px, 100%);
+  gap: 8px;
+}
+
+.editor textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  resize: vertical;
+  font: inherit;
+  padding: 8px;
+  border: 1px solid var(--chat-border);
+  border-radius: 8px;
+  background: var(--chat-bg-panel);
+  color: var(--chat-text);
+}
+
+.editorActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}

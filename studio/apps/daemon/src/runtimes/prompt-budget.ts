@@ -30,7 +30,7 @@ function promptArgvBudgetMessage(
 // message instead of a generic spawn E2BIG.
 const POSIX_ARGV_PROMPT_BUDGET = 120_000;
 
-function resolveArgvPromptBudget(
+export function resolveArgvPromptBudget(
   maxPromptArgBytes: number,
   platform: NodeJS.Platform,
 ): number {

@@ -1,0 +1,679 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The web-page viewer's bar and tools in the product shell.
+   The viewer itself is inherited (components/FileViewer.tsx); only its chrome is redrawn here so a
+   web page opens with the same bar as every other file (fantay/artifact/shell/ArtifactShell): the
+   file's path at the left, then the view switch, viewport and zoom, then the file's own actions
+   with Share as the one filled control. The annotation tools leave the bar and float over the page
+   as an island, the way the board's tools do. Unlayered, so it outranks the inherited styles that
+   app.css imports into the `legacy` layer. */
+
+[data-fantay-shell] .html-viewer {
+  position: relative;
+  background: var(--paper);
+}
+
+/* ── the bar ─────────────────────────────────────────────────────────────────────────────────── */
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) {
+  gap: 2px;
+  min-height: 40px;
+  height: 40px;
+  padding: 0 8px 0 12px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* The two inherited groups dissolve: every control is laid out in one row and ordered below. */
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) > .viewer-toolbar-left,
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) > .viewer-toolbar-actions,
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-toolbar-inline-actions,
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-preview-toolbar-inline {
+  display: contents;
+}
+
+/* The path takes the free space; everything after it sits at the right. */
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) > :first-child {
+  flex: 1 1 0;
+  order: 0;
+  margin-right: 10px;
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .deck-thumbnail-toolbar-toggle {
+  order: 10;
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-tabs {
+  order: 11;
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-viewport-switcher {
+  order: 12;
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-toolbar-zoom {
+  order: 13;
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-deck-nav-inline {
+  order: 14;
+}
+
+/* Reload: the last of the "how I look at it" controls. */
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) > .viewer-toolbar-left > .icon-only:not(.deck-thumbnail-toolbar-toggle) {
+  order: 15;
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) > .viewer-fx-file-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  order: 20;
+  margin-left: 6px;
+}
+
+/* The overflow menu only repeated controls that a narrow bar had dropped. Nothing is dropped here
+   (labels fold to icons instead), so it has nothing to hold. */
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-toolbar-more {
+  display: none;
+}
+
+/* ── controls in the bar: one height (28px), one radius, ink on hover ────────────────────────── */
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .icon-only,
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-action,
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .chrome-action,
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .handoff-trigger,
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .handoff-caret {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 28px;
+  min-height: 0;
+  margin: 0;
+  border: 0;
+  border-radius: var(--radius-row);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-soft);
+  font: inherit;
+  line-height: 1;
+  transform: none;
+  transition:
+    background-color var(--motion-micro) var(--ease-out-quint),
+    color var(--motion-micro) var(--ease-out-quint);
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .icon-only,
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .chrome-action-icon {
+  width: 28px;
+  padding: 0;
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .icon-only:hover:not(:disabled),
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-action:hover:not(:disabled),
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .chrome-action:hover:not(:disabled),
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .handoff-trigger:hover:not(:disabled),
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .handoff-caret:hover:not(:disabled),
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .chrome-action.is-active,
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .chrome-action[aria-expanded='true'],
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-action[aria-expanded='true'] {
+  border: 0;
+  background: var(--paper-deep);
+  color: var(--ink);
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) :is(.icon-only, .viewer-action, .chrome-action):disabled {
+  background: transparent;
+  color: var(--ink-ghost);
+  opacity: 1;
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) :is(.icon-only, .viewer-action, .chrome-action, .viewer-tab):focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 1px;
+}
+
+/* View switch: the product's segmented control (a trough one step off the paper, a raised chip). */
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-tabs {
+  gap: 1px;
+  height: 28px;
+  margin-right: 4px;
+  padding: 3px;
+  border: 0;
+  border-radius: calc(var(--radius-row) + 3px);
+  background: var(--sub);
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-tabs .viewer-tab {
+  width: auto;
+  min-width: 0;
+  height: 22px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-row);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 500;
+  transition: color var(--motion-micro) var(--ease-out-quint);
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-tabs .viewer-tab:hover:not(:disabled):not(.active) {
+  color: var(--ink);
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-tabs .viewer-tab.active {
+  border: 0;
+  background: var(--surface);
+  box-shadow:
+    0 0 0 0.5px rgba(24, 24, 27, 0.06),
+    0 1px 2px rgba(24, 24, 27, 0.08);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+[data-theme='dark'] [data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-tabs .viewer-tab.active {
+  background: color-mix(in srgb, var(--ink) 12%, var(--sub));
+  box-shadow: none;
+}
+
+/* Words, not glyphs: "预览 / 代码" reads faster than an eye and a bracket. */
+/* The glyph carries an inline `display`, so hiding it needs the override. */
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-tabs .viewer-tab-icon {
+  display: none !important;
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-tabs .viewer-tab-label {
+  display: inline;
+}
+
+/* Viewport and zoom: quiet text buttons. */
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-viewport-trigger,
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .zoom-trigger {
+  width: auto;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .zoom-trigger {
+  min-width: 44px;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The file's actions. Export is a quiet labelled button; Share is the one filled control. */
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-fx-file-actions .chrome-file-action-menus,
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-fx-file-actions .share-menu {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-fx-file-actions .chrome-file-action-menus {
+  margin-left: 4px;
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-fx-file-actions .chrome-action-with-label {
+  width: auto;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-fx-file-actions [data-artifact-anchor] {
+  border-radius: 999px;
+  background: var(--brand);
+  color: var(--on-brand);
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-fx-file-actions [data-artifact-anchor]:hover:not(:disabled),
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-fx-file-actions [data-artifact-anchor][aria-expanded='true'] {
+  background: var(--brand-hover);
+  color: var(--on-brand);
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-fx-file-actions [data-artifact-anchor]:disabled {
+  background: var(--paper-deep);
+  color: var(--ink-ghost);
+}
+
+/* Order inside the group: present, versions, open with editor, then Export and Share last, so the
+   filled control is always the bar's final word. */
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-fx-file-actions .present-wrap {
+  order: 1;
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-fx-file-actions [data-od-version-entry] {
+  order: 2;
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-fx-file-actions .handoff-wrap {
+  order: 3;
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-fx-file-actions .chrome-file-action-menus {
+  order: 4;
+}
+
+/* Inside that last group the editor button comes before Export and Share. */
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-fx-file-actions .chrome-file-action-menus > .handoff-wrap {
+  order: -1;
+}
+
+/* "Open with editor": two quiet halves of one control. */
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-fx-file-actions .handoff-wrap {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-fx-file-actions .handoff-split {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-fx-file-actions .handoff-trigger {
+  width: 28px;
+  padding: 0;
+}
+
+[data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-fx-file-actions .handoff-caret {
+  width: 16px;
+  padding: 0;
+}
+
+/* ── narrow panel: words fold away, controls stay ────────────────────────────────────────────── */
+
+@container (max-width: 720px) {
+  [data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-tabs .viewer-tab {
+    width: auto;
+    min-width: 0;
+    padding: 0 10px;
+  }
+
+  [data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-deck-nav-inline {
+    display: inline-flex;
+  }
+}
+
+@container (max-width: 640px) {
+  [data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-viewport-trigger > :not(svg):not(.viewer-viewport-icon) {
+    display: none;
+  }
+
+  [data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-fx-file-actions .handoff-wrap {
+    display: none;
+  }
+}
+
+@container (max-width: 560px) {
+  /* The path gives up its words but keeps taking the free space, so the controls stay at the right
+     (the bar is the query container, and a container cannot restyle itself). */
+  [data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) > :first-child {
+    width: 0;
+    margin-right: 0;
+    overflow: hidden;
+    visibility: hidden;
+  }
+
+  [data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-fx-file-actions .chrome-action-with-label:not([data-artifact-anchor]) > span {
+    display: none;
+  }
+
+  [data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-fx-file-actions .chrome-action-with-label:not([data-artifact-anchor]) {
+    width: 28px;
+    padding: 0;
+  }
+}
+
+@container (max-width: 440px) {
+  [data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) .viewer-toolbar-zoom,
+  [data-fantay-shell] .viewer > .viewer-toolbar:has(> [data-artifact-path]) > .viewer-toolbar-left > .icon-only:not(.deck-thumbnail-toolbar-toggle) {
+    display: none;
+  }
+}
+
+/* ── the tool island: annotation tools floating over the page ────────────────────────────────── */
+
+[data-fantay-shell] .html-viewer > .viewer-fx-tool-island {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  box-shadow: var(--shadow-float);
+  transform: translateX(-50%);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  animation: fx-tool-island-in var(--motion-enter) var(--ease-out-quint) both;
+}
+
+[data-fantay-shell] .html-viewer > .viewer-fx-tool-island[hidden],
+[data-fantay-shell] .html-viewer > .viewer-fx-tool-island:empty {
+  display: none;
+}
+
+/* Presenting fills the tab with the page alone. */
+[data-fantay-shell] .html-viewer.is-tab-present > .viewer-fx-tool-island {
+  display: none;
+}
+
+[data-fantay-shell] .html-viewer > .viewer-fx-tool-island .artifact-tool-menu-anchor {
+  display: inline-flex;
+}
+
+[data-fantay-shell] .html-viewer > .viewer-fx-tool-island .viewer-action {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 32px;
+  height: 32px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  transform: none;
+  transition:
+    background-color var(--motion-micro) var(--ease-out-quint),
+    color var(--motion-micro) var(--ease-out-quint);
+}
+
+[data-fantay-shell] .html-viewer > .viewer-fx-tool-island .viewer-action:hover:not(:disabled) {
+  background: var(--paper-deep);
+  color: var(--ink);
+}
+
+/* The tool in use: ink on paper inverted, the darkest thing on the island. */
+[data-fantay-shell] .html-viewer > .viewer-fx-tool-island .viewer-action.active,
+[data-fantay-shell] .html-viewer > .viewer-fx-tool-island .viewer-action.active:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+[data-fantay-shell] .html-viewer > .viewer-fx-tool-island .viewer-action:disabled {
+  color: var(--ink-ghost);
+  opacity: 1;
+}
+
+[data-fantay-shell] .html-viewer > .viewer-fx-tool-island .viewer-action:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 1px;
+}
+
+/* The comment count is a tool with a number beside its glyph. */
+[data-fantay-shell] .html-viewer > .viewer-fx-tool-island .viewer-comment-count-trigger {
+  width: auto;
+  min-width: 32px;
+  padding: 0 10px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+[data-fantay-shell] .html-viewer > .viewer-fx-tool-island .viewer-comment-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+[data-fantay-shell] .html-viewer > .viewer-fx-tool-island .viewer-toolbar-tool-divider {
+  display: block;
+  flex: none;
+  width: 1px;
+  height: 16px;
+  margin: 0 3px;
+  background: var(--line);
+}
+
+@keyframes fx-tool-island-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-fantay-shell] .html-viewer > .viewer-fx-tool-island {
+    animation: none;
+  }
+}
+
+/* The tab row no longer hosts a file's actions in the product shell. */
+[data-fantay-shell] .ws-tabs-file-actions:empty {
+  display: none;
+}
+
+/* ── Markdown documents: the same bar ────────────────────────────────────────────────────────── */
+
+[data-fantay-shell] .viewer[data-markdown-document] {
+  background: var(--paper);
+}
+
+/* The first tab is the live writing surface. */
+[data-fantay-shell] .viewer > .viewer-toolbar .markdown-mode-tabs {
+  margin-left: 0;
+}
+
+/* Saving state: a quiet fact after the name, not a control. */
+[data-fantay-shell] .viewer[data-markdown-document] > .viewer-toolbar .viewer-meta {
+  flex: none;
+  order: 5;
+  margin-right: 8px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+[data-fantay-shell] .viewer[data-markdown-document] > .viewer-toolbar .markdown-autosave-saved {
+  color: var(--ink-faint);
+}
+
+/* Copy and download: glyphs only; the word is in the tooltip. A failed save keeps its words. */
+[data-fantay-shell] .viewer[data-markdown-document] > .viewer-toolbar .viewer-action:not(.markdown-autosave) {
+  order: 16;
+  width: 28px;
+  padding: 0;
+}
+
+[data-fantay-shell] .viewer[data-markdown-document] > .viewer-toolbar .viewer-action:not(.markdown-autosave) > span {
+  display: none;
+}
+
+[data-fantay-shell] .viewer[data-markdown-document] > .viewer-toolbar .share-menu {
+  display: inline-flex;
+  order: 17;
+}
+
+[data-fantay-shell] .viewer[data-markdown-document] > .viewer-toolbar .viewer-action.markdown-autosave {
+  order: 5;
+  width: auto;
+  padding: 0 8px;
+  color: var(--accent-ink);
+}
+
+/* The page: paper, one reading column. */
+[data-fantay-shell] .markdown-workbench,
+[data-fantay-shell] .markdown-preview-pane-wrap,
+[data-fantay-shell] .markdown-preview-pane {
+  background: var(--paper);
+}
+
+[data-fantay-shell] .markdown-editor-pane {
+  border-right: 1px solid var(--line-soft);
+  background: var(--paper);
+}
+
+[data-fantay-shell] .markdown-workbench-edit .markdown-editor-pane {
+  border-right: 0;
+}
+
+[data-fantay-shell] .markdown-rendered {
+  max-width: 760px;
+  padding: 32px 40px 80px;
+}
+
+/* While only reading, there is nothing to save: the idle and saved states say nothing. */
+[data-fantay-shell] .viewer[data-markdown-document="preview"] > .viewer-toolbar :is(.markdown-autosave-idle, .markdown-autosave-saved) {
+  display: none;
+}
+
+/* A single paper column. CodeMirror retains native selections, composition and scrolling. */
+[data-fantay-shell] .markdown-workbench-live { grid-template-columns: minmax(0, 1fr); }
+.markdown-workbench > [hidden] { display: none; }
+[data-fantay-shell] .markdown-workbench { contain: layout paint style; }
+.md-live-editor { min-height: 0; min-width: 0; }
+.md-live-editor .cm-editor { height: 100%; color: var(--ink); }
+.md-live-editor .cm-editor.cm-focused { outline: none; }
+.md-live-editor .cm-scroller { overflow: auto; font: inherit; line-height: 1.72; }
+.md-live-editor .cm-content {
+  box-sizing: border-box;
+  max-width: 760px;
+  width: 100%;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 32px clamp(16px, 5%, 40px) 80px;
+  font-family: var(--font-ui);
+  caret-color: var(--ink);
+}
+.md-live-editor .cm-line { padding: 0; }
+.md-live-h1, .md-live-h2, .md-live-h3, .md-live-h4, .md-live-h5, .md-live-h6 {
+  font-weight: 700;
+  line-height: 1.35;
+}
+.md-live-h1 { font-size: 2.1em; }
+.md-live-h2 { font-size: 1.55em; }
+.md-live-h3 { font-size: 1.25em; }
+.md-live-strong { font-weight: 700; }
+.md-live-em { font-style: italic; }
+.md-live-strike { text-decoration: line-through; }
+.md-live-syntax, .md-live-editor .cm-placeholder { color: var(--ink-faint); }
+.md-live-code { font-family: var(--font-mono, monospace); font-size: .9em; background: var(--surface-sunken, var(--bg-panel)); }
+.md-live-quote { box-shadow: inset 3px 0 var(--line-soft); color: var(--ink-muted); }
+.md-live-editor .cm-line.md-live-quote { padding-inline-start: 12px; }
+[data-fantay-shell] .md-live-editor .md-live-fragment { margin: 0; padding: 0; max-width: 100%; font: inherit; cursor: text; white-space: normal; }
+.md-live-fragment > :first-child { margin-top: 0; }
+.md-live-fragment > :last-child { margin-bottom: 0; }
+.md-live-editor input[type="checkbox"] { vertical-align: middle; cursor: pointer; }
+
+/* The control and its ink stay in place; only the raised selection moves. The press is
+   reversible (dragging out cancels it), while click or keyboard commits the actual mode. */
+[data-fantay-shell] .viewer[data-markdown-document] .viewer-toolbar .markdown-mode-tabs[data-sliding] {
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: repeat(var(--md-tab-count), minmax(0, 1fr));
+  gap: 0;
+  isolation: isolate;
+  --md-chip: var(--surface);
+  --md-chip-shadow: 0 0 0 0.5px rgba(24,24,27,.06), 0 1px 2px rgba(24,24,27,.08);
+}
+[data-theme='dark'] [data-fantay-shell] .viewer[data-markdown-document] .markdown-mode-tabs[data-sliding] {
+  --md-chip: color-mix(in srgb, var(--ink) 12%, var(--sub));
+  --md-chip-shadow: none;
+}
+.markdown-mode-tabs[data-sliding] > .md-mode-indicator {
+  position: absolute;
+  inset-block: 3px;
+  inset-inline-start: 3px;
+  inline-size: calc((100% - 6px) / var(--md-tab-count));
+  border-radius: var(--radius-row);
+  background: var(--md-chip);
+  box-shadow: var(--md-chip-shadow);
+  pointer-events: none;
+  transform: translateX(calc(var(--md-direction, 1) * var(--md-press-index, var(--md-tab-index)) * 100%));
+  transition: transform var(--motion-fast, 150ms) var(--ease-out-quint, ease-out);
+}
+.markdown-mode-tabs[data-sliding]:dir(rtl) { --md-direction: -1; }
+[data-fantay-shell] .viewer[data-markdown-document] > .viewer-toolbar:has(> [data-artifact-path])
+  .markdown-mode-tabs[data-sliding] > .viewer-tab {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  box-shadow: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .markdown-mode-tabs[data-sliding] > .md-mode-indicator { transition: none; }
+}
+
+/* Keep each pane's geometry and scroll position while it is parked. Switching the visible
+   pane does not require laying out a zero-height editor or reconstructing a textarea. */
+[data-fantay-shell] .markdown-workbench {
+  position: relative;
+  overflow: hidden;
+  display: block;
+  container: md-workbench / inline-size;
+}
+[data-fantay-shell] .markdown-workbench > [data-md-layer] {
+  position: absolute;
+  inset: 0;
+}
+[data-fantay-shell] .markdown-workbench > [data-pane-visible="false"] {
+  visibility: hidden;
+  pointer-events: none;
+}
+[data-fantay-shell] .markdown-workbench-split > [data-md-layer="editor"] {
+  inset-inline-end: 50%;
+  border-inline-end: 1px solid var(--line-soft);
+}
+[data-fantay-shell] .markdown-workbench-split > [data-md-layer="preview"] { inset-inline-start: 50%; }
+@container md-workbench (max-width: 550px) {
+  [data-fantay-shell] .markdown-workbench-split > [data-md-layer="editor"] {
+    inset-inline: 0;
+    inset-block-end: 50%;
+    border-inline-end: 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  [data-fantay-shell] .markdown-workbench-split > [data-md-layer="preview"] {
+    inset-inline: 0;
+    inset-block-start: 50%;
+  }
+}
+.md-live-editor[data-md-source="true"] .cm-content {
+  max-width: none;
+  padding: 24px 28px 40px;
+  font: 500 13px/1.7 var(--mono);
+  tab-size: 2;
+}
+
+.md-mode-wash {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  background-color: var(--paper);
+}

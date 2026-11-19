@@ -1,16 +1,17 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { fantayDisplayVersion, fantayPackageVersion } from '@open-design/release';
 
 import type { ToolPackConfig } from "../config/index.js";
 
 export async function readRuntimeAppVersion(config: ToolPackConfig): Promise<string> {
-  if (config.appVersion != null) return config.appVersion;
+  if (config.appVersion != null) return fantayDisplayVersion(config.appVersion);
   const packageJsonPath = join(config.workspaceRoot, "apps", "packaged", "package.json");
   const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8")) as { version?: unknown };
   if (typeof packageJson.version !== "string" || packageJson.version.length === 0) {
     throw new Error(`missing apps/packaged package version in ${packageJsonPath}`);
   }
-  return packageJson.version;
+  return fantayDisplayVersion(packageJson.version);
 }
 
 export function versionCoreForAppVersion(appVersion: string): string {
@@ -24,5 +25,5 @@ export function versionFamilyForAppVersion(appVersion: string): string | null {
 }
 
 export function electronBuilderVersionForAppVersion(appVersion: string): string {
-  return appVersion;
+  return fantayPackageVersion(appVersion);
 }

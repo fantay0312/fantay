@@ -16,6 +16,9 @@
 //      project file (those will have a slash in `filePath` and reach this
 //      step with zero suffix matches → declined).
 
+import { artifactFileFamily } from '../fantay/artifact/file-family';
+import { isFantayShellEnabled } from '../fantay/shell/flags';
+
 interface CandidateFile {
   readonly name: string;
   readonly path?: string;
@@ -132,15 +135,32 @@ function isMediaPreviewFile(file: CandidateFile): boolean {
   return MEDIA_EXTENSION.test(path) && !path.startsWith(DAEMON_SKETCH_NAME_PREFIX);
 }
 
+// Product shell only: PDFs, Word documents, workbooks, decks, Mermaid diagrams and
+// Excalidraw drawings render as themselves there (fantay/artifact viewers), so a turn
+// whose deliverable is one of them should surface it the way a markdown report does.
+// The inherited chrome shows those files as a text extract and keeps leaving them to
+// the produced-files chips. Delimited text (.csv / .tsv) stays out: it is as often a
+// fixture edited beside code as it is a deliverable, and the code surface already
+// shows its changes.
+function isRichDocumentPreviewFile(file: CandidateFile): boolean {
+  if (!isFantayShellEnabled()) return false;
+  const { viewer, format } = artifactFileFamily(file.path ?? file.name);
+  if (viewer === 'pdf' || viewer === 'diagram' || viewer === 'whiteboard') return true;
+  if (viewer === 'document' || viewer === 'slides') return format !== 'legacy';
+  return viewer === 'sheet' && format === 'workbook';
+}
+
 // Auto-open priority for a turn's produced files. Higher wins. HTML is the
 // primary visual deliverable, so when a turn writes both an HTML page and a
 // markdown note (e.g. index.html + README.md) the page takes focus; markdown
-// is the next-best previewable artifact. Image, video, and audio files are the
-// fallback for media-only turns; non-previewable outputs such as decks and raw
-// text are left for the user to open from the produced-files chips.
+// is the next-best previewable artifact, level with the office documents the
+// product shell can render. Image, video, and audio files are the fallback for
+// media-only turns; non-previewable outputs such as raw text are left for the
+// user to open from the produced-files chips.
 function autoOpenPreviewRank(file: CandidateFile): number {
   if (isHtmlPreviewFile(file)) return 3;
   if (isMarkdownPreviewFile(file)) return 2;
+  if (isRichDocumentPreviewFile(file)) return 2;
   if (isMediaPreviewFile(file)) return 1;
   return 0;
 }

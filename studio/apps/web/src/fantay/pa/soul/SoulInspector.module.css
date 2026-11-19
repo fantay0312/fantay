@@ -1,0 +1,705 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The companion inspector body (Soul UI spec §5.1–5.4). Base tokens only: the panel never takes the chat theme, colour
+   stays in the portrait. Hairline groups follow the inspector's .surfaceCard recipe; the glide track, panes and their
+   stagger come from PaInspector.module.css. */
+
+.body {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+/* ── hero ──────────────────────────────────────────────────────────────────────────────── */
+
+.hero {
+  position: relative;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 14px 12px;
+  text-align: center;
+}
+.aura {
+  position: absolute;
+  inset: -42px 0 auto;
+  height: 176px;
+  pointer-events: none;
+  background: radial-gradient(120% 100% at 50% 0%, var(--pa-inspector-hero-group) 0%, transparent 92%);
+}
+.portrait {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  --pa-avatar-collar: var(--pa-inspector-bg);
+}
+.badge {
+  position: absolute;
+  bottom: -2px;
+  inset-inline-end: -2px;
+  display: grid;
+  place-items: center;
+}
+.badgeButton {
+  background: var(--pa-inspector-card);
+  box-shadow: var(--shadow-ring);
+  color: var(--ink-soft);
+}
+.badgeButton:hover {
+  background: var(--pa-inspector-card);
+  box-shadow: var(--shadow-ring-hover);
+  color: var(--ink);
+}
+.name {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  margin: 10px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.tagline {
+  position: relative;
+  z-index: 1;
+  display: -webkit-box;
+  max-width: 272px;
+  margin: 4px 0 0;
+  overflow: hidden;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+/* KPI text: wraps, never ellipsized (owner rule O4). */
+.facts {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  text-wrap: balance;
+}
+
+/* ── blocks and hairline groups ────────────────────────────────────────────────────────── */
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.heading {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  padding: 0 2px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  color: var(--ink);
+}
+.headingCount {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.card {
+  overflow: hidden;
+  border: 1px solid var(--pa-inspector-card-border);
+  border-radius: var(--radius-card);
+  background: var(--pa-inspector-card);
+}
+.card > * + * {
+  border-top: 1px solid var(--line-soft);
+}
+.card > .caption + * {
+  border-top: 0;
+}
+.caption {
+  padding: 9px 12px 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-faint);
+}
+
+.row,
+.rowButton {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+}
+.rowButton {
+  height: auto;
+  justify-content: flex-start;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 400;
+  text-align: start;
+  white-space: normal;
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+.rowButton:hover {
+  background: color-mix(in srgb, var(--ink) 3.5%, transparent);
+  color: var(--ink);
+}
+.rowButton > [data-slot='button-label'] {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+.rowMain {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+}
+.rowLabel {
+  flex: none;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--ink);
+}
+.rowMain > .rowLabel {
+  flex: initial;
+}
+.rowPreview {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.rowValue {
+  flex: none;
+  max-width: 60%;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--ink-soft);
+  text-align: end;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.chevron {
+  flex: none;
+  color: var(--ink-faint);
+  transition:
+    transform var(--pa-dur-quick) var(--pa-ease),
+    color var(--pa-dur-quick) var(--pa-ease);
+}
+.rowButton:hover .chevron {
+  color: var(--ink-soft);
+  transform: translateX(1px);
+}
+.rowControl {
+  display: flex;
+  min-width: 0;
+  flex: 0 1 196px;
+  justify-content: flex-end;
+  margin-inline-start: auto;
+}
+.rowSpinner {
+  flex: none;
+  color: var(--ink-faint);
+}
+.picker,
+.select {
+  width: 100%;
+  min-width: 0;
+}
+.select {
+  background: var(--pa-inspector-card);
+}
+
+/* 关于: label column, wrapping value at the end. */
+.factRow {
+  align-items: flex-start;
+  min-height: 44px;
+  padding-block: 12px;
+}
+.factLabel {
+  flex: none;
+  min-width: 56px;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--ink);
+}
+.factValue {
+  min-width: 0;
+  flex: 1 1 auto;
+  padding-top: 1px;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--ink-soft);
+  text-align: end;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+.factRow .chevron {
+  margin-top: 3px;
+}
+
+/* Room members */
+.memberRow {
+  min-height: 52px;
+  --pa-avatar-collar: transparent;
+}
+.memberName {
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 19px;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.memberTagline {
+  overflow: hidden;
+  font-size: 12.5px;
+  line-height: 17px;
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A row whose control spans the width under its label (谁来接话). */
+.stackRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+}
+.stackRowHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.segmented {
+  background: var(--pa-inspector-trough);
+}
+
+.footnote {
+  margin: 0;
+  padding: 0 2px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--ink-faint);
+  text-wrap: pretty;
+}
+
+/* ── TA: 立绘 (stage 2) ────────────────────────────────────────────────────────────────── */
+
+/* The mood word as the character wrote it, quoted by the locale's own marks. */
+.mood {
+  quotes: auto;
+}
+/* The set: 52 px squircles, at least four to a row at the narrowest inspector (300), five at the widest. The images
+   keep their colour; the mark of the one on screen is an ink ring that crossfades over --pa-dur-swap. */
+.spriteGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  gap: 12px 4px;
+  margin: 0;
+  padding: 14px 8px 12px;
+  list-style: none;
+}
+.sprite {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+.spriteFace {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.spriteFace::after {
+  position: absolute;
+  inset: -3px;
+  border-radius: 19px;
+  box-shadow: 0 0 0 1.5px var(--ink);
+  content: '';
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--pa-dur-swap) var(--pa-ease);
+}
+.sprite[data-current] .spriteFace::after {
+  opacity: 1;
+}
+.spriteLabel {
+  max-width: 100%;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-soft);
+  text-align: center;
+  overflow-wrap: anywhere;
+  transition: color var(--pa-dur-swap) var(--pa-ease);
+}
+.sprite[data-current] .spriteLabel {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* ── 此刻: state rows ──────────────────────────────────────────────────────────────────── */
+
+.stateRow {
+  display: grid;
+  width: 100%;
+  height: auto;
+  min-height: 40px;
+  grid-template-columns: 72px minmax(0, 1fr) 28px;
+  align-items: center;
+  column-gap: 10px;
+  padding: 6px 8px 6px 12px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 400;
+  text-align: start;
+  white-space: normal;
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+.stateRow:hover,
+.stateRow[data-state='open'] {
+  background: color-mix(in srgb, var(--ink) 3.5%, transparent);
+  color: var(--ink);
+}
+.stateRow > [data-slot='button-label'] {
+  display: contents;
+}
+.stateLabel {
+  font-size: 12.5px;
+  line-height: 17px;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+.stateControl {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+.stateMeter {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+}
+.stateBar {
+  display: flex;
+  min-width: 24px;
+  flex: 1 1 auto;
+}
+.stateBar > * {
+  width: 100%;
+}
+.stateNumber {
+  flex: none;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.stateText {
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.stateTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.stateEmpty {
+  color: var(--ink-faint);
+}
+.stateMark {
+  display: flex;
+  justify-content: flex-end;
+}
+.stateDelta {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.editedDot {
+  width: 6px;
+  height: 6px;
+  margin-inline-end: 4px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.popover {
+  padding: 12px;
+}
+.popoverForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.popoverTitle {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  color: var(--ink);
+}
+.popoverActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* ── 此刻: interlude ───────────────────────────────────────────────────────────────────── */
+
+.eventCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+}
+.card.eventCard > * + * {
+  border-top: 0;
+}
+.eventHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.eventTitle {
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 19px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.eventLeft {
+  flex: none;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.eventSummary {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+.eventActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* ── 记忆 ──────────────────────────────────────────────────────────────────────────────── */
+
+.memoryRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+}
+.memoryText {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 4px;
+}
+.memoryMeta {
+  display: flex;
+  min-height: 18px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.memoryContent {
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+.memoryActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.due {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.promiseRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 6px 10px 12px;
+  transition: opacity var(--pa-dur-quick) var(--pa-ease);
+}
+.promiseRow[data-kept='true'] .memoryText {
+  opacity: 0.6;
+}
+.promiseRow[data-kept='true'] .memoryContent {
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--ink) 35%, transparent);
+}
+.check {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 16px;
+  height: 19px;
+  cursor: pointer;
+}
+.rowMenu {
+  flex: none;
+  margin-top: -3px;
+  color: var(--ink-faint);
+}
+
+.rememberedRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  padding-inline-end: 6px;
+}
+.rememberedOpen {
+  display: flex;
+  min-width: 0;
+  height: auto;
+  flex: 1 1 auto;
+  justify-content: flex-start;
+  padding: 10px 6px 10px 12px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 400;
+  text-align: start;
+  white-space: normal;
+}
+.rememberedOpen:hover {
+  background: transparent;
+  color: var(--ink);
+}
+.rememberedOpen > [data-slot='button-label'] {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 8px;
+}
+.rememberedOpen [data-slot='soul-tag'] {
+  flex: none;
+  margin-top: 1px;
+}
+.rememberedText {
+  display: -webkit-box;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.rememberedRow:hover {
+  background: color-mix(in srgb, var(--ink) 3.5%, transparent);
+}
+.rememberedRow .rowMenu {
+  margin-top: 7px;
+}
+
+.quiet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 16px 8px;
+  text-align: center;
+}
+.quietDisc {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--pa-inspector-trough);
+  color: var(--ink-soft);
+}
+.quietText {
+  max-width: 256px;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  text-wrap: balance;
+}
+
+/* Hover-only affordances stay reachable without a pointer that hovers. */
+@media (hover: none) {
+  .rowButton:hover,
+  .stateRow:hover,
+  .rememberedRow:hover {
+    background: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rowButton,
+  .stateRow,
+  .chevron,
+  .promiseRow,
+  .spriteFace::after,
+  .spriteLabel {
+    transition-duration: 0ms;
+  }
+  .rowButton:hover .chevron {
+    transform: none;
+  }
+}

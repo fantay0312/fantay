@@ -13,6 +13,7 @@
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 import { useT } from '../../i18n';
+import { useMarkdownFocus } from '../workspace/use-markdown-focus';
 import { FantayMascot } from '../../fantay/brand/FantayMascot';
 import styles from './ChatMascot.module.css';
 
@@ -41,6 +42,7 @@ export function ChatLoadingMascot(): ReactElement {
 const MASCOT_GLIDE_MIN_PX = 12;
 
 export function TurnMascot({ streaming }: { streaming: boolean }): ReactElement {
+  const writing = useMarkdownFocus();
   const [pulse, setPulse] = useState(0);
   const wasStreaming = useRef(streaming);
   useEffect(() => {
@@ -75,7 +77,7 @@ export function TurnMascot({ streaming }: { streaming: boolean }): ReactElement 
   }, []);
   return (
     <div ref={ref} className={styles.turn} data-testid="chat-turn-mascot" data-state={streaming ? 'working' : 'resting'} aria-hidden>
-      <FantayMascot size={28} mood={streaming ? 'working' : 'idle'} pulse={pulse} />
+      <FantayMascot size={28} mood={streaming ? 'working' : 'idle'} paused={writing && !streaming} pulse={pulse} />
     </div>
   );
 }

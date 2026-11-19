@@ -1,0 +1,965 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The 代码 surface: a 40px header, then the viewer and the file tree side by side.
+   Quiet paper: ink on the ground, tone for grouping, one hairline where the viewer meets the tree.
+   The only colour is the add / remove tint of a change, the find highlight and one small status dot.
+   The split (viewer | divider | tree) follows cindy's FileBrowserBody (Apache-2.0, see CodeSurface.tsx);
+   the divider's states follow eta's pane divider (MIT, see use-pane-width.ts). */
+
+.root {
+  --code-hover: color-mix(in srgb, var(--ink) 6%, transparent);
+  --code-add: color-mix(in srgb, var(--success) 12%, transparent);
+  --code-add-strong: color-mix(in srgb, var(--success) 28%, transparent);
+  --code-remove: color-mix(in srgb, var(--danger) 10%, transparent);
+  --code-remove-strong: color-mix(in srgb, var(--danger) 24%, transparent);
+  /* Left edge of text in the viewer: line padding in the editor, sign column in the hunk list. */
+  --code-line-pad: 12px;
+
+  container: code-surface / inline-size;
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* While the divider is dragged the pointer crosses the editor and the tree: keep one cursor and
+   select nothing. */
+.root[data-resizing] {
+  cursor: col-resize;
+  user-select: none;
+}
+
+/* ── controls ────────────────────────────────────────────────────────────────────────────────────
+   Every button here is drawn from scratch: the app's global `button` rule (36px, bordered, 600) and
+   its hover wash must not show through, so size, border, ground and colour are all stated, and each
+   selector carries the root class to outrank element rules wherever they sit in the cascade.
+   `.control` is that reset; each button adds its own shape on top. */
+.root .control {
+  appearance: none;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-row);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-soft);
+  font: inherit;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+  transform: none;
+  transition:
+    background-color var(--motion-micro) var(--ease-out-quint),
+    color var(--motion-micro) var(--ease-out-quint);
+}
+
+.root .control:active {
+  transform: none;
+}
+
+.root .control:focus-visible,
+.root .filterInput:focus-visible,
+.root .treeRow:focus-visible,
+.root .divider:focus-visible,
+.root .hunks:focus-visible,
+.root .plainText:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 1px;
+}
+
+.root .control:disabled {
+  cursor: default;
+}
+
+.root .iconButton {
+  width: 28px;
+  height: 28px;
+}
+
+.root .iconButton:hover:not(:disabled),
+.root .iconButton[data-state='open'] {
+  border: 0;
+  background: var(--code-hover);
+  color: var(--ink);
+}
+
+.root .iconButton[aria-pressed='true'] {
+  background: var(--sub);
+  color: var(--ink);
+}
+
+.root .iconButton:disabled {
+  background: transparent;
+  color: var(--ink-ghost);
+}
+
+.root .textButton {
+  height: 28px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.root .textButton:hover {
+  border: 0;
+  background: var(--code-hover);
+  color: var(--ink);
+}
+
+.root .textButton[aria-pressed='true'] {
+  background: var(--sub);
+  color: var(--ink);
+}
+
+/* ── header ──────────────────────────────────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 8px 0 12px;
+}
+
+.title {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 4px;
+  color: var(--ink-faint);
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  margin-inline-start: auto;
+}
+
+.tag {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: var(--radius-tag);
+  background: var(--sub);
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+/* The one status dot: the agent is running and this file is among the ones it changed. */
+.liveDot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: livePulse 1.6s var(--ease-out-quint) infinite alternate;
+}
+
+@keyframes livePulse {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.35;
+  }
+}
+
+.counts {
+  display: inline-flex;
+  flex: none;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.countAdded {
+  color: var(--success);
+}
+
+.countRemoved {
+  color: var(--danger);
+}
+
+/* Breadcrumb (structure from t3code FileBreadcrumbs, MIT; see Breadcrumb.tsx). The list keeps its
+   natural width so the row can tell when it no longer fits and fold leading folders into "…". */
+.crumbs {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.crumbList {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  white-space: nowrap;
+}
+
+.crumbItem {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-width: 0;
+}
+
+/* Every folder is folded and it still does not fit: now the file name may truncate. */
+.crumbs[data-tight] .crumbList {
+  width: 100%;
+}
+
+.crumbs[data-tight] .crumbItem[data-current] {
+  flex: 1 1 auto;
+}
+
+.root .crumb {
+  display: block;
+  max-width: 160px;
+  padding: 2px 4px;
+  overflow: hidden;
+  border-radius: var(--radius-tag);
+  color: var(--ink-faint);
+  text-overflow: ellipsis;
+}
+
+.root .crumb:hover {
+  border: 0;
+  background: var(--code-hover);
+  color: var(--ink);
+}
+
+.crumbEllipsis {
+  padding: 2px 4px;
+  color: var(--ink-faint);
+}
+
+.crumbSeparator {
+  flex: none;
+  margin: 0 1px;
+  color: var(--ink-ghost);
+}
+
+.crumbFile {
+  display: block;
+  min-width: 0;
+  padding: 2px 4px;
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+
+/* ── body: viewer | divider | tree ───────────────────────────────────────────────────────────── */
+.body {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.viewer {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  /* CodeMirror layers its gutter and panels with z-indexes in the hundreds. Kept inside the viewer,
+     they cannot paint over the tree when it opens as an overlay. */
+  isolation: isolate;
+}
+
+.viewerBody {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.notice {
+  flex: none;
+  margin: 0;
+  padding: 6px 16px;
+  background: var(--sub);
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+/* One hairline where the two regions meet. It is also the drag handle: 1px to look at, 9px to hit. */
+.divider {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: 1px;
+  background: var(--line-soft);
+  cursor: col-resize;
+  touch-action: none;
+  transition: background-color var(--motion-fast) var(--ease-out-quint);
+}
+
+.divider::before {
+  position: absolute;
+  inset: 0 -4px;
+  content: '';
+}
+
+.divider:hover,
+.divider[data-dragging='true'] {
+  background: var(--ink-ghost);
+}
+
+.rail {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  /* The viewer always keeps room to read, however wide the tree was dragged. */
+  width: min(var(--code-tree-width), calc(100cqw - 240px));
+  min-height: 0;
+  background: var(--paper);
+}
+
+.root[data-tree-open='false']:not([data-narrow]) .rail,
+.root[data-tree-open='false']:not([data-narrow]) .divider {
+  display: none;
+}
+
+/* Until the surface has a width it cannot tell wide from narrow. The tree is laid out but not shown
+   for that unpainted commit: shown, a narrow surface would mount with the tree in the flow and then
+   play the overlay's exit transition over the code. */
+.root[data-unmeasured] .rail {
+  visibility: hidden;
+}
+
+/* Narrow surface: the tree leaves the flow and opens over the viewer from the right edge.
+   Kept mounted while closed, so the exit can play and the filter and scroll position survive. */
+.root[data-narrow] .divider {
+  display: none;
+}
+
+.root[data-narrow] .rail {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  width: min(var(--code-tree-width), calc(100cqw - 40px));
+  box-shadow: var(--shadow-float);
+  transition:
+    opacity var(--motion-enter) var(--ease-out-quint),
+    transform var(--motion-enter) var(--ease-out-quint);
+}
+
+.root[data-narrow][data-tree-open='false'] .rail {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(8px);
+  transition:
+    opacity var(--motion-exit) var(--ease-out-quint),
+    transform var(--motion-exit) var(--ease-out-quint),
+    visibility 0s linear var(--motion-exit);
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+/* ── tree rail ───────────────────────────────────────────────────────────────────────────────── */
+.filter {
+  position: relative;
+  flex: none;
+  padding: 8px 8px 4px;
+}
+
+.filterIcon {
+  position: absolute;
+  top: 17px;
+  left: 18px;
+  color: var(--ink-faint);
+  pointer-events: none;
+}
+
+.root .filterInput {
+  display: block;
+  width: 100%;
+  height: 32px;
+  margin: 0;
+  padding: 0 30px 0 32px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--sub);
+  box-shadow: none;
+  color: var(--ink);
+  font: inherit;
+  transition: none;
+}
+
+.root .filterInput::placeholder {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+
+.root .filterInput:focus {
+  border: 0;
+}
+
+.root .filterClear {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  color: var(--ink-faint);
+}
+
+.root .filterClear:hover {
+  border: 0;
+  background: var(--code-hover);
+  color: var(--ink);
+}
+
+.railScroll {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 6px 16px;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.sectionLabel {
+  padding: 10px 8px 4px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.changedList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.root .changedRow {
+  display: flex;
+  justify-content: flex-start;
+  gap: 6px;
+  width: 100%;
+  height: 28px;
+  padding: 0 8px;
+  color: var(--ink);
+  font-size: 12.5px;
+  text-align: start;
+}
+
+.root .changedRow:hover:not(:disabled) {
+  border: 0;
+  background: var(--code-hover);
+  color: var(--ink);
+}
+
+.root .changedRow[data-selected] {
+  background: var(--sub);
+}
+
+.root .changedRow:disabled {
+  background: transparent;
+  color: var(--ink-faint);
+}
+
+.root .changedRow[data-status='deleted'] .changedName {
+  text-decoration: line-through;
+}
+
+/* Name, then its folder when the whole folder fits: the pair wraps, and one line is shown, so a
+   folder that would be cut to a letter or two drops to the hidden second line instead. */
+.changedText {
+  display: flex;
+  flex: 1 1 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 6px;
+  min-width: 0;
+  height: 18px;
+  overflow: hidden;
+  line-height: 18px;
+}
+
+.changedName {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.changedDir {
+  flex: 0 0 auto;
+  color: var(--ink-ghost);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.changedRow .counts {
+  margin-inline-start: auto;
+}
+
+/* Rows are placed by the virtualiser: absolute, one pitch (TREE_ROW_HEIGHT in file-tree.ts). */
+.tree {
+  position: relative;
+  width: 100%;
+}
+
+.treeRow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 28px;
+  padding-inline-end: 8px;
+  border-radius: var(--radius-row);
+  color: var(--ink);
+  font-size: 12.5px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.treeRow:hover {
+  background: var(--code-hover);
+}
+
+.treeRow[data-selected] {
+  background: var(--sub);
+}
+
+.root .treeRow:focus-visible {
+  /* Rows touch each other: the ring sits inside the row. */
+  outline-offset: -2px;
+}
+
+/* These fill the viewer edge to edge; a ring outside the box would be clipped by the surface. */
+.root .hunks:focus-visible,
+.root .plainText:focus-visible {
+  outline-offset: -2px;
+}
+
+.treeGlyph {
+  flex: none;
+  color: var(--ink-faint);
+  transition: transform var(--motion-fast) var(--ease-out-quint);
+}
+
+.treeRow[data-expanded='true'] .treeGlyph {
+  transform: rotate(90deg);
+}
+
+.treeLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.changeDot {
+  flex: none;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+}
+
+.changeDot[data-kind='dir'] {
+  background: var(--ink-ghost);
+}
+
+.railEmpty {
+  margin: 0;
+  padding: 16px 8px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* ── states ──────────────────────────────────────────────────────────────────────────────────── */
+.state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.stateIcon {
+  color: var(--ink-ghost);
+}
+
+.stateText {
+  max-width: 320px;
+  margin: 0;
+  color: var(--ink-faint);
+}
+
+.root .stateAction {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--radius-control);
+  background: var(--sub);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.root .stateAction:hover {
+  border: 0;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  color: var(--ink);
+}
+
+/* Shown only after the load has outlasted its grace period, so it eases in rather than flashes. */
+.skeleton {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 24px 16px 56px;
+  animation: stateIn var(--motion-enter) var(--ease-out-quint);
+}
+
+.skeletonLine {
+  display: block;
+  flex: none;
+  height: 9px;
+  border-radius: var(--radius-tag);
+  background: var(--sub);
+}
+
+@keyframes stateIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── editor ──────────────────────────────────────────────────────────────────────────────────────
+   The host of the CodeMirror view. Ground, gutter, type and selection are set by the editor theme
+   (codemirror-theme.ts). What follows restyles the parts CodeMirror ships with light / dark base
+   themes of their own: each selector is long on purpose, to outrank those from any load order. */
+.editor {
+  position: absolute;
+  inset: 0;
+}
+
+.editor :global(.cm-editor) {
+  height: 100%;
+}
+
+/* The code is one tab stop (find and select-all are its keyboard commands), and CodeMirror takes the
+   outline off the focused text. The ring is drawn by the host, inside its edge and above
+   CodeMirror's own layers (sticky gutter 200, panels 300), which would cover a ring on the editor. */
+.editor:has(:global(.cm-content:focus-visible))::after {
+  position: absolute;
+  inset: 0;
+  z-index: 301;
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: -2px;
+  content: '';
+  pointer-events: none;
+}
+
+/* Changes view (@codemirror/merge, unified). Tint marks the line, a stronger tint the words. */
+.editor :global(.cm-editor.cm-merge-b .cm-content .cm-changedLine) {
+  background-color: var(--code-add);
+}
+
+.editor :global(.cm-editor.cm-merge-b .cm-content .cm-changedText) {
+  background: var(--code-add-strong);
+}
+
+.editor :global(.cm-editor.cm-merge-b .cm-content .cm-deletedChunk) {
+  padding-left: 0;
+  background-color: var(--code-remove);
+}
+
+.editor :global(.cm-editor.cm-merge-b .cm-content .cm-deletedChunk .cm-deletedLine) {
+  padding: 0 24px 0 var(--code-line-pad);
+}
+
+.editor :global(.cm-editor.cm-merge-b .cm-content .cm-deletedChunk .cm-deletedText) {
+  background: var(--code-remove-strong);
+}
+
+.editor :global(.cm-editor.cm-merge-b .cm-content .cm-insertedLine),
+.editor :global(.cm-editor.cm-merge-b .cm-content .cm-deletedLine),
+.editor :global(.cm-editor.cm-merge-b .cm-content del) {
+  text-decoration: none;
+}
+
+/* "N unchanged lines": a quiet band of tone. Its height matches the widget's own estimate (27px),
+   and it uses padding, not margin, because the editor measures blocks by their border box. */
+.editor :global(.cm-editor .cm-content .cm-collapsedLines) {
+  padding: 5px 24px 5px var(--code-line-pad);
+  background: var(--sub);
+  color: var(--ink-faint);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 17px;
+  cursor: pointer;
+  transition: color var(--motion-micro) var(--ease-out-quint);
+}
+
+.editor :global(.cm-editor .cm-content .cm-collapsedLines:hover) {
+  color: var(--ink);
+}
+
+.editor :global(.cm-editor .cm-content .cm-collapsedLines)::before,
+.editor :global(.cm-editor .cm-content .cm-collapsedLines)::after {
+  content: none;
+}
+
+/* Find (Cmd/Ctrl+F): a field and two arrows on the paper, under one hairline. The match-case,
+   regexp, whole-word and select-all controls are left out; plain find is what a reader needs. */
+.editor :global(.cm-editor .cm-scroller .cm-searchMatch) {
+  background-color: color-mix(in srgb, var(--warning) 26%, transparent);
+}
+
+.editor :global(.cm-editor .cm-scroller .cm-searchMatch.cm-searchMatch-selected) {
+  background-color: color-mix(in srgb, var(--warning) 58%, transparent);
+}
+
+.editor :global(.cm-editor .cm-panels.cm-panels-top) {
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+.editor :global(.cm-editor .cm-panels .cm-panel.cm-search) {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 40px 6px 12px;
+}
+
+.editor :global(.cm-editor .cm-panels .cm-panel.cm-search .cm-textfield) {
+  flex: 0 1 280px;
+  min-width: 0;
+  height: 28px;
+  margin: 0 4px 0 0;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--sub);
+  color: var(--ink);
+  font: 500 13px/1.4 var(--font-ui);
+}
+
+.editor :global(.cm-editor .cm-panels .cm-panel.cm-search .cm-textfield:focus-visible),
+.editor :global(.cm-editor .cm-panels .cm-panel.cm-search button:focus-visible) {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 1px;
+}
+
+.editor :global(.cm-editor .cm-panels .cm-panel.cm-search button) {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-row);
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  cursor: pointer;
+  transform: none;
+}
+
+.editor :global(.cm-editor .cm-panels .cm-panel.cm-search button:hover) {
+  border: 0;
+  background: var(--code-hover);
+  color: var(--ink);
+}
+
+/* The buttons keep their words as accessible names; an arrow is what the eye gets. */
+.editor :global(.cm-editor .cm-panels .cm-panel.cm-search .cm-button) {
+  font-size: 0;
+}
+
+.editor :global(.cm-editor .cm-panels .cm-panel.cm-search .cm-button)::before {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.editor :global(.cm-editor .cm-panels .cm-panel.cm-search .cm-button[name='next'])::before {
+  content: '↓';
+}
+
+.editor :global(.cm-editor .cm-panels .cm-panel.cm-search .cm-button[name='prev'])::before {
+  content: '↑';
+}
+
+.editor :global(.cm-editor .cm-panels .cm-panel.cm-search .cm-button[name='select']),
+.editor :global(.cm-editor .cm-panels .cm-panel.cm-search label) {
+  display: none;
+}
+
+.editor :global(.cm-editor .cm-panels .cm-panel.cm-search button[name='close']) {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  color: var(--ink-faint);
+  font-size: 16px;
+  line-height: 1;
+  transform: translateY(-50%);
+}
+
+/* The editor could not start: the same text, plain. */
+.plainText {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 10px 24px 72px var(--code-line-pad);
+  overflow: auto;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.7;
+  white-space: pre;
+  tab-size: 4;
+}
+
+.plainText[data-wrap='true'] {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ── changes, edit by edit (fallback when the turn's edits cannot be undone into one text) ─────── */
+.hunks {
+  position: absolute;
+  inset: 0;
+  padding: 10px 0 72px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  /* Code reads at regular weight; the surface's 500 is for interface text. */
+  font-weight: 400;
+  line-height: 1.7;
+  tab-size: 4;
+}
+
+/* As wide as its longest line, so a tint runs the full width of what can be scrolled to. */
+.hunk {
+  width: max-content;
+  min-width: 100%;
+}
+
+.hunks[data-wrap='true'] .hunk {
+  width: auto;
+}
+
+.hunk + .hunk {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.hunkLine {
+  display: flex;
+}
+
+.hunkLine[data-type='add'] {
+  background: var(--code-add);
+}
+
+.hunkLine[data-type='remove'] {
+  background: var(--code-remove);
+}
+
+/* Signs are not part of the code: a selection never picks them up. */
+.hunkSign {
+  flex: none;
+  width: 32px;
+  padding-inline-end: 8px;
+  color: var(--ink-faint);
+  text-align: end;
+  user-select: none;
+}
+
+.hunkText {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-inline-end: 24px;
+  white-space: pre;
+}
+
+.hunks[data-wrap='true'] .hunkText {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.hunkMore {
+  padding: 4px 24px 4px 32px;
+  color: var(--ink-faint);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root .control,
+  .divider,
+  .treeGlyph,
+  .root[data-narrow] .rail,
+  .root[data-narrow][data-tree-open='false'] .rail {
+    transition: none;
+  }
+
+  .liveDot,
+  .skeleton {
+    animation: none;
+  }
+}

@@ -26,7 +26,7 @@ let channels: PaChannelSnapshot;
 function channel(type: PaChannel['type']): PaChannel {
   return {
     ...stamp, id: 'channel', name: 'Dedicated PA', type, enabled: false, targetId: 'a', targetKind: 'agent', allowProject: false,
-    shareGroupMemory: false, allowedSenderIds: [], remoteChatId: null, tenantId: null, authorizationVersion: 1, status: 'disconnected',
+    shareGroupMemory: false, chatMode: 'work', allowedSenderIds: [], remoteChatId: null, tenantId: null, authorizationVersion: 1, status: 'disconnected',
     credentialConfigured: false, accountLabel: null, lastReceivedAt: null, lastSentAt: null, lastError: null,
     capabilities: { direct: true, groups: type === 'feishu', threads: type === 'feishu', files: false, unsolicited: false },
     verification: { inboundAt: null, outboundAt: null, reconnectAt: null, reloginAt: null },
@@ -103,6 +103,50 @@ describe('Fantay connections and background controls', () => {
     await waitFor(() => expect(paRequest).toHaveBeenCalledWith('/channels/channel/feishu', 'POST', expect.objectContaining({ appId: 'cli_test' })));
     await waitFor(() => expect(secret.value).toBe(''));
     expect(screen.queryByText('SYNTHETIC_SECRET')).toBeNull();
+  });
+
+  it('offers all eight platforms in the channel picker', async () => {
+    mount({ place: 'connections' });
+    fireEvent.click(await screen.findByRole('button', { name: paEn['pa.addChannel'] }));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.keyDown(within(dialog).getByRole('combobox', { name: paEn['pa.platform'] }), { key: 'ArrowDown' });
+    for (const platform of [paEn['pa.feishu'], paEn['pa.weixin'], 'DingTalk', 'WeCom', 'QQ', 'Telegram', 'Discord', 'Slack']) {
+      expect(await screen.findByRole('option', { name: platform })).toBeTruthy();
+    }
+  });
+
+  it('starts Feishu authorization and renders the QR through the local endpoint', async () => {
+    channels.channels = [channel('feishu')];
+    extraRoute = (path, method) => {
+      if (path !== '/channels/channel/feishu-registration') return undefined;
+      return method === 'POST' ? {
+        status: 'waiting', expiresAt: 123, authorizationUrl: 'https://open.feishu.cn/page/launcher?user_code=SYNTHETIC',
+        botUrl: null, error: null,
+      } : null;
+    };
+    mount({ place: 'connections' });
+    fireEvent.click(await screen.findByRole('button', { name: /Dedicated PA/ }));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: paEn['pa.channel.createFeishu'] }));
+    const qr = await within(dialog).findByAltText(paEn['pa.channel.feishuQrAlt']);
+    expect(qr.getAttribute('src')).toBe('/api/pa/channels/channel/feishu-registration/qr.png?v=123');
+    expect(within(dialog).getByRole('button', { name: paEn['pa.channel.authorizeFeishu'] })).toBeTruthy();
+  });
+
+  it('shows write-only platform fields for a Slack connection', async () => {
+    channels.channels = [channel('slack')];
+    mount({ place: 'connections' });
+    fireEvent.click(await screen.findByRole('button', { name: /Dedicated PA/ }));
+    const dialog = await screen.findByRole('dialog');
+    const appToken = within(dialog).getByLabelText('App-Level Token') as HTMLInputElement;
+    const botToken = within(dialog).getByLabelText('Bot Token') as HTMLInputElement;
+    expect(appToken.type).toBe('password');
+    expect(botToken.type).toBe('password');
+    fireEvent.change(appToken, { target: { value: 'xapp-test' } });
+    fireEvent.change(botToken, { target: { value: 'xoxb-test' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: paEn['pa.connect'] }));
+    await waitFor(() => expect(paRequest).toHaveBeenCalledWith('/channels/channel/im', 'POST', { appToken: 'xapp-test', botToken: 'xoxb-test' }));
+    await waitFor(() => expect(appToken.value).toBe(''));
   });
 
   it('renders only a local QR-image endpoint, never a provider token in an image URL', async () => {

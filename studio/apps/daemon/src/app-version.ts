@@ -1,7 +1,7 @@
 import { readFile, stat } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join, parse as parsePath } from 'node:path';
-import { releaseChannelFromVersion } from '@open-design/release';
+import { releaseChannelFromVersion, fantayDisplayVersion } from '@open-design/release';
 import { isPackagedKernelVersion, PACKAGED_KERNEL } from '@open-design/sidecar-proto';
 
 export const APP_VERSION_FALLBACK = '0.0.0';
@@ -139,9 +139,9 @@ export function resolveAppVersionInfo({
   arch = process.arch,
 }: ResolveAppVersionInfoOptions = {}): AppVersionInfo {
   const packaged = isPackagedRuntime({ env, resourcesPath, execPath, platform });
-  const version = cleanString(env.OD_APP_VERSION)
+  const version = fantayDisplayVersion(cleanString(env.OD_APP_VERSION)
     ?? cleanString(packageMetadata?.version)
-    ?? APP_VERSION_FALLBACK;
+    ?? APP_VERSION_FALLBACK);
   const inferredChannel = inferReleaseChannelFromVersion(version);
   const channel = cleanString(env.OD_RELEASE_CHANNEL)
     ?? cleanString(env.OD_APP_CHANNEL)

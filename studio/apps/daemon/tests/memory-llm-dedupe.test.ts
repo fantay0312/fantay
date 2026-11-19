@@ -6,7 +6,14 @@ import {
   extractWithLLM,
   __resetMemoryTurnDedupeForTests,
 } from '../src/memory-llm.js';
-import { memoryDir, writeMemoryConfig } from '../src/memory.js';
+import {
+  deriveMemoryId,
+  listMemoryEntries,
+  memoryDir,
+  readMemoryEntry,
+  upsertMemoryEntry,
+  writeMemoryConfig,
+} from '../src/memory.js';
 import { __resetExtractionsForTests } from '../src/memory-extractions.js';
 import { createClaudeStreamHandler } from '../src/runtimes/claude-stream.js';
 
@@ -204,5 +211,83 @@ describe('memory-llm chat extraction: duplicate-turn gate + reply serialization'
     expect(userPayload).not.toContain('hook_started');
     expect(userPayload).not.toContain('stream_event');
     expect(userPayload).not.toContain('"type":"system"');
+  });
+});
+
+describe('memory-llm extraction: a proposed entry never overwrites a different hand-written one', () => {
+  beforeEach(async () => {
+    await fsp.rm(memoryDir(dataDir), { recursive: true, force: true });
+    __resetExtractionsForTests();
+    __resetMemoryTurnDedupeForTests();
+    await writeMemoryConfig(dataDir, {
+      chatExtractionEnabled: true,
+      extraction: { provider: 'openai', apiKey: 'sk-test', model: 'gpt-4o-mini' },
+    });
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    vi.restoreAllMocks();
+  });
+
+  function mockEntries(entries: object[]): void {
+    globalThis.fetch = vi.fn(async () =>
+      new Response(
+        JSON.stringify({ choices: [{ message: { content: JSON.stringify({ entries }) } }] }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    ) as typeof fetch;
+  }
+
+  const MINE = [
+    {
+      id: 'rule_always_use_semantic_html_elements_for_navigation',
+      name: 'Always use semantic HTML elements for navigation menus',
+      description: 'my rule',
+      type: 'rule',
+      body: 'Use <nav> for every menu.',
+    },
+    {
+      id: 'rule_avoid_gradients',
+      name: 'Avoid gradients',
+      description: 'my other rule',
+      type: 'rule',
+      body: 'No gradients.',
+    },
+  ] as const;
+
+  it('writes names that normalize to a hand-written id under fresh ids and leaves the originals alone', async () => {
+    for (const entry of MINE) await upsertMemoryEntry(dataDir, entry);
+    // The premise: the proposed names really do map onto the hand-written ids.
+    expect(deriveMemoryId('rule', 'Always use semantic HTML elements for navigation bars', undefined)).toBe(MINE[0].id);
+    expect(deriveMemoryId('rule', 'Avoid gradients.', undefined)).toBe(MINE[1].id);
+    mockEntries([
+      {
+        type: 'rule',
+        name: 'Always use semantic HTML elements for navigation bars',
+        description: 'model rule',
+        body: 'Use <nav> for navigation bars.',
+      },
+      { type: 'rule', name: 'Avoid gradients.', description: 'model rule', body: 'Prefer flat fills.' },
+    ]);
+
+    const written = await extractWithLLM(
+      dataDir,
+      { userMessage: 'Review comments on the nav and the hero.', assistantMessage: 'Noted.' },
+      { projectRoot: process.cwd(), conversationId: 'conv-collide' },
+    );
+
+    expect(written).toHaveLength(2);
+    for (const entry of written) {
+      expect(MINE.map((m) => m.id)).not.toContain(entry.id);
+    }
+    for (const entry of MINE) {
+      const kept = await readMemoryEntry(dataDir, entry.id);
+      expect(kept).toMatchObject({ name: entry.name, description: entry.description, source: 'manual' });
+      expect(kept!.body.trim()).toBe(entry.body);
+    }
+    expect(await listMemoryEntries(dataDir)).toHaveLength(4);
+    // No previous text was displaced, so there is nothing in .history.
+    await expect(fsp.access(path.join(memoryDir(dataDir), '.history'))).rejects.toThrow();
   });
 });

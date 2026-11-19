@@ -1,0 +1,22 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The 工作 strip (Soul UI spec §6.3): a line tab list under the page title, four tabs inline, full width hairline. */
+
+.tabs {
+  margin-top: 14px;
+}
+
+.list {
+  display: flex;
+  width: 100%;
+  gap: 20px;
+}
+
+.trigger {
+  gap: 6px;
+}
+
+.pill {
+  height: 16px;
+  padding: 0 5px;
+  font-size: 10.5px;
+}

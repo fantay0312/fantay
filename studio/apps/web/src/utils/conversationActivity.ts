@@ -15,7 +15,8 @@ export function hasConversationActivity(
   conversation: Conversation,
   runningIds: ReadonlySet<string> = NO_RUNNING,
 ): boolean {
-  return (conversation.messageCount ?? 0) > 0 || conversation.latestRun != null || runningIds.has(conversation.id);
+  return (conversation.messageCount ?? 0) > 0 || conversation.hasSideDialogue === true
+    || conversation.latestRun != null || runningIds.has(conversation.id);
 }
 
 /** The localStorage key ChatPane keeps one chat's unsent composer text under. */

@@ -14,6 +14,8 @@ import { PaTranscript } from './PaTranscript';
 import { platformName } from './PaTurnTail';
 import { usePa } from './pa-context';
 import { conversationKind } from './pa-model';
+import { soulThemeAttrs, soulThemeStyle } from './soul/soul-theme';
+import { conversationMode, resolveChatAppearance } from './soul/soul-model';
 import styles from './PaConversation.module.css';
 
 export function PaConversationView({ conversationId, active = true }: { conversationId: string | null; active?: boolean }) {
@@ -58,9 +60,19 @@ export function PaConversationView({ conversationId, active = true }: { conversa
   }
 
   const channel = conversationKind(conversation) === 'channel' ? index.channels.get(conversation.channelId ?? '') : undefined;
+  // Companion chats carry the chat's theme on the whole column (header, transcript, the ground around the composer);
+  // work chats keep the default skin (Soul UI spec §4.1, §8.4).
+  const mode = conversationMode(index, conversation);
+  const appearance = mode === 'companion' ? resolveChatAppearance(index, conversation) : null;
 
   return (
-    <div className={styles.view} data-testid="pa-conversation">
+    <div
+      className={styles.view}
+      data-testid="pa-conversation"
+      data-mode={mode}
+      {...(appearance ? soulThemeAttrs(appearance) : {})}
+      style={appearance ? soulThemeStyle(appearance) : undefined}
+    >
       <PaChatHeader conversation={conversation} />
       {channel || conversationKind(conversation) === 'channel' ? (
         <div className={styles.calloutColumn} data-narrow={narrow}>
@@ -75,7 +87,7 @@ export function PaConversationView({ conversationId, active = true }: { conversa
           </Callout>
         </div>
       ) : null}
-      <PaTranscript conversation={conversation} followNonce={followNonce} />
+      <PaTranscript conversation={conversation} mode={mode} followNonce={followNonce} />
       <PaComposer conversation={conversation} active={active} onSent={() => setFollowNonce((n) => n + 1)} />
     </div>
   );

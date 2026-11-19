@@ -1382,3 +1382,48 @@
     transition: none;
   }
 }
+
+/* ── Companion theme scope (Soul UI spec §4.1, §4.2, §8.4) ─────────────────────────────────────
+   In companion mode `.view` carries the chat's `data-pa-skin` (and shape, font, scale, pattern, frame): the paper
+   covers the header, the transcript and the ground around the composer; the composer shell keeps its own surface.
+   Hover fills on the paper use --pa-soul-chrome-hover, never a grey --sub patch. Work mode has no attribute. */
+
+.view[data-pa-skin] {
+  --pa-avatar-collar: var(--pa-skin-paper);
+  background: var(--pa-skin-paper);
+  color: var(--pa-skin-ink);
+  transition: background-color var(--pa-dur-enter) var(--pa-ease);
+}
+
+.view[data-pa-skin] .header {
+  background: var(--pa-skin-paper);
+  transition: background-color var(--pa-dur-enter) var(--pa-ease);
+}
+
+.view[data-pa-skin] .headerTitle,
+.view[data-pa-skin] .headerIdentity {
+  color: var(--pa-skin-ink);
+}
+
+.view[data-pa-skin] .headerSub {
+  color: var(--pa-skin-meta);
+}
+
+.view[data-pa-skin] .headerIdentity:hover,
+.view[data-pa-skin] .headerIdentity:active {
+  --pa-avatar-collar: var(--pa-skin-paper);
+  background: var(--pa-soul-chrome-hover);
+}
+
+.view[data-pa-skin] .header [data-slot='icon-button']:hover:not([data-disabled]),
+.view[data-pa-skin] .header [data-slot='icon-button'][data-state='open'],
+.view[data-pa-skin] .header [data-slot='icon-button'][data-on] {
+  background: var(--pa-soul-chrome-hover);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .view[data-pa-skin],
+  .view[data-pa-skin] .header {
+    transition: none;
+  }
+}

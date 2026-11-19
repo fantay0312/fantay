@@ -273,14 +273,6 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
-.heroModelRow {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  max-width: 100%;
-  justify-content: center;
-  margin-top: 7px;
-}
 .heroMetaBox {
   position: relative;
   z-index: 1;
@@ -418,6 +410,11 @@
   font-variant-numeric: tabular-nums;
   text-align: center;
 }
+/* Companion 记忆 tab: pending 想记下 count in ink (warm stays for needs-you). */
+.tabBadge[data-tone='ink'] {
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+  color: var(--ink-soft);
+}
 
 .pane {
   flex: 1 1 auto;
@@ -467,6 +464,10 @@
   flex-direction: column;
   gap: 12px;
   padding-top: 2px;
+}
+/* Companion panes: block gap 16 (Soul UI spec §5.1). */
+.paneStack[data-gap='soul'] {
+  gap: 16px;
 }
 
 /* ── shared card & section shells ─────────────────────────────────────────────────────── */

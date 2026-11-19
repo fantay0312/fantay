@@ -1,0 +1,14 @@
+﻿{
+  "spec": "chara_card_v2",
+  "spec_version": "2.0",
+  "data": {
+    "name": "  Rin  ",
+    "description": "Line one\r\nLine two\rLine three",
+    "personality": "calm",
+    "first_mes": "Hello\u0000 there.\r\nWelcome back.",
+    "mes_example": "<START>\r\n{{user}}: Hi\r\n{{char}}: Hi.",
+    "alternate_greetings": ["One\r\ntwo"],
+    "tags": ["windows"],
+    "extensions": {}
+  }
+}

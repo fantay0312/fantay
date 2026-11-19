@@ -72,6 +72,7 @@ interface MemoryEntryInput {
   description?: string;
   type: MemoryType;
   body?: string;
+  projectId?: string | null;
 }
 
 interface MemoryAppConfigLike {
@@ -115,12 +116,17 @@ export function registerMemoryRoutes(app: Express, ctx: RegisterMemoryRoutesDeps
   // Markdown-on-disk memory under <dataDir>/memory/. The daemon folds these
   // into every system prompt (gated by `enabled`) and the chat run loop
   // calls `/api/memory/extract` after each turn to sediment new facts.
-  app.get('/api/memory', async (_req, res) => {
+  app.get('/api/memory', async (req, res) => {
     try {
+      const hasProjectParam = Object.prototype.hasOwnProperty.call(req.query, 'projectId');
+      const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : null;
       const [config, index, entries] = await Promise.all([
         readMemoryConfig(RUNTIME_DATA_DIR),
         readMemoryIndex(RUNTIME_DATA_DIR),
-        listMemoryEntries(RUNTIME_DATA_DIR),
+        listMemoryEntries(
+          RUNTIME_DATA_DIR,
+          hasProjectParam ? { projectId } : undefined,
+        ),
       ]);
       res.json({
         enabled: config.enabled,
@@ -141,11 +147,16 @@ export function registerMemoryRoutes(app: Express, ctx: RegisterMemoryRoutesDeps
   // Static sub-resources (`/index`, `/config`, `/extract`) registered
   // BEFORE the `:id` catch-alls so an `index` / `config` / `extract` slug
   // can't shadow the real handlers.
-  app.get('/api/memory/tree', async (_req, res) => {
+  app.get('/api/memory/tree', async (req, res) => {
     try {
+      const hasProjectParam = Object.prototype.hasOwnProperty.call(req.query, 'projectId');
+      const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : null;
       const [config, tree] = await Promise.all([
         readMemoryConfig(RUNTIME_DATA_DIR),
-        buildMemoryTree(RUNTIME_DATA_DIR),
+        buildMemoryTree(
+          RUNTIME_DATA_DIR,
+          hasProjectParam ? { projectId } : undefined,
+        ),
       ]);
       res.json({
         enabled: config.enabled,
@@ -631,9 +642,11 @@ export function registerMemoryRoutes(app: Express, ctx: RegisterMemoryRoutesDeps
   // BYOK turn and passes the result into `composeSystemPrompt`'s
   // `memoryBody` field — without this, the Memory tab is a no-op for
   // BYOK users even though the UI saves model/index/entries for them.
-  app.get('/api/memory/system-prompt', async (_req, res) => {
+  app.get('/api/memory/system-prompt', async (req, res) => {
     try {
-      const body = await composeMemoryBody(RUNTIME_DATA_DIR);
+      const projectId =
+        typeof req.query.projectId === 'string' ? req.query.projectId : null;
+      const body = await composeMemoryBody(RUNTIME_DATA_DIR, { projectId });
       res.json({ body });
     } catch (err) {
       res.status(500).json({ error: errorMessage(err) });

@@ -1,0 +1,42 @@
+{
+  "entries": {
+    "0": {
+      "uid": 0, "key": ["harbor", "port"], "keysecondary": [], "comment": "Harbor", "content": "The harbor smells of tar.",
+      "constant": false, "selective": true, "selectiveLogic": 0, "order": 100, "position": 0, "disable": false,
+      "depth": 4, "role": 0, "probability": 100, "useProbability": true, "group": "", "displayIndex": 0, "addMemo": true
+    },
+    "1": {
+      "uid": 1, "key": ["lamp"], "keysecondary": ["night"], "comment": "Lamp", "content": "The lamp burns whale oil.",
+      "position": 1, "order": 50, "disable": false, "selectiveLogic": 1
+    },
+    "2": { "uid": 2, "key": ["storm"], "comment": "Author note top", "content": "Storms come from the east.", "position": 2, "depth": 9, "role": 2 },
+    "3": { "uid": 3, "key": ["tide"], "comment": "Author note bottom", "content": "Tides are high in autumn.", "position": 3 },
+    "4": { "uid": 4, "key": ["bell"], "comment": "At depth", "content": "The bell rings twice.", "position": 4, "depth": 2, "role": 1 },
+    "5": { "uid": 5, "key": ["fog"], "comment": "Examples top", "content": "Fog swallows the pier.", "position": 5 },
+    "6": { "uid": 6, "key": ["gull"], "comment": "Examples bottom", "content": "Gulls steal bread.", "position": 6 },
+    "7": { "uid": 7, "key": ["ledger"], "comment": "Outlet", "content": "The ledger lists every ship.", "position": 7, "outletName": "ledger" },
+    "8": {
+      "uid": 8, "key": ["/harbou?r master/i", "码头，灯塔", "/(a+)+$/"], "comment": "Regex keys",
+      "content": "The harbour master is called Ines.", "position": 0, "caseSensitive": true, "matchWholeWords": false
+    },
+    "9": {
+      "uid": 9, "key": ["variables"], "comment": "Template code",
+      "content": "<% if (getvar('trust') > 5) { %>\n_.set('door', 'open')\n<% } %>", "position": 0
+    },
+    "10": {
+      "uid": 10, "key": ["wreck"], "comment": "Disabled with groups", "content": "A wreck lies off the point.", "position": 0,
+      "disable": true, "group": "Weather, Night,weather", "groupOverride": true, "groupWeight": "50", "useProbability": true,
+      "probability": 30, "sticky": null, "cooldown": "2", "delay": 1, "delayUntilRecursion": 1, "scanDepth": 6,
+      "excludeRecursion": true, "preventRecursion": true, "ignoreBudget": true, "vectorized": true
+    },
+    "11": {
+      "uid": 11, "key": [], "comment": "Vectorized", "content": "Rumours about the lighthouse.", "position": 0,
+      "vectorized": true, "useProbability": false, "probability": 10, "constant": true
+    },
+    "notes": {
+      "uid": 12, "key": "rope, knot,", "comment": "Non-numeric key",
+      "content": "@@scan_depth 2\n@@dont_activate\nRope knots tell stories.", "position": 0, "role": "assistant"
+    }
+  },
+  "originalData": { "name": "Harbor Lore", "entries": [] }
+}

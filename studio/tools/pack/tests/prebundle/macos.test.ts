@@ -82,6 +82,7 @@ describe("mac standalone prebundle policy", () => {
       ).toBe(false);
     }
     for (const packageName of [
+      "@fantay/native-web-search",
       "@open-design/contracts",
       "@open-design/platform",
       "@open-design/sidecar",
@@ -96,6 +97,7 @@ describe("mac standalone prebundle policy", () => {
     expect(MAC_PREBUNDLE_ESBUILD_TARGET).toBe("node24");
     expect(MAC_PREBUNDLE_POLICIES.packagedMain.externals).toEqual(["@open-design/sidecar", "electron", "sharp"]);
     expect(MAC_PREBUNDLE_POLICIES.daemonCli.externals).toEqual([
+      "@fantay/native-web-search",
       "@ffmpeg-installer/ffmpeg",
       "@ffprobe-installer/ffprobe",
       "@larksuiteoapi/node-sdk",
@@ -106,8 +108,12 @@ describe("mac standalone prebundle policy", () => {
       "hyperframes",
       "gsap",
       "node-pty",
+      "onnxruntime-node",
+      "pdfjs-dist",
+      "silk-wasm",
     ]);
     expect(MAC_PREBUNDLE_POLICIES.daemonSidecar.externals).toEqual([
+      "@fantay/native-web-search",
       "@ffmpeg-installer/ffmpeg",
       "@ffprobe-installer/ffprobe",
       "@larksuiteoapi/node-sdk",
@@ -118,6 +124,9 @@ describe("mac standalone prebundle policy", () => {
       "hyperframes",
       "gsap",
       "node-pty",
+      "onnxruntime-node",
+      "pdfjs-dist",
+      "silk-wasm",
     ]);
     expect(MAC_PREBUNDLE_POLICIES.webSidecar.externals).toEqual(["@open-design/sidecar"]);
     expect(MAC_DAEMON_PREBUNDLE_ESM_REQUIRE_BANNER).toContain("createRequire");
@@ -133,7 +142,9 @@ describe("mac standalone prebundle policy", () => {
       "hyperframes": "0.8.1",
       "gsap": "3.14.2",
       "node-pty": "1.1.0",
+      "pdfjs-dist": "6.5.438",
       "sharp": "0.35.3",
+      "silk-wasm": "3.7.1",
     });
     expect(MAC_PREBUNDLE_COPIED_RUNTIME_DEPENDENCIES).toEqual({ "fsevents": "2.3.3" });
     expect(MAC_PREBUNDLED_DAEMON_CLI_RELATIVE_PATH).toBe("app/prebundled/daemon/daemon-cli.mjs");

@@ -127,3 +127,437 @@
   --pa-scrollbar-track: transparent;
   --pa-pane-x: 0px;
 }
+
+/*
+ * ── Soul (companion chat) tokens — Soul UI spec §8.2–8.4 ──
+ * Two families. `--pa-soul-*` are mode-dependent chrome values (portrait ring, tags, state bars, chrome hover on a
+ * theme paper, the drop veil, pattern alphas). `--pa-skin-*` are the transcript theme: one block per theme and mode,
+ * applied by `data-pa-skin` on the element that owns a themed area (soul/soul-theme.ts). The default skin is also
+ * declared on :root, so every PA module may read `--pa-skin-*` and a surface outside a theme scope shows the default
+ * look. Shape, font and scale are separate attributes (`data-pa-shape`, `data-pa-font`, `data-pa-scale`).
+ * Contrast (WCAG relative luminance, every theme and mode): ink, soft and meta on paper and card-bg; bubble ink and
+ * soft on their fill; accent on paper and card-bg; accent-ink on accent; link on the incoming fill — all ≥ 4.5:1
+ * (lowest: light 5.14 deepsea, dark 5.43 rain). The quote bar is ≥ 3:1 on its bubble.
+ */
+:root {
+  --pa-soul-font-serif: 'Songti SC', STSong, 'Noto Serif CJK SC', 'Source Han Serif SC', SimSun, Georgia, serif;
+  --pa-soul-font-kai: 'Kaiti SC', STKaiti, KaiTi, 'AR PL UKai CN', 'Songti SC', serif;
+  --pa-loop-typing: 1.2s;
+}
+
+:root,
+[data-theme='light'] {
+  --pa-soul-portrait-ring: color-mix(in srgb, var(--ink) 8%, transparent);
+  --pa-soul-tag-bg: color-mix(in srgb, var(--ink) 6%, transparent);
+  --pa-soul-tag-ink: var(--ink-soft);
+  --pa-soul-bar-track: var(--line);
+  --pa-soul-bar-fill: var(--ink);
+  --pa-soul-chrome-hover: color-mix(in srgb, var(--ink) 6%, transparent);
+  --pa-soul-veil: color-mix(in srgb, var(--paper) 88%, transparent);
+  --pa-soul-pattern-line: 9%;
+  --pa-soul-pattern-dot: 22%;
+}
+
+[data-theme='dark'] {
+  --pa-soul-portrait-ring: color-mix(in srgb, var(--ink) 12%, transparent);
+  --pa-soul-tag-bg: color-mix(in srgb, var(--ink) 10%, transparent);
+  --pa-soul-tag-ink: var(--ink-soft);
+  --pa-soul-bar-track: var(--line);
+  --pa-soul-bar-fill: var(--ink);
+  --pa-soul-chrome-hover: color-mix(in srgb, var(--ink) 9%, transparent);
+  --pa-soul-veil: color-mix(in srgb, var(--paper) 88%, transparent);
+  --pa-soul-pattern-line: 7%;
+  --pa-soul-pattern-dot: 18%;
+}
+
+/* ── Soul: bubble shape, font and scale (mode-independent; soft / ui / md are the defaults) ── */
+:root,
+[data-pa-shape='soft'] {
+  --pa-skin-radius: 14px;
+  --pa-skin-radius-join: 6px;
+  --pa-skin-radius-tail: 4px;
+}
+[data-pa-shape='round'] {
+  --pa-skin-radius: 18px;
+  --pa-skin-radius-join: 6px;
+  --pa-skin-radius-tail: 4px;
+}
+[data-pa-shape='square'] {
+  --pa-skin-radius: 6px;
+  --pa-skin-radius-join: 6px;
+  --pa-skin-radius-tail: 2px;
+}
+:root,
+[data-pa-font='ui'] {
+  --pa-skin-font: var(--font-ui);
+}
+[data-pa-font='serif'] {
+  --pa-skin-font: var(--pa-soul-font-serif);
+}
+[data-pa-font='kai'] {
+  --pa-skin-font: var(--pa-soul-font-kai);
+}
+[data-pa-font='mono'] {
+  --pa-skin-font: var(--font-mono);
+}
+:root,
+[data-pa-scale='md'] {
+  --pa-skin-size: 14px;
+}
+[data-pa-scale='sm'] {
+  --pa-skin-size: 13px;
+}
+[data-pa-scale='lg'] {
+  --pa-skin-size: 15.5px;
+}
+
+/* ── Soul: themes (light rule, then its dark rule). The default skin is also the value outside any scope. ── */
+/* fantay 默认: base-token references, so the default chat tracks the app look exactly. */
+:root,
+[data-theme='light'],
+[data-pa-skin='fantay'] {
+  --pa-skin-paper: var(--paper);
+  --pa-skin-ink: var(--ink);
+  --pa-skin-soft: var(--ink-soft);
+  --pa-skin-meta: var(--ink-soft);
+  --pa-skin-line: var(--line);
+  --pa-skin-in-bg: var(--sub);
+  --pa-skin-in-ink: var(--ink);
+  --pa-skin-in-soft: var(--ink-soft);
+  --pa-skin-in-border: transparent;
+  --pa-skin-out-bg: var(--brand);
+  --pa-skin-out-ink: var(--on-brand);
+  --pa-skin-out-soft: var(--ink-ghost);
+  --pa-skin-out-border: transparent;
+  --pa-skin-accent: var(--ink);
+  --pa-skin-accent-ink: var(--paper);
+  --pa-skin-link: var(--ink);
+  --pa-skin-quote: var(--ink);
+  --pa-skin-card-bg: var(--surface);
+  --pa-skin-pattern-ink: var(--ink);
+  --pa-skin-out-weight: 500;
+  --pa-skin-display-font: var(--font-ui);
+}
+[data-theme='dark'],
+[data-theme='dark'] [data-pa-skin='fantay'] {
+  --pa-skin-paper: var(--paper);
+  --pa-skin-ink: var(--ink);
+  --pa-skin-soft: var(--ink-soft);
+  --pa-skin-meta: var(--ink-soft);
+  --pa-skin-line: var(--line);
+  --pa-skin-in-bg: var(--sub);
+  --pa-skin-in-ink: var(--ink);
+  --pa-skin-in-soft: var(--ink-soft);
+  --pa-skin-in-border: transparent;
+  --pa-skin-out-bg: var(--brand-soft);
+  --pa-skin-out-ink: var(--ink);
+  --pa-skin-out-soft: var(--ink-soft);
+  --pa-skin-out-border: transparent;
+  --pa-skin-accent: var(--ink);
+  --pa-skin-accent-ink: var(--paper);
+  --pa-skin-link: var(--ink);
+  --pa-skin-quote: var(--ink);
+  --pa-skin-card-bg: var(--surface);
+  --pa-skin-pattern-ink: var(--ink);
+  --pa-skin-out-weight: 400;
+}
+/* clean 清简 */
+[data-pa-skin='clean'] {
+  --pa-skin-paper: #f6f8f3;
+  --pa-skin-ink: #1a2a24;
+  --pa-skin-soft: #44554d;
+  --pa-skin-meta: #5a6961;
+  --pa-skin-line: #d5dfd6;
+  --pa-skin-in-bg: #ffffff;
+  --pa-skin-in-ink: #1a2a24;
+  --pa-skin-in-soft: #4f5f57;
+  --pa-skin-in-border: #e0e8e0;
+  --pa-skin-out-bg: #dcefdc;
+  --pa-skin-out-ink: #16281f;
+  --pa-skin-out-soft: #3f5a4a;
+  --pa-skin-out-border: #c9e2cb;
+  --pa-skin-accent: #215a45;
+  --pa-skin-accent-ink: #ffffff;
+  --pa-skin-link: #215a45;
+  --pa-skin-quote: #215a45;
+  --pa-skin-card-bg: #fbfcf9;
+  --pa-skin-pattern-ink: #215a45;
+  --pa-skin-out-weight: 400;
+  --pa-skin-display-font: var(--font-ui);
+}
+[data-theme='dark'] [data-pa-skin='clean'] {
+  --pa-skin-paper: #19221f;
+  --pa-skin-ink: #edf3ef;
+  --pa-skin-soft: #b3c2ba;
+  --pa-skin-meta: #94a59c;
+  --pa-skin-line: #2d3b35;
+  --pa-skin-in-bg: #232e2a;
+  --pa-skin-in-ink: #edf3ef;
+  --pa-skin-in-soft: #adbdb4;
+  --pa-skin-in-border: #2f3d37;
+  --pa-skin-out-bg: #24493a;
+  --pa-skin-out-ink: #eaf5ee;
+  --pa-skin-out-soft: #b4d3c2;
+  --pa-skin-out-border: transparent;
+  --pa-skin-accent: #74c6a3;
+  --pa-skin-accent-ink: #0e221a;
+  --pa-skin-link: #74c6a3;
+  --pa-skin-quote: #74c6a3;
+  --pa-skin-card-bg: #1e2925;
+  --pa-skin-pattern-ink: #74c6a3;
+  --pa-skin-out-weight: 400;
+}
+/* sakura 樱花手帐 */
+[data-pa-skin='sakura'] {
+  --pa-skin-paper: #fdf7f8;
+  --pa-skin-ink: #3a2a33;
+  --pa-skin-soft: #65505b;
+  --pa-skin-meta: #7a626d;
+  --pa-skin-line: #f0dbe2;
+  --pa-skin-in-bg: #ffffff;
+  --pa-skin-in-ink: #3a2a33;
+  --pa-skin-in-soft: #6c5662;
+  --pa-skin-in-border: #f3d9e2;
+  --pa-skin-out-bg: #f9dfe8;
+  --pa-skin-out-ink: #4a2334;
+  --pa-skin-out-soft: #7a4a5e;
+  --pa-skin-out-border: #f0c9d6;
+  --pa-skin-accent: #943b57;
+  --pa-skin-accent-ink: #ffffff;
+  --pa-skin-link: #943b57;
+  --pa-skin-quote: #943b57;
+  --pa-skin-card-bg: #fffafb;
+  --pa-skin-pattern-ink: #943b57;
+  --pa-skin-out-weight: 400;
+  --pa-skin-display-font: var(--pa-soul-font-kai);
+}
+[data-theme='dark'] [data-pa-skin='sakura'] {
+  --pa-skin-paper: #211a1e;
+  --pa-skin-ink: #f6eaef;
+  --pa-skin-soft: #cdb9c2;
+  --pa-skin-meta: #ad98a2;
+  --pa-skin-line: #3a2e34;
+  --pa-skin-in-bg: #2c2328;
+  --pa-skin-in-ink: #f6eaef;
+  --pa-skin-in-soft: #c7b2bc;
+  --pa-skin-in-border: #3d3037;
+  --pa-skin-out-bg: #5a2c3f;
+  --pa-skin-out-ink: #fdeaf1;
+  --pa-skin-out-soft: #e3b9c8;
+  --pa-skin-out-border: transparent;
+  --pa-skin-accent: #f09bb4;
+  --pa-skin-accent-ink: #281019;
+  --pa-skin-link: #f09bb4;
+  --pa-skin-quote: #f09bb4;
+  --pa-skin-card-bg: #271f23;
+  --pa-skin-pattern-ink: #f09bb4;
+  --pa-skin-out-weight: 400;
+}
+/* archive 旧档案 */
+[data-pa-skin='archive'] {
+  --pa-skin-paper: #f7f1e3;
+  --pa-skin-ink: #2b2723;
+  --pa-skin-soft: #5c5348;
+  --pa-skin-meta: #6a6156;
+  --pa-skin-line: #e0d6c2;
+  --pa-skin-in-bg: #fffaf0;
+  --pa-skin-in-ink: #2b2723;
+  --pa-skin-in-soft: #5f564b;
+  --pa-skin-in-border: #e2d7c0;
+  --pa-skin-out-bg: #eadfc8;
+  --pa-skin-out-ink: #2b2420;
+  --pa-skin-out-soft: #5a4f42;
+  --pa-skin-out-border: #d9cbae;
+  --pa-skin-accent: #7d3225;
+  --pa-skin-accent-ink: #fffaf5;
+  --pa-skin-link: #7d3225;
+  --pa-skin-quote: #7d3225;
+  --pa-skin-card-bg: #fbf6ea;
+  --pa-skin-pattern-ink: #7d3225;
+  --pa-skin-out-weight: 400;
+  --pa-skin-display-font: var(--pa-soul-font-serif);
+}
+[data-theme='dark'] [data-pa-skin='archive'] {
+  --pa-skin-paper: #211d16;
+  --pa-skin-ink: #efe7d8;
+  --pa-skin-soft: #c4b9a5;
+  --pa-skin-meta: #a3987f;
+  --pa-skin-line: #3a3327;
+  --pa-skin-in-bg: #2b261d;
+  --pa-skin-in-ink: #efe7d8;
+  --pa-skin-in-soft: #beb39f;
+  --pa-skin-in-border: #3d3629;
+  --pa-skin-out-bg: #4a3a28;
+  --pa-skin-out-ink: #f5ead6;
+  --pa-skin-out-soft: #d6c4a4;
+  --pa-skin-out-border: transparent;
+  --pa-skin-accent: #e69a88;
+  --pa-skin-accent-ink: #26110c;
+  --pa-skin-link: #e69a88;
+  --pa-skin-quote: #e69a88;
+  --pa-skin-card-bg: #262118;
+  --pa-skin-pattern-ink: #e69a88;
+  --pa-skin-out-weight: 400;
+}
+/* rain 夜雨 */
+[data-pa-skin='rain'] {
+  --pa-skin-paper: #f2f5fa;
+  --pa-skin-ink: #1c2533;
+  --pa-skin-soft: #4a5669;
+  --pa-skin-meta: #5b677a;
+  --pa-skin-line: #d9e0ea;
+  --pa-skin-in-bg: #ffffff;
+  --pa-skin-in-ink: #1c2533;
+  --pa-skin-in-soft: #4f5b6e;
+  --pa-skin-in-border: #dde4ee;
+  --pa-skin-out-bg: #2e4e7e;
+  --pa-skin-out-ink: #ffffff;
+  --pa-skin-out-soft: #c9d8f0;
+  --pa-skin-out-border: transparent;
+  --pa-skin-accent: #2e4e7e;
+  --pa-skin-accent-ink: #ffffff;
+  --pa-skin-link: #2e4e7e;
+  --pa-skin-quote: #2e4e7e;
+  --pa-skin-card-bg: #f8fafd;
+  --pa-skin-pattern-ink: #2e4e7e;
+  --pa-skin-out-weight: 500;
+  --pa-skin-display-font: var(--font-ui);
+}
+[data-theme='dark'] [data-pa-skin='rain'] {
+  --pa-skin-paper: #171d26;
+  --pa-skin-ink: #e8eef7;
+  --pa-skin-soft: #b1bdcf;
+  --pa-skin-meta: #909db2;
+  --pa-skin-line: #2a3342;
+  --pa-skin-in-bg: #212938;
+  --pa-skin-in-ink: #e8eef7;
+  --pa-skin-in-soft: #aab7ca;
+  --pa-skin-in-border: #2d3748;
+  --pa-skin-out-bg: #2f4f80;
+  --pa-skin-out-ink: #f2f6fc;
+  --pa-skin-out-soft: #c3d3ec;
+  --pa-skin-out-border: transparent;
+  --pa-skin-accent: #8fb4eb;
+  --pa-skin-accent-ink: #0e1a2b;
+  --pa-skin-link: #8fb4eb;
+  --pa-skin-quote: #8fb4eb;
+  --pa-skin-card-bg: #1c2330;
+  --pa-skin-pattern-ink: #8fb4eb;
+  --pa-skin-out-weight: 500;
+}
+/* ink 水墨 */
+[data-pa-skin='ink'] {
+  --pa-skin-paper: #f8f5ee;
+  --pa-skin-ink: #24221f;
+  --pa-skin-soft: #55514a;
+  --pa-skin-meta: #696459;
+  --pa-skin-line: #e2dccf;
+  --pa-skin-in-bg: #fdfbf5;
+  --pa-skin-in-ink: #24221f;
+  --pa-skin-in-soft: #58544c;
+  --pa-skin-in-border: #ddd5c4;
+  --pa-skin-out-bg: #e4e9e0;
+  --pa-skin-out-ink: #232822;
+  --pa-skin-out-soft: #4f584d;
+  --pa-skin-out-border: #d3dacd;
+  --pa-skin-accent: #8c271e;
+  --pa-skin-accent-ink: #fffaf5;
+  --pa-skin-link: #8c271e;
+  --pa-skin-quote: #8c271e;
+  --pa-skin-card-bg: #fbf9f3;
+  --pa-skin-pattern-ink: #24221f;
+  --pa-skin-out-weight: 400;
+  --pa-skin-display-font: var(--pa-soul-font-kai);
+}
+[data-theme='dark'] [data-pa-skin='ink'] {
+  --pa-skin-paper: #1c1b19;
+  --pa-skin-ink: #ece8df;
+  --pa-skin-soft: #bdb8ac;
+  --pa-skin-meta: #9b9689;
+  --pa-skin-line: #34322d;
+  --pa-skin-in-bg: #262522;
+  --pa-skin-in-ink: #ece8df;
+  --pa-skin-in-soft: #b7b2a6;
+  --pa-skin-in-border: #383630;
+  --pa-skin-out-bg: #353d35;
+  --pa-skin-out-ink: #eef1ea;
+  --pa-skin-out-soft: #c0c9bd;
+  --pa-skin-out-border: transparent;
+  --pa-skin-accent: #e58a7d;
+  --pa-skin-accent-ink: #2a0f0b;
+  --pa-skin-link: #e58a7d;
+  --pa-skin-quote: #e58a7d;
+  --pa-skin-card-bg: #21201d;
+  --pa-skin-pattern-ink: #ece8df;
+  --pa-skin-out-weight: 400;
+}
+/* deepsea 深海 */
+[data-pa-skin='deepsea'] {
+  --pa-skin-paper: #eef5f5;
+  --pa-skin-ink: #12292e;
+  --pa-skin-soft: #40585c;
+  --pa-skin-meta: #536b6f;
+  --pa-skin-line: #cfe0e0;
+  --pa-skin-in-bg: #1d4d57;
+  --pa-skin-in-ink: #f0fafa;
+  --pa-skin-in-soft: #b9d8da;
+  --pa-skin-in-border: transparent;
+  --pa-skin-out-bg: #223f5c;
+  --pa-skin-out-ink: #f2f7fc;
+  --pa-skin-out-soft: #c0d0e2;
+  --pa-skin-out-border: transparent;
+  --pa-skin-accent: #17707a;
+  --pa-skin-accent-ink: #ffffff;
+  --pa-skin-link: #f0fafa;
+  --pa-skin-quote: #b9d8da;
+  --pa-skin-card-bg: #f6fafa;
+  --pa-skin-pattern-ink: #17707a;
+  --pa-skin-out-weight: 500;
+  --pa-skin-display-font: var(--font-mono);
+}
+[data-theme='dark'] [data-pa-skin='deepsea'] {
+  --pa-skin-paper: #0f1a1f;
+  --pa-skin-ink: #e3f1f2;
+  --pa-skin-soft: #a9c3c6;
+  --pa-skin-meta: #88a4a8;
+  --pa-skin-line: #20323a;
+  --pa-skin-in-bg: #173b44;
+  --pa-skin-in-ink: #e9f6f6;
+  --pa-skin-in-soft: #add0d2;
+  --pa-skin-in-border: #1f4a54;
+  --pa-skin-out-bg: #1f3a56;
+  --pa-skin-out-ink: #eef4fb;
+  --pa-skin-out-soft: #b9cbe0;
+  --pa-skin-out-border: transparent;
+  --pa-skin-accent: #6fd0d6;
+  --pa-skin-accent-ink: #06262a;
+  --pa-skin-link: #6fd0d6;
+  --pa-skin-quote: #6fd0d6;
+  --pa-skin-card-bg: #142229;
+  --pa-skin-pattern-ink: #6fd0d6;
+  --pa-skin-out-weight: 500;
+}
+
+/* ── Soul stage 2 (mode-independent): the polaroid tilt inside a transcript, the standing-picture column, the live
+   caret's blink. ── */
+:root {
+  --pa-soul-polaroid-tilt: -2deg;
+  --pa-soul-stage-w: 220px;
+  --pa-loop-caret: 1s;
+}
+
+/* ── Soul: custom accent (inline --pa-accent-* from soul-theme.ts; the engine's guardAccent keeps it readable) ── */
+[data-pa-accent] {
+  --pa-skin-accent: var(--pa-accent-l);
+  --pa-skin-accent-ink: var(--pa-accent-ink-l);
+  --pa-skin-link: var(--pa-link-l);
+  --pa-skin-quote: var(--pa-link-l);
+  --pa-skin-pattern-ink: var(--pa-accent-l);
+}
+[data-theme='dark'] [data-pa-accent] {
+  --pa-skin-accent: var(--pa-accent-d);
+  --pa-skin-accent-ink: var(--pa-accent-ink-d);
+  --pa-skin-link: var(--pa-link-d);
+  --pa-skin-quote: var(--pa-link-d);
+  --pa-skin-pattern-ink: var(--pa-accent-d);
+}

@@ -12,6 +12,7 @@
  *   frame and commits one transaction on release.
  */
 import {
+  BOARD_LIMITS,
   findGroupDropTarget,
   type BoardGeometryNode,
 } from '@open-design/contracts';
@@ -534,7 +535,65 @@ export function createPointerController(deps: PointerControllerDeps): PointerCon
   }
 
   /* ── draw ─────────────────────────────────────────────────────────────────────────────── */
+  function startPen(event: PointerEvent): void {
+    let samples = [toWorld(event)];
+    const first = samples[0]!;
+    let left = first.x, right = first.x, top = first.y, bottom = first.y;
+    let spacing = 0.8 / camera.get().zoom;
+    store.setUi({ selection: [], mode: null, interaction: 'drawing' });
+
+    function append(ev: PointerEvent): void {
+      const point = toWorld(ev);
+      const last = samples[samples.length - 1]!;
+      if (Math.hypot(last.x - point.x, last.y - point.y) < spacing) return;
+      if (samples.length >= 4096) {
+        samples = samples.filter((_, index) => index % 2 === 0);
+        spacing *= 2;
+      }
+      samples.push(point);
+      left = Math.min(left, point.x);
+      right = Math.max(right, point.x);
+      top = Math.min(top, point.y);
+      bottom = Math.max(bottom, point.y);
+    }
+
+    function stroke() {
+      const w = Math.max(BOARD_LIMITS.minNodeSize, right - left + 4);
+      const h = Math.max(BOARD_LIMITS.minNodeSize, bottom - top + 4);
+      const rect = { x: (left + right - w) / 2, y: (top + bottom - h) / 2, w, h };
+      const coordinates = samples.map(p => `${Math.round((p.x - rect.x) * 1000 / w)},${Math.round((p.y - rect.y) * 1000 / h)}`);
+      // A zero-length segment with round caps is a dot.
+      if (coordinates.length === 1) coordinates.push(coordinates[0]!);
+      return { rect, points: coordinates.join(' ') };
+    }
+
+    const batch = frameBatcher(() => store.setPreview({ rects: new Map(), draw: { tool: 'pen', ...stroke() } }));
+    begin({
+      pointerId: event.pointerId,
+      move(ev) {
+        const coalesced = ev.getCoalescedEvents?.();
+        if (coalesced) coalesced.forEach(append);
+        append(ev);
+        batch.push(ev);
+      },
+      up(ev) {
+        append(ev);
+        batch.stop();
+        end();
+        store.setPreview(null);
+        if (state().readOnly) return;
+        const { rect, points } = stroke();
+        commands.addNode({ kind: 'shape', ...rect, data: { shape: 'freehand', points, stroke: 'ink', strokeWidth: 2 } });
+      },
+      cancel() { batch.stop(); },
+    });
+  }
+
   function startDraw(event: PointerEvent, tool: BoardTool): void {
+    if (tool === 'pen') {
+      startPen(event);
+      return;
+    }
     const origin = toWorld(event);
     let moved = false;
     let latest: Rect = { x: origin.x, y: origin.y, w: 0, h: 0 };

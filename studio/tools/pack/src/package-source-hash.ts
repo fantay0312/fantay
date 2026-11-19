@@ -10,9 +10,15 @@ async function readNormalizedFile(filePath: string): Promise<Buffer | string> {
   return await readFile(filePath);
 }
 
-export async function hashPackageSourcePath(path: string, options: { ignorePaths?: readonly string[] } = {}): Promise<string> {
+export function packageSourceHashOptions(name: string): { ignorePaths?: readonly string[]; ignoreDirectoryNames?: readonly string[] } {
+  if (name === '@open-design/web') return { ignorePaths: ['public/canvas-editor', 'public/canvaskit'] };
+  if (name === '@fantay/native-web-search') return { ignorePaths: ['runtime', '.tmp'], ignoreDirectoryNames: ['.venv', '__pycache__', '.pytest_cache', 'smart_search.egg-info', '.DS_Store'] };
+  return {};
+}
+
+export async function hashPackageSourcePath(path: string, options: { ignorePaths?: readonly string[]; ignoreDirectoryNames?: readonly string[] } = {}): Promise<string> {
   const hash = createHash("sha256");
-  const ignoredDirectoryNames = new Set([".next", ".od", "dist", "node_modules", "out"]);
+  const ignoredDirectoryNames = new Set([".next", ".od", "dist", "node_modules", "out", ...options.ignoreDirectoryNames ?? []]);
 
   async function visit(current: string, root: string): Promise<void> {
     const metadata = await lstat(current);

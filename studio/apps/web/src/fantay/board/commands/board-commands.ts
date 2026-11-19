@@ -757,6 +757,7 @@ export function createBoardCommands(deps: BoardCommandsDeps): BoardCommands {
         return;
       case 'note':
       case 'shape':
+        if (node.kind === 'shape' && node.data.shape === 'freehand') return;
         if (!state().readOnly) store.setUi({ editingTextId: id, selection: [id] });
         return;
       case 'design':
@@ -891,7 +892,8 @@ export function createBoardCommands(deps: BoardCommandsDeps): BoardCommands {
     setMode,
     setTool,
     startTextEdit(id) {
-      if (state().readOnly || !doc().nodes.has(id)) return;
+      const node = doc().nodes.get(id);
+      if (state().readOnly || !node || (node.kind === 'shape' && node.data.shape === 'freehand')) return;
       store.setUi({ editingTextId: id, selection: [id] });
     },
     stopTextEdit() {

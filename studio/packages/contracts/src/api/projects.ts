@@ -408,6 +408,8 @@ export interface ProjectTabsState {
 }
 
 export interface Conversation {
+  /** Its bound side chat can contain the user's only draft or conversation. */
+  hasSideDialogue?: boolean;
   id: string;
   projectId: string;
   title: string | null;

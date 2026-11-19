@@ -57,7 +57,6 @@ function renderPanel(files: ProjectFile[]) {
       onUpload={vi.fn()}
       onUploadFiles={vi.fn()}
       onPaste={vi.fn()}
-      onNewSketch={vi.fn()}
     />,
   );
 }

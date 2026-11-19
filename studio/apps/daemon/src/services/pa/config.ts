@@ -31,11 +31,28 @@ const secretSchema = z.discriminatedUnion("type", [
     mount: id, path: z.string().regex(/^[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_-]+)*$/).max(300), field: id,
   }).strict(),
 ]);
+/** Capabilities a member holds on top of the role. `library.manage`: agents, group chats, characters, world books and
+ *  style presets (an admin always manages them). */
+export const paMemberPermissions = z.enum(["library.manage"]);
+/** One member as the daemon enforces it. `groups` are every organization group of the member: a library item synced
+ *  for certain groups is shown only to their members. */
+export const paMemberSchema = z.object({
+  id, role: roles, group: id, tokenSha256: hash, grantVersion: epoch, expiresAt: epoch,
+  permissions: z.array(paMemberPermissions).max(paMemberPermissions.options.length).default([]),
+  groups: z.array(id).max(50).default([]),
+}).strict();
 const enterpriseSchema = z.object({
   tenantId: id,
-  members: z.array(z.object({
-    id, role: roles, group: id, tokenSha256: hash, grantVersion: epoch, expiresAt: epoch,
-  }).strict()).min(1).max(1000),
+  /** With `orgServer` this is only the directory used until the first sync; afterwards the server's list replaces it. */
+  members: z.array(paMemberSchema).max(10000).default([]),
+  /** The organization server this daemon follows: it pulls the member directory and the shared library from it, and
+   *  the library is then changed only there. `credentialFile` holds a service credential with the `directory.sync`
+   *  and `library.sync` scopes. */
+  orgServer: z.object({
+    url: z.string().url(),
+    credentialFile: z.string().min(1).max(1024),
+    refreshSeconds: z.number().int().min(10).max(3600).default(60),
+  }).strict().optional(),
   budgets: z.object({ tenant: quota, groups: z.record(id, quota), roles: z.record(roles, quota) }).strict(),
   gateway: z.object({
     endpoint: z.string().url(), secret: secretSchema,
@@ -59,8 +76,11 @@ const configSchema = z.object({
   const reject = (message: string) => ctx.addIssue({ code: "custom", message });
   if ((config.mode === "enterprise") !== Boolean(config.enterprise)) reject("Enterprise mode requires enterprise configuration");
   const members = config.enterprise?.members ?? [];
-  if (config.enterprise && !members.some(member => member.role === "admin")) reject("An enterprise administrator is required");
+  const linked = Boolean(config.enterprise?.orgServer);
+  if (config.enterprise && !linked && !members.some(member => member.role === "admin")) reject("An enterprise administrator is required");
   if (config.enterprise && members.some(member => !config.enterprise?.budgets.groups[member.group])) reject("Every member group requires a quota");
+  // A synced member whose group has no quota of its own is budgeted under `default`.
+  if (linked && !config.enterprise?.budgets.groups.default) reject("An organization server needs a `default` group quota");
   if (config.enterprise && roles.options.some(role => !config.enterprise?.budgets.roles[role])) reject("Every enterprise role requires a quota");
   for (const values of [
     members.map(member => member.id), config.workers.map(worker => worker.id),
@@ -72,6 +92,9 @@ export type PaConfig = z.infer<typeof configSchema>;
 export type PaEnterpriseConfig = NonNullable<PaConfig["enterprise"]>;
 export type PaMember = PaEnterpriseConfig["members"][number];
 export type PaWorkerIdentity = PaConfig["workers"][number];
+/** Who may change the shared library: admins, and members granted `library.manage`. Viewers never write. */
+export const paCanManageLibrary = (member: PaMember): boolean =>
+  member.role === "admin" || member.role === "operator" && member.permissions.includes("library.manage");
 export type PaSandboxConfig = z.infer<typeof paSandboxConfig>;
 export type PaQuota = z.infer<typeof quota>;
 

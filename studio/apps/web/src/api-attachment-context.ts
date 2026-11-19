@@ -203,7 +203,6 @@ function isTextSketchPath(path: string): boolean {
 function inferProjectFileKind(name: string): ProjectFileKind {
   const lower = name.toLowerCase();
   const baseName = lower.split('/').pop() ?? lower;
-  if (lower.endsWith('.sketch.json')) return 'sketch';
   if (/\.(html|htm)$/.test(lower)) return 'html';
   if (lower.endsWith('.svg')) return 'sketch';
   if (/\.(png|jpe?g|gif|webp|avif)$/.test(lower)) {
@@ -236,7 +235,7 @@ function codeFenceLanguage(name: string): string {
   if (lower.endsWith('.css')) return 'css';
   if (/\.(js|mjs|cjs)$/.test(lower)) return 'js';
   if (/\.(ts|tsx)$/.test(lower)) return 'ts';
-  if (lower.endsWith('.json') || lower.endsWith('.sketch.json')) return 'json';
+  if (lower.endsWith('.json')) return 'json';
   if (lower.endsWith('.md')) return 'md';
   if (lower.endsWith('.py')) return 'py';
   return 'text';

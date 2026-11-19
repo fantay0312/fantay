@@ -118,7 +118,7 @@ export interface NodeRuntime {
   editSession?: NodeEditSessionState;
 }
 
-export type BoardTool = 'select' | 'hand' | 'frame' | 'rectangle' | 'ellipse' | 'text' | 'generate' | 'note' | 'comment';
+export type BoardTool = 'select' | 'hand' | 'frame' | 'rectangle' | 'ellipse' | 'pen' | 'text' | 'generate' | 'note' | 'comment';
 export type BoardNodeMode = 'navigate' | 'edit' | 'capture';
 export type BoardCaptureTool = 'pick' | 'markup';
 export type BoardInteraction = 'idle' | 'panning' | 'zooming' | 'dragging' | 'resizing' | 'marquee' | 'drawing' | 'connecting';
@@ -179,7 +179,7 @@ export interface InteractionPreview {
   rects: ReadonlyMap<string, Rect>;
   /** world */
   marquee?: Rect;
-  draw?: { tool: BoardTool; rect: Rect };
+  draw?: { tool: BoardTool; rect: Rect; points?: string };
   connect?: { from: string; to?: string; point: Point };
   guides?: readonly SnapGuide[];
   dropGroupId?: string | null;

@@ -1,0 +1,230 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* A type specimen on paper: the name, a line at six sizes, the glyphs, the facts. The interface
+   speaks in the product's own type (labels, sizes, facts); everything set in `--specimen-font` is
+   the font being shown. One reading column; tone groups the glyph cells, no rules. */
+
+.scroller {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--line) transparent;
+  scrollbar-width: thin;
+}
+
+.page {
+  /* Set inline to the loaded face, with the interface font behind it for anything it cannot draw. */
+  --specimen-font: var(--font-ui);
+  /* 400 for a static font (it is drawn as designed); a variable font's own default weight. */
+  --specimen-weight: 400;
+
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 28px 32px 72px;
+  animation: specimen-in var(--motion-enter) var(--ease-out-quint) both;
+}
+
+/* ── the name ────────────────────────────────────────────────────────────────────────────────── */
+
+.hero {
+  margin-bottom: 24px;
+}
+
+.title {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--specimen-font);
+  font-size: clamp(36px, 9cqw, 64px);
+  font-synthesis: none;
+  font-weight: var(--specimen-weight);
+  letter-spacing: 0;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.style {
+  margin: 10px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+}
+
+/* ── the line at six sizes ───────────────────────────────────────────────────────────────────── */
+
+.sampleInput {
+  margin-bottom: 8px;
+}
+
+.waterfall {
+  display: flex;
+  flex-direction: column;
+}
+
+.line {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  min-width: 0;
+  padding: 10px 0;
+  box-shadow: inset 0 -1px 0 var(--line-soft);
+}
+
+.line:last-child {
+  box-shadow: none;
+}
+
+.lineSize {
+  flex: none;
+  width: 20px;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+/* One line each: a long sample runs off the edge and fades, so the six sizes stay comparable. */
+.lineText {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-family: var(--specimen-font);
+  font-synthesis: none;
+  font-weight: var(--specimen-weight);
+  line-height: 1.25;
+  white-space: nowrap;
+  mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+}
+
+/* ── glyphs ──────────────────────────────────────────────────────────────────────────────────── */
+
+.section {
+  margin-top: 32px;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.sectionCount {
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.glyphs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 4px;
+}
+
+.glyph {
+  display: grid;
+  height: 44px;
+  overflow: hidden;
+  border-radius: var(--radius-control);
+  background: var(--sub);
+  color: var(--ink);
+  font-family: var(--specimen-font);
+  font-size: 22px;
+  font-synthesis: none;
+  font-weight: var(--specimen-weight);
+  line-height: 1;
+  place-items: center;
+  transition: background-color var(--motion-micro) var(--ease-out-quint);
+  user-select: text;
+}
+
+.glyph:hover {
+  background: var(--paper-deep);
+}
+
+/* ── facts ───────────────────────────────────────────────────────────────────────────────────── */
+
+.about {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  border-radius: var(--radius-card);
+  background: var(--sub);
+  padding: 4px 14px;
+}
+
+.aboutRow {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 16px;
+  padding: 9px 0;
+  box-shadow: inset 0 -1px 0 var(--line-soft);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.aboutRow:last-child {
+  box-shadow: none;
+}
+
+.aboutRow dt {
+  color: var(--ink-faint);
+}
+
+.aboutRow dd {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow-wrap: anywhere;
+}
+
+/* ── narrow panel ────────────────────────────────────────────────────────────────────────────── */
+
+@container artifact (max-width: 520px) {
+  .page {
+    padding: 20px 16px 56px;
+  }
+
+  /* The largest size shows three letters in a narrow panel: it says nothing the next one does not. */
+  .line[data-size='72'] {
+    display: none;
+  }
+
+  .aboutRow {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 12px;
+  }
+}
+
+@keyframes specimen-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page {
+    animation: none;
+  }
+
+  .glyph {
+    transition: none;
+  }
+}

@@ -121,7 +121,6 @@ function renderPanel(
       onUpload={vi.fn()}
       onUploadFiles={vi.fn()}
       onPaste={vi.fn()}
-      onNewSketch={vi.fn()}
       onClearUploadError={onClearUploadError}
       {...overrides}
     />,
@@ -172,27 +171,24 @@ describe("DesignFilesPanel sections", () => {
   });
 
   it("shows prioritized project starter actions in the empty state", () => {
-    const onNewSketch = vi.fn();
     const onOpenBrowser = vi.fn();
     const onCreateDesignSystem = vi.fn();
     const onPaste = vi.fn();
     const onUpload = vi.fn();
 
     renderPanel([], {
-      onNewSketch,
       onOpenBrowser,
       onCreateDesignSystem,
       onPaste,
       onUpload,
     });
 
-    fireEvent.click(screen.getByTestId("design-files-empty-new-sketch"));
+    expect(screen.queryByTestId('design-files-empty-new-sketch')).toBeNull();
     fireEvent.click(screen.getByTestId("design-files-empty-open-browser"));
     fireEvent.click(screen.getByTestId("design-files-empty-create-design-system"));
     fireEvent.click(screen.getByTestId("design-files-empty-new-document"));
     fireEvent.click(screen.getByTestId("design-files-upload-trigger"));
 
-    expect(onNewSketch).toHaveBeenCalledTimes(1);
     expect(onOpenBrowser).toHaveBeenCalledTimes(1);
     expect(onCreateDesignSystem).toHaveBeenCalledTimes(1);
     expect(onPaste).toHaveBeenCalledTimes(1);
@@ -200,7 +196,6 @@ describe("DesignFilesPanel sections", () => {
   });
 
   it("keeps empty-state actions visible but disables mutations for read-only shared viewers", () => {
-    const onNewSketch = vi.fn();
     const onOpenBrowser = vi.fn();
     const onCreateDesignSystem = vi.fn();
     const onPaste = vi.fn();
@@ -208,7 +203,6 @@ describe("DesignFilesPanel sections", () => {
 
     renderPanel([], {
       viewerOnly: true,
-      onNewSketch,
       onOpenBrowser,
       onCreateDesignSystem,
       onPaste,
@@ -216,7 +210,6 @@ describe("DesignFilesPanel sections", () => {
     });
 
     const mutationButtons = [
-      screen.getByTestId("design-files-empty-new-sketch"),
       screen.getByTestId("design-files-empty-new-document"),
       screen.getByTestId("design-files-upload-trigger"),
       screen.getByTestId("design-files-empty-create-design-system"),
@@ -230,7 +223,6 @@ describe("DesignFilesPanel sections", () => {
       fireEvent.click(button);
     }
 
-    expect(onNewSketch).not.toHaveBeenCalled();
     expect(onCreateDesignSystem).not.toHaveBeenCalled();
     expect(onPaste).not.toHaveBeenCalled();
     expect(onUpload).not.toHaveBeenCalled();
@@ -415,7 +407,6 @@ describe("DesignFilesPanel selection", () => {
           onUpload={vi.fn()}
           onUploadFiles={vi.fn()}
           onPaste={vi.fn()}
-          onNewSketch={vi.fn()}
         />
       </CollabProvider>,
     );
@@ -865,7 +856,6 @@ describe("DesignFilesPanel directory navigation", () => {
           onUpload={vi.fn()}
           onUploadFiles={vi.fn()}
           onPaste={vi.fn()}
-          onNewSketch={vi.fn()}
         />
       );
     }
@@ -942,7 +932,6 @@ describe("DesignFilesPanel directory navigation", () => {
           onUpload={vi.fn()}
           onUploadFiles={vi.fn()}
           onPaste={vi.fn()}
-          onNewSketch={vi.fn()}
         />
       );
     }
@@ -1106,7 +1095,6 @@ describe("DesignFilesPanel pending sync (downloadPending)", () => {
       onUpload: vi.fn(),
       onUploadFiles: vi.fn(),
       onPaste: vi.fn(),
-      onNewSketch: vi.fn(),
       viewerOnly: true,
     };
     const { rerender } = render(
@@ -1182,7 +1170,6 @@ describe("building preview", () => {
         onUpload={vi.fn()}
         onUploadFiles={vi.fn()}
         onPaste={vi.fn()}
-        onNewSketch={vi.fn()}
       />,
     );
 
@@ -1206,7 +1193,7 @@ describe("building preview", () => {
     renderPanel([], { running: true });
 
     expect(screen.queryByTestId("design-files-building")).toBeNull();
-    expect(screen.getByTestId("design-files-empty-new-sketch")).toBeTruthy();
+    expect(screen.queryByTestId('design-files-empty-new-sketch')).toBeNull();
     expect(screen.queryByTestId("design-files-preview-toggle")).toBeNull();
   });
 

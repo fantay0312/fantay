@@ -170,6 +170,9 @@ describe('routes', () => {
     expect(isSidebarNavItemActive('workbench', { kind: 'design-system-detail', designSystemId: 'x' }, false)).toBe(true);
     expect(isSidebarNavItemActive('workbench', { kind: 'design-system-create' }, false)).toBe(true);
     expect(isSidebarNavItemActive('workbench', { kind: 'home', view: 'movies', movieProjectId: 'film' }, false)).toBe(false);
+    expect(isSidebarNavItemActive('memory', { kind: 'home', view: 'memory' }, false)).toBe(true);
+    expect(isSidebarNavItemActive('memory', { kind: 'home', view: 'memory', memoryTab: 'inspector' }, false)).toBe(true);
+    expect(isSidebarNavItemActive('memory', home, false)).toBe(false);
     expect(isSidebarNavItemActive('plugins', { kind: 'marketplace' }, false)).toBe(true);
     expect(isSidebarNavItemActive('plugins', { kind: 'marketplace-detail', pluginId: 'x' }, false)).toBe(true);
     expect(isSidebarNavItemActive('automations', { kind: 'home', view: 'tasks' }, false)).toBe(true);

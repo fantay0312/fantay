@@ -11,7 +11,7 @@ export const tokenToSeaAgentDef: RuntimeAgentDef = createBundledPiAgentDef({
   name: 'TokenToSea',
   fetchModels: async () => (await tokenToSeaRuntime().chatModels())
     .filter(isTokenToSeaAgentModel)
-    .map(model => ({ id: model.id, label: model.name ?? model.model, reasoningOptions: tokenToSeaReasoningOptions(model) })),
+    .map(model => ({ id: model.id, label: model.name ?? model.model, ...(model.channelOffer && { channelOffer: model.channelOffer }), reasoningOptions: tokenToSeaReasoningOptions(model) })),
   fallbackModels: [],
   supportsCustomModel: false,
 });

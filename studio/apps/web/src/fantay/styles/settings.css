@@ -483,12 +483,12 @@ html:not(.is-window-fullscreen) [data-fantay-shell][data-client-type='desktop'][
 
   /* Field */
   & .settings-content :where(
-    input[type='text'],
-    input[type='password'],
-    input[type='url'],
-    input[type='number'],
-    input[type='search'],
-    input:not([type]),
+    input[type='text']:not([data-variant='bare']),
+    input[type='password']:not([data-variant='bare']),
+    input[type='url']:not([data-variant='bare']),
+    input[type='number']:not([data-variant='bare']),
+    input[type='search']:not([data-variant='bare']),
+    input:not([type]):not([data-variant='bare']),
     .od-select-trigger,
     textarea,
     .settings-model-select,

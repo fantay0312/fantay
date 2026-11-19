@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   statuses: new Map<string, ProjectDisplayStatus>(),
   listConversations: vi.fn<(projectId: string) => Promise<Conversation[]>>(async () => []),
   acknowledge: vi.fn(),
+  timelineEnabled: false,
 }));
 
 vi.mock('../../../src/router', () => ({
@@ -48,8 +49,20 @@ vi.mock('../../../src/state/projects', async (importOriginal) => {
 
 vi.mock('../../../src/components/ProjectSearchModal', () => ({ ProjectSearchModal: () => null }));
 
+vi.mock('../../../src/fantay/plugins/react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../src/fantay/plugins/react')>();
+  return {
+    ...actual,
+    usePluginNavItems: () => mocks.timelineEnabled
+      ? [{ pluginId: 'project-timeline', pageId: 'timeline', order: 20, title: '项目时间线', component: () => null }]
+      : [],
+  };
+});
+
 import { I18nProvider } from '../../../src/i18n';
 import { resetMotionCreateForTests } from '../../../src/fantay/motion/motion-create-store';
+import { saveTimelineNote, timelineStoragePrefix } from '../../../src/fantay/plugins/builtin/project-timeline/timeline-storage';
+import { notifyTimelineNotesChanged } from '../../../src/fantay/plugins/builtin/project-timeline/use-timeline-notes';
 import { FantayShell, type FantayShellProps } from '../../../src/fantay/shell/FantayShell';
 import { resetFantayCommandsForTests } from '../../../src/fantay/shell/commands';
 import {
@@ -149,6 +162,7 @@ beforeEach(() => {
   mocks.listConversations.mockReset();
   mocks.listConversations.mockImplementation(async () => []);
   mocks.acknowledge.mockClear();
+  mocks.timelineEnabled = false;
   resetSidebarStoreForTests();
   resetSidebarConversationsForTests();
   resetFantayCommandsForTests();
@@ -164,6 +178,36 @@ afterEach(() => {
 });
 
 describe('sections and rows', () => {
+  it('lists standalone timeline posts in recent updates and routes each one to its own detail', async () => {
+    mocks.timelineEnabled = true;
+    window.localStorage.setItem(SIDEBAR_EXPANDED_PROJECTS_STORAGE_KEY, JSON.stringify(['alpha']));
+    const prefix = timelineStoragePrefix(null, 'sidebar-member');
+    window.localStorage.setItem(`${prefix}earlier`, JSON.stringify({
+      id: 'earlier', projectId: null, at: 1, text: 'Earlier standalone update',
+    }));
+    saveTimelineNote(window.localStorage, prefix, 'alpha', 'Project update');
+    saveTimelineNote(window.localStorage, timelineStoragePrefix(null, 'other-member'), null, 'Private update');
+    renderSidebar({ accountId: 'sidebar-member' });
+
+    const recent = await screen.findByTestId('fantay-sidebar-section-timeline-recent');
+    expect(within(recent).getByRole('button', { name: '最近动态' })).toBeVisible();
+    const projects = screen.getByTestId('fantay-sidebar-section-projects');
+    const project = within(projects).getByTestId('fantay-sidebar-project-item-alpha');
+    expect(within(project).getByRole('button', { name: 'Project update' })).toBeVisible();
+    expect(within(recent).queryByText('Project update')).toBeNull();
+    expect(screen.queryByText('Private update')).toBeNull();
+
+    const posted = saveTimelineNote(window.localStorage, prefix, null, 'New standalone update');
+    act(() => notifyTimelineNotesChanged(prefix));
+    const rows = within(recent).getAllByTestId('fantay-sidebar-timeline-note');
+    expect(rows.map(row => row.textContent)).toEqual(['New standalone update', 'Earlier standalone update']);
+    expect(within(projects).queryByText(posted.text)).toBeNull();
+    fireEvent.click(rows[0]!);
+    expect(mocks.navigate).toHaveBeenCalledWith({
+      kind: 'tool', pluginId: 'project-timeline', pageId: 'timeline', itemId: `note:${posted.id}`,
+    });
+  });
+
   it('places 工作台 under 主页 and keeps the individual projects in the 项目 section', () => {
     renderSidebar();
     const ids = ['home', 'workbench', 'section-projects'];

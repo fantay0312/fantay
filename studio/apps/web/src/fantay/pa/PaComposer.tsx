@@ -8,6 +8,7 @@ import {
   AtSign,
   BookmarkPlus,
   CalendarClock,
+  Check,
   CircleAlert,
   CircleSlash,
   Clock,
@@ -65,14 +66,32 @@ import {
   mentionQuery,
   predictResponders,
   projectGate,
+  newRequestId,
   requestFor,
   subjectOf,
 } from './pa-model';
 import type { PaConversation, PaDrafts, PaGroup, PaIndex, PaMemoryInput, PaTaskInput, PersonalAgent } from './pa-types';
+import { SoulPersonaChip, SoulPlayMenu, soulDecksFor } from './soul/SoulPlayMenu';
+import {
+  SOUL_SLASH_LISTBOX_ID,
+  SoulSlashList,
+  soulDeckFor,
+  soulSlashOpen,
+  soulSlashOptionId,
+  soulSlashRows,
+  type SoulSlashRow,
+} from './soul/SoulSlashList';
+import { SoulStateStrip } from './soul/SoulStateStrip';
+import { SoulTray } from './soul/SoulTray';
+import { SOUL_COMMANDS, parseRollArg, parseSlash, type SoulCommandId } from './soul/soul-commands';
+import { revealSoulMessage, useSoulCompose } from './soul/soul-compose';
+import { activeChatTask, chatOf, conversationMode, displayName, soulItems } from './soul/soul-model';
+import { skipSoulReveal } from './soul/useSoulReveal';
 import styles from './PaComposer.module.css';
 
 /** The literal token the daemon matches for "everyone" (SVC mention rules). */
 const EVERYONE = '@全体';
+const NO_SLASH_ROWS: SoulSlashRow[] = [];
 
 /** The last focus request honoured per draft store (one per workspace); a composer mounted after a request still
  *  takes it, and a remounted workspace starts over. */
@@ -115,6 +134,20 @@ function scrollToMessage(id: string) {
   }
 }
 
+/** A stacked text goes back to the capsule once it needs no more than this share of the capsule's width. */
+const INLINE_RELEASE = 0.8;
+
+/** The width the text needs on one line: the textarea measured with no box width and wrapping off. */
+function singleLineWidth(node: HTMLTextAreaElement): number {
+  const { width, whiteSpace } = node.style;
+  node.style.width = '0px';
+  node.style.whiteSpace = 'pre';
+  const natural = node.scrollWidth;
+  node.style.width = width;
+  node.style.whiteSpace = whiteSpace;
+  return natural;
+}
+
 /** Crisp two-facet paper-plane glyph cut out with `currentColor` so the button's own disc tone shows through the fold. */
 function PaSendGlyph() {
   return (
@@ -148,6 +181,16 @@ export function PaComposer({
   const directAgent = kind === 'direct' && subject?.kind === 'agent' ? subject.agent : null;
   const gate = kind === 'group' ? projectGate(index, conversation) : null;
   const project = Boolean(gate?.ok && draft.project);
+  /* Companion mode (Soul UI spec §4.5): chat sends, the play menu, slash commands, one context chip, the tray and the
+     state strip. Work mode keeps everything below as it was. */
+  const companion = conversationMode(index, conversation) === 'companion';
+  const compose = useSoulCompose(cid);
+  const chatBusy = companion && activeChatTask(index, cid) !== null;
+  // 我来点名: nobody speaks unless the owner picks (the tray's 让谁接话 chips); empty Enter and /continue do not.
+  const manualRoom = companion && group !== null && chatOf(index, cid).groupStrategy === 'manual';
+  const [diceOpen, setDiceOpen] = useState(false);
+  const [slashActive, setSlashActive] = useState(0);
+  const [slashDismissed, setSlashDismissed] = useState<string | null>(null);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const pendingCaret = useRef<number | null>(null);
@@ -164,7 +207,7 @@ export function PaComposer({
   const error = errors[cid] ?? null;
 
   const hasNewline = draft.text.includes('\n');
-  const stacked = kind === 'group' || expanded || multiline || hasNewline;
+  const stacked = (kind === 'group' && !companion) || expanded || multiline || hasNewline;
 
   useEffect(() => {
     setExpanded(false);
@@ -189,13 +232,27 @@ export function PaComposer({
         key: agent.id,
         token: `@${agent.name}`,
         agent,
-        caption: [role, index.models.get(`${agent.model.runtime}/${agent.model.modelId}`)?.label || agent.model.modelId]
-          .filter(Boolean)
-          .join(' · '),
+        // A companion room names no roles or models (Soul UI spec O12).
+        caption: companion
+          ? ''
+          : [role, index.models.get(`${agent.model.runtime}/${agent.model.modelId}`)?.label || agent.model.modelId]
+              .filter(Boolean)
+              .join(' · '),
       });
     }
   }
-  const listOpen = Boolean(mention && focused && mention.start !== dismissed && items.length > 0);
+  /* ── slash list (companion): the input starts with `/` and has no line break ── */
+  const decks = companion ? soulDecksFor(index, conversation) : [];
+  const slashText = companion && soulSlashOpen(draft.text) ? draft.text : null;
+  const slashRows = slashText !== null ? soulSlashRows(slashText, { decks, busy: chatBusy, manual: manualRoom }) : NO_SLASH_ROWS;
+  const slashOpen = slashText !== null && focused && slashDismissed !== slashText && slashRows.length > 0;
+  const slashList = usePresence(slashOpen, 150);
+  const lastSlashRows = useRef(slashRows);
+  if (slashOpen) lastSlashRows.current = slashRows;
+  const slashIndex = Math.min(slashActive, Math.max(0, slashRows.length - 1));
+  useEffect(() => setSlashActive(0), [slashText]);
+
+  const listOpen = !slashOpen && Boolean(mention && focused && mention.start !== dismissed && items.length > 0);
   const list = usePresence(listOpen, 150);
   const lastItems = useRef(items);
   if (listOpen) lastItems.current = items;
@@ -240,6 +297,8 @@ export function PaComposer({
   };
 
   /* ── adaptive auto-grow + hysteresis full-width switch + max-height cap + internal scroll ── */
+  /** The capsule's width when its text was promoted to the stacked card, and the text it was promoted for. */
+  const promotion = useRef<{ width: number; text: string } | null>(null);
   const syncTextareaLayout = useCallback(
     (node: HTMLTextAreaElement, followCaretEnd: boolean) => {
       const prevScrollTop = node.scrollTop;
@@ -262,14 +321,26 @@ export function PaComposer({
       const nextHeight = Math.max(minH, Math.min(raw, maxH));
       const nextScrollable = raw > maxH + 1;
 
-      /* Hysteresis prevents width-oscillation when switching between inline capsule and full-width stacked card:
-         inline capsule promotes to stacked as soon as text wraps past 1 line or contains `\n`, and releases back
-         to inline only when cleared or comfortably shorter than a single inline capsule line. */
+      /* The inline capsule promotes to the full-width stacked card when its text wraps past one line or contains
+         `\n`, and releases back only when cleared or comfortably shorter than the capsule it was promoted from.
+         Both steps run in a layout effect, so they must never answer each other: an empty input does not promote
+         (a placeholder too long for a narrow capsule wraps too), and a text is not released by the same measure
+         that promoted it. Otherwise the two layouts alternate until React stops the render. */
       const value = node.value;
       const singleLineBase = stacked ? 28 : 36;
-      const wrappedNow = raw > singleLineBase + 10 || value.includes('\n');
-      const safeInlineChars = Math.max(8, Math.floor((Math.max(node.clientWidth, 260) - 148) / 15));
-      const nextMultiline = wrappedNow ? true : multiline && value.length > 0 && value.length > safeInlineChars;
+      const wrappedNow = value.length > 0 && (raw > singleLineBase + 10 || value.includes('\n'));
+      let nextMultiline = multiline;
+      if (!multiline) {
+        if (wrappedNow) {
+          promotion.current = { width: node.clientWidth, text: value };
+          nextMultiline = true;
+        }
+      } else if (value.length === 0) {
+        nextMultiline = false;
+      } else if (!wrappedNow && value !== promotion.current?.text) {
+        const capsule = promotion.current?.width ?? node.clientWidth;
+        nextMultiline = singleLineWidth(node) > capsule * INLINE_RELEASE;
+      }
 
       node.style.height = `${nextHeight}px`;
       node.style.overflowY = nextScrollable ? 'auto' : 'hidden';
@@ -325,13 +396,16 @@ export function PaComposer({
 
   /* ── send ── */
   const sendUnavailable = data.load === 'offline' || Boolean(directAgent && !directAgent.enabled);
-  const sendDisabled = !draft.text.trim() || pending || sendUnavailable;
+  // A companion send never waits for the previous one: the text turns into a pending bubble at once.
+  const sendDisabled = !draft.text.trim() || (pending && !companion) || sendUnavailable;
 
-  const send = async () => {
+  const sendWork = async () => {
     const current = drafts.get(cid);
-    const goal = current.text.trim();
+    const text = current.text.trim();
+    const team = !conversation.channelId ? /^\/team\s+([\s\S]+)$/i.exec(text) : null;
+    const goal = team?.[1]?.trim() ?? text;
     if (!goal || sendDisabled) return;
-    const asProject = Boolean(gate?.ok && current.project);
+    const asProject = !team && Boolean(gate?.ok && current.project);
     const projectName = current.projectName.trim();
     const completionCriteria = current.completionCriterion?.split(/\r?\n/).map(criterion => criterion.trim()).filter(Boolean);
     // `budget` is never sent: the daemon applies the owner's limits.
@@ -339,9 +413,9 @@ export function PaComposer({
       conversationId: cid,
       goal,
       targetAgentIds: [],
-      kind: asProject ? 'project' : 'discussion',
+      kind: team ? 'team' : asProject ? 'project' : 'discussion',
       ...(current.localOnly ? { dataClass: 'local_only' } : {}),
-      ...(current.sandbox ? { execution: { target: current.sandbox, generateScript: true } } : {}),
+      ...(!team && current.sandbox ? { execution: { target: current.sandbox, generateScript: true } } : {}),
       ...(completionCriteria?.length ? { completionCriteria } : {}),
       ...(asProject && projectName ? { projectName } : {}),
       ...(current.replyTo ? { replyTo: current.replyTo } : {}),
@@ -383,8 +457,192 @@ export function PaComposer({
     }
   };
 
+  /* ── companion: chat sends, the context chip, slash commands ── */
+  const clearInput = () => {
+    drafts.set(cid, { text: '', request: null });
+    setExpanded(false);
+    setMultiline(false);
+    setScrollable(false);
+    requestAnimationFrame(() => inputRef.current?.focus());
+  };
+
+  const sendAsTask = (goal: string, replyTo: string | null) => {
+    const body = {
+      conversationId: cid,
+      goal,
+      kind: 'discussion',
+      targetAgentIds: [],
+      requestId: newRequestId(),
+      ...(replyTo ? { replyTo } : {}),
+    } as unknown as PaTaskInput;
+    void data.actions
+      .sendTask(body)
+      .then(() => {
+        refreshPaActivity();
+        onSent();
+      })
+      .catch(errorToast);
+  };
+
+  /** Runs a slash command; false when the text should be sent as a normal message instead. */
+  const runSlash = (command: { id: SoulCommandId; arg: string }, deck: (typeof decks)[number] | null = null): boolean => {
+    if (command.id !== 'task' && chatBusy) return true;
+    switch (command.id) {
+      case 'roll': {
+        if (!command.arg) {
+          // The dice popover takes the focus; refocusing the input would dismiss it at once.
+          drafts.set(cid, { text: '', request: null });
+          setDiceOpen(true);
+          return true;
+        }
+        const roll = parseRollArg(command.arg);
+        if (!roll) return true;
+        clearInput();
+        void data.actions.roll(cid, { ...roll, respond: true }).catch(errorToast);
+        return true;
+      }
+      case 'draw': {
+        const target = deck ?? soulDeckFor(command.arg, decks);
+        if (!target) {
+          const slash = SOUL_COMMANDS.find((item) => item.id === 'draw')?.slash ?? '';
+          if (!command.arg) drafts.set(cid, { text: `${slash} ` });
+          return true;
+        }
+        clearInput();
+        void data.actions.draw(cid, { deckId: target.id, respond: true }).catch(errorToast);
+        return true;
+      }
+      case 'event':
+        clearInput();
+        void data.actions.eventAction(cid, 'draw').catch(errorToast);
+        return true;
+      case 'continue':
+        if (manualRoom) return true;
+        clearInput();
+        void data.actions.continueChat(cid).catch(errorToast);
+        return true;
+      case 'task': {
+        const replyTo = drafts.get(cid).replyTo;
+        clearInput();
+        if (command.arg) {
+          drafts.set(cid, { replyTo: null });
+          sendAsTask(command.arg, replyTo);
+        } else {
+          compose.setChip({ kind: 'task' });
+        }
+        return true;
+      }
+      default:
+        return false;
+    }
+  };
+
+  const pickSlash = (row: SoulSlashRow | undefined) => {
+    if (!row || row.busy) return;
+    if (row.kind === 'deck') {
+      runSlash({ id: 'draw', arg: '' }, row.deck);
+      return;
+    }
+    if (row.invalid) return;
+    if (row.command.id === 'draw' && !row.arg) {
+      const text = `${row.command.slash} `;
+      drafts.set(cid, { text });
+      pendingCaret.current = text.length;
+      setCaret(text.length);
+      return;
+    }
+    runSlash({ id: row.command.id, arg: row.arg });
+  };
+
+  const completeSlash = (row: SoulSlashRow | undefined) => {
+    if (!row) return;
+    const drawSlash = SOUL_COMMANDS.find((item) => item.id === 'draw')?.slash ?? '';
+    const text = row.kind === 'deck' ? `${drawSlash} ${row.deck.id}` : `${row.command.slash} `;
+    drafts.set(cid, { text });
+    pendingCaret.current = text.length;
+    setCaret(text.length);
+  };
+
+  const sendCompanion = async () => {
+    const current = drafts.get(cid);
+    const text = current.text.trim();
+    const chip = compose.chip;
+    skipSoulReveal();
+    if (chip?.kind === 'edit') {
+      const message = index.messages.get(chip.messageId);
+      if (!message) {
+        compose.setChip(null);
+      } else {
+        if (!text) return;
+        try {
+          await data.actions.editMessage(message, { content: text });
+          compose.setChip(null);
+          drafts.set(cid, { text: chip.restore ?? '', request: null });
+        } catch (reason) {
+          errorToast(reason);
+        }
+        return;
+      }
+    }
+    if (!text || sendUnavailable) return;
+    const command = parseSlash(text);
+    if (command && runSlash(command)) return;
+    if (chip?.kind === 'task') {
+      compose.setChip(null);
+      drafts.set(cid, { text: '', replyTo: null, request: null });
+      sendAsTask(text, current.replyTo);
+      return;
+    }
+    const replyTo = current.replyTo;
+    const body = {
+      conversationId: cid,
+      goal: text,
+      kind: 'chat',
+      targetAgentIds: [],
+      ...(replyTo ? { replyTo } : {}),
+    } as unknown as Omit<PaTaskInput, 'requestId'>;
+    const request = requestFor(current, body);
+    compose.addPending({ requestId: request.id, text, at: Date.now(), failed: false, ...(replyTo ? { replyTo } : {}) });
+    drafts.set(cid, { text: '', replyTo: null, request: null });
+    setExpanded(false);
+    setMultiline(false);
+    setScrollable(false);
+    onSent();
+    try {
+      await data.actions.sendChat({ conversationId: cid, text, requestId: request.id, ...(replyTo ? { replyTo } : {}) });
+    } catch {
+      compose.failPending(request.id);
+    }
+  };
+
+  const send = () => (companion ? sendCompanion() : sendWork());
+
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.nativeEvent.isComposing || event.keyCode === 229) return;
+    if (companion) skipSoulReveal();
+    if (slashOpen) {
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        const step = event.key === 'ArrowDown' ? 1 : -1;
+        setSlashActive((slashIndex + step + slashRows.length) % slashRows.length);
+        return;
+      }
+      if (event.key === 'Tab') {
+        event.preventDefault();
+        completeSlash(slashRows[slashIndex]);
+        return;
+      }
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        pickSlash(slashRows[slashIndex]);
+        return;
+      }
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setSlashDismissed(draft.text);
+        return;
+      }
+    }
     if (listOpen && mention) {
       if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
         event.preventDefault();
@@ -403,9 +661,32 @@ export function PaComposer({
         return;
       }
     }
+    if (companion && event.key === 'Enter' && !event.shiftKey && !draft.text.trim() && compose.chip?.kind !== 'edit') {
+      // Enter on an empty companion composer: 接着说.
+      event.preventDefault();
+      if (!chatBusy && !manualRoom && soulItems(index, cid).length > 0) void data.actions.continueChat(cid).catch(errorToast);
+      return;
+    }
+    if (companion && event.key === 'ArrowUp' && draft.text === '' && !compose.chip && !chatBusy) {
+      // ↑ in an empty composer edits the owner's last line.
+      const chatItems = soulItems(index, cid);
+      for (let at = chatItems.length - 1; at >= 0; at -= 1) {
+        const item = chatItems[at]!;
+        if (item.role !== 'owner' || !item.message.soul) continue;
+        event.preventDefault();
+        compose.setChip({ kind: 'edit', messageId: item.message.id, restore: '' });
+        drafts.set(cid, { text: item.message.content });
+        return;
+      }
+    }
     if (event.key === 'Enter' && (event.metaKey || event.ctrlKey || !event.shiftKey)) {
       event.preventDefault();
       void send();
+      return;
+    }
+    if (companion && event.key === 'Escape' && (compose.chip || draft.replyTo)) {
+      event.preventDefault();
+      cancelChip();
       return;
     }
     if (event.key === 'Escape' && draft.replyTo) {
@@ -474,7 +755,7 @@ export function PaComposer({
         </Button>
       </>
     );
-  } else if (activeTask) {
+  } else if (activeTask && !companion) {
     note = t('pa.composer.noteQueued');
     noteIcon = Clock;
     noteTone = 'faint';
@@ -510,14 +791,80 @@ export function PaComposer({
         : '';
 
   const names = placeholderNames(members.map((m) => m.name));
-  const placeholder =
-    kind === 'group' ? t('pa.composer.placeholderGroup', { names }) : t('pa.composer.placeholder', { names });
+  const placeholder = companion
+    ? group
+      ? t('pa.soul.chat.composer.placeholderRoom', { name: group.name })
+      : t('pa.soul.chat.composer.placeholder', { name: directAgent ? displayName(index, directAgent.id) : names })
+    : kind === 'group'
+      ? t('pa.composer.placeholderGroup', { names })
+      : t('pa.composer.placeholder', { names });
 
+  /* ── companion context chip: one at a time, edit > reply > task ── */
+  const chipName = group ? group.name : directAgent ? displayName(index, directAgent.id) : names;
+  const editTarget = companion && compose.chip?.kind === 'edit' ? index.messages.get(compose.chip.messageId) ?? null : null;
+  const chipKind: 'edit' | 'reply' | 'task' | null = !companion
+    ? null
+    : editTarget
+      ? 'edit'
+      : replyMessage
+        ? 'reply'
+        : compose.chip?.kind === 'task'
+          ? 'task'
+          : null;
+  const speakerName = (id: string) => (id === 'owner' ? t('pa.soul.chat.chip.you') : displayName(index, id));
+  const chipText =
+    chipKind === 'edit' && editTarget
+      ? editTarget.senderId === 'owner'
+        ? t('pa.soul.chat.chip.editYou')
+        : t('pa.soul.chat.chip.edit', { who: speakerName(editTarget.senderId) })
+      : chipKind === 'reply' && replyMessage
+        ? t('pa.soul.chat.chip.reply', {
+            who: speakerName(replyMessage.senderId),
+            text: clip(replyMessage.senderId === 'owner' ? replyMessage.content : plainLine(replyMessage.content), 40),
+          })
+        : chipKind === 'task'
+          ? t('pa.soul.chat.chip.task', { name: chipName })
+          : '';
+  const cancelChip = () => {
+    const chip = compose.chip;
+    if (chipKind === 'edit' && chip?.kind === 'edit') {
+      drafts.set(cid, { text: chip.restore ?? '' });
+      compose.setChip(null);
+    } else if (chipKind === 'reply') {
+      drafts.set(cid, { replyTo: null });
+    } else {
+      compose.setChip(null);
+    }
+    inputRef.current?.focus();
+  };
+  const editing = chipKind === 'edit';
+  const soulChip = chipKind ? (
+    <div className={styles.replyRow}>
+      <span className={styles.soulChip} data-testid="pa-soul-chip" data-kind={chipKind}>
+        {chipKind === 'reply' && replyMessage ? (
+          <Button variant="bare" className={styles.soulChipText} onClick={() => revealSoulMessage(replyMessage.id)}>
+            {chipText}
+          </Button>
+        ) : (
+          <span className={styles.soulChipText}>{chipText}</span>
+        )}
+        <IconButton size="xs" aria-label={t('pa.soul.chat.chip.clear')} className={styles.soulChipClear} onClick={cancelChip}>
+          <XIcon />
+        </IconButton>
+      </span>
+    </div>
+  ) : null;
+
+  const linkedProjectId = [...(index.tasksByConversation.get(cid) ?? [])]
+    .reverse()
+    .find((task) => Boolean(task.projectId))?.projectId ?? null;
   const memoryPreset: { scope: PaMemoryInput['scope']; scopeId: string | null } = group
     ? { scope: 'group', scopeId: group.id }
-    : directAgent && !isFantay(index, directAgent.id)
+    : directAgent
       ? { scope: 'agent', scopeId: directAgent.id }
-      : { scope: 'private', scopeId: null };
+      : linkedProjectId
+        ? { scope: 'project', scopeId: linkedProjectId }
+        : { scope: 'private', scopeId: null };
 
   const handoffGroup = kind === 'direct' ? firstProjectGroup(index) : null;
 
@@ -567,6 +914,27 @@ export function PaComposer({
             onActive={setActive}
           />
         ) : null}
+        {slashList.mounted ? (
+          <SoulSlashList
+            rows={slashOpen ? slashRows : lastSlashRows.current}
+            active={slashIndex}
+            closing={slashList.closing}
+            onPick={pickSlash}
+            onActive={setSlashActive}
+          />
+        ) : null}
+        {companion ? (
+          <>
+            <SoulTray
+              conversation={conversation}
+              onFill={(text) => {
+                drafts.set(cid, { text, request: null });
+                drafts.requestFocus();
+              }}
+            />
+            <SoulStateStrip conversation={conversation} />
+          </>
+        ) : null}
         <div
           className={cn('composer-shell', styles.shell)}
           data-stacked={stacked ? '' : undefined}
@@ -574,7 +942,7 @@ export function PaComposer({
           data-multiline={multiline || hasNewline ? '' : undefined}
           data-scrollable={scrollable ? '' : undefined}
         >
-          {replyMessage ? (
+          {companion ? soulChip : replyMessage ? (
             <div className={styles.replyRow}>
               <span className={styles.replyChip}>
                 <Chip size="sm" className={styles.replyChipButton} onClick={() => scrollToMessage(replyMessage.id)}>
@@ -603,21 +971,21 @@ export function PaComposer({
               </span>
             </div>
           ) : null}
-          {draft.localOnly ? (
+          {!companion && draft.localOnly ? (
             <div className={styles.replyRow}>
               <Chip size="sm" icon={<Icon icon={Shield} size="sm" />} onClick={() => drafts.set(cid, { localOnly: false })}>
                 {t('pa.composer.localOnly')}
               </Chip>
             </div>
           ) : null}
-          {draft.sandbox ? (
+          {!companion && draft.sandbox ? (
             <div className={styles.replyRow}>
               <Chip size="sm" icon={<Icon icon={Shield} size="sm" />} onClick={() => drafts.set(cid, { sandbox: undefined })}>
                 {t(draft.sandbox === 'worker' ? 'pa.composer.sandboxWorker' : 'pa.composer.sandboxLocal')}
               </Chip>
             </div>
           ) : null}
-          {draft.completionCriterion !== undefined ? (
+          {!companion && draft.completionCriterion !== undefined ? (
             <div className={styles.projectRow}>
               <Textarea
                 className={styles.criteriaInput}
@@ -630,7 +998,7 @@ export function PaComposer({
               />
             </div>
           ) : null}
-          {project && gate?.ok ? (
+          {!companion && project && gate?.ok ? (
             <div className={styles.projectRow}>
               <Input
                 variant="bare"
@@ -654,6 +1022,26 @@ export function PaComposer({
           {/* Persistent 3-slot grid: `<Textarea>` stays in the exact same React slot whether inline or stacked. */}
           <div className={styles.bodyGrid}>
             <div className={styles.startCluster}>
+              {companion ? (
+                <SoulPlayMenu
+                  conversation={conversation}
+                  triggerClassName={styles.toolCircle!}
+                  glyphClassName={styles.plusGlyph!}
+                  diceOpen={diceOpen}
+                  onDiceOpenChange={setDiceOpen}
+                  expanded={expanded}
+                  onToggleExpand={() => {
+                    setExpanded((value) => !value);
+                    requestAnimationFrame(() => inputRef.current?.focus());
+                  }}
+                  onMention={group ? triggerMention : null}
+                  onTask={() => {
+                    compose.setChip({ kind: 'task' });
+                    requestAnimationFrame(() => inputRef.current?.focus());
+                  }}
+                  onDone={() => requestAnimationFrame(() => inputRef.current?.focus())}
+                />
+              ) : (
               <DropdownMenu>
                 <Tooltip label={t('pa.composer.moreActions')}>
                   <DropdownMenuTrigger asChild>
@@ -747,8 +1135,9 @@ export function PaComposer({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              )}
 
-              {stacked && group ? (
+              {stacked && group && !companion ? (
                 <IconButton
                   variant="quiet"
                   shape="round"
@@ -761,8 +1150,8 @@ export function PaComposer({
                   <Icon icon={AtSign} size="md" />
                 </IconButton>
               ) : null}
-              {stacked ? (projectChip && gateReason ? <Tooltip label={gateReason}>{projectChip}</Tooltip> : projectChip) : null}
-              {stacked && previewText ? (
+              {stacked && !companion ? (projectChip && gateReason ? <Tooltip label={gateReason}>{projectChip}</Tooltip> : projectChip) : null}
+              {stacked && !companion && previewText ? (
                 <span className={styles.preview}>
                   <span className={styles.previewFaces} aria-hidden>
                     {responders.slice(0, 3).map((agent) => (
@@ -785,10 +1174,12 @@ export function PaComposer({
               className={styles.input}
               placeholder={placeholder}
               aria-label={placeholder}
-              aria-controls={group ? PA_MENTION_LISTBOX_ID : undefined}
-              aria-expanded={group ? listOpen : undefined}
-              aria-activedescendant={listOpen ? paMentionOptionId(activeIndex) : undefined}
-              aria-autocomplete={group ? 'list' : undefined}
+              aria-controls={slashOpen ? SOUL_SLASH_LISTBOX_ID : group ? PA_MENTION_LISTBOX_ID : undefined}
+              aria-expanded={group || companion ? listOpen || slashOpen : undefined}
+              aria-activedescendant={
+                slashOpen ? soulSlashOptionId(slashIndex) : listOpen ? paMentionOptionId(activeIndex) : undefined
+              }
+              aria-autocomplete={group || companion ? 'list' : undefined}
               value={draft.text}
               onChange={(event) => {
                 drafts.set(cid, { text: event.target.value });
@@ -808,8 +1199,12 @@ export function PaComposer({
             </span>
 
             <div className={styles.endCluster}>
-              {directAgent ? <PaModelPicker agent={directAgent} variant="composer" /> : null}
-              {stacked ? (
+              {companion ? (
+                <SoulPersonaChip conversation={conversation} />
+              ) : directAgent ? (
+                <PaModelPicker agent={directAgent} variant="composer" />
+              ) : null}
+              {stacked && !companion ? (
                 <IconButton
                   variant="quiet"
                   shape="round"
@@ -829,7 +1224,7 @@ export function PaComposer({
               {workspaceActive ? (
                 <PaVoiceInput
                   key={cid}
-                  disabled={pending}
+                  disabled={pending && !companion}
                   className={styles.toolCircle}
                   onTranscript={(text) => {
                     const before = drafts.get(cid).text;
@@ -845,12 +1240,12 @@ export function PaComposer({
                 className={cn('composer-send', styles.sendButton)}
                 data-testid="pa-composer-send"
                 data-unavailable={sendUnavailable ? '' : undefined}
-                aria-label={t('pa.send')}
-                tooltip={t('pa.send')}
+                aria-label={editing ? t('pa.soul.chat.chip.saveEdit') : t('pa.send')}
+                tooltip={editing ? t('pa.soul.chat.chip.saveEdit') : t('pa.send')}
                 disabled={sendDisabled}
                 onClick={() => void send()}
               >
-                {pending ? <Spinner size="sm" /> : <PaSendGlyph />}
+                {pending && !companion ? <Spinner size="sm" /> : editing ? <Icon icon={Check} size="md" /> : <PaSendGlyph />}
               </IconButton>
             </div>
           </div>

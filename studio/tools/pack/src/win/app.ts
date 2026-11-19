@@ -13,7 +13,7 @@ import {
   prepareNodePtyRuntime,
   validateNodePtyRuntime,
 } from "../node-pty-runtime.js";
-import { hashPackageSourcePath } from "../package-source-hash.js";
+import { hashPackageSourcePath, packageSourceHashOptions } from "../package-source-hash.js";
 import { electronBuilderVersionForAppVersion } from "../versioning/index.js";
 import {
   WIN_DAEMON_PREBUNDLE_ESM_REQUIRE_BANNER,
@@ -146,7 +146,7 @@ export async function createWorkspaceTarballsCacheKey(
 ): Promise<string> {
   const packageHashes: Record<string, string> = {};
   for (const packageInfo of INTERNAL_PACKAGES) {
-    packageHashes[packageInfo.name] = await hashPackageSourcePath(join(config.workspaceRoot, packageInfo.directory));
+    packageHashes[packageInfo.name] = await hashPackageSourcePath(join(config.workspaceRoot, packageInfo.directory), packageSourceHashOptions(packageInfo.name));
   }
   const rootPackageJson = JSON.parse(await readFile(join(config.workspaceRoot, "package.json"), "utf8")) as {
     packageManager?: unknown;

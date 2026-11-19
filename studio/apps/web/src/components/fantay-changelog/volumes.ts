@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Fantay's changelog, bound as a manga series: one release is one volume, one change is one chapter.
 // Volumes are in release order; the shelf opens on the last one. Add a release by appending a volume.
+import { FANTAY_RELEASES } from '@open-design/contracts';
 
 export type MangaLocale = 'en' | 'zh-CN' | 'zh-TW';
 /** Cover stock. The colours are the mascot's own (blue top, coral underside) plus paper, ink and the brand green. */
@@ -21,6 +22,7 @@ export interface MangaVolumeCopy {
 }
 
 export interface MangaVolume {
+  version?: string;
   id: string;
   /** YYYY-MM-DD */
   date: string;
@@ -297,6 +299,9 @@ export const MANGA_VOLUMES: readonly MangaVolume[] = [
       },
     },
   },
+  ...FANTAY_RELEASES.map(release => ({
+    id: `fantay-${release.version}`, version: release.version, date: release.date, ...release.manga,
+  })),
 ];
 
 export function mangaLocale(locale: string): MangaLocale {

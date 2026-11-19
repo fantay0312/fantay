@@ -28,6 +28,7 @@ This file is the single source of truth for agents entering this repository. Rea
 - `apps/daemon` is the local privileged daemon and `od` bin. It owns `/api/*`, agent spawning, skills, design systems, artifacts, and static serving.
 - `apps/desktop` is the Electron shell; it consumes web/daemon status through the sidecar client boundary.
 - `apps/packaged` is the thin packaged Electron runtime entry; it starts packaged sidecars and owns the `od://` entry glue only.
+- `apps/org-server` is the Fantay organization server for team and enterprise plans: members, roles, groups, the shared character library, policy and audit. It is deployed on its own and shares only `@open-design/contracts/org` with the rest of the workspace.
 - `apps/closure` owns the independently distributable OpenDesign Closure content. It does not own acquisition, generation state, or shell policy.
 - `packages/contracts` is the pure TypeScript web/daemon app contract layer.
 - `packages/sidecar-proto` owns business DTOs and action names; `packages/sidecar` owns the complete business-agnostic sidecar client boundary and protocol implementation; `packages/platform` owns generic OS process primitives.
@@ -169,6 +170,17 @@ obvious, block the PR and request core-maintainer guidance.
 - `tools/release` also retains catalog and DeepSeek bootstrap publication through explicitly configured Fantay storage.
 - Historical OpenDesign branch release, backport, Feishu delivery and whole-workbench cloud deployment procedures are archived under the workspace's `doc/achieve/studio-own-brand-20261107` directory.
 - Runtime channel identities, installer compatibility and update verification remain owned by the packaging and desktop runtime contracts.
+
+## Calendar versions and release records
+
+- Fantay's public version format is `YY.MMDD.N`: `26.1114.1` means the first update version prepared on 2026-11-14. Use the release date in `Asia/Taipei`; reset `N` to 1 on a new day and increment it for each new version that day. Month and day must each have two digits: January 1 is `26.0101.1`, never `26.101.1`. `N` must be 1–65535 for Windows compatibility.
+- Public app versions, release records, manga, tags, installer filenames and update metadata preserve the four-digit date. Only npm/Electron-builder numeric package fields use the internal SemVer encoding via `fantayPackageVersion`; runtime and packaging restore the public spelling via `fantayDisplayVersion`. Never let the internal encoding change the user's version format.
+- An update version is one release preparation, not every Git commit, test run, build retry or platform artifact. Retry the same prepared version without incrementing it. Changed content after publication gets a new version; never overwrite a published version. Committing, pushing, installing and publishing still require the authorization appropriate to the user's request.
+- Run `mise x -- pnpm tools-release next-version` to calculate the next version. Author one new entry in `packages/contracts/src/fantay-releases.ts`, then run `mise x -- pnpm tools-release sync-version` and `mise x -- pnpm tools-release sync-version --check`. Build the contracts/release/tool packages first after editing their source.
+- The shared record must include the version/date, prepared or published status, concise app summaries, specific changes grouped by area (user-visible before/after behavior and entry points), compatibility/data impact, actual validation and known limitations. Describe only verified changes included in this version; do not claim unrelated working-tree changes or untested publication as delivered.
+- Every version needs a matching manga volume with short, concrete chapters in Simplified Chinese, Traditional Chinese and English. It is derived from the same record; never rewrite historical manga or invent version numbers for it.
+- `sync-version` synchronizes the explicit application/supporting package list and generates `docs/releases/<version>.md`, `docs/releases/README.md` and `docs/releases/releases.json`. The Markdown is the repository's detailed log; JSON is the reusable website feed. Keep these in the repository and include the matching notes in release preparation. Website publication is a separate authorized action.
+- Run the focused version/usage/release checks affected by a change. Record actual outcomes and distinguish source-ready, built, installed and published states. Update the record's status to published only after release publication is verified.
 
 ## Boundary constraints
 

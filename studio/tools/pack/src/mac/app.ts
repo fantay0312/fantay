@@ -1,5 +1,5 @@
 import { finalizeRuntimeManifest } from "../resources/runtime-manifest.js";
-import { cp, mkdir, readFile, readdir, realpath, rm, stat, writeFile } from "node:fs/promises";
+import { chmod, cp, mkdir, readFile, readdir, realpath, rm, stat, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, join, relative } from "node:path";
 
@@ -33,6 +33,7 @@ import {
   ELECTRON_REBUILD_MODE,
   ELECTRON_REBUILD_NATIVE_MODULES,
   INTERNAL_PACKAGES,
+  MAC_NATIVE_SEARCH_EXECUTABLE,
 } from "./constants.js";
 import { resolveMacInstallIdentity } from "./identity.js";
 import { readPackagedVersion } from "./manifest.js";
@@ -389,6 +390,11 @@ export async function writeAssembledApp(
     "utf8",
   );
   await runNpmInstall(paths.assembledAppRoot);
+  // Package tarballs normalize files outside npm's bin field to non-executable.
+  await chmod(
+    join(paths.assembledAppRoot, MAC_NATIVE_SEARCH_EXECUTABLE),
+    0o755,
+  );
   if (usePrebundledStandaloneWeb) {
     await copyMacPrebundleRuntimeDependencies(config, paths.assembledAppRoot);
   }

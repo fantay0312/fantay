@@ -43,8 +43,15 @@ async function createProject(page: Page, name: string, htmlCount: number, withPn
   return projectId;
 }
 
+async function showRightPanel(page: Page): Promise<void> {
+  const toggle = page.getByTestId('fantay-workspace-panel-toggle').filter({ visible: true }).first();
+  await expect(toggle).toBeVisible({ timeout: T.long });
+  if (await toggle.getAttribute('aria-pressed') === 'false') await toggle.click();
+}
+
 async function openBoard(page: Page, projectId: string): Promise<void> {
   await page.goto(`/projects/${projectId}`, { waitUntil: 'domcontentloaded' });
+  await showRightPanel(page);
   await expect(page.getByTestId('board-root')).toBeVisible({ timeout: T.long });
 }
 
@@ -70,6 +77,99 @@ async function focusBoard(page: Page): Promise<void> {
 test.beforeEach(async ({ page }) => {
   await seedFantayShell(page, 'on');
   await applyStandardMocks(page);
+});
+
+test('[P1] freehand strokes use the project board and survive a reload', async ({ page }) => {
+  const projectId = await createProject(page, 'Freehand board', 0, false);
+  await openBoard(page, projectId);
+  await page.getByTestId('board-tool-pen').click();
+  const box = await page.getByTestId('board-stage').boundingBox();
+  if (!box) throw new Error('board stage has no box');
+  const x = box.x + box.width / 2, y = box.y + box.height / 2;
+  const saved = page.waitForResponse(isBoardPatch(projectId));
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + 26, y - 18, { steps: 8 });
+  await page.mouse.move(x + 54, y + 12, { steps: 8 });
+  await page.mouse.up();
+  await saved;
+  const stroke = page.getByTestId('board-pen-stroke').locator('polyline');
+  const points = await stroke.getAttribute('points');
+  expect(points?.split(' ').length).toBeGreaterThan(3);
+  await page.reload();
+  await showRightPanel(page);
+  await expect(stroke).toHaveAttribute('points', points!);
+  const files = await page.request.get('/api/projects/' + projectId + '/files');
+  expect((await files.json()).files.map((f: { name: string }) => f.name)).not.toContainEqual(expect.stringMatching(/\.sketch\.json$/));
+});
+
+test('[P1] live Markdown edits the original UTF-8 file in place', async ({ page }) => {
+  const projectId = await createProject(page, 'Live Markdown', 0, false);
+  const source = '\uFEFF# Title\r\n\r\n**Bold** text\r\n\r\n| A | B |\n| --- | --- |\n| 1 | 2 |\n';
+  const file = '/api/projects/' + projectId + '/files';
+  expect((await page.request.post(file, { data: { name: 'notes.md', content: source } })).ok()).toBeTruthy();
+  await page.goto('/projects/' + projectId + '/files/notes.md');
+  await showRightPanel(page);
+  const editor = page.getByTestId('markdown-live-editor');
+  await expect(editor.locator('.md-live-strong')).toHaveText('Bold', { timeout: T.long });
+  await expect(editor.getByRole('cell', { name: '2' })).toBeVisible();
+  await editor.getByText('Title', { exact: true }).click();
+  await page.keyboard.press('End');
+  await page.keyboard.insertText(' 中文');
+  await editor.getByText('Bold', { exact: true }).click();
+  await expect(editor.locator('.md-live-h1')).toHaveText('Title 中文');
+  const expected = source.replace('Title', 'Title 中文');
+  await expect.poll(async () => (await (await page.request.get(file + '/notes.md')).body()).toString('utf8')).toBe(expected);
+  await page.reload();
+  await showRightPanel(page);
+  await expect(editor.locator('.md-live-h1')).toHaveText('Title 中文');
+});
+
+test('[P1] the new tab offers one board and creates a live Markdown document', async ({ page }) => {
+  const projectId = await createProject(page, 'Unified workspace', 0, false);
+  const seed = await page.request.post('/api/projects/' + projectId + '/files', {
+    data: { name: 'readme.md', content: '# Workspace' },
+  });
+  expect(seed.ok()).toBeTruthy();
+  await page.goto('/projects/' + projectId + '/files/readme.md');
+  await expect(page.getByTestId('markdown-live-editor')).toBeVisible({ timeout: T.long });
+  await page.getByTestId('workspace-add-tab').click();
+  await expect(page.getByTestId('workspace-tool-board')).toHaveCount(1);
+  await expect(page.getByTestId('workspace-action-new-sketch')).toHaveCount(0);
+  await page.getByTestId('workspace-action-create-document').click();
+  const editor = page.getByTestId('markdown-live-editor');
+  await expect(editor).toBeVisible({ timeout: T.long });
+  await expect(editor.locator('.md-live-h1')).toHaveText('Document');
+  await editor.locator('.md-live-h1').click();
+  await page.keyboard.press('End');
+  await page.keyboard.insertText(' draft');
+  await page.keyboard.press('ControlOrMeta+z');
+  await page.keyboard.press('ControlOrMeta+Shift+z');
+  await page.getByRole('tab', { name: 'Preview', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Document draft' })).toBeVisible();
+  await expect.poll(async () => (await page.request.get('/api/projects/' + projectId + '/files/document.md')).text()).toContain('# Document draft');
+  await page.getByRole('tab', { name: 'Edit', exact: true }).click();
+  await editor.locator('.cm-content').focus();
+  await page.keyboard.press('ControlOrMeta+z');
+  await expect.poll(async () => (await page.request.get('/api/projects/' + projectId + '/files/document.md')).text()).not.toContain('# Document draft');
+  await page.keyboard.press('ControlOrMeta+Shift+z');
+  await expect.poll(async () => (await page.request.get('/api/projects/' + projectId + '/files/document.md')).text()).toContain('# Document draft');
+
+  const modes = page.getByRole('tablist', { name: /markdown view mode/i });
+  await modes.getByRole('tab', { name: 'Code' }).click();
+  const input = editor.locator('.cm-content');
+  await input.focus();
+  await page.keyboard.press(process.platform === 'darwin' ? 'Meta+ArrowDown' : 'Control+End');
+  await page.keyboard.insertText(' shared-buffer');
+  await modes.getByRole('tab', { name: 'Split' }).click();
+  await expect(page.getByLabel('Markdown preview').getByText(/shared-buffer/)).toBeVisible();
+  await modes.getByRole('tab', { name: 'Split' }).press('Home');
+  await expect(modes.getByRole('tab', { name: 'Edit' })).toBeFocused();
+  await expect(modes.getByRole('tab', { name: 'Edit' })).toHaveAttribute('aria-selected', 'true');
+  await input.focus();
+  await page.keyboard.press('ControlOrMeta+z');
+  await expect.poll(async () => (await page.request.get('/api/projects/' + projectId + '/files/document.md')).text()).not.toContain('shared-buffer');
+
 });
 
 test('[P1] seeded files appear as labelled nodes and ⇧1 fits the board', async ({ page }) => {

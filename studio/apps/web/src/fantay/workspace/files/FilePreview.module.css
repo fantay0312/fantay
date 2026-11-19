@@ -1,0 +1,396 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* File previews. One language for every type: the ground is the canvas tone (set by the card), a
+   text file is a sheet of paper standing on it and running off the bottom edge, a picture floats on
+   it, a type tile is a large quiet glyph with its extension in the corner. Ink only: headings in
+   ink, text in ink-soft, structure in line tones. The same rules give the dark theme, where the
+   sheet is the darker paper on the lighter canvas.
+
+   Text is laid out at a readable size and scaled to half (`--sketch-scale`), so it stays real,
+   selectable-looking text at about 6px whatever minimum font size the platform enforces. */
+
+/* ── picture ─────────────────────────────────────────────────────────────────────────────────── */
+
+.picture {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  padding: 10px;
+  place-items: center;
+}
+
+/* Sized by the picture itself, never upscaled, so the element's box is the picture's rectangle and
+   the checker behind it shows through transparent pixels and nowhere else. */
+.image {
+  --checker: color-mix(in srgb, var(--ink) 9%, var(--paper));
+
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 100%;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity var(--motion-enter) var(--ease-out-quint);
+}
+
+.image[data-ready] {
+  opacity: 1;
+}
+
+.image[data-alpha] {
+  background-color: var(--paper);
+  background-image: conic-gradient(var(--checker) 25%, transparent 0 50%, var(--checker) 0 75%, transparent 0);
+  background-size: 10px 10px;
+}
+
+/* ── video ───────────────────────────────────────────────────────────────────────────────────── */
+
+.frame {
+  position: absolute;
+  inset: 0;
+}
+
+.cover {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: preview-in var(--motion-enter) var(--ease-out-quint) both;
+}
+
+.play {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  display: grid;
+  width: 20px;
+  height: 20px;
+  padding-left: 1px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  box-shadow: var(--shadow-ring);
+  color: var(--ink);
+  place-items: center;
+  animation: preview-in var(--motion-enter) var(--ease-out-quint) both;
+}
+
+/* ── type tile ───────────────────────────────────────────────────────────────────────────────── */
+
+.tile {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+/* The glyph sits on a piece of paper, like every other preview's subject. */
+.tileChip {
+  display: grid;
+  flex: none;
+  background: var(--paper);
+  box-shadow: var(--shadow-ring);
+  color: var(--ink-soft);
+  place-items: center;
+}
+
+.tileChip[data-shape='square'] {
+  width: 50px;
+  height: 50px;
+  border-radius: 13px;
+}
+
+.tileChip[data-shape='page'] {
+  width: 44px;
+  height: 56px;
+  border-radius: 6px;
+}
+
+.tileChip[data-shape='wide'] {
+  width: 66px;
+  height: 46px;
+  border-radius: 7px;
+}
+
+.tileLabel {
+  color: var(--ink-faint);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+/* ── sheet ───────────────────────────────────────────────────────────────────────────────────── */
+
+.sheetGround {
+  position: absolute;
+  inset: 0;
+}
+
+.sheet {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  bottom: 0;
+  left: 14px;
+  overflow: hidden;
+  border-radius: 5px 5px 0 0;
+  background: var(--paper);
+  box-shadow: var(--shadow-ring);
+}
+
+/* A web page is a window, not a leaf of paper: wider, with the strip a browser wears on top. */
+.sheet[data-variant='page'] {
+  right: 10px;
+  left: 10px;
+}
+
+.pageBar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 11px;
+  background: var(--sub);
+  box-shadow: inset 0 -1px 0 var(--line-soft);
+}
+
+.pageBar::before {
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--ink-ghost);
+  box-shadow:
+    5px 0 0 var(--ink-ghost),
+    10px 0 0 var(--ink-ghost);
+  content: '';
+  opacity: 0.6;
+}
+
+.sheetInner {
+  --sketch-scale: 0.5;
+
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  width: calc(100% / var(--sketch-scale));
+  height: calc(100% / var(--sketch-scale));
+  padding: 18px 20px 0;
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(var(--sketch-scale));
+  transform-origin: 0 0;
+  transition: opacity var(--motion-enter) var(--ease-out-quint);
+  user-select: none;
+}
+
+.sheetInner[data-ready] {
+  opacity: 1;
+}
+
+.sheet[data-variant='page'] .sheetInner {
+  top: 11px;
+}
+
+.sheet[data-variant='table'] .sheetInner {
+  padding: 0;
+}
+
+/* The app's global `pre` and `p` rules must not show through. */
+.lines {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.heading,
+.paragraph,
+.item,
+.quote,
+.codeLine {
+  margin: 0;
+  padding: 0;
+  overflow-wrap: anywhere;
+}
+
+.heading {
+  margin-bottom: 6px;
+  color: var(--ink);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.heading[data-level='1'] {
+  margin-bottom: 9px;
+  font-size: 19px;
+}
+
+.heading[data-level='2'] {
+  margin-top: 4px;
+  font-size: 15px;
+}
+
+.heading[data-level='3'] {
+  margin-top: 2px;
+  font-size: 13px;
+}
+
+.paragraph {
+  display: -webkit-box;
+  margin-bottom: 8px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+}
+
+.item {
+  position: relative;
+  margin-bottom: 3px;
+  padding-left: 13px;
+}
+
+.item::before {
+  position: absolute;
+  top: 7px;
+  left: 3px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ink-ghost);
+  content: '';
+}
+
+.quote {
+  margin-bottom: 8px;
+  padding-left: 9px;
+  box-shadow: inset 2px 0 0 var(--line);
+  color: var(--ink-faint);
+}
+
+.codeLine {
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: pre;
+}
+
+.rule {
+  display: block;
+  height: 1px;
+  margin: 9px 0;
+  background: var(--line);
+}
+
+/* A picture or an embed inside a document or a page. */
+.block {
+  display: block;
+  height: 56px;
+  margin: 4px 0 10px;
+  border-radius: 6px;
+  background: var(--sub);
+}
+
+.pill {
+  display: inline-block;
+  margin: 2px 6px 9px 0;
+  padding: 3px 11px;
+  border-radius: 999px;
+  background: var(--sub);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Stand-in lines for a page whose content only exists once its script has run. */
+.bar {
+  display: block;
+  width: 78%;
+  height: 8px;
+  margin: 0 0 9px;
+  border-radius: 4px;
+  background: var(--sub);
+}
+
+.bar[data-width='wide'] {
+  width: 92%;
+}
+
+.bar[data-width='short'] {
+  width: 46%;
+}
+
+.table {
+  display: grid;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 22px;
+}
+
+.cell {
+  min-width: 0;
+  padding: 0 9px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 -1px 0 var(--line-soft),
+    inset -1px 0 0 var(--line-soft);
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell[data-head] {
+  background: var(--sub);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+@keyframes preview-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image,
+  .sheetInner {
+    transition: none;
+  }
+
+  .cover,
+  .play {
+    animation: none;
+  }
+}

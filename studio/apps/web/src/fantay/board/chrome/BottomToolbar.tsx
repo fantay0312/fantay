@@ -28,7 +28,7 @@ import { ToolButton } from './ToolButton';
 import styles from './chrome.module.css';
 
 const ISLAND = { [BOARD_CHROME_ISLAND_ATTR]: '' } as const;
-const DRAW_GROUP: readonly BoardTool[] = ['frame', 'rectangle', 'ellipse', 'text'];
+const DRAW_GROUP: readonly BoardTool[] = ['pen', 'frame', 'rectangle', 'ellipse', 'text'];
 
 export function toolHintKey(tool: BoardTool): DictKey | null {
   if (tool === 'frame') return 'board.tool.frameHint';

@@ -1,5 +1,6 @@
 import { Fragment, memo, type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { LIVE_SINCE_ATTR, useCharReveal } from "./chat/useCharReveal";
+import { useStreamingMarkdownSnapshot } from "./chat/useStreamingMarkdownSnapshot";
 import { ExecutionShell, type ShellFailureReason } from "./chat/ExecutionShell";
 import { daemonFailureVerdictFrom, resolveRunFailureUi } from "../runtime/amr-guidance";
 import { buildTurnBlocks } from "../runtime/chat/build-turn-blocks";
@@ -3175,7 +3176,9 @@ function ProseBlock({
     () => (streaming ? splitStreamingArtifact(visibleText) : { head: visibleText, live: null }),
     [visibleText, streaming]
   );
-  const segments = useMemo(() => splitOnQuestionForms(head), [head]);
+  const liveProse = isLastAssistant && streaming;
+  const proseSnapshot = useStreamingMarkdownSnapshot(head, liveProse);
+  const segments = useMemo(() => splitOnQuestionForms(proseSnapshot), [proseSnapshot]);
   /**
    * 这条消息里的问卷**还收不收提交**。
    *
@@ -3198,7 +3201,7 @@ function ProseBlock({
    * 判据挂在「这是最后一条且还在流」上 —— 历史消息重渲染时不能再化开一遍。
    */
   const proseRef = useRef<HTMLDivElement>(null);
-  useCharReveal(proseRef, Boolean(isLastAssistant && streaming));
+  useCharReveal(proseRef, liveProse);
   /*
    * 这一段是在直播途中 / 收尾那一刻才出现的(Fantay 2026-11-08):挂上来时所在消息还带着
    * 直播标记(`AssistantMessage` 的 layout effect 晚于这里,收尾那一帧标记也还在)。
@@ -3230,7 +3233,7 @@ function ProseBlock({
     | { key: string; kind: "form"; form: QuestionForm }
     | { key: string; kind: "od-card"; card: OdCard }
     | { key: string; kind: "suppressed-direction" };
-  const renderable = segments.flatMap((seg, idx): Renderable[] => {
+  const renderable = useMemo(() => segments.flatMap((seg, idx): Renderable[] => {
     if (seg.kind === "form") {
       if (suppressDirectionForms && isDirectionForm(seg.form)) {
         return [{ key: `f-${idx}`, kind: "suppressed-direction" }];
@@ -3245,7 +3248,7 @@ function ProseBlock({
       if (cardSeg.text.trim().length === 0) return [];
       return [{ key: `t-${idx}-${c}`, kind: "text", text: cardSeg.text }];
     });
-  });
+  }), [segments, suppressDirectionForms]);
   /**
    * 一段正文可以「看上去空但仍有东西要画」:还没闭合的 `<question-form>` 被剥掉之后,
    * 留下来的加载框才是这一块此刻的全部内容。
@@ -3263,9 +3266,12 @@ function ProseBlock({
       {renderable.map((seg) => {
         if (seg.kind === "text") {
           return (
-            <Fragment key={seg.key}>
-              {renderMarkdown(seg.text, { onLinkClick })}
-            </Fragment>
+            <AssistantMarkdown
+              key={seg.key}
+              text={seg.text}
+              live={liveProse}
+              onLinkClick={onLinkClick}
+            />
           );
         }
         if (seg.kind === "od-card") {
@@ -3311,6 +3317,21 @@ function ProseBlock({
     </div>
   );
 }
+
+const AssistantMarkdown = memo(function AssistantMarkdown({
+  text,
+  live,
+  onLinkClick,
+}: {
+  text: string;
+  live: boolean;
+  onLinkClick: MarkdownLinkClickHandler;
+}) {
+  return useMemo(
+    () => <>{renderMarkdown(text, { onLinkClick, syntaxHighlight: !live })}</>,
+    [text, onLinkClick, live],
+  );
+});
 
 function isDirectionForm(form: QuestionForm): boolean {
   if (form.id.toLowerCase() === "direction") return true;

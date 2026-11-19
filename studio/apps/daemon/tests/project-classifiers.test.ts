@@ -11,12 +11,9 @@ import { kindFor, mimeFor } from '../src/projects.js';
 // addition, or upcoming `.yaml` / `.toml` / `.sh`) can be made safely.
 
 describe('kindFor', () => {
-  it('classifies .sketch.json as sketch (compound extension wins over .json)', () => {
-    // `kindFor` checks the compound suffix before extracting `path.extname`,
-    // otherwise editable sketches would slot into the 'code' bucket along
-    // with regular JSON files and the sketch viewer would never render.
-    expect(kindFor('drawing.sketch.json')).toBe('sketch');
-    expect(kindFor('nested/path/board.sketch.json')).toBe('sketch');
+  it('opens former drawing documents as ordinary JSON source', () => {
+    expect(kindFor('drawing.sketch.json')).toBe('code');
+    expect(kindFor('nested/path/board.sketch.json')).toBe('code');
   });
 
   it('classifies HTML files as html', () => {

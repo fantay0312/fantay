@@ -4,11 +4,12 @@ import { dirname, join, relative } from "node:path";
 
 import { hashJson, hashPath, ToolPackCache } from "./cache/index.js";
 import type { ToolPackConfig } from "./config/index.js";
-import { hashPackageSourcePath } from "./package-source-hash.js";
+import { hashPackageSourcePath, packageSourceHashOptions } from "./package-source-hash.js";
 import { readRuntimeAppVersion, versionFamilyForAppVersion } from "./versioning/index.js";
 import { processWebSourcemaps } from "./web-sourcemaps.js";
 
 export const WORKSPACE_BUILD_PACKAGES = [
+  { directory: "native-tool/web_search", name: "@fantay/native-web-search" },
   { directory: "packages/tokentosea", name: "@fantay/tokentosea" },
   { directory: "packages/release", name: "@open-design/release" },
   { directory: "packages/components", name: "@open-design/components" },
@@ -48,9 +49,10 @@ export const WORKSPACE_BUILD_COMMANDS = [
   },
   { args: ["--filter", "@open-design/web", "run", "build:sidecar"] },
   { args: ["--filter", "@open-design/packaged", "run", "build"] },
+  { args: ["--filter", "@fantay/native-web-search", "run", "prepare:engine"] },
 ] as const;
 
-export const WORKSPACE_BUILD_CACHE_SCHEMA_VERSION = 15;
+export const WORKSPACE_BUILD_CACHE_SCHEMA_VERSION = 16;
 
 /**
  * V8 old-space ceiling (MB) for the packaged closure build, the stage that runs
@@ -85,6 +87,7 @@ export type WorkspaceBuildCacheKeyInputs = {
   pnpmLock: string;
   pnpmWorkspace: string;
   schemaVersion: number;
+  architecture?: string;
   webOutputMode: ToolPackConfig["webOutputMode"];
 };
 
@@ -139,7 +142,7 @@ async function readPackageManager(workspaceRoot: string): Promise<unknown> {
 export async function createWorkspaceBuildCacheKey(config: ToolPackConfig): Promise<string> {
   const packageHashes: Record<string, string> = {};
   for (const packageInfo of WORKSPACE_BUILD_PACKAGES) {
-    packageHashes[packageInfo.name] = await hashPackageSourcePath(join(config.workspaceRoot, packageInfo.directory), packageInfo.name === '@open-design/web' ? { ignorePaths: ['public/canvas-editor', 'public/canvaskit'] } : {});
+    packageHashes[packageInfo.name] = await hashPackageSourcePath(join(config.workspaceRoot, packageInfo.directory), packageSourceHashOptions(packageInfo.name));
   }
   const nodeId = `${config.platform}.workspace-build`;
 
@@ -153,6 +156,7 @@ export async function createWorkspaceBuildCacheKey(config: ToolPackConfig): Prom
     pnpmLock: await hashPath(join(config.workspaceRoot, "pnpm-lock.yaml")),
     pnpmWorkspace: await hashPath(join(config.workspaceRoot, "pnpm-workspace.yaml")),
     schemaVersion: WORKSPACE_BUILD_CACHE_SCHEMA_VERSION,
+    architecture: process.arch,
     webOutputMode: config.webOutputMode,
   });
 }
@@ -182,6 +186,7 @@ export async function runWorkspaceBuild(
     );
     await runPnpm([...WORKSPACE_BUILD_COMMANDS[2].args]);
     await runPnpm([...WORKSPACE_BUILD_COMMANDS[3].args]);
+    await runPnpm([...WORKSPACE_BUILD_COMMANDS[4].args]);
   } finally {
     if (previousWebNextEnv == null) await rm(webNextEnvPath, { force: true });
     else await writeFile(webNextEnvPath, previousWebNextEnv, "utf8");
@@ -194,6 +199,8 @@ function workspaceBuildOutputFiles(config: ToolPackConfig): string[] {
     "apps/web/.next/standalone/server.js",
   ];
   return [
+    "native-tool/web_search/dist/index.js",
+    `native-tool/web_search/runtime/${process.platform}-${process.arch}/smart-search${process.platform === 'win32' ? '.exe' : ''}`,
     "packages/components/dist/index.mjs",
     "packages/components/dist/index.d.ts",
     "packages/release/dist/index.mjs",
@@ -244,6 +251,8 @@ function workspaceBuildOutputFiles(config: ToolPackConfig): string[] {
 
 function workspaceBuildArtifacts(config: ToolPackConfig): WorkspaceBuildArtifact[] {
   const artifacts = [
+    "native-tool/web_search/dist",
+    "native-tool/web_search/runtime",
     "packages/components/dist",
     "packages/release/dist",
     "packages/contracts/dist",

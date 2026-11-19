@@ -31,7 +31,9 @@ export const WIN_PREBUNDLE_RUNTIME_DEPENDENCIES = {
   "hyperframes": "0.8.1",
   "gsap": "3.14.2",
   "node-pty": "1.1.0",
+  "pdfjs-dist": "6.5.438",
   "sharp": "0.35.3",
+  "silk-wasm": "3.7.1",
 } as const;
 
 export const WIN_STANDALONE_PREBUNDLE_EXCLUDED_INTERNAL_PACKAGES = [
@@ -57,7 +59,7 @@ export const WIN_PREBUNDLE_POLICIES = {
     label: "packaged main",
   },
   daemonCli: {
-    externals: ["@ffmpeg-installer/ffmpeg", "@ffprobe-installer/ffprobe", "@open-design/sidecar", "better-sqlite3", "blake3-wasm", "hyperframes", "gsap", "node-pty"],
+    externals: ["@ffmpeg-installer/ffmpeg", "@ffprobe-installer/ffprobe", "@open-design/sidecar", "better-sqlite3", "blake3-wasm", "hyperframes", "gsap", "node-pty", "onnxruntime-node", "pdfjs-dist", "silk-wasm"],
     forbiddenInputs: [
       "/node_modules/@open-design/daemon/",
       "/node_modules/@ffmpeg-installer/ffmpeg/",
@@ -68,6 +70,7 @@ export const WIN_PREBUNDLE_POLICIES = {
       "/node_modules/gsap/",
       "/node_modules/next/",
       "/node_modules/node-pty/",
+      "/node_modules/onnxruntime-node/",
       "/node_modules/openai/",
       "/node_modules/react/",
       "/node_modules/react-dom/",
@@ -75,7 +78,7 @@ export const WIN_PREBUNDLE_POLICIES = {
     label: "daemon cli",
   },
   daemonSidecar: {
-    externals: ["@ffmpeg-installer/ffmpeg", "@ffprobe-installer/ffprobe", "@open-design/sidecar", "better-sqlite3", "blake3-wasm", "hyperframes", "gsap", "node-pty"],
+    externals: ["@ffmpeg-installer/ffmpeg", "@ffprobe-installer/ffprobe", "@open-design/sidecar", "better-sqlite3", "blake3-wasm", "hyperframes", "gsap", "node-pty", "onnxruntime-node", "pdfjs-dist", "silk-wasm"],
     forbiddenInputs: [
       "/node_modules/@open-design/daemon/",
       "/node_modules/@ffmpeg-installer/ffmpeg/",
@@ -86,6 +89,7 @@ export const WIN_PREBUNDLE_POLICIES = {
       "/node_modules/gsap/",
       "/node_modules/next/",
       "/node_modules/node-pty/",
+      "/node_modules/onnxruntime-node/",
       "/node_modules/openai/",
       "/node_modules/react/",
       "/node_modules/react-dom/",

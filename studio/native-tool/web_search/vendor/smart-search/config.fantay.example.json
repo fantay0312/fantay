@@ -1,0 +1,11 @@
+{
+  "XAI_ENABLED": "false",
+  "OPENAI_COMPATIBLE_ENABLED": "true",
+  "OPENAI_COMPATIBLE_API_URL": "https://api.fantay.me/v1",
+  "OPENAI_COMPATIBLE_API_KEY": "",
+  "OPENAI_COMPATIBLE_API_MODE": "responses",
+  "OPENAI_COMPATIBLE_MODEL": "grok-4.20-multi-agent-0309",
+  "OPENAI_COMPATIBLE_TOOLS": "web_search,x_search",
+  "OPENAI_COMPATIBLE_STREAM": "false",
+  "SMART_SEARCH_INTENT_ROUTER": "local"
+}

@@ -20,7 +20,7 @@ import { projectDir, resolveProjectDir } from './projects.js';
 // not accidentally match and silence every event in the tree.
 const WATCHER_ONLY_IGNORE_NAMES = new Set(['.ds_store']);
 export type ProjectWatchKind = 'add' | 'change' | 'unlink';
-export interface ProjectWatchEvent { type: 'file-changed'; path: string; kind: ProjectWatchKind }
+export interface ProjectWatchEvent { type: 'file-changed'; path: string; kind: ProjectWatchKind; mtime?: number; size?: number }
 export type ProjectWatchCallback = (evt: ProjectWatchEvent) => void;
 type ProjectWatchIgnored = (absPath: string, stats?: Stats) => boolean;
 export interface ProjectWatcherOptions {
@@ -107,10 +107,14 @@ function makeEntry(dir: string, opts: Required<Pick<ProjectWatcherOptions, 'igno
     resolveReady();
   };
 
-  const broadcast = (kind: ProjectWatchKind) => (absPath: string) => {
+  const broadcast = (kind: ProjectWatchKind) => (absPath: string, stats?: Stats) => {
     const rel = path.relative(dir, absPath);
     if (!rel || rel.startsWith('..')) return;
     const evt: ProjectWatchEvent = { type: 'file-changed', path: rel.split(path.sep).join('/'), kind };
+    if (kind === 'change' && stats?.isFile()) {
+      evt.mtime = stats.mtimeMs;
+      evt.size = stats.size;
+    }
     for (const cb of entry.subscribers) {
       try {
         cb(evt);

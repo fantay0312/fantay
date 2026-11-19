@@ -1,0 +1,12 @@
+.voice-settings { padding: 20px 24px 28px; max-width: 660px; }
+.voice-settings__intro { margin: 0 0 24px; color: var(--text-primary); font-size: 14px; line-height: 1.6; }
+.voice-settings__field { display: flex; flex-direction: column; gap: 8px; margin: 0 0 20px; }
+.voice-settings__field > label { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.voice-settings__field input { width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-input, var(--bg-primary)); color: var(--text-primary); font: inherit; font-size: 13px; }
+.voice-settings__field input:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 2px; }
+.voice-settings__model { display: flex; align-items: center; gap: 8px; }
+.voice-settings__model .agent-model-select-wrap { flex: 1; min-width: 0; }
+.voice-settings__hint { color: var(--text-secondary); font-size: 13px; line-height: 1.6; margin: 0 0 20px; }
+.voice-settings__clear { display: flex; align-items: center; gap: 8px; margin: -4px 0 20px; color: var(--text-secondary); font-size: 13px; }
+.voice-settings__error { color: var(--danger, #c83232); font-size: 13px; line-height: 1.6; }
+.voice-settings__reuse { margin-bottom: 20px; }

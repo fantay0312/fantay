@@ -7,7 +7,6 @@ import type { ProjectFile, ProjectFileKind } from '../../types';
 import type { WorkspaceContextItem } from '@open-design/contracts';
 import type { TabLauncherClickProps } from '@open-design/contracts/analytics';
 import type { LauncherAction, LauncherContext } from './tab-launcher';
-import { WorkspaceToolsPanel, type WorkspaceTool } from './WorkspaceToolsPanel';
 import styles from './TabLauncherMenu.module.css';
 
 type TranslateFn = (key: keyof Dict, vars?: Record<string, string | number>) => string;
@@ -39,8 +38,6 @@ interface Props {
   openTabNames: string[];
   /** "Create new" actions from the launcher registry (empty in Stage 1). */
   actions: LauncherAction[];
-  tools?: readonly WorkspaceTool[];
-  inline?: boolean;
   /** Context the registry actions run against. */
   launcherContext: LauncherContext;
   /** Open the chosen file in a new tab (wired to FileWorkspace.openFile). */
@@ -62,8 +59,6 @@ export function TabLauncherMenu({
   workspaceContexts = [],
   openTabNames,
   actions,
-  tools,
-  inline = false,
   launcherContext,
   onOpenFile,
   onOpenTab,
@@ -82,7 +77,7 @@ export function TabLauncherMenu({
   // Position from the anchor's rect; keep it pinned to the button's right edge
   // so the menu hangs under the "+" without spilling off-screen.
   useLayoutEffect(() => {
-    if (!anchor || inline) return;
+    if (!anchor) return;
     function update() {
       if (!anchor) return;
       const r = anchor.getBoundingClientRect();
@@ -97,11 +92,10 @@ export function TabLauncherMenu({
       window.removeEventListener('scroll', update, true);
       window.removeEventListener('resize', update);
     };
-  }, [anchor, inline]);
+  }, [anchor]);
 
   // Outside-click / Escape to dismiss.
   useEffect(() => {
-    if (inline) return;
     function onDown(e: MouseEvent) {
       const target = e.target as Node;
       if (anchor?.contains(target)) return;
@@ -117,7 +111,7 @@ export function TabLauncherMenu({
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
     };
-  }, [anchor, inline, onClose]);
+  }, [anchor, onClose]);
 
   // The set of kinds present, in a stable order, for the filter chips.
   const presentKinds = useMemo(() => {
@@ -139,10 +133,10 @@ export function TabLauncherMenu({
     if (kindFilter !== 'all') return [] as WorkspaceContextItem[];
     const q = query.trim().toLowerCase();
     return workspaceContexts
-      .filter((item) => item.tabId && (!inline || openTabNames.includes(item.tabId)))
+      .filter((item) => item.tabId)
       .filter((item) => !q || workspaceContextSearchText(item).toLowerCase().includes(q))
       .slice(0, 20);
-  }, [inline, kindFilter, openTabNames, query, workspaceContexts]);
+  }, [kindFilter, query, workspaceContexts]);
 
   const selectableCount = results.length + tabResults.length;
 
@@ -210,36 +204,16 @@ export function TabLauncherMenu({
     }
   }
 
-  if (!inline && !pos) return null;
-
-  const browserAction = tools && actions.find((action) => action.id === 'new-browser');
-  const createActions = browserAction && !query.trim()
-    ? actions.filter((action) => action !== browserAction)
-    : actions;
-  const toolCards = tools?.map((tool) => ({
-    ...tool,
-    run: () => {
-      tool.run();
-      onClose();
-    },
-  }));
-  if (toolCards && browserAction) {
-    toolCards.push({
-      id: 'browser',
-      iconName: browserAction.iconName,
-      labelKey: browserAction.labelKey,
-      run: () => runLauncherAction(browserAction),
-    });
-  }
+  if (!pos) return null;
 
   const content = (
     <div
       ref={menuRef}
-      className={inline ? styles.inline : styles.menu}
-      style={pos && !inline ? { top: pos.top, left: pos.left } : undefined}
-      role={inline ? 'region' : 'dialog'}
+      className={styles.menu}
+      style={{ top: pos.top, left: pos.left }}
+      role="dialog"
       aria-label={t('workspace.newTab')}
-      data-testid={inline ? 'workspace-start-page' : 'tab-launcher-menu'}
+      data-testid="tab-launcher-menu"
     >
       <div className={styles.searchRow}>
         <span className={styles.searchIcon} aria-hidden>
@@ -258,7 +232,6 @@ export function TabLauncherMenu({
         />
       </div>
 
-      {inline && toolCards && !query.trim() ? <WorkspaceToolsPanel tools={toolCards} /> : null}
       {presentKinds.length > 0 ? (
         <div className={styles.chips}>
           <button
@@ -288,12 +261,11 @@ export function TabLauncherMenu({
       ) : null}
 
       <div className={styles.scrollBody} data-testid="tab-launcher-scroll-body">
-        {!inline && toolCards && !query.trim() ? <WorkspaceToolsPanel tools={toolCards} /> : null}
-        {createActions.length > 0 ? (
+        {actions.length > 0 ? (
           <section className={styles.section}>
             <div className={styles.sectionHeader}>{t('workspace.createNew')}</div>
             <ul className={styles.list}>
-              {createActions.map((action, index) => (
+              {actions.map((action, index) => (
                 <li key={action.id}>
                   <button
                     type="button"
@@ -383,7 +355,7 @@ export function TabLauncherMenu({
           </section>
         ) : null}
 
-        {results.length === 0 && tabResults.length === 0 && (!inline || query.trim()) ? (
+        {results.length === 0 && tabResults.length === 0 ? (
           <div className={styles.empty} data-testid="tab-launcher-empty">
             {t('workspace.noFilesMatch')}
           </div>
@@ -391,7 +363,7 @@ export function TabLauncherMenu({
       </div>
     </div>
   );
-  return inline ? content : createPortal(content, document.body);
+  return createPortal(content, document.body);
 }
 
 // --- local helpers ---------------------------------------------------------
@@ -399,7 +371,7 @@ export function TabLauncherMenu({
 // it, so we keep a tiny copy here (same wording contract) rather than widening
 // that component's surface.
 
-function kindIconName(kind: ProjectFileKind): IconName {
+export function kindIconName(kind: ProjectFileKind): IconName {
   if (kind === 'html') return 'file-code';
   if (kind === 'image') return 'image';
   if (kind === 'sketch') return 'pencil';
@@ -420,7 +392,7 @@ function kindLabel(kind: ProjectFileKind, t: TranslateFn): string {
   return t('designFiles.kindBinary');
 }
 
-function workspaceContextIconName(kind: WorkspaceContextItem['kind']): IconName {
+export function workspaceContextIconName(kind: WorkspaceContextItem['kind']): IconName {
   if (kind === 'browser') return 'globe';
   if (kind === 'design-files' || kind === 'folder') return 'folder';
   if (kind === 'project') return 'folder';
@@ -432,7 +404,7 @@ function workspaceContextIconName(kind: WorkspaceContextItem['kind']): IconName 
   return 'file';
 }
 
-function workspaceContextSearchText(item: WorkspaceContextItem): string {
+export function workspaceContextSearchText(item: WorkspaceContextItem): string {
   return [
     item.id,
     item.kind,

@@ -10,6 +10,7 @@ import {
   type AppliedPluginSnapshot,
   type ArtifactManifest,
   type ByokChatProviderConfig,
+  type ChatMessageBranchRequest,
   type ChatRunStatus,
   type ChatRunStatusResponse,
   type InstalledPluginRecord,
@@ -57,6 +58,7 @@ import {
   updateProject,
   upsertMessage,
 } from '../db.js';
+import { beginMessageBranch, MessageBranchConflict } from '../storage/message-branches.js';
 import { readVelaLoginStatus } from '../integrations/vela.js';
 import {
   ensureDetectedRuntimeVersions,
@@ -1295,6 +1297,28 @@ export function registerRunRoutes(app: Express, ctx: RegisterRunRoutesDeps) {
       return sendApiError(res, 503, 'UPSTREAM_UNAVAILABLE', 'daemon is shutting down');
     }
     const requestBody = toJsonRecord(req.body);
+    let messageBranch: ChatMessageBranchRequest | undefined;
+    if (requestBody.messageBranch !== undefined) {
+      const branch = toJsonRecord(requestBody.messageBranch);
+      if ((branch.action !== 'edit' && branch.action !== 'regenerate')
+        || typeof branch.messageId !== 'string' || !isSafeId(branch.messageId)
+        || typeof branch.expectedLeafId !== 'string' || !isSafeId(branch.expectedLeafId)
+        || typeof requestBody.projectId !== 'string' || !requestBody.projectId
+        || typeof requestBody.conversationId !== 'string' || !requestBody.conversationId
+        || typeof requestBody.userMessageId !== 'string' || !requestBody.userMessageId
+        || typeof requestBody.assistantMessageId !== 'string' || !requestBody.assistantMessageId
+        || typeof requestBody.clientRequestId !== 'string' || !requestBody.clientRequestId
+        || typeof requestBody.currentPrompt !== 'string'
+        || requestBody.taskExecutionId !== undefined || requestBody.resume === true) {
+        return sendApiError(res, 400, 'BAD_REQUEST', 'Invalid message branch request');
+      }
+      messageBranch = {
+        action: branch.action,
+        messageId: branch.messageId,
+        expectedLeafId: branch.expectedLeafId,
+      };
+      requestBody.messageBranch = messageBranch;
+    }
     // A retired runtime id (amr, byok-opencode) runs the runtime that replaced
     // it; record the run under that id so every later check sees one runtime.
     if (typeof requestBody.agentId === 'string') requestBody.agentId = canonicalAgentId(requestBody.agentId);
@@ -1360,7 +1384,7 @@ export function registerRunRoutes(app: Express, ctx: RegisterRunRoutesDeps) {
     }
     let previousStrategyTask: StrategyTaskExecutionRecord | null = null;
     try {
-      previousStrategyTask = resolveStrategyHandoff(db, requestBody, design.runs.list({
+      previousStrategyTask = messageBranch ? null : resolveStrategyHandoff(db, requestBody, design.runs.list({
         projectId: typeof requestBody.projectId === 'string' ? requestBody.projectId : undefined,
         conversationId: typeof requestBody.conversationId === 'string' ? requestBody.conversationId : undefined,
       }));
@@ -2159,7 +2183,19 @@ export function registerRunRoutes(app: Express, ctx: RegisterRunRoutesDeps) {
         };
       }
     }
-    const seedRunUserMessage = () => {
+    const seedRunUserMessage = (candidate: ChatRun) => {
+      if (messageBranch) {
+        if (!runUserSeed || !candidate.assistantMessageId) {
+          throw new MessageBranchConflict('The branch requires a persisted question and reply.');
+        }
+        if (design.runs.list({ conversationId: runUserSeed.conversationId })
+          .some(run => run.id !== candidate.id && holdsConversation(run))) {
+          throw new MessageBranchConflict('Wait for the active reply before creating a message version.');
+        }
+        beginMessageBranch(db, runUserSeed.conversationId, messageBranch,
+          runUserSeed.id, candidate.assistantMessageId);
+        if (messageBranch.action === 'regenerate') return;
+      }
       if (!runUserSeed) return;
       const now = Date.now();
       upsertMessage(db, runUserSeed.conversationId, {
@@ -2449,7 +2485,7 @@ export function registerRunRoutes(app: Express, ctx: RegisterRunRoutesDeps) {
                   // falls back to mutable request paths.
                   design.runs.persistState(candidate);
                 }
-                seedRunUserMessage();
+                seedRunUserMessage(candidate);
                 if (
                   strategyRolloutDecision?.effectiveMode === 'active'
                   && resolvedSnapshot?.ok
@@ -2519,15 +2555,25 @@ export function registerRunRoutes(app: Express, ctx: RegisterRunRoutesDeps) {
         preparedPromptBundleText = null;
         frozenSkillPackage = undefined;
         if (!await fallbackAutomaticBeforeStart(error.preparationCause)) return;
-        preparedRun = internalRuns.prepare({
-          meta,
-          ...(runUserSeed ? { beforeClaimCommit: () => seedRunUserMessage() } : {}),
-          resume: {
-            requested: requestBody.resume === true,
-            canResume: isRechargeResumableRun,
-          },
-        });
+        try {
+          preparedRun = internalRuns.prepare({
+            meta,
+            ...(runUserSeed ? { beforeClaimCommit: seedRunUserMessage } : {}),
+            resume: {
+              requested: requestBody.resume === true,
+              canResume: isRechargeResumableRun,
+            },
+          });
+        } catch (fallbackError) {
+          if (fallbackError instanceof MessageBranchConflict) {
+            return sendApiError(res, 409, 'MESSAGE_BRANCH_CONFLICT', fallbackError.message);
+          }
+          throw fallbackError;
+        }
       } else {
+        if (error instanceof MessageBranchConflict) {
+          return sendApiError(res, 409, 'MESSAGE_BRANCH_CONFLICT', error.message);
+        }
         if (error instanceof StrategyHandoffError) return sendApiError(res, error.status, error.code, error.message);
         if (error instanceof OdNextTaskInputSnapshotError) {
           return sendApiError(res, 400, error.code, error.message);
@@ -2570,7 +2616,7 @@ export function registerRunRoutes(app: Express, ctx: RegisterRunRoutesDeps) {
         'clientRequestId is already associated with a different logical run request',
       );
     }
-    if (preparedRun.kind === 'ready' && preparedRun.creationKind === 'created') {
+    if (!messageBranch && preparedRun.kind === 'ready' && preparedRun.creationKind === 'created') {
       const blockingRun = activeRunBlockingDesignSystemEnrichment(design.runs, {
         conversationId: meta.conversationId,
         analyticsHints: meta.analyticsHints,

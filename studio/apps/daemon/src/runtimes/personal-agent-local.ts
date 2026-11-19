@@ -31,6 +31,7 @@ export async function executePaLocalModel(
   runId: string,
   signal: AbortSignal,
   terminate: (pid: number) => Promise<boolean>,
+  choice?: { reasoning?: string; serviceTier?: string },
 ): Promise<PaModelResult> {
   const def = getAgentDef(model.runtime);
   if (!def || ['tokentosea', 'byok'].includes(def.id)) {
@@ -73,13 +74,12 @@ export async function executePaLocalModel(
     }
     if (baseId === 'deepseek-harness') env.OD_DSH_TOOL_POLICY = 'read-only';
     const logFilePath = path.join(cwd, 'agent.log');
-    const antigravityModel = baseId === 'antigravity' ? resolveAntigravityConcreteModel({ model: model.modelId }) : null;
+    const options = { model: model.modelId, ...choice };
+    const antigravityModel = baseId === 'antigravity' ? resolveAntigravityConcreteModel(options) : null;
     if (antigravityModel && !antigravityTakesModelFlag(antigravityModel)) {
       releaseModelLock = await acquireAntigravityModelLock();
     }
-    const args = def.buildArgs(def.promptViaStdin || def.promptViaFile ? '' : prompt, [], [], {
-      model: model.modelId,
-    }, {
+    const args = def.buildArgs(def.promptViaStdin || def.promptViaFile ? '' : prompt, [], [], options, {
       cwd, executionPermission: 'read-only', disablePlugins: true,
       promptFilePath, ampSettingsFilePath: ampSettings?.settingsFilePath,
       agentLogFilePath: logFilePath,

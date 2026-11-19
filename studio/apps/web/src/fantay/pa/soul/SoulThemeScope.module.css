@@ -1,0 +1,67 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* A themed island and the theme paper (Soul UI spec §8.4). `.paper` is shared: the companion transcript scroller takes
+   it (W3-2), SoulThemeScope and the theme swatches put it on their own root. The pattern layer reads the scope's
+   `data-pa-pattern` (on an ancestor or on the paper itself); its lines and dots are the theme's pattern ink at the
+   mode's alpha, so they stay a texture and never compete with text. `background-attachment: local` lets the pattern
+   scroll with the transcript. */
+
+.scope {
+  position: relative;
+  min-width: 0;
+  font-family: var(--font-ui);
+}
+
+.paper {
+  background-color: var(--pa-skin-paper);
+  background-attachment: local;
+  color: var(--pa-skin-ink);
+  transition:
+    background-color var(--pa-dur-enter) var(--pa-ease),
+    color var(--pa-dur-enter) var(--pa-ease);
+}
+
+/* The scope's pattern (attribute on an ancestor) first, then the paper's own attribute, which wins: a swatch or a
+   preview of a plain theme stays plain even when it sits inside a patterned scope. */
+[data-pa-pattern='grid'] .paper {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--pa-skin-pattern-ink) var(--pa-soul-pattern-line), transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--pa-skin-pattern-ink) var(--pa-soul-pattern-line), transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+[data-pa-pattern='ruled'] .paper {
+  background-image: linear-gradient(transparent 29px, color-mix(in srgb, var(--pa-skin-pattern-ink) var(--pa-soul-pattern-line), transparent) 29px);
+  background-size: 100% 30px;
+}
+
+[data-pa-pattern='dots'] .paper {
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--pa-skin-pattern-ink) var(--pa-soul-pattern-dot), transparent) 1.2px, transparent 1.7px);
+  background-size: 18px 18px;
+}
+
+.paper[data-pa-pattern='grid'] {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--pa-skin-pattern-ink) var(--pa-soul-pattern-line), transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--pa-skin-pattern-ink) var(--pa-soul-pattern-line), transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.paper[data-pa-pattern='ruled'] {
+  background-image: linear-gradient(transparent 29px, color-mix(in srgb, var(--pa-skin-pattern-ink) var(--pa-soul-pattern-line), transparent) 29px);
+  background-size: 100% 30px;
+}
+
+.paper[data-pa-pattern='dots'] {
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--pa-skin-pattern-ink) var(--pa-soul-pattern-dot), transparent) 1.2px, transparent 1.7px);
+  background-size: 18px 18px;
+}
+
+.paper[data-pa-pattern='none'] {
+  background-image: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paper {
+    transition: none;
+  }
+}

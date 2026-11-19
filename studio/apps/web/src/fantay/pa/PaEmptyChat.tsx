@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Empty conversations (spec §6.6). Fantay greets in first person with four starters that only fill the composer
-// or open a place, never send. Its live mascot shows only while the inspector (which has its own live hero) is
-// closed, so the transcript slot never doubles the budget of spec §5.4.
-import { BookmarkPlus, Lightbulb, MessagesSquare, PanelsTopLeft } from 'lucide-react';
+// Empty conversations (spec §6.6, Soul UI spec §4.3). Fantay greets in first person with at most two starters that
+// only fill the composer, never send, then the 入门 shelf of three starter characters. Its live mascot shows only
+// while the inspector (which has its own live hero) is closed, so the transcript slot never doubles the budget of
+// spec §5.4. Work characters and work groups keep their quiet empty state.
+import { Lightbulb, PanelsTopLeft } from 'lucide-react';
 
 import { useT } from '../../i18n';
 import { FantayMascot, FantayMascotStill } from '../brand/FantayMascot';
@@ -13,6 +14,10 @@ import { usePa } from './pa-context';
 import { paPendingKey } from './usePaWorkspace';
 import { conversationKind, projectGate, subjectOf } from './pa-model';
 import type { PaConversation, PaGroup, PaIndex, PersonalAgent } from './pa-types';
+import { characterOf, portraitSrc } from './soul/soul-model';
+import { SoulAgentPortrait } from './soul/SoulPortrait';
+import { SoulStarterShelf } from './soul/SoulStarterShelf';
+import shell from './soul/SoulShell.module.css';
 import styles from './PaConversation.module.css';
 
 const MODE_HELP = {
@@ -73,7 +78,7 @@ export function PaEmptyChat({ conversation }: { conversation: PaConversation | n
             else nav.setInspector(true);
           }}
         >
-          <PaGroupAvatar members={members} fantayId={fantay?.id ?? null} size={48} />
+          <PaGroupAvatar members={members} fantayId={fantay?.id ?? null} size={48} portraitOf={(agentId) => portraitSrc(index, agentId)} />
         </Button>
         <p className={styles.emptyCopy}>{t('pa.empty.group', { members: members.map((m) => m.name).join('、') })}</p>
         {group ? <p className={styles.emptyCaption}>{t(MODE_HELP[group.mode])}</p> : null}
@@ -87,7 +92,7 @@ export function PaEmptyChat({ conversation }: { conversation: PaConversation | n
     const inspectorShowsFantay = ui.inspectorOpen && (!ui.inspectorAgentId || ui.inspectorAgentId === fantay.id);
     const showMascot = !inspectorShowsFantay;
     return (
-      <div className={styles.empty} data-testid="pa-empty-chat" data-greet="">
+      <div className={cn(styles.empty, shell.fantayEmpty)} data-testid="pa-empty-chat" data-greet="">
         <div className={styles.emptyHeroRow}>
           <span className={styles.emptyMascot} aria-hidden>
             {showMascot ? (
@@ -100,8 +105,8 @@ export function PaEmptyChat({ conversation }: { conversation: PaConversation | n
             {t('pa.empty.fantayTitle', { name: agent.name })}
           </p>
         </div>
-        <p className={styles.emptyBody}>{t('pa.empty.fantayBody')}</p>
-        <div className={styles.starters}>
+        <p className={styles.emptyBody}>{t('pa.soul.shell.empty.fantayBody')}</p>
+        <div className={cn(styles.starters, shell.fantayStarters)}>
           <Chip
             variant="suggestion"
             size="md"
@@ -119,31 +124,15 @@ export function PaEmptyChat({ conversation }: { conversation: PaConversation | n
               icon={<Icon icon={PanelsTopLeft} size="sm" />}
               onClick={() => nav.fillComposer(group.conversationId, { project: true, text: t('pa.empty.starterGroupFill') })}
             >
-              <span className={styles.starterText}>{t('pa.empty.starterGroup')}</span>
+              <span className={styles.starterText}>{t('pa.soul.shell.empty.starterGroup')}</span>
             </Chip>
           ) : null}
-          <Chip
-            variant="suggestion"
-            size="md"
-            className={styles.starter}
-            icon={<Icon icon={BookmarkPlus} size="sm" />}
-            onClick={() => nav.openModal({ kind: 'memory', memoryId: null, preset: { scope: 'private', scopeId: null } })}
-          >
-            <span className={styles.starterText}>{t('pa.empty.starterMemory', { name: agent.name })}</span>
-          </Chip>
-          <Chip
-            variant="suggestion"
-            size="md"
-            className={styles.starter}
-            icon={<Icon icon={MessagesSquare} size="sm" />}
-            onClick={() => {
-              nav.openPlace('connections');
-              nav.openModal({ kind: 'channel', channelId: null });
-            }}
-          >
-            <span className={styles.starterText}>{t('pa.empty.starterChannel', { name: agent.name })}</span>
-          </Chip>
         </div>
+        {index.canManageLibrary ? (
+          <div className={shell.fantayShelf}>
+            <SoulStarterShelf limit={3} onOpenLibrary={() => nav.openPlace('library', { libraryTab: 'characters' })} />
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -157,7 +146,7 @@ export function PaEmptyChat({ conversation }: { conversation: PaConversation | n
           aria-label={agent.name}
           onClick={() => nav.inspectAgent(agent.id)}
         >
-          <PaAvatar agent={agent} size={48} fantay={false} dim={!agent.enabled} />
+          <SoulAgentPortrait agent={agent} character={characterOf(index, agent.id)} fantay={false} size={48} dim={!agent.enabled} />
         </Button>
       ) : (
         <PaAvatar agent={null} size={48} fantay={false} />

@@ -3011,6 +3011,10 @@ button.agent-group-rescan-btn:hover:not(:disabled) {
   padding: 6px;
   border-right: 1px solid var(--border);
 }
+.model-select-searchable__popover--offers .model-select-searchable__companies { flex-basis: 45%; }
+.model-select-searchable__popover--offers .model-select-searchable__company-name > span {
+  white-space: normal; overflow-wrap: anywhere; text-overflow: clip;
+}
 .model-select-searchable__company {
   flex: 0 0 auto;
   min-width: 0;

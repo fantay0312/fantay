@@ -1,0 +1,32 @@
+{
+  "spec": "chara_card_v2",
+  "spec_version": 2,
+  "data": {
+    "name": 12345,
+    "description": ["not", "a", "string"],
+    "personality": true,
+    "scenario": null,
+    "first_mes": { "text": "hi" },
+    "mes_example": 42,
+    "alternate_greetings": "Hello there",
+    "tags": "a, b, , A, c",
+    "creator": { "name": "x" },
+    "character_version": 1.5,
+    "system_prompt": false,
+    "nickname": [],
+    "character_book": { "entries": "nope", "scan_depth": "x" },
+    "assets": "not a list",
+    "extensions": {
+      "talkativeness": "loud",
+      "depth_prompt": { "prompt": 7, "depth": "deep", "role": 9 },
+      "fantay": {
+        "tagline": 99,
+        "presetId": "builtin:BAD",
+        "appearance": { "theme": "neon" },
+        "stateSchema": "nope",
+        "decks": [{ "id": "Bad Id" }],
+        "openers": "Hi, Hello"
+      }
+    }
+  }
+}

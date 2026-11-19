@@ -30,6 +30,7 @@ export const NSIS_INSTALLER_LANGUAGE_BY_WEB_LOCALE = {
   "zh-TW": "zh_TW",
 } as const;
 export const INTERNAL_PACKAGES = [
+  { directory: "native-tool/web_search", name: "@fantay/native-web-search" },
   { directory: "packages/fantay-tokens", name: "@fantay/tokens" },
   { directory: "packages/tokentosea", name: "@fantay/tokentosea" },
   { directory: "packages/release", name: "@open-design/release" },

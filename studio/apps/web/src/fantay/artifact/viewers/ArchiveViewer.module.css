@@ -1,0 +1,409 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* An archive's listing: a filter, then a tree with a size and a date column, on paper. Selecting a
+   file opens a second pane, beside the list when the panel is wide and below it when it is narrow;
+   one hairline separates the two. Row metrics (28px pitch, 14px glyph, hover wash, tone for the
+   selected row) are the 代码 surface's tree, so the two lists in the side workspace read as one. */
+
+.layout {
+  --archive-hover: color-mix(in srgb, var(--ink) 6%, transparent);
+
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+}
+
+.layout[data-peek] {
+  grid-template-columns: minmax(232px, 5fr) 1px minmax(0, 7fr);
+}
+
+.divider {
+  background: var(--line-soft);
+}
+
+/* ── list ────────────────────────────────────────────────────────────────────────────────────── */
+
+.list {
+  container: archive-list / inline-size;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.filter {
+  flex: none;
+  padding: 2px 12px 8px;
+}
+
+/* What the reader should know before trusting the list: it was cut short, paths were cleaned. */
+.notes {
+  flex: none;
+  margin: 0 12px 8px;
+  padding: 7px 10px;
+  border-radius: var(--radius-control);
+  background: var(--sub);
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.notes p {
+  margin: 0;
+}
+
+.notes p + p {
+  margin-top: 2px;
+}
+
+.scroller {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 6px 16px;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--line) transparent;
+  scrollbar-width: thin;
+}
+
+/* Column names. They stay while the rows scroll under them; the hairline is the table's only rule. */
+.columns {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 8px 0 10px;
+  background: var(--paper);
+  box-shadow: inset 0 -1px 0 var(--line-soft);
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 600;
+  user-select: none;
+}
+
+.columnName {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Rows are placed by the virtualiser: absolute, one pitch (TREE_ROW_HEIGHT in file-tree.ts). */
+.tree {
+  position: relative;
+  width: 100%;
+}
+
+.row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 28px;
+  padding-inline-end: 8px;
+  border-radius: var(--radius-row);
+  color: var(--ink);
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.row:hover {
+  background: var(--archive-hover);
+}
+
+.row[data-selected] {
+  background: var(--sub);
+}
+
+.row[data-selected] .rowLabel {
+  font-weight: 600;
+}
+
+.row:focus-visible {
+  /* Rows touch each other: the ring sits inside the row. */
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: -2px;
+}
+
+.rowGlyph {
+  flex: none;
+  color: var(--ink-faint);
+  transition: transform var(--motion-fast) var(--ease-out-quint);
+}
+
+.row[data-expanded='true'] .rowGlyph {
+  transform: rotate(90deg);
+}
+
+.rowLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowBadge {
+  flex: none;
+  color: var(--ink-faint);
+}
+
+.rowDate,
+.rowSize {
+  flex: none;
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.columns .rowDate,
+.columns .rowSize {
+  font-weight: 600;
+}
+
+.rowSize {
+  width: 64px;
+}
+
+/* The date is the first column to go when the list is narrow. */
+.rowDate {
+  display: none;
+  width: 128px;
+}
+
+@container archive-list (min-width: 500px) {
+  .rowDate {
+    display: block;
+  }
+}
+
+.noMatches {
+  margin: 0;
+  padding: 20px 10px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* ── peek ────────────────────────────────────────────────────────────────────────────────────── */
+
+.peek {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--paper);
+  animation: archive-peek-in var(--motion-enter) var(--ease-out-quint) both;
+}
+
+.peekHead {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 6px 0 12px;
+}
+
+.peekGlyph {
+  flex: none;
+  color: var(--ink-faint);
+}
+
+.peekName {
+  flex: 0 1 auto;
+  min-width: 40px;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.peekFacts {
+  flex: 0 100 auto;
+  min-width: 0;
+  margin-inline-start: 4px;
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.peekActions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  margin-inline-start: auto;
+}
+
+.peekNote {
+  flex: none;
+  margin: 0 12px 8px;
+  padding: 7px 10px;
+  border-radius: var(--radius-control);
+  background: var(--sub);
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.peekBody {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* A picture sits on the canvas tone, like the image viewer's stage. */
+.peekImage {
+  display: grid;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 16px;
+  overflow: hidden;
+  background: var(--sub);
+  place-items: center;
+}
+
+.peekImage img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 2px;
+  object-fit: contain;
+}
+
+.peekWait {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+/* Facts only: what the entry is, why there is nothing more to see, and the numbers. */
+.facts {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 24px;
+  overflow: auto;
+  background: var(--sub);
+  text-align: center;
+}
+
+.factsGlyph {
+  display: grid;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 10px;
+  border-radius: var(--radius-card);
+  background: var(--paper);
+  color: var(--ink-soft);
+  place-items: center;
+}
+
+.factsName {
+  max-width: 100%;
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.factsReason {
+  max-width: 300px;
+  margin: 6px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.factsList {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 6px 16px;
+  width: min(300px, 100%);
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-card);
+  background: var(--paper);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: start;
+}
+
+.factsList dt {
+  color: var(--ink-faint);
+}
+
+.factsList dd {
+  margin: 0;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.factsPath {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+/* ── narrow panel: the pane moves under the list ─────────────────────────────────────────────── */
+
+@container artifact (max-width: 620px) {
+  .layout[data-peek] {
+    grid-template-rows: minmax(132px, 2fr) 1px minmax(0, 3fr);
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .facts {
+    justify-content: flex-start;
+    padding: 16px;
+  }
+}
+
+@keyframes archive-peek-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peek {
+    animation: none;
+  }
+
+  .rowGlyph {
+    transition: none;
+  }
+}

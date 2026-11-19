@@ -254,7 +254,8 @@
 /* ── global states (spec §17.2) ── */
 
 /* Over a conversation the bar spans the column on the chat header's 16 px gutters; over a page it takes the
-   page's own measure (任务 760, 记忆 / 连接 680, each plus 32 px gutters), so its edges line up with the page. */
+   page's own measure (工作 760, 记忆 / 连接 680, 角色库 960, each plus 32 px gutters), so its edges line up with the
+   page. */
 .staleBar {
   box-sizing: border-box;
   flex: none;
@@ -262,8 +263,14 @@
   margin: 0 auto;
   padding: 10px 16px 0;
 }
-.staleBar[data-place='tasks'] {
+.staleBar[data-place='tasks'],
+.staleBar[data-place='activity'] {
   max-width: calc(760px + 64px);
+  padding: 16px 32px 0;
+}
+/* 角色库 keeps the library's 960 measure (SoulLibraryPage). */
+.staleBar[data-place='library'] {
+  max-width: calc(960px + 64px);
   padding: 16px 32px 0;
 }
 .staleBar[data-place='memory'],

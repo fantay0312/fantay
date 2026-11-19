@@ -1,0 +1,196 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Portraits and covers (Soul UI spec §8.6). The size arrives inline as --pa-portrait (px). Frames: circle (50%),
+   squircle (30%) and polaroid (stage 2, below); `scope` follows the nearest [data-pa-frame] of the transcript theme
+   (a nested scope of another frame is not supported for polaroid). Every framed portrait carries
+   a 1 px inner ring drawn above the image, so a light photo never bleeds into a light paper. The monogram is the
+   first code point of the name in the theme's accent on the theme's paper, set in the theme's display face. */
+
+.portrait {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--pa-portrait);
+  height: var(--pa-portrait);
+  line-height: 1;
+  vertical-align: middle;
+  user-select: none;
+}
+
+.portrait[data-dim] {
+  opacity: 0.55;
+}
+
+/* The one cell is the box (the polaroid: its photo area), never the image: an `auto` track would grow to a tall
+   image's own height (a full-figure sprite, a 3:4 photo) and push it past the frame instead of cover-fitting it. */
+.framed {
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--sub);
+}
+
+.framed::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--pa-soul-portrait-ring);
+  content: '';
+  pointer-events: none;
+}
+
+.framed[data-frame='squircle'],
+:global([data-pa-frame='squircle']) .framed[data-frame='scope'] {
+  border-radius: 30%;
+}
+
+/* A circle scope nested inside a squircle one wins (nearest scope). */
+:global([data-pa-frame='squircle']) :global([data-pa-frame='circle']) .framed[data-frame='scope'] {
+  border-radius: 50%;
+}
+
+/* Polaroid (stage 2): the photo stays square and keeps the portrait's width; the card around it is the theme's card
+   ground with a 1 px line and a deeper margin under the photo (8 % · 8 % · 22 %), so the box is 1.14 × as tall as it
+   is wide. The inner ring moves onto the photo. Below 28 px the component draws a squircle instead (`data-size-sm`
+   keeps a scope polaroid out too). */
+.framed[data-frame='polaroid'],
+:global([data-pa-frame='polaroid']) .framed[data-frame='scope']:not([data-size-sm]) {
+  box-sizing: border-box;
+  height: calc(var(--pa-portrait) * 1.14);
+  padding: calc(var(--pa-portrait) * 0.08) calc(var(--pa-portrait) * 0.08) calc(var(--pa-portrait) * 0.22);
+  overflow: visible;
+  border-radius: 2px;
+  background: var(--pa-skin-card-bg);
+  box-shadow:
+    inset 0 0 0 1px var(--pa-skin-line),
+    0 1px 2px rgba(0, 0, 0, 0.07);
+}
+
+:global([data-pa-frame='polaroid']) .framed[data-frame='scope'][data-size-sm] {
+  border-radius: 30%;
+}
+
+.framed[data-frame='polaroid']::after,
+:global([data-pa-frame='polaroid']) .framed[data-frame='scope']:not([data-size-sm])::after {
+  inset: calc(var(--pa-portrait) * 0.08) calc(var(--pa-portrait) * 0.08) calc(var(--pa-portrait) * 0.22);
+  border-radius: 1px;
+}
+
+.framed[data-frame='polaroid'] .image,
+.framed[data-frame='polaroid'] .monogram,
+:global([data-pa-frame='polaroid']) .framed[data-frame='scope']:not([data-size-sm]) :is(.image, .monogram) {
+  border-radius: 1px;
+}
+
+.framed[data-frame='polaroid'] .monogram,
+:global([data-pa-frame='polaroid']) .framed[data-frame='scope']:not([data-size-sm]) .monogram {
+  font-size: calc(var(--pa-portrait) * 0.36);
+}
+
+/* Inside a themed transcript, from 40 px up, the card sits a little crooked on the paper, like a photo pinned into a
+   journal. It is static, so reduced motion keeps it. */
+:global([data-pa-skin]) .framed[data-frame='polaroid'][data-size-lg],
+:global([data-pa-frame='polaroid']) .framed[data-frame='scope'][data-size-lg] {
+  transform: rotate(var(--pa-soul-polaroid-tilt));
+}
+
+.image {
+  display: block;
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 20%;
+}
+
+/* A change of image (a new portrait, or a sprite following the mood): the new image waits invisible until it has
+   loaded, then fades in over the previous one, which fades out underneath (--pa-dur-swap). */
+.image[data-swap='wait'] {
+  opacity: 0;
+}
+
+.image[data-swap='in'] {
+  animation: soul-portrait-in var(--pa-dur-swap) var(--pa-ease) both;
+}
+
+.under[data-out] {
+  animation: soul-portrait-out var(--pa-dur-swap) linear both;
+}
+
+@keyframes soul-portrait-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes soul-portrait-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image[data-swap='in'],
+  .under[data-out] {
+    animation: none;
+  }
+  .under {
+    display: none;
+  }
+}
+
+.monogram {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  background: var(--pa-skin-paper);
+  color: var(--pa-skin-accent);
+  font-family: var(--pa-skin-display-font);
+  font-size: calc(var(--pa-portrait) * 0.42);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+/* The default theme's paper is the app paper itself: the monogram sits on the sub well so it never vanishes. */
+.monogram[data-pa-skin='fantay'] {
+  background: var(--sub);
+}
+
+/* ── cover: fills its parent box (library tiles 3:4, the editor well) ── */
+
+.cover {
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  place-self: stretch;
+  overflow: hidden;
+  container-type: inline-size;
+  user-select: none;
+}
+
+.coverMascot {
+  background: var(--pa-fantay-disc);
+}
+
+/* The paper and its pattern come from SoulThemeScope.module.css `.paper` on the same element. */
+.coverMonogram[data-pa-skin='fantay'] {
+  background-color: var(--sub);
+}
+
+.coverGlyph {
+  color: var(--pa-skin-accent);
+  font-family: var(--pa-skin-display-font);
+  font-size: 42cqi;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+}

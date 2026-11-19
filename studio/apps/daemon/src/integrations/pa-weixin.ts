@@ -1,6 +1,6 @@
-import { randomBytes } from 'node:crypto';
+import { createDecipheriv, randomBytes } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
-import { channelRecord as obj, channelText as str, readChannelJson, PaChannelTransportError, type PaChannelTransport, type PaInboundMessage, type PaOutboundMessage, type PaSendReceipt } from './pa-channel-transport.js';
+import { channelRecord as obj, channelText as str, readChannelJson, readPaAttachment, PaChannelTransportError, type PaChannelTransport, type PaInboundMessage, type PaInboundAttachment, type PaMediaAdmission, type PaOutboundMessage, type PaSendReceipt } from './pa-channel-transport.js';
 
 // Protocol evidence: Tencent/openclaw-weixin @ 4746de126700699b6563f9b482f32f8d072892a7.
 // Dedicated direct-chat protocol only; no ordinary friends/group-history access.
@@ -25,7 +25,8 @@ export function normalizeWeixinMessage(raw: unknown): PaInboundMessage | null {
   const id = str(value.message_id), senderId = str(value.from_user_id);
   if (!id || !senderId) return null;
   const items = Array.isArray(value.item_list) ? value.item_list.map(obj) : [];
-  const text = items.filter(item => item.type === 1).map(item => str(obj(item.text_item).text)).join('\n');
+  const text = items.map(item => item.type === 1 ? str(obj(item.text_item).text) :
+    item.type === 3 ? str(obj(item.voice_item).text) : '').filter(Boolean).join('\n');
   const createdAt = Number(value.create_time_ms);
   return { id, senderId, chatId: senderId, tenantId: null, threadId: null, text,
     createdAt: Number.isFinite(createdAt) ? createdAt : Date.now(), direct: true, mentioned: false,
@@ -67,7 +68,7 @@ export class PaWeixinTransport implements PaChannelTransport {
   readonly idempotencyWindowMs = 0; // client_id is not documented as a server-side deduplication guarantee.
   private abort: AbortController | null = null;
   private loop: Promise<void> | null = null;
-  constructor(private config: { token: string; baseUrl: string; ownerId: string; cursor: () => string; checkpoint: (cursor: string) => void; request?: typeof fetch }) { weixinOrigin(config.baseUrl); }
+  constructor(private config: { token: string; baseUrl: string; ownerId: string; cursor: () => string; checkpoint: (cursor: string) => void; request?: typeof fetch; admitMedia?: PaMediaAdmission }) { weixinOrigin(config.baseUrl); }
   async start(onMessage: (message: PaInboundMessage) => Promise<void>, onState: (state: 'connecting' | 'connected' | 'login_required' | 'error', message?: string) => void): Promise<void> {
     if (this.abort) return;
     this.abort = new AbortController();
@@ -84,7 +85,15 @@ export class PaWeixinTransport implements PaChannelTransport {
           const data = obj(await readChannelJson(response)); check(data);
           if (signal.aborted) break;
           const messages = Array.isArray(data.msgs) ? data.msgs : [];
-          for (const raw of messages) { const message = normalizeWeixinMessage(raw); if (message) await onMessage(message); }
+          for (const raw of messages) {
+            const message = normalizeWeixinMessage(raw);
+            if (!message) continue;
+            if (this.config.admitMedia?.(message)) {
+              const attachments = await this.attachments(raw, signal);
+              if (attachments.length) { message.attachments = attachments; message.unsupported = false; }
+            }
+            if (!signal.aborted) await onMessage(message);
+          }
           // Advance only after every incoming event is durably accepted/ignored.
           if (typeof data.get_updates_buf === 'string') this.config.checkpoint(data.get_updates_buf);
           if (typeof data.longpolling_timeout_ms === 'number') timeoutMs = Math.max(1000, Math.min(55000, data.longpolling_timeout_ms));
@@ -100,6 +109,35 @@ export class PaWeixinTransport implements PaChannelTransport {
     })();
   }
   async stop(): Promise<void> { this.abort?.abort(); await this.loop; this.abort = null; this.loop = null; }
+  private async attachments(raw: unknown, signal: AbortSignal): Promise<PaInboundAttachment[]> {
+    const items = obj(raw).item_list;
+    const attachments: PaInboundAttachment[] = [];
+    if (!Array.isArray(items)) return attachments;
+    for (const item of items.map(obj).filter(item => item.type === 2 || item.type === 4 ||
+      item.type === 3 && !str(obj(item.voice_item).text).trim()).slice(0, 3)) {
+      const payload = obj(item.type === 2 ? item.image_item : item.type === 3 ? item.voice_item : item.file_item), media = obj(payload.media);
+      const parameter = str(media.encrypt_query_param);
+      if (!str(media.full_url) && !parameter) continue;
+      try {
+        const url = new URL(str(media.full_url) || 'https://novac2c.cdn.weixin.qq.com/c2c/download');
+        if (!str(media.full_url)) url.searchParams.set('encrypted_query_param', parameter);
+        if (url.username || url.password || url.port || url.protocol !== 'https:' || !url.hostname.endsWith('.cdn.weixin.qq.com')) continue;
+        const response = await (this.config.request ?? fetch)(url, { redirect: 'error', signal: AbortSignal.any([signal, AbortSignal.timeout(10000)]) });
+        const encrypted = await readPaAttachment(response);
+        const encoded = Buffer.from(str(media.aes_key), 'base64');
+        const hex = str(payload.aeskey) || encoded.toString('utf8');
+        const key = /^[0-9a-f]{32}$/i.test(hex) ? Buffer.from(hex, 'hex') : encoded.length === 16 ? encoded : null;
+        if (item.type !== 2 && !key) continue;
+        const decipher = key ? createDecipheriv('aes-128-ecb', key, null) : null;
+        const data = decipher ? Buffer.concat([decipher.update(encrypted), decipher.final()]) : encrypted;
+        const name = str(payload.file_name);
+        const pcm = item.type === 3 && payload.encode_type === 1 && payload.bits_per_sample === 16 ? Number(payload.sample_rate) : null;
+        attachments.push({ data, ...(name ? { name } : {}), ...(item.type === 3 ? { audio: true } : {}),
+          ...(pcm !== null && Number.isInteger(pcm) ? { pcmSampleRate: pcm } : {}) });
+      } catch { /* Unavailable media is handled by the channel's text fallback. */ }
+    }
+    return attachments;
+  }
   async send(message: PaOutboundMessage, signal: AbortSignal): Promise<PaSendReceipt> {
     if (message.chatId !== this.config.ownerId || !message.contextToken) throw new PaChannelTransportError('微信回复缺少已绑定所有者的有效会话上下文，请先从微信发送消息', 'rejected');
     try {

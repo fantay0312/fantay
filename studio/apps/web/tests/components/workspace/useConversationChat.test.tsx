@@ -172,6 +172,48 @@ describe('useConversationChat run failures', () => {
   });
 });
 
+it('sends composer attachments, skills, research and workspace context to the bound side run', async () => {
+  mockedListMessages.mockResolvedValue([]);
+  mockedSaveMessage.mockResolvedValue(null);
+  mockedStreamViaDaemon.mockClear().mockResolvedValue(undefined);
+  const hook = renderHook(() => useConversationChat('project-1', 'side-id', {
+    config, agentsById: new Map(), locale: 'zh-CN', sessionMode: 'chat', sideDialogueInstructions: 'Fantay',
+  }));
+  await waitFor(() => expect(hook.result.current.loading).toBe(false));
+  const file = { name: 'brief.txt', path: 'brief.txt', kind: 'file' as const };
+  const scope = { skillIds: ['review'] };
+  act(() => expect(hook.result.current.onSend('Review the attached brief', [file], [], {
+    clientRequestId: 'request-1', context: scope, skillIds: ['review'],
+    research: { enabled: true, query: 'references' }, appliedPluginSnapshotId: 'side-plugin',
+  })).toBe(true));
+  expect(mockedStreamViaDaemon).toHaveBeenCalledWith(expect.objectContaining({
+    projectId: 'project-1', conversationId: 'side-id', clientRequestId: 'request-1',
+    attachments: ['brief.txt'], context: scope, skillIds: ['review'], sideDialogueInstructions: 'Fantay',
+    research: { enabled: true, query: 'references' }, appliedPluginSnapshotId: 'side-plugin',
+  }));
+  expect(mockedSaveMessage).toHaveBeenCalledWith('project-1', 'side-id',
+    expect.objectContaining({ role: 'user', attachments: [file], runContext: scope }), expect.anything());
+  hook.unmount();
+});
+
+it('restores the original side transcript if an edited turn is stopped before its branch is admitted', async () => {
+  const initial: ChatMessage[] = [
+    { id: 'q1', role: 'user', content: 'First wording', createdAt: 1 },
+    { id: 'a1', role: 'assistant', content: 'First answer', runId: 'r1', runStatus: 'succeeded', createdAt: 2 },
+  ];
+  mockedListMessages.mockResolvedValue(initial);
+  mockedSaveMessage.mockClear();
+  mockedStreamViaDaemon.mockClear().mockResolvedValue(undefined);
+  const hook = renderHook(() => useConversationChat('p', 'side-id', { config, agentsById: new Map(), locale: 'en', sessionMode: 'chat' }));
+  await waitFor(() => expect(hook.result.current.loading).toBe(false));
+  await act(async () => { expect(await hook.result.current.versionActions.edit('q1', 'New wording')).toBe(true); });
+  expect(mockedStreamViaDaemon.mock.calls[0]?.[0].messageBranch).toEqual({ action: 'edit', messageId: 'q1', expectedLeafId: 'a1' });
+  act(() => hook.result.current.onStop());
+  expect(hook.result.current.messages).toEqual(initial);
+  expect(mockedSaveMessage).not.toHaveBeenCalled();
+  hook.unmount();
+});
+
 describe('G9 side-chat retries preserve the persisted failed turn', () => {
   const projectId = 'retry-history-project';
   const conversationId = 'non-active-side-conversation';

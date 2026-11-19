@@ -33,7 +33,9 @@ export const MAC_PREBUNDLE_RUNTIME_DEPENDENCIES = {
   "hyperframes": "0.8.1",
   "gsap": "3.14.2",
   "node-pty": "1.1.0",
+  "pdfjs-dist": "6.5.438",
   "sharp": "0.35.3",
+  "silk-wasm": "3.7.1",
 } as const;
 
 // npm 11 synthesizes a `node-gyp rebuild` install step for fsevents even
@@ -69,7 +71,7 @@ export const MAC_PREBUNDLE_POLICIES = {
     label: "packaged main",
   },
   daemonCli: {
-    externals: ["@ffmpeg-installer/ffmpeg", "@ffprobe-installer/ffprobe", "@larksuiteoapi/node-sdk", "@open-design/sidecar", "better-sqlite3", "blake3-wasm", "fsevents", "hyperframes", "gsap", "node-pty"],
+    externals: ["@fantay/native-web-search", "@ffmpeg-installer/ffmpeg", "@ffprobe-installer/ffprobe", "@larksuiteoapi/node-sdk", "@open-design/sidecar", "better-sqlite3", "blake3-wasm", "fsevents", "hyperframes", "gsap", "node-pty", "onnxruntime-node", "pdfjs-dist", "silk-wasm"],
     forbiddenInputs: [
       "/node_modules/@open-design/daemon/",
       "/node_modules/@ffmpeg-installer/ffmpeg/",
@@ -82,6 +84,7 @@ export const MAC_PREBUNDLE_POLICIES = {
       "/node_modules/gsap/",
       "/node_modules/next/",
       "/node_modules/node-pty/",
+      "/node_modules/onnxruntime-node/",
       "/node_modules/openai/",
       "/node_modules/react/",
       "/node_modules/react-dom/",
@@ -89,7 +92,8 @@ export const MAC_PREBUNDLE_POLICIES = {
     label: "daemon cli",
   },
   daemonSidecar: {
-    externals: ["@ffmpeg-installer/ffmpeg", "@ffprobe-installer/ffprobe", "@larksuiteoapi/node-sdk", "@open-design/sidecar", "better-sqlite3", "blake3-wasm", "fsevents", "hyperframes", "gsap", "node-pty"],
+    // The search adapter resolves its catalogs and engine relative to its installed module.
+    externals: ["@fantay/native-web-search", "@ffmpeg-installer/ffmpeg", "@ffprobe-installer/ffprobe", "@larksuiteoapi/node-sdk", "@open-design/sidecar", "better-sqlite3", "blake3-wasm", "fsevents", "hyperframes", "gsap", "node-pty", "onnxruntime-node", "pdfjs-dist", "silk-wasm"],
     forbiddenInputs: [
       "/node_modules/@open-design/daemon/",
       "/node_modules/@ffmpeg-installer/ffmpeg/",
@@ -102,6 +106,7 @@ export const MAC_PREBUNDLE_POLICIES = {
       "/node_modules/gsap/",
       "/node_modules/next/",
       "/node_modules/node-pty/",
+      "/node_modules/onnxruntime-node/",
       "/node_modules/openai/",
       "/node_modules/react/",
       "/node_modules/react-dom/",

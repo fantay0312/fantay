@@ -1,0 +1,126 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Soul shell pieces shared by the roster, the bottom bar, the 工作 tab strip, the chat header, Fantay's first screen
+   and the file-drop veil (Soul UI spec §3, §4.2, §4.3, §6.3). Chrome reads base tokens; the header text reads
+   --pa-skin-*, which is the default skin outside a companion chat, so work mode looks exactly as before. */
+
+/* ── the warm needs-you count (roster rows, the 工作 cell, the 任务 tab) ── */
+
+.needsPill {
+  display: inline-flex;
+  flex: none;
+  height: 18px;
+  align-items: center;
+  padding: 0 6px;
+  border-radius: 999px;
+  /* Opaque, so it can sit on an icon's corner as well as on a row. */
+  background: color-mix(in srgb, var(--warning) 16%, var(--surface));
+  color: var(--warning-ink);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* ── chat header (spec §4.2) ── */
+
+.headerPortrait {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+}
+
+.headerName {
+  color: var(--pa-skin-ink);
+}
+
+/* Status line: 12 / 400 in the paper's meta ink, one line; it is not KPI text, so it may ellipsize. */
+.status {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--pa-skin-meta);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+}
+.statusLayer {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headerSub {
+  color: var(--pa-skin-meta);
+}
+
+/* 支线 marks in the 历史 menu: a 12 px branch glyph before the label. */
+.branchGlyph {
+  flex: none;
+  margin-inline-end: 6px;
+  color: var(--ink-faint);
+}
+.historyText {
+  display: inline-flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+}
+.historyLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Fantay's first screen (spec §4.3 a): the same greeting, a wider block for the starter shelf ── */
+
+/* Doubled with the attribute so it outranks the shared `.empty` measure whatever order the modules load in. */
+.fantayEmpty[data-greet] {
+  max-width: 640px;
+  margin-top: 12vh;
+}
+
+.fantayStarters {
+  justify-self: center;
+}
+
+.fantayShelf {
+  align-self: stretch;
+  margin-top: 28px;
+  text-align: start;
+}
+
+/* ── file-drop veil (spec §3.8) ── */
+
+.veil {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  display: flex;
+  padding: 12px;
+  background: var(--pa-soul-veil);
+  pointer-events: none;
+  animation: soul-veil-in var(--pa-dur-quick) var(--pa-ease) both;
+}
+
+.veilFrame {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--line);
+  border-radius: var(--radius-panel);
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+@keyframes soul-veil-in {
+  from {
+    opacity: 0;
+  }
+}

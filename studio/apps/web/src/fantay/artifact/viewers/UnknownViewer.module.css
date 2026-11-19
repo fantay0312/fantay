@@ -1,0 +1,86 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The file card: a paper card on the canvas ground, centred. Tone does the grouping; no border. */
+
+.wrap {
+  display: grid;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 24px;
+  overflow: auto;
+  place-items: center;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(340px, 100%);
+  padding: 28px 24px 24px;
+  border-radius: var(--radius-panel);
+  background: var(--paper);
+  text-align: center;
+  animation: file-card-in var(--motion-enter) var(--ease-out-quint) both;
+}
+
+.glyph {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 14px;
+  border-radius: var(--radius-card);
+  background: var(--sub);
+  color: var(--ink-soft);
+  place-items: center;
+}
+
+.name {
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.facts {
+  margin: 2px 0 0;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.reason {
+  max-width: 280px;
+  margin: 12px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.buttons {
+  display: flex;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+@keyframes file-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none;
+  }
+}

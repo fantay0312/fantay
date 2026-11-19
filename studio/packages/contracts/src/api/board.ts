@@ -226,7 +226,9 @@ export interface BoardTextStyle {
 }
 export interface BoardShapeNode extends BoardNodeCommon {
   kind: 'shape';
-  shape: 'rect' | 'ellipse' | 'text';
+  shape: 'rect' | 'ellipse' | 'text' | 'freehand';
+  /** Polyline coordinates in a 1000-by-1000 view box. */
+  points?: string;
   fill?: BoardColor | 'none';
   stroke?: BoardColor | 'none';
   strokeWidth?: number;         // 0..32
@@ -373,7 +375,8 @@ export interface BoardNodePatch {
   durationMs?: number | null; posterTimeMs?: number | null; loop?: boolean; muted?: boolean;
   generation?: MediaNodeGeneration | null; refProxy?: BoardMediaRefProxy | null;
   text?: string; color?: BoardPaletteColor; size?: BoardNoteSize | null;
-  shape?: 'rect' | 'ellipse' | 'text'; fill?: BoardColor | 'none' | null; stroke?: BoardColor | 'none' | null;
+  points?: string | null;
+  shape?: BoardShapeNode['shape']; fill?: BoardColor | 'none' | null; stroke?: BoardColor | 'none' | null;
   strokeWidth?: number | null; radius?: number | null; textStyle?: BoardTextStyle | null;
   role?: BoardGroupRole; layout?: BoardGroupLayout; sectionKind?: BoardSectionKind | null; variantKey?: string | null;
   baseNodeId?: string | null; promotedNodeId?: string | null; collapsed?: boolean;

@@ -388,6 +388,7 @@ export function shouldRouteToFirstRunOnboarding(
 function workspaceProjectListViewForRoute(route: Route): WorkspaceProjectListView {
   if (route.kind === 'home' && route.view === 'all-projects') return 'all';
   if (route.kind === 'home' && route.view === 'drafts') return 'drafts';
+  if (route.kind === 'tool' && route.pluginId === 'project-timeline') return 'all';
   if (route.kind === 'project') return 'all';
   return 'recent';
 }
@@ -5714,6 +5715,7 @@ function AppInner() {
           projectAuthorizationKey={
             activeProjectAuthorizationKey ?? activeProject.id
           }
+          dialogueAccountId={tokenToSeaSession.phase === 'ready' ? tokenToSeaSession.user?.id : undefined}
           onObservedPublicShareLink={onObservedPublicShareLink}
           observedPublicShareLink={signedOutObservedShare ?? localObservedShare}
           loginUpdateRequest={loginUpdateRequest}
@@ -5920,6 +5922,8 @@ function AppInner() {
           <FantayShell
             clientType={clientType}
             hostPlatform={hostPlatform}
+            accountId={tokenToSeaSession.phase === 'ready' && tokenToSeaSession.signedIn
+              ? tokenToSeaSession.user?.id : undefined}
             projects={workspaceChromeProjects}
             projectsLoading={projectsLoading}
             onOpenProject={handleOpenProject}

@@ -1,0 +1,219 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* 对比. One hairline group split by a vertical hairline into 已有的记忆 | 新的记忆 (not two cards), the
+   reason and hint above it as plain text, and the four choices in the footer as equal columns, each with
+   its consequence under it. Diff marks and tags come from MemoryDialogFrame.module.css. */
+
+.why {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.whyLabel {
+  font-size: var(--type-label);
+  line-height: 16px;
+  color: var(--ink-faint);
+}
+
+.whyText {
+  margin: 0;
+  font-size: var(--type-copy);
+  line-height: 1.55;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin: 6px 0 0;
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.hintIcon {
+  flex: none;
+  color: var(--ink-faint);
+}
+
+.hintNote {
+  color: var(--ink-faint);
+}
+
+/* ── the two memories ─────────────────────────────────────────────────────────────────── */
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px 16px 16px;
+}
+
+.side + .side {
+  border-inline-start: 1px solid var(--line-soft);
+}
+
+.sideHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* The heading and, for a side already put away, its state. */
+.sideTitleRow {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  min-width: 0;
+}
+
+.sideTitle {
+  margin: 0;
+  font-size: var(--type-label);
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--ink-soft);
+}
+
+.sideWhen {
+  flex: none;
+  font-size: var(--type-label);
+  line-height: 16px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.sideText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sideMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+}
+
+/* In the merge step the originals stay visible but give the editor the room. */
+.columns[data-compact] .side {
+  gap: 6px;
+  padding: 10px 14px 12px;
+}
+
+.columns[data-compact] .sideText {
+  max-height: 112px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.columns[data-compact] .sideText p {
+  font-size: var(--type-body);
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .side + .side {
+    border-inline-start: 0;
+    border-top: 1px solid var(--line-soft);
+  }
+}
+
+.legendRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 16px;
+  margin-top: -8px;
+}
+
+/* ── loading: the same footprint as the columns ───────────────────────────────────────── */
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.loadingColumns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  min-height: 150px;
+  padding: 16px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-card);
+}
+
+/* ── the four choices ─────────────────────────────────────────────────────────────────── */
+
+.choiceFooter {
+  display: block;
+}
+
+.choices {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.choice {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.choiceHelp {
+  margin: 0;
+  font-size: var(--type-label);
+  line-height: 1.45;
+  color: var(--ink-faint);
+  text-wrap: pretty;
+}
+
+@media (max-width: 640px) {
+  .choices {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ── merge step ───────────────────────────────────────────────────────────────────────── */
+
+.mergeField {
+  min-height: 140px;
+  resize: vertical;
+}
+
+.mergeField[aria-busy='true'] {
+  color: var(--ink-faint);
+}
+
+.draftNote {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}

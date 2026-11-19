@@ -108,6 +108,7 @@ import {
   type LexicalComposerInputHandle,
   type CaretRect,
 } from './composer/LexicalComposerInput';
+import { VoiceInputButton } from './composer/VoiceInputButton';
 import { CaretFloatingLayer } from './composer/CaretFloatingLayer';
 import { PlaceholderCarousel } from './home-hero/PlaceholderCarousel';
 import {
@@ -521,6 +522,7 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
     return () => observer.disconnect();
   }, [beamPhase]);
   const editorRef = useRef<LexicalComposerInputHandle | null>(null);
+  const [voiceActive, setVoiceActive] = useState(false);
   const promptEditorRef = useRef<HTMLDivElement | null>(null);
   // A single-line chip row leads the prompt's FIRST line and every wrapped line
   // returns to the chip's own left edge. A float cannot do that — its band is
@@ -642,9 +644,9 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
     !pluginsLoading &&
     carouselScenario !== null &&
     carouselScenarios.some((scenario) => scenario.id === carouselScenario.id);
-  const sendEnabled = canSubmit || carouselSubmittable;
+  const sendEnabled = !voiceActive && (canSubmit || carouselSubmittable);
   function handleSend() {
-    if (submitting || submitDisabled) return;
+    if (submitting || submitDisabled || voiceActive) return;
     if (canSubmit) {
       notifyCompletionFeedbackGesture();
       onSubmit();
@@ -2393,6 +2395,8 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
                 {executionSwitcher}
               </div>
             ) : null}
+            {active ? <VoiceInputButton disabled={submitting || submitDisabled} onActiveChange={setVoiceActive}
+              onTranscript={text => { editorRef.current?.insertText(text); editorRef.current?.focus(); }} /> : null}
             <button
               type="button"
               className={`home-hero__submit${sendAttention ? ' home-hero__attention-sheen' : ''}`}

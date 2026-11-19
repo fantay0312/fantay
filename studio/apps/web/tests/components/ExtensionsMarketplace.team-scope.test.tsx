@@ -556,10 +556,14 @@ describe('ExtensionsMarketplace 团队 scope visibility', () => {
     await waitFor(() => expect(screen.getByText('account-b-plugin')).toBeTruthy());
   });
 
-  it('does not issue headerless catalog reads while modern workspace authority is unavailable', async () => {
+  it('reads only bundled skills while modern workspace authority is unavailable', async () => {
     workspaceContext = null;
     workspaceContextLoading = false;
     workspaceContextFailure = 'unavailable';
+    vi.mocked(fetchSkills).mockResolvedValue([
+      { ...skill('fantay-router'), source: 'built-in' },
+      { ...skill('private-row'), source: 'user' },
+    ]);
     renderMarketplace();
 
     await act(async () => {
@@ -567,7 +571,10 @@ describe('ExtensionsMarketplace 团队 scope visibility', () => {
       await Promise.resolve();
     });
 
-    expect(fetchSkills).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /^Skills$/i }));
+    expect(await screen.findByTestId('plugins-card-fantay-router')).toBeTruthy();
+    expect(screen.queryByTestId('plugins-card-private-row')).toBeNull();
+    expect(fetchSkills).toHaveBeenCalledWith(null, { bundledOnly: true });
     expect(
       vi.mocked(globalThis.fetch).mock.calls.some(([input]) => String(input) === '/api/plugins'),
     ).toBe(false);
@@ -581,7 +588,7 @@ describe('ExtensionsMarketplace 团队 scope visibility', () => {
       workspaceContextFailure = failure;
       renderMarketplace();
 
-      await waitFor(() => expect(fetchSkills).toHaveBeenCalledWith(null));
+      await waitFor(() => expect(fetchSkills).toHaveBeenCalledWith(null, { fallbackToBundled: true }));
       await waitFor(() =>
         expect(
           vi.mocked(globalThis.fetch).mock.calls.some(([input]) => String(input) === '/api/plugins'),

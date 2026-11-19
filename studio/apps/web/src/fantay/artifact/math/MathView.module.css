@@ -1,0 +1,28 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* A typeset formula in running text. KaTeX sets formulas 21% larger than the text around them,
+   right beside Latin serif prose; beside interface type and Chinese that shouts, so here it is 8%. */
+
+.inline :global(.katex),
+.display :global(.katex) {
+  font-size: 1.08em;
+}
+
+/* A display formula keeps to its own line and scrolls inside it when it is wider than the column. */
+.display {
+  display: block;
+  margin: 10px 0;
+  padding: 2px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  text-align: center;
+}
+
+.display :global(.katex-display) {
+  margin: 0;
+}
+
+/* A display formula that could not be typeset: as written, on its own line, line breaks kept. */
+.written {
+  display: block;
+  white-space: pre-wrap;
+}

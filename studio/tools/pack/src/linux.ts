@@ -50,6 +50,7 @@ const CONTAINER_NODE_VERSION = "24.14.1";
 const CONTAINER_TOOLS_PACK_CLI_PATH = "tools/pack/bin/tools-pack.mjs";
 
 export const INTERNAL_PACKAGES = [
+  { directory: "native-tool/web_search", name: "@fantay/native-web-search" },
   { directory: "packages/fantay-tokens", name: "@fantay/tokens" },
   { directory: "packages/tokentosea", name: "@fantay/tokentosea" },
   { directory: "packages/release", name: "@open-design/release" },

@@ -54,6 +54,14 @@ export function ShapeNode({ view }: NodeFaceProps) {
     return () => observer.disconnect();
   }, [isText, busy, commands, node.id, node.h]);
 
+  if (shape === 'freehand') {
+    return (
+      <svg className={styles.ink} viewBox="0 0 1000 1000" preserveAspectRatio="none" data-testid="board-pen-stroke">
+        <polyline points={node.data.points} fill="none" stroke={boardColorCss(node.data.stroke, 'var(--ink)')}
+          strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+      </svg>
+    );
+  }
   return (
     <div className={styles.shape} data-shape={shape} style={style} data-testid="board-shape">
       {view.editingText ? (

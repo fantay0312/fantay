@@ -10,11 +10,12 @@ import { usePresence } from '../../hooks/usePresence';
 import { useI18n, useT } from '../../i18n';
 import { Button, Icon, cn } from '../ui';
 import { PaEmptyChat } from './PaEmptyChat';
-import { PaMessage } from './PaMessage';
-import { PaReceipt, PaTurnTail, tailKindOf } from './PaTurnTail';
+import { PaTurnBody } from './PaMessage';
 import { usePa } from './pa-context';
 import { buildTurns, needsSeparator, separatorLabel } from './pa-model';
-import type { PaConversation, PaGroup, PaMessage as PaMessageRecord, PaTurn } from './pa-types';
+import type { PaConversation, PaIndex } from './pa-types';
+import { SoulTranscript } from './soul/SoulTranscript';
+import { conversationMode } from './soul/soul-model';
 import styles from './PaConversation.module.css';
 
 /** The reader counts as "at the end" within this many pixels of the bottom (spec §6.5). */
@@ -36,20 +37,31 @@ function findBy(root: HTMLElement | null, attribute: 'taskId' | 'messageId', val
   return null;
 }
 
-function roleOf(group: PaGroup | null, turn: PaTurn, senderId: string): 'moderator' | 'reviewer' | null {
-  if (!group || senderId === 'owner') return null;
-  const task = turn.task;
-  if (task?.kind === 'project' && task.participantIds.length > 1) {
-    if (task.participantIds[task.participantIds.length - 1] === senderId) return 'reviewer';
-  }
-  if (group.moderatorId === senderId) return 'moderator';
-  const reviewer =
-    group.reviewerId ??
-    (group.mode === 'review' ? [...group.memberIds].reverse().find((id) => id !== group.moderatorId) ?? null : null);
-  return reviewer === senderId ? 'reviewer' : null;
+/** A conversation that has chat history (any message with `soul`) renders through the companion transcript even in work
+ *  mode, so its chat turns keep their bubbles (Soul UI spec §4.1). */
+function hasSoulMessages(index: PaIndex, conversationId: string): boolean {
+  return (index.messagesByConversation.get(conversationId) ?? []).some((message) => message.soul !== undefined);
 }
 
-export function PaTranscript({ conversation, followNonce }: { conversation: PaConversation; followNonce: number }) {
+export function PaTranscript({
+  conversation,
+  followNonce,
+  mode,
+}: {
+  conversation: PaConversation;
+  followNonce: number;
+  /** The conversation's mode, when the caller already resolved it. */
+  mode?: 'work' | 'companion';
+}) {
+  const { index } = usePa();
+  const resolved = mode ?? conversationMode(index, conversation);
+  if (resolved === 'companion' || hasSoulMessages(index, conversation.id)) {
+    return <SoulTranscript conversation={conversation} mode={resolved} followNonce={followNonce} />;
+  }
+  return <PaWorkTranscript conversation={conversation} followNonce={followNonce} />;
+}
+
+function PaWorkTranscript({ conversation, followNonce }: { conversation: PaConversation; followNonce: number }) {
   const t = useT();
   const { locale } = useI18n();
   const { index, ui, now, layout } = usePa();
@@ -57,7 +69,6 @@ export function PaTranscript({ conversation, followNonce }: { conversation: PaCo
   const group =
     index.groupByConversation.get(conversation.id) ??
     (conversation.groupId ? index.groups.get(conversation.groupId) ?? null : null);
-  const clustered = group != null;
 
   const scrollerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -184,11 +195,6 @@ export function PaTranscript({ conversation, followNonce }: { conversation: PaCo
     const separator = needsSeparator(previousAt, firstAt) ? separatorLabel(firstAt, now, locale, t) : null;
     previousAt = turn.messages[turn.messages.length - 1]?.createdAt ?? firstAt;
     const latest = turnIndex === lastIndex;
-    const tailKind = turn.task ? tailKindOf(turn.task) : null;
-    const tailEntering = turn.task ? entering(`tail:${turn.key}:${tailKind}`) : false;
-    const lastMessage = turn.messages[turn.messages.length - 1];
-    // A discussion receipt joins the last reply's footer row instead of adding a row of its own under it.
-    const receiptInline = tailKind === 'receipt' && lastMessage != null && lastMessage.senderId !== 'owner';
     return (
       <Fragment key={turn.key}>
         {separator ? <p className={cn('text-caption text-ink-faint', styles.separator)}>{separator}</p> : null}
@@ -198,33 +204,7 @@ export function PaTranscript({ conversation, followNonce }: { conversation: PaCo
           data-task-id={turn.task?.id}
           data-latest={latest ? '' : undefined}
         >
-          {turn.messages.map((message: PaMessageRecord, i) => (
-            <PaMessage
-              key={message.id}
-              message={message}
-              conversationId={conversation.id}
-              clustered={clustered}
-              clusterStart={i === 0 || turn.messages[i - 1]!.senderId !== message.senderId}
-              role={roleOf(group, turn, message.senderId)}
-              attempts={turn.attempts}
-              entering={entering(`m:${message.id}`)}
-              onJump={onJump}
-              receipt={
-                receiptInline && turn.task && message === lastMessage ? (
-                  <PaReceipt task={turn.task} turn={turn} latest={latest} entering={tailEntering} />
-                ) : undefined
-              }
-            />
-          ))}
-          {turn.task ? (
-            <PaTurnTail
-              turn={turn}
-              conversation={conversation}
-              latest={latest}
-              entering={tailEntering}
-              receiptInline={receiptInline}
-            />
-          ) : null}
+          <PaTurnBody turn={turn} conversation={conversation} group={group} latest={latest} entering={entering} onJump={onJump} />
         </section>
       </Fragment>
     );

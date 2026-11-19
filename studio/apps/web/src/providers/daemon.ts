@@ -82,6 +82,8 @@ function detectClientType(): 'desktop' | 'web' | 'unknown' {
 import { BackoffController } from '../lib/backoff';
 import { parseSseFrame } from './sse';
 import {
+  normalizeArtifactFocusTool,
+  normalizeArtifactFocusUrl,
   persistedArtifactFilesOf,
   summarizeArtifactsForTranscript,
   summarizeHistoricalQuestionForms,
@@ -479,6 +481,7 @@ export interface DaemonStreamOptions {
   history: ChatMessage[];
   /** Legacy field accepted by older tests/callers. Daemon-owned prompt composition ignores it. */
   systemPrompt?: string;
+  sideDialogueInstructions?: string;
   /** Stops the current browser-side SSE subscription. The daemon run continues. */
   signal: AbortSignal;
   /** Explicit user cancellation signal. This maps to POST /api/runs/:id/cancel. */
@@ -489,6 +492,7 @@ export interface DaemonStreamOptions {
   // workspace.
   projectId?: string | null;
   conversationId?: string | null;
+  messageBranch?: ChatRequest['messageBranch'];
   sessionMode?: ChatSessionMode;
   userMessageId?: string | null;
   assistantMessageId?: string | null;
@@ -977,11 +981,13 @@ function cleanAmrOpenCodeStderrFallback(agentId: string | undefined, stderr: str
 export async function streamViaDaemon({
   agentId,
   history,
+  sideDialogueInstructions,
   signal,
   cancelSignal,
   handlers,
   projectId,
   conversationId,
+  messageBranch,
   sessionMode,
   userMessageId,
   assistantMessageId,
@@ -1025,12 +1031,14 @@ export async function streamViaDaemon({
   const transcript = buildDaemonTranscript(history, agentId);
   const request: ChatRequest = {
     agentId,
+    ...(sideDialogueInstructions && { systemPrompt: sideDialogueInstructions }),
     message: transcript,
     ...(taskExecutionId ? { taskExecutionId } : {}),
     currentPrompt: latestUserPromptFromHistory(history),
     priorTranscript: buildDaemonPriorTranscript(history, agentId),
     projectId: projectId ?? null,
     conversationId: conversationId ?? null,
+    ...(messageBranch ? { messageBranch } : {}),
     sessionMode,
     userMessageId: userMessageId ?? null,
     assistantMessageId: assistantMessageId ?? null,
@@ -1699,9 +1707,11 @@ export async function listProjectRunsWithScope(
 export async function listRunsForProject(
   projectId: string,
   workspaceContext?: WorkspaceCollabContext | null,
+  signal?: AbortSignal,
 ): Promise<{ runs: ChatRunStatusResponse[]; awaitingInputProjectIds: string[] } | null> {
   try {
     const resp = await fetch(`/api/runs?projectId=${encodeURIComponent(projectId)}`, {
+      signal,
       ...(workspaceContext
         ? { headers: workspaceProjectHeaders(workspaceContext) }
         : {}),
@@ -2569,6 +2579,12 @@ function translateAgentEvent(data: DaemonAgentPayload): AgentEvent | null {
   // daemon. The client never sees the `<od-focus …/>` marker itself, and never
   // resolves a path of its own — `open` is a project-relative path the daemon
   // already proved lands inside the project root.
+  //
+  // `tool` (which workspace surface) and `url` (the browser surface's address)
+  // ride on the same event. Both are re-checked with the contract normalizers:
+  // this is the last stop before the UI navigates somewhere, and a daemon
+  // newer than this renderer may name a tool it does not have. `tool` alone is
+  // a complete event — it opens a surface, not a file.
   if (t === 'artifact_focus') {
     const open = typeof data.open === 'string' && data.open ? data.open : undefined;
     const show = Array.isArray(data.show)
@@ -2576,11 +2592,15 @@ function translateAgentEvent(data: DaemonAgentPayload): AgentEvent | null {
           (p): p is string => typeof p === 'string' && p.trim().length > 0,
         )
       : undefined;
-    if (!open && (!show || show.length === 0)) return null;
+    const tool = normalizeArtifactFocusTool(data.tool);
+    const url = tool === 'browser' ? normalizeArtifactFocusUrl(data.url) : null;
+    if (!open && (!show || show.length === 0) && !tool) return null;
     return {
       kind: 'artifact_focus',
       ...(open ? { open } : {}),
       ...(show && show.length > 0 ? { show } : {}),
+      ...(tool ? { tool } : {}),
+      ...(url ? { url } : {}),
     };
   }
   if (t === 'conversation_title' && typeof data.title === 'string') {

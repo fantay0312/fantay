@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// The original folded-paper Fantay drawing (doc/FantayDesign-SVG-package/README.txt), as numbers. The illustrated
-// changelog uses this art, and the living mascot cuts its cloth from the silhouette in mascot-sheet.ts.
+// The original folded-paper Fantay drawing (doc/FantayDesign-SVG-package/README.txt) and shared brand colours.
 
 /** The whole silhouette: the join, round the belly, the tail and the top edge to the raised tip, then the fold's rim. */
 export const FRONT_PATH =

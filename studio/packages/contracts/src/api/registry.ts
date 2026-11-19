@@ -30,6 +30,13 @@ export interface AgentModelVariant {
 export interface AgentModelOption {
   id: string;
   label: string;
+  /** Public TokenToSea comparison metadata. Route selection always uses id. */
+  channelOffer?: {
+    modelKey: string; modelName: string; supplier: string; channel: string;
+    multiplier?: string; inputMultiplier?: string; outputMultiplier?: string; free?: boolean;
+    referenceBasis?: 'historical' | 'historical_peak' | 'historical_off_peak';
+    unavailableReason?: 'no_published_price' | 'returned_model_mismatch';
+  };
   /**
    * The provider's own one-line description, when its catalog has one. Today
    * this carries speed-tier copy (Codex `service_tiers[].description` such as

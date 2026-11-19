@@ -16,7 +16,7 @@ import type { BoardTool, DictKey } from '../model/types';
 /* The board tools (bottom toolbar): what a pointer-down means depends on the tool, on what it landed on, and on
    a few modifiers. Resolved here, in one place, so the stage, nodes and handles agree on it. */
 
-export const DRAW_TOOLS: ReadonlySet<BoardTool> = new Set<BoardTool>(['frame', 'rectangle', 'ellipse', 'text']);
+export const DRAW_TOOLS: ReadonlySet<BoardTool> = new Set<BoardTool>(['frame', 'rectangle', 'ellipse', 'text', 'pen']);
 export const PLACE_TOOLS: ReadonlySet<BoardTool> = new Set<BoardTool>(['note', 'generate']);
 
 export function isDrawTool(tool: BoardTool): boolean {
@@ -33,6 +33,7 @@ export const BOARD_TOOLS: ReadonlyArray<{ id: BoardTool; key: string; labelKey: 
   { id: 'frame', key: 'F', labelKey: 'board.tool.frame' },
   { id: 'rectangle', key: 'R', labelKey: 'board.tool.rectangle' },
   { id: 'ellipse', key: 'O', labelKey: 'board.tool.ellipse' },
+  { id: 'pen', key: 'P', labelKey: 'board.tool.pen' },
   { id: 'text', key: 'T', labelKey: 'board.tool.text' },
   { id: 'generate', key: 'G', labelKey: 'board.tool.generate' },
   { id: 'note', key: 'N', labelKey: 'board.tool.note' },

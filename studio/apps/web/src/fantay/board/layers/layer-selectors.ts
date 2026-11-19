@@ -120,7 +120,7 @@ export function sameSelectionSlice(a: SelectionSlice, b: SelectionSlice): boolea
 
 export interface GestureSlice {
   marquee: Rect | null;
-  draw: { tool: BoardTool; rect: Rect } | null;
+  draw: { tool: BoardTool; rect: Rect; points?: string } | null;
   guides: readonly SnapGuide[];
   resize: { rect: Rect; w: number; h: number } | null;
 }
@@ -141,7 +141,7 @@ export function gestureSlice(state: EngineState): GestureSlice {
 
 export function sameGestureSlice(a: GestureSlice, b: GestureSlice): boolean {
   if (!sameRect(a.marquee, b.marquee)) return false;
-  if (a.draw !== b.draw && (!a.draw || !b.draw || a.draw.tool !== b.draw.tool || !sameRect(a.draw.rect, b.draw.rect))) return false;
+  if (a.draw !== b.draw && (!a.draw || !b.draw || a.draw.points !== b.draw.points || a.draw.tool !== b.draw.tool || !sameRect(a.draw.rect, b.draw.rect))) return false;
   if (a.guides !== b.guides) {
     if (a.guides.length !== b.guides.length) return false;
     for (let index = 0; index < a.guides.length; index += 1) {

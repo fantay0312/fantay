@@ -1,0 +1,443 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Start page of the side workspace. One column and one row grammar at three sizes (suggestion 44,
+   tool 40, file 34); grouping comes from space and a quiet label, never from boxes.
+   Row anatomy and the narrow-panel degradation are adapted from cindy EmptyState.tsx @ 88941ba7
+   (Apache-2.0) and t3code RightPanelTabs.tsx @ c5e6b24f (MIT); see WorkspaceStart.tsx.
+
+   Alignment: every row's text starts 36px from the column edge (inset + icon slot + gap), and the
+   flat lists, their labels and the pills share one content edge at 10px. */
+
+.root {
+  --start-tone: color-mix(in srgb, var(--ink) 6%, transparent);
+  --start-press: color-mix(in srgb, var(--ink) 10%, transparent);
+  --start-ease: var(--ease-out-quint, cubic-bezier(0.23, 1, 0.32, 1));
+  container-type: inline-size;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  /* Keeps the centred column still when a long result list brings in a scrollbar. */
+  scrollbar-gutter: stable both-edges;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  outline: none;
+}
+
+.column {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 28px 20px 32px;
+}
+
+/* -------- Search field ------------------------------------------------- */
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 6px 0 12px;
+  border-radius: 10px;
+  background: var(--sub);
+  /* A spread-only ring, so it can fade; it casts nothing. */
+  box-shadow: 0 0 0 2px transparent;
+  transition: box-shadow 140ms var(--start-ease);
+}
+
+.search:focus-within {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ink) 12%, transparent);
+  transition-duration: 200ms;
+}
+
+.searchGlyph {
+  flex: none;
+  color: var(--ink-faint);
+}
+
+/* The global `input` and `input:focus` primitives draw a bordered panel; the field is the tray. */
+.search .input,
+.search .input:focus {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  outline: none;
+}
+
+.search .input::placeholder {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+
+.search .clear {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 140ms var(--start-ease),
+    visibility 0s linear 140ms,
+    background-color 140ms var(--start-ease),
+    color 140ms var(--start-ease);
+}
+
+.search .clear[data-visible='true'] {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 200ms var(--start-ease),
+    visibility 0s,
+    background-color 140ms var(--start-ease),
+    color 140ms var(--start-ease);
+}
+
+.search .clear:hover {
+  border: 0;
+  background: var(--start-tone);
+  color: var(--ink);
+}
+
+.search .clear:active {
+  background: var(--start-press);
+  transform: none;
+}
+
+.search .clear:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 1px;
+}
+
+/* -------- List, groups and their labels -------------------------------- */
+
+.list {
+  outline: none;
+}
+
+.list [cmdk-list-sizer] {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Results are one list in groups, so the groups sit closer than the page's sections. */
+.root[data-mode='search'] .list [cmdk-list-sizer] {
+  gap: 16px;
+}
+
+.group [cmdk-group-heading] {
+  display: flex;
+  align-items: center;
+  height: 20px;
+  margin-bottom: 4px;
+  padding: 0 10px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 600;
+  user-select: none;
+}
+
+.group [cmdk-group-items] {
+  display: flex;
+  flex-direction: column;
+}
+
+/* -------- Rows ---------------------------------------------------------- */
+
+/* Two classes deep on purpose: the global `button` primitive sets size, border and a press nudge. */
+.root .item {
+  --item-tone: var(--start-tone);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 140ms var(--start-ease),
+    color 140ms var(--start-ease);
+}
+
+/* One lit row at a time. cmdk selects on pointer move, so while the page holds focus the selection
+   is the hover; a separate :hover would leave two rows lit after an arrow key. Without focus the
+   selection stays quiet and plain hover answers the pointer. */
+.root:focus-within .item[data-selected='true'],
+.root:not(:focus-within) .item:hover {
+  background: var(--item-tone);
+  color: var(--ink);
+  transition-duration: 60ms;
+}
+
+/* Press deepens the lit tone (through the variable, so it wins over the lit rule); rows do not take
+   the global 1px press nudge. */
+.root .item:active {
+  --item-tone: var(--start-press);
+  transform: none;
+}
+
+.root .item:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 1px;
+}
+
+.glyph {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
+
+.label,
+.name {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Secondary text takes what is left and gives way first. */
+.hint,
+.meta,
+.detail {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+/* Trailing glyph: absent at rest, slides in 2px when the row is lit or focused. */
+.reveal {
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--ink-ghost);
+  opacity: 0;
+  transform: translateX(-2px);
+  transition:
+    opacity 140ms var(--start-ease),
+    transform 140ms var(--start-ease);
+}
+
+.root:focus-within .item[data-selected='true'] .reveal,
+.root:not(:focus-within) .item:hover .reveal,
+.root .item:focus-visible .reveal {
+  opacity: 1;
+  transform: translateX(0);
+  transition-duration: 200ms;
+}
+
+/* Suggestion: the one outlined row, where the product shows it understood the task. */
+.suggested [cmdk-group-items] {
+  gap: 6px;
+}
+
+.root .suggestion {
+  height: 44px;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  font-weight: 600;
+}
+
+.meta {
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+/* Tool: the file row one size up. */
+.root .tool {
+  height: 40px;
+  gap: 10px;
+  padding: 0 10px;
+  border-radius: var(--radius-control);
+  font-weight: 600;
+}
+
+.hint {
+  color: var(--ink-faint);
+  font-size: 12.5px;
+}
+
+/* Create actions: quiet pills on the content edge, right under the tools. */
+.pills [cmdk-group-items] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 10px;
+}
+
+.group + .pills {
+  margin-top: 10px;
+}
+
+.root .pill {
+  --item-tone: var(--sub);
+  width: auto;
+  max-width: 100%;
+  height: 28px;
+  gap: 6px;
+  padding: 0 10px 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.pill .glyph {
+  width: 14px;
+  height: 14px;
+}
+
+/* File, tab and search-result row. */
+.root .row {
+  height: 34px;
+  gap: 10px;
+  padding: 0 8px;
+  border-radius: var(--radius-row);
+}
+
+.row .glyph {
+  width: 18px;
+  color: var(--ink-faint);
+}
+
+.detail {
+  color: var(--ink-ghost);
+  font-size: 12px;
+}
+
+.trail {
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--ink-ghost);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The faintest ink is too faint to read on a lit row. */
+.root:focus-within .item[data-selected='true'] .detail,
+.root:focus-within .item[data-selected='true'] .trail,
+.root:not(:focus-within) .item:hover .detail,
+.root:not(:focus-within) .item:hover .trail {
+  color: var(--ink-faint);
+}
+
+/* "All files": a text button on the Recent heading line. It is the group's first item in the DOM so
+   the arrow keys and Tab reach it before the files; the heading itself is hidden from assistive tech
+   by cmdk, so the button cannot live inside it. */
+.recent {
+  position: relative;
+}
+
+.root .link {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 4px;
+  width: auto;
+  height: 20px;
+  gap: 2px;
+  padding: 0 0 0 6px;
+  border-radius: var(--radius-tag);
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* -------- No results ---------------------------------------------------- */
+
+.empty {
+  padding: 28px 12px;
+  color: var(--ink-faint);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* -------- Entrance: once per mount (WorkspaceStart sets data-entering) -- */
+
+.root[data-entering='true'] .rise {
+  animation: start-rise 200ms var(--start-ease) both;
+  animation-delay: calc(var(--rise-index, 0) * 30ms);
+}
+
+@keyframes start-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* -------- Narrow panel -------------------------------------------------- */
+
+@container (max-width: 300px) {
+  .column {
+    gap: 20px;
+    padding: 20px 12px 24px;
+  }
+
+  .hint,
+  .meta,
+  .detail {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root[data-entering='true'] .rise {
+    animation: none;
+  }
+
+  .reveal {
+    transform: none;
+    transition: opacity 140ms var(--start-ease);
+  }
+}

@@ -1261,7 +1261,7 @@ export function PreviewDrawOverlay({
   // pen, and drop-a-text-label.
   const markToolOptions: { tool: MarkTool; label: string; icon: string }[] = [
     { tool: 'box', label: t('fileViewer.boxSelect'), icon: 'checkbox-blank-line' },
-    { tool: 'pen', label: t('sketch.toolPen'), icon: 'pencil-line' },
+    { tool: 'pen', label: t('board.tool.pen'), icon: 'pencil-line' },
     { tool: 'text', label: t('fileViewer.textTool'), icon: 'text' },
   ];
 

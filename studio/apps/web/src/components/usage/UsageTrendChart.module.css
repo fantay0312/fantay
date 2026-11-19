@@ -54,7 +54,7 @@
   color: var(--ink-faint);
   font-size: var(--settings-type-meta);
   font-variant-numeric: tabular-nums;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1.5;
 }
 
@@ -63,7 +63,7 @@
 .controls {
   display: flex;
   flex: none;
-  gap: 8px;
+  gap: 6px;
 }
 
 .fill[data-slot='segmented'] {
@@ -120,9 +120,9 @@
 
 .axisText {
   fill: var(--ink-faint);
-  font-size: 12px;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 /* The hovered day: a soft column behind its bar that glides from day to day; the other days step back. */
@@ -316,7 +316,7 @@
   margin: 0;
   color: var(--ink-faint);
   font-size: var(--settings-type-meta);
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1.5;
 }
 

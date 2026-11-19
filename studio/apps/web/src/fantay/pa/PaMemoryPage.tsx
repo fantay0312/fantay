@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // 记忆 page (spec §11): a heading with the one page action, the recall hint, a full-width scope
 // filter and a search, then one hairline group of memories. Create and edit open the memory modal;
-// delete confirms first.
+// archiving confirms first and says where to restore it (a memory is never deleted).
 import { useMemo, useRef, useState } from 'react';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Archive, ArrowUpRight, CircleCheck, Pencil, Plus } from 'lucide-react';
 import { useI18n, useT } from '../../i18n';
+import { navigate } from '../../router';
 import { FantayMascotStill } from '../brand/FantayMascot';
 import {
   ConfirmDialog,
@@ -26,13 +27,31 @@ import {
   toast,
 } from '../ui';
 import { PaMarkdown } from './PaMarkdown';
+import { paMemoryInUse, resolveDefaultMemoryScope } from './PaMemoryModal';
 import { formatDay } from './PaTaskModal';
 import { usePa } from './pa-context';
 import { memoryScopeName } from './pa-model';
-import type { PaMemory, PaMemoryFilter } from './pa-types';
+import type { PaMemory, PaMemoryCandidate, PaMemoryFilter, PaMemoryInput } from './pa-types';
 import styles from './PaPages.module.css';
+import { displayName } from './soul/soul-model';
+import { SoulTag } from './soul/SoulPrimitives';
 
 const FILTERS: readonly PaMemoryFilter[] = ['all', 'private', 'agent', 'group', 'project'];
+
+/** The memory kinds shown as a tag (Soul UI spec 6.4); a memory without one of these kinds shows no tag. */
+const KIND_LABEL: Partial<Record<string, 'pa.soul.manage.kind.profile' | 'pa.soul.manage.kind.preference' | 'pa.soul.manage.kind.fact' | 'pa.soul.manage.kind.procedure' | 'pa.soul.manage.kind.promise' | 'pa.soul.manage.kind.moment'>> = {
+  profile: 'pa.soul.manage.kind.profile',
+  preference: 'pa.soul.manage.kind.preference',
+  fact: 'pa.soul.manage.kind.fact',
+  procedure: 'pa.soul.manage.kind.procedure',
+  promise: 'pa.soul.manage.kind.promise',
+  moment: 'pa.soul.manage.kind.moment',
+};
+
+/** A 约定 is kept once its `validUntil` has passed. */
+function kept(memory: PaMemory, now: number): boolean {
+  return typeof memory.validUntil === 'number' && memory.validUntil <= now;
+}
 
 export function PaMemoryPage() {
   const { data, index, ui, nav, projects, now } = usePa();
@@ -40,11 +59,16 @@ export function PaMemoryPage() {
   const { locale } = useI18n();
   const [query, setQuery] = useState('');
   const [target, setTarget] = useState<PaMemory | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const deletingRef = useRef(false);
+  const [archiving, setArchiving] = useState(false);
+  const archivingRef = useRef(false);
 
   const filter = ui.memoryFilter;
-  const all = useMemo(() => [...index.memories.values()].sort((a, b) => b.updatedAt - a.updatedAt), [index]);
+  // Only memories in use: archived and replaced ones are kept in the Memory Center (已归档), so archiving here
+  // takes the row away.
+  const all = useMemo(
+    () => [...index.memories.values()].filter(paMemoryInUse).sort((a, b) => b.updatedAt - a.updatedAt),
+    [index],
+  );
   const needle = query.trim().toLocaleLowerCase(locale);
   const shown = useMemo(
     () =>
@@ -75,27 +99,47 @@ export function PaMemoryPage() {
             ? t('pa.memory.filterGroup')
             : t('pa.memory.filterProject');
 
-  const create = () =>
-    nav.openModal(
-      filter === 'all' ? { kind: 'memory', memoryId: null } : { kind: 'memory', memoryId: null, preset: { scope: filter, scopeId: null } },
+  const create = () => {
+    const preset = resolveDefaultMemoryScope(
+      filter === 'all' ? undefined : { scope: filter },
+      index,
+      projects,
+      ui,
     );
+    nav.openModal({ kind: 'memory', memoryId: null, preset });
+  };
 
-  const confirmDelete = async () => {
+  // `deleteMemory` keeps its route name; the service archives the memory.
+  const confirmArchive = async () => {
     const memory = target;
-    if (!memory || deletingRef.current) return;
-    deletingRef.current = true;
-    setDeleting(true);
+    if (!memory || archivingRef.current) return;
+    archivingRef.current = true;
+    setArchiving(true);
     try {
       await data.actions.deleteMemory(memory.id);
-      toast({ tone: 'success', title: t('pa.memory.deleted') });
+      toast({ tone: 'success', title: t('pa.memory.archived'), description: t('pa.memory.archivedBody') });
     } catch (error) {
       toast({ tone: 'danger', title: error instanceof Error ? error.message : String(error) });
     } finally {
-      deletingRef.current = false;
-      setDeleting(false);
+      archivingRef.current = false;
+      setArchiving(false);
       setTarget(null);
     }
   };
+
+  /** 标为已兑现: the memory's own input with `validUntil = now`. */
+  const markKept = (memory: PaMemory) => {
+    const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, revision: _revision, principalId: _principal, ...input } = memory;
+    const next: PaMemoryInput = { ...input, validUntil: Date.now() };
+    void data.actions
+      .saveMemory(next, memory)
+      .catch((error) => toast({ tone: 'danger', title: error instanceof Error ? error.message : String(error) }));
+  };
+  const resolveCandidate = (candidate: PaMemoryCandidate, accept: boolean) =>
+    void data.actions
+      .resolveMemoryCandidate(candidate.id, candidate.revision, accept)
+      .catch((error) => toast({ tone: 'danger', title: error instanceof Error ? error.message : String(error) }));
+  const candidates = (data.snapshot?.memoryCandidates ?? []).filter((candidate) => candidate.status === 'pending');
 
   const loading = data.load === 'loading' && !data.snapshot;
   // With nothing stored yet the scope filter and the search have nothing to act on; the empty state stands alone.
@@ -109,15 +153,48 @@ export function PaMemoryPage() {
             <h1 className={styles.title}>{t('pa.memories')}</h1>
             <p className={styles.hint}>{t('pa.memoryHint')}</p>
           </div>
-          <Button className={cn('fx-page-action', styles.pageAction)} onClick={create}>
-            <Icon icon={Plus} size="sm" />
-            {t('pa.newMemory')}
-          </Button>
+          <div className="flex flex-none items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              data-testid="pa-open-memory-center"
+              onClick={() => navigate({ kind: 'home', view: 'memory' })}
+            >
+              {t('pa.memory.openCenter')}
+              <Icon icon={ArrowUpRight} size="sm" />
+            </Button>
+            <Button className={cn('fx-page-action', styles.pageAction)} onClick={create}>
+              <Icon icon={Plus} size="sm" />
+              {t('pa.newMemory')}
+            </Button>
+          </div>
         </header>
 
-        {data.snapshot?.memoryCandidates?.length ? (
+        {candidates.length ? (
           <div className={styles.memList} aria-label={t('pa.memory.proposedProcedure')}>
-            {data.snapshot.memoryCandidates.map(candidate => (
+            {candidates.map(candidate => candidate.sourceMessageId ? (
+              // A chat candidate (想记下): the kind, who wants to remember it, the text and its date, 记下 · 忽略.
+              <article key={candidate.id} className={styles.memRow} data-testid="pa-memory-candidate">
+                <div className={styles.memBody}>
+                  <div className={styles.memContent}>{candidate.content}</div>
+                  <div className={styles.memMeta}>
+                    {candidate.kind && KIND_LABEL[candidate.kind] ? <SoulTag tone="outline">{t(KIND_LABEL[candidate.kind]!)}</SoulTag> : null}
+                    <MetaLine className={styles.memCaption}>
+                      {candidate.agentId ? (
+                        <span className={styles.memFixed}>{t('pa.soul.manage.memory.wants', { name: displayName(index, candidate.agentId) })}</span>
+                      ) : null}
+                      {typeof candidate.dueAt === 'number' ? (
+                        <span className={styles.memFixed}>{t('pa.soul.manage.memory.dueOn', { date: formatDay(candidate.dueAt, now, locale) })}</span>
+                      ) : null}
+                    </MetaLine>
+                  </div>
+                </div>
+                <div className="flex flex-none items-center gap-1.5">
+                  <Button size="sm" onClick={() => resolveCandidate(candidate, true)}>{t('pa.soul.manage.memory.save')}</Button>
+                  <Button size="sm" variant="ghost" onClick={() => resolveCandidate(candidate, false)}>{t('pa.soul.manage.memory.dismiss')}</Button>
+                </div>
+              </article>
+            ) : (
               <article key={candidate.id} className={styles.memRow}>
                 <div className={styles.memBody}>
                   <div className={styles.memScope}>{t('pa.memory.proposedProcedure')}</div>
@@ -143,7 +220,7 @@ export function PaMemoryPage() {
             >
               {FILTERS.map((key) => (
                 <SegmentedItem key={key} value={key} className="min-w-0 flex-1" data-testid={`pa-memory-filter-${key}`}>
-                  <span className={styles.segLabel}>{label(key)}</span>
+                  <span className={styles.segLabel} title={label(key)}>{label(key)}</span>
                   {counts[key] > 0 ? <span className={styles.segCount}>{counts[key]}</span> : null}
                 </SegmentedItem>
               ))}
@@ -179,6 +256,10 @@ export function PaMemoryPage() {
             <div className={styles.memList}>
               {shown.map((memory) => {
                 const refs = index.memoryRefCount.get(memory.id) ?? 0;
+                const kindLabel = memory.kind ? KIND_LABEL[memory.kind] : undefined;
+                const promise = memory.kind === 'promise';
+                const done = promise && kept(memory, now);
+                const sourceConversation = memory.sourceMessageId ? index.messages.get(memory.sourceMessageId)?.conversationId : undefined;
                 return (
                   <article key={memory.id} className={styles.memRow} data-testid="pa-memory-row" data-scope={memory.scope}>
                     <div className={styles.memBody}>
@@ -188,8 +269,13 @@ export function PaMemoryPage() {
                       {/* The scope is the row's facet, so it reads as a tag ahead of the caption: its own `·`
                           (智能体 · 审阅者) then never runs into the caption's separators. */}
                       <div className={styles.memMeta}>
+                        {kindLabel ? <SoulTag tone="outline">{t(kindLabel)}</SoulTag> : null}
                         <span className={styles.memScope}>{memoryScopeName(index, memory, projects, t)}</span>
                         <MetaLine className={styles.memCaption}>
+                          {done ? <span className={styles.memFixed}>{t('pa.soul.manage.memory.kept')}</span> : null}
+                          {promise && !done && typeof memory.dueAt === 'number' ? (
+                            <span className={styles.memFixed}>{t('pa.soul.manage.memory.dueOn', { date: formatDay(memory.dueAt, now, locale) })}</span>
+                          ) : null}
                           {memory.source ? (
                             <span className={styles.memSource} title={memory.source}>
                               {memory.source}
@@ -198,6 +284,16 @@ export function PaMemoryPage() {
                           <span className={styles.memFixed}>{t('pa.memory.updated', { date: formatDay(memory.updatedAt, now, locale) })}</span>
                           <span className={styles.memFixed}>{t('pa.memory.revision', { n: memory.revision })}</span>
                           {refs > 0 ? <span className={styles.memFixed}>{t('pa.memory.refCount', { count: refs })}</span> : null}
+                          {sourceConversation ? (
+                            <Button
+                              variant="link"
+                              size="sm"
+                              className={cn(styles.memFixed, 'font-medium text-ink-soft')}
+                              onClick={() => nav.openConversation(sourceConversation)}
+                            >
+                              {t('pa.soul.manage.memory.source')}
+                            </Button>
+                          ) : null}
                         </MetaLine>
                       </div>
                     </div>
@@ -208,11 +304,16 @@ export function PaMemoryPage() {
                         </IconButton>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent width="sm">
+                        {promise && !done ? (
+                          <DropdownMenuItem icon={<Icon icon={CircleCheck} size="sm" />} onSelect={() => markKept(memory)}>
+                            {t('pa.soul.manage.memory.markKept')}
+                          </DropdownMenuItem>
+                        ) : null}
                         <DropdownMenuItem icon={<Icon icon={Pencil} size="sm" />} onSelect={() => nav.openModal({ kind: 'memory', memoryId: memory.id })}>
                           {t('pa.edit')}
                         </DropdownMenuItem>
-                        <DropdownMenuItem tone="danger" icon={<Icon icon={Trash2} size="sm" />} onSelect={() => setTarget(memory)}>
-                          {t('pa.delete')}
+                        <DropdownMenuItem icon={<Icon icon={Archive} size="sm" />} onSelect={() => setTarget(memory)}>
+                          {t('pa.memory.archive')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -227,15 +328,14 @@ export function PaMemoryPage() {
       <ConfirmDialog
         open={target !== null}
         onOpenChange={(open) => {
-          if (!open && !deletingRef.current) setTarget(null);
+          if (!open && !archivingRef.current) setTarget(null);
         }}
-        title={t('pa.memory.deleteTitle')}
-        description={t('pa.memory.deleteBody')}
-        confirmLabel={t('pa.delete')}
+        title={t('pa.memory.archiveTitle')}
+        description={t('pa.memory.archiveBody')}
+        confirmLabel={t('pa.memory.archive')}
         cancelLabel={t('pa.cancel')}
-        destructive
-        busy={deleting}
-        onConfirm={() => void confirmDelete()}
+        busy={archiving}
+        onConfirm={() => void confirmArchive()}
       />
     </div>
   );

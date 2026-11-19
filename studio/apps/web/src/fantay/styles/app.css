@@ -19,6 +19,7 @@
 @import '@fantay/tokens/tokens.css' layer(theme);
 @import './legacy-aliases.css' layer(theme);
 @import './desktop-workspace.css';
+@import './artifact-web.css';
 @import './dropdown.css';
 @import './settings.css';
 @import './settings/execution.css';
@@ -34,6 +35,7 @@
 @import './resource-pages.css';
 @import './pa.css';
 @import './workbench.css';
+@import './memory-center.css';
 @import './projects-page.css';
 @import './new-project.css';
 

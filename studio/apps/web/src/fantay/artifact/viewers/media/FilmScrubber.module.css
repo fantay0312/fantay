@@ -1,0 +1,119 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The scrubber over a film. It sits on the picture, so its colours are fixed light-on-dark and do
+   not follow the theme. `--played` and `--loaded` (0..1) are set by the component. */
+
+.scrubber {
+  --played: 0;
+  --loaded: 0;
+  --film-rail: rgba(255, 255, 255, 0.26);
+  --film-loaded: rgba(255, 255, 255, 0.34);
+  --film-played: #ffffff;
+
+  position: relative;
+  /* A 16px target around a 3px rail. */
+  height: 16px;
+  outline: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.scrubber[data-ready] {
+  cursor: pointer;
+}
+
+.rail {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--film-rail);
+  translate: 0 -50%;
+  transition: height var(--motion-fast) var(--ease-out-quint);
+}
+
+.scrubber:hover .rail,
+.scrubber:focus-visible .rail,
+.scrubber[data-dragging] .rail {
+  height: 5px;
+}
+
+.loaded,
+.played {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+}
+
+.loaded {
+  background: var(--film-loaded);
+  transform: scaleX(var(--loaded));
+}
+
+.played {
+  background: var(--film-played);
+  transform: scaleX(var(--played));
+}
+
+/* The handle appears with the pointer or the keyboard; at rest the rail alone is enough. */
+.thumb {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--played) * 100%);
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--film-played);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  scale: 0.6;
+  translate: -50% -50%;
+  transition:
+    opacity var(--motion-fast) var(--ease-out-quint),
+    scale var(--motion-fast) var(--ease-out-quint);
+}
+
+.scrubber:hover .thumb,
+.scrubber:focus-visible .thumb,
+.scrubber[data-dragging] .thumb {
+  opacity: 1;
+  scale: 1;
+}
+
+.scrubber:focus-visible .thumb {
+  box-shadow: 0 0 0 2px var(--focus-ring-color);
+}
+
+.hint {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  padding: 2px 6px;
+  border-radius: var(--radius-tag);
+  background: rgba(0, 0, 0, 0.72);
+  color: #ffffff;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%);
+  transition: opacity var(--motion-exit) var(--ease-out-quint);
+  white-space: nowrap;
+}
+
+.hint[data-visible] {
+  opacity: 1;
+  transition-duration: var(--motion-micro);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail,
+  .thumb,
+  .hint {
+    transition: none;
+  }
+}

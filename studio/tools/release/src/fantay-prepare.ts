@@ -2,6 +2,9 @@ import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { copyFile, mkdir, writeFile, stat } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
+import { FANTAY_RELEASES } from '@open-design/contracts';
+import { parseFantayVersion } from '@open-design/release';
+import { renderFantayRelease, renderFantayReleaseHtml } from './fantay-version.js';
 
 async function sha256File(file: string): Promise<string> {
   const hash = createHash('sha256');
@@ -20,6 +23,9 @@ export async function prepareFantayRelease(args: string[]) {
   }
   const version=flags.get('--version');
   if (!version || !/^\d+\.\d+\.\d+$/.test(version)) throw new Error('A stable x.y.z version is required');
+  parseFantayVersion(version);
+  const release = FANTAY_RELEASES.find(item => item.version === version);
+  if (!release) throw new Error('Add the matching detailed release record and manga before preparing installers');
   const out=resolve(flags.get('--out') ?? '.tmp/fantay-release/'+version);
   const primary='https://static.tokentosea.com/fantay-design/releases/'+version;
   const github='https://github.com/fantay0312/fantay/releases/download/v'+version;
@@ -50,6 +56,9 @@ export async function prepareFantayRelease(args: string[]) {
   await writeFile(join(out,'metadata.json'),JSON.stringify(metadata,null,2)+'\n');
   await writeFile(join(out,'github','metadata.json'),JSON.stringify({...metadata,platforms:githubPlatforms},null,2)+'\n');
   await writeFile(join(out,'assets','SHA256SUMS'),sums.join('\n')+'\n');
+  await writeFile(join(out,'release-notes.md'),renderFantayRelease(release));
+  await writeFile(join(out,'release-notes.html'),renderFantayReleaseHtml([release]));
+  await writeFile(join(out,'release-notes.json'),JSON.stringify(release,null,2)+'\n');
   await writeFile(join(out,'publish-plan.json'),JSON.stringify({repository:'fantay0312/fantay',tag:'v'+version,version,assets,cosPrefix:'fantay-design/releases/'+version,latestKey:'fantay-design/releases/stable/latest/metadata.json',order:['Upload versioned assets to COS','Create GitHub draft with assets and github/metadata.json','Verify both origins against SHA256SUMS','Publish the GitHub release','Publish COS version metadata, then stable/latest/metadata.json last']},null,2)+'\n');
   return out;
 }

@@ -1,0 +1,685 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The profile editor (Soul UI spec 7.1): a section list beside one scrolling form inside the fixed-height 2xl frame
+   (PaModals `.fixedFrame`). The nav and the footer stay; only the form scrolls. Chrome is ink: the only colour in
+   here is the portrait and the theme islands of the 外观 section. Also styles the state-fields editor (7.1). */
+
+.editor {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: 184px minmax(0, 1fr);
+  min-height: 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+/* The modal is narrower than 860 (it is 100vw - 24 below a 984 px window). */
+@media (max-width: 883px) {
+  .editor {
+    grid-template-columns: 132px minmax(0, 1fr);
+  }
+}
+
+/* ── section nav ── */
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  padding: 12px 8px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-inline-end: 1px solid var(--line-soft);
+}
+
+.navItem {
+  flex: none;
+  justify-content: flex-start;
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: var(--radius-control);
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: start;
+  transition:
+    background-color var(--pa-dur-quick) var(--pa-ease),
+    color var(--pa-dur-quick) var(--pa-ease);
+}
+
+.navItem > [data-slot='button-label'] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.navItem[aria-current='true'] {
+  background: var(--sub);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.navLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navDot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-ink);
+}
+
+/* ── form pane ── */
+
+.pane {
+  min-width: 0;
+  min-height: 0;
+  padding: 20px 24px 28px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  text-wrap: pretty;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  animation: soul-editor-in var(--pa-dur-enter) var(--pa-ease) both;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+/* A sub-heading inside a section (13 / 600), as the group titles of the inspector and the pages. */
+.groupTitle {
+  margin: 4px 0 -6px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.caption {
+  margin: -6px 0 0;
+  font-size: var(--type-label);
+  line-height: 1.45;
+  color: var(--ink-faint);
+  text-wrap: pretty;
+}
+
+@keyframes soul-editor-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── 基础: the portrait well beside the fields ── */
+
+.basic {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+}
+
+.portraitCol {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.well {
+  position: relative;
+  display: grid;
+  width: 120px;
+  height: 160px;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--sub);
+}
+
+.well::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--pa-soul-portrait-ring);
+  content: '';
+  pointer-events: none;
+}
+
+.well[data-busy] {
+  opacity: 0.7;
+}
+
+.portraitError {
+  margin: 2px 0 0;
+  font-size: var(--type-label);
+  line-height: 1.45;
+  color: var(--accent-ink);
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.grid4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* ── hairline lists with a selected row (alternate greetings, bound world books, state fields) ── */
+
+.pickList {
+  max-height: 160px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.pickRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding-inline-end: 8px;
+  transition: background-color var(--pa-dur-quick) var(--pa-ease);
+}
+
+.pickRow[data-selected] {
+  background: var(--sub);
+}
+
+.pickButton {
+  flex: 1 1 auto;
+  justify-content: flex-start;
+  min-width: 0;
+  height: 40px;
+  padding: 0 8px 0 16px;
+  border-radius: 0;
+  color: var(--ink);
+  font-weight: 400;
+  text-align: start;
+}
+
+.pickButton:hover,
+.pickRow[data-selected] .pickButton {
+  background: transparent;
+}
+
+.pickButton > [data-slot='button-label'] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.pickRow[data-tall] .pickButton {
+  height: 44px;
+}
+
+.pickIndex {
+  flex: none;
+  min-width: 52px;
+  color: var(--ink-faint);
+  font-size: var(--type-label);
+  font-variant-numeric: tabular-nums;
+}
+
+.pickName {
+  flex: none;
+  max-width: 45%;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pickText {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pickText[data-empty] {
+  color: var(--ink-faint);
+}
+
+.pickMeta {
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--ink-faint);
+  font-size: var(--type-label);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.actionsEnd {
+  margin-inline-start: auto;
+}
+
+.loreSelect {
+  width: 220px;
+  max-width: 100%;
+}
+
+/* ── rows with an inline stepper or select (话多程度, 角色便签 depth and role) ── */
+
+.inlineControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+}
+
+.inlineControl {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: var(--type-label);
+  font-weight: 500;
+}
+
+.inlineSelect {
+  width: 132px;
+}
+
+/* ── 高级: the import record ── */
+
+.fact {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding: 12px 16px;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.reviewRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 16px;
+}
+
+.reviewSummary {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.reviewAction {
+  flex: none;
+  font-size: var(--type-label);
+  line-height: 1.5;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.sectionEnd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line-soft);
+}
+
+/* ── 状态与玩法: the state-fields editor ── */
+
+.stateEmpty {
+  margin: 0;
+  padding: 14px 16px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.kindTag {
+  flex: none;
+}
+
+.stateDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 16px 16px;
+}
+
+.segmentLabel {
+  margin-bottom: 6px;
+}
+
+/* A number field: tabular digits at the end edge. */
+.number {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section {
+    animation: soul-editor-fade 120ms linear both;
+  }
+
+  .navItem,
+  .pickRow {
+    transition: none;
+  }
+
+  @keyframes soul-editor-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+/* ── stage 2: 文风与模型 ▸ 声音 (SoulVoiceField) ── */
+
+.voiceSelect {
+  width: 280px;
+  max-width: 100%;
+}
+
+.voiceOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.voiceOptionText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── stage 2: 立绘 (SoulSpritesEditor): eight 3:4 wells on the character's theme paper ── */
+
+.spritesHead {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.spritesLede {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.spritesCount {
+  flex: none;
+  font-size: var(--type-label);
+  line-height: 1.45;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.spriteGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px 12px;
+}
+
+.spriteWell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.spriteFrame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--pa-skin-paper);
+  transition: opacity var(--pa-dur-quick) var(--pa-ease);
+}
+
+.spriteFrame::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--pa-soul-portrait-ring);
+  content: '';
+  pointer-events: none;
+}
+
+.spriteWell:not([data-set]) .spriteFrame::after {
+  box-shadow: none;
+  border: 1px dashed var(--pa-skin-line);
+}
+
+.spriteFrame[data-busy] {
+  opacity: 0.7;
+}
+
+.spriteImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0%;
+}
+
+.spriteEmpty {
+  font-size: var(--type-label);
+  line-height: 1.4;
+  color: var(--pa-skin-meta);
+}
+
+.spriteName {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.spriteActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── stage 2: 牌堆 (SoulDeckEditor): the list rows, then the selected deck's form ── */
+
+.deckName {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deckName[data-empty] {
+  color: var(--ink-faint);
+}
+
+.deckHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 14px 16px 16px;
+}
+
+.deckNameField {
+  flex: 1 1 auto;
+}
+
+.deckOrder {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+}
+
+.deckOrderLabel {
+  display: block;
+  margin-bottom: 6px;
+  font-size: var(--type-label);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+.cards > * + * {
+  border-top: 1px solid var(--line-soft);
+}
+
+/* One card per row: 顺序 · 牌面 · 说明 · 只给 TA 看的内容 · remove. The head row names the columns once. */
+.cardGrid {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 0.9fr) minmax(0, 1.2fr) minmax(0, 1.1fr) 24px;
+  align-items: start;
+  gap: 10px;
+  padding: 10px 16px;
+}
+
+.cardGrid[data-head] {
+  align-items: end;
+  padding-block: 10px 8px;
+}
+
+.cardGrid > [data-slot='soul-stepper'] {
+  margin-top: 2px;
+}
+
+.cardGrid > :last-child:not([aria-hidden]) {
+  margin-top: 4px;
+}
+
+.cardHeadCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: var(--type-label);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+.cardHeadHint {
+  font-weight: 400;
+  color: var(--ink-faint);
+  text-wrap: pretty;
+}
+
+.deckFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 16px;
+}
+
+.deckCount {
+  font-size: var(--type-label);
+  line-height: 1.45;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.deckIssue {
+  font-size: var(--type-label);
+  line-height: 1.45;
+  color: var(--accent-ink);
+}
+
+.pasteResult {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  font-size: var(--type-label);
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.pasteSkipped {
+  color: var(--ink-faint);
+}
+
+.deckEnd {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spriteFrame {
+    transition: none;
+  }
+}

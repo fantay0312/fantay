@@ -265,7 +265,6 @@ import {
   BYOK_AGENT_ID,
   BYOK_PROVIDER_REQUIRED_MESSAGE,
   buildByokPiProvider,
-  buildTokenToSeaPiProvider,
   isBundledPiAgent,
   prepareBundledPiRunHome,
 } from './runtimes/bundled-pi.js';
@@ -451,6 +450,7 @@ import {
   readMemoryConfig,
 } from './memory.js';
 import { runAutoExtractionCleanup } from './memory-cleanup.js';
+import type { StudioMemoryBridge } from './services/memory/studio-bridge.js';
 import { attachAcpSession } from './agent-protocol/index.js';
 
 import { ingestRoutineConnectorEvolution } from './automation-routine-evolution.js';
@@ -640,6 +640,12 @@ import { generateMedia } from './media/index.js';
 import { resolveHyperFramesCliPath } from './media/hyperframes-runtime.js';
 import { listElevenLabsVoiceOptions } from './integrations/elevenlabs-voices.js';
 import { searchResearch, ResearchError } from './research/index.js';
+import { SearchService } from './research/search-service.js';
+import { registerSearchServiceRoutes } from './routes/search-service.js';
+import { registerVoiceInputRoutes } from './routes/voice-input.js';
+import { VoiceInputService } from './services/voice-input.js';
+import { WebSearchError } from '@fantay/native-web-search';
+import type { SearchProviderId } from '@open-design/contracts/api/search-service';
 
 import {
   AUDIO_DURATIONS_SEC,
@@ -650,7 +656,7 @@ import {
   VIDEO_LENGTHS_SEC,
   VIDEO_MODELS,
 } from './media/models.js';
-import { readMaskedConfig, writeConfig } from './media/config.js';
+import { readMaskedConfig, resolveProviderConfig, writeConfig } from './media/config.js';
 import {
   listMediaTasksByProject,
   listRecentMediaTasks,
@@ -909,6 +915,8 @@ import { registerHandoffRoutes } from './routes/handoff.js';
 
 import { TranscriptExportLockedError } from './transcript-export.js';
 import { registerChatRoutes } from './routes/chat.js';
+import { registerSideDialogue } from './routes/side-dialogue.js';
+import { tokenToSeaLeaseProvider } from './integrations/tokentosea-pi-provider.js';
 import { registerRunRoutes } from './routes/runs.js';
 import { registerStrategyRolloutRoutes } from './routes/strategy-rollout.js';
 import { registerTerminalRoutes } from './routes/terminal.js';
@@ -1204,8 +1212,8 @@ import { registerTokenToSeaRoutes } from './routes/tokentosea.js';
 import { tokenToSeaProjectHasPublication } from './routes/tokentosea-share.js';
 import { registerUsageRoutes } from './routes/usage.js';
 import { syncLocalUsageMessages } from './integrations/usage-local-messages.js';
-import { TokenToSeaRuntime, configureTokenToSeaRuntime, tokenToSeaCookie, tokenToSeaAgentOutputLimit, tokenToSeaInterleavedReasoning } from './integrations/tokentosea-runtime.js';
-import { tokenToSeaNativeProtocol, tokenToSeaUsesClaudeMessages } from './integrations/tokentosea-claude.js';
+import { LocalAgentUsage, fantayUsageSessions } from './integrations/usage-local-agents.js';
+import { TokenToSeaRuntime, configureTokenToSeaRuntime, tokenToSeaCookie } from './integrations/tokentosea-runtime.js';
 import { startTokenToSeaEventsSubscriber } from './collab/tokentosea-events.js';
 import { registerDesignCanvasRoutes } from './routes/design-canvas.js';
 import { registerProjectOrganizationRoutes } from './routes/project-organization.js';
@@ -1522,6 +1530,24 @@ const designSystemGenerationJobs = createDesignSystemGenerationJobStore({
   root: USER_DESIGN_SYSTEMS_DIR,
 });
 let routineService = null;
+// Project conversations read and learn through the memory engine. Set once the Personal Agent service (which
+// owns the engine) exists; stays null when the engine lives in another database (enterprise tenant mode).
+let studioMemoryBridge: StudioMemoryBridge | null = null;
+/** Startup work comes first; the memory backfill waits this long before its first step. */
+const STUDIO_MEMORY_BACKFILL_DELAY_MS = 4_000;
+
+/**
+ * A model for the memory engine over the Settings → 记忆 provider choice. `context` narrows it the way the
+ * extractor is narrowed: a run's chat agent, model or API provider.
+ */
+function memoryEngineLlm(dataDir, context = {}) {
+  return {
+    async complete({ system, user, maxTokens, dataClass, signal }) {
+      const { completeWithMemoryProvider } = await import('./memory-llm.js');
+      return completeWithMemoryProvider(dataDir, { system, user }, { ...context, maxTokens, dataClass, signal });
+    },
+  };
+}
 
 // In-memory OAuth state cache. Lives for the daemon process's lifetime.
 // Maps the OAuth `state` parameter we generated in /api/mcp/oauth/start
@@ -2301,6 +2327,12 @@ export function composeChatUserRequestForAgent(
      * Empty/omitted MUST leave the composed body byte-identical to before.
      */
     previousTurnTaskList?: readonly RecalledTodo[];
+    /**
+     * The `<memory>` block recalled for this turn (`StudioMemoryBridge.recallForRun`). It is per-turn
+     * reference data, so it rides the user body for the same reasons as the todo recall: a resumed session
+     * still receives it, and the cached system prompt does not move. Empty/omitted leaves the body unchanged.
+     */
+    memoryRecall?: string | null;
   } = {},
 ) {
   // When the adapter resumes its own session, the
@@ -2331,8 +2363,10 @@ export function composeChatUserRequestForAgent(
   const continuationContext = renderResumeContinuationContext(
     options.resumeContinuationOriginalRequest,
   );
+  const memoryRecall = typeof options.memoryRecall === 'string' ? options.memoryRecall.trim() : '';
   const parts: string[] = [];
   if (continuationContext) parts.push(continuationContext);
+  if (memoryRecall) parts.push(memoryRecall);
   if (recall) parts.push(recall);
   if (!transition) {
     parts.push(body);
@@ -3324,6 +3358,7 @@ export async function startServer({
     if (!await tokenToSea.identity.session(tokenToSeaCookie(req)).catch(() => null)) { res.status(401).json({ error: '请先使用 TokenToSea 登录' }); return; }
     tokenToSeaMediaBody(req, res, next);
   });
+  app.use('/api/pa/soul', express.json({ limit: '24mb', verify: captureJsonBodySize }));
   app.use(express.json({ limit: '4mb', verify: captureJsonBodySize }));
   app.use('/api', tokenToSea.middleware);
   app.post('/api/tokentosea/agent/v1/chat/completions', (req, res) => tokenToSea.inference(req, res));
@@ -3837,11 +3872,9 @@ export async function startServer({
   // block the daemon from serving.
   try {
     const memoryCleanup = await runAutoExtractionCleanup(RUNTIME_DATA_DIR);
-    if (memoryCleanup.ran && (memoryCleanup.deletedIds.length > 0 || memoryCleanup.profilePruned)) {
-      console.log(
-        `[memory] auto-extraction cleanup removed ${memoryCleanup.deletedIds.length} entr(y/ies)`
-        + `${memoryCleanup.profilePruned ? ' and pruned user_profile to canonical fields' : ''}`,
-      );
+    // The pass no longer moves or rewrites any entry; the one thing it may still do is switch learning off once.
+    if (memoryCleanup.ran && memoryCleanup.extractionSwitchedOff) {
+      console.log('[memory] learning from conversations was switched off once for this data directory');
     }
   } catch (err) {
     console.warn('[memory] auto-extraction cleanup failed:', err);
@@ -9047,7 +9080,22 @@ export async function startServer({
   };
   const orbitDeps = { orbitService };
   const nativeDialogDeps = { openBrowser, openNativeFolderDialog };
-  const researchDeps = { searchResearch, ResearchError };
+  const searchService = new SearchService(RUNTIME_DATA_DIR, tokenToSea, provider => resolveProviderConfig(PROJECT_ROOT, provider));
+  const researchDeps = {
+    ResearchError,
+    searchResearch: async (input: Parameters<typeof searchResearch>[0]) => {
+      try {
+        return await searchService.search({
+          query: input.query,
+          ...(input.maxSources ? { maxResults: Math.min(20, Math.max(1, Math.floor(input.maxSources))) } : {}),
+          ...(input.providers?.[0] ? { provider: input.providers[0] as SearchProviderId } : {}),
+        }, { ...input.requestInit, ...(input.signal ? { signal: input.signal } : {}) });
+      } catch (error) {
+        if (error instanceof WebSearchError) throw new ResearchError(error.message, error.status, error.code);
+        throw error;
+      }
+    },
+  };
   const liveArtifactDeps = {
     createLiveArtifact,
     listLiveArtifacts,
@@ -9162,11 +9210,14 @@ export async function startServer({
   });
   registerDesignCanvasRoutes(app, RUNTIME_DATA_DIR);
   registerProjectOrganizationRoutes(app, { db });
+  const localAgentUsage = new LocalAgentUsage(tokenToSea.usage, RUNTIME_DATA_DIR);
   registerUsageRoutes(app, {
     runtime: tokenToSea, requireLocalDaemonRequest: httpDeps.requireLocalDaemonRequest,
     authorizeProject: (req,res,id)=>authorizeProjectRequest(req,res,id,{mode:'read',capability:'readFiles'}),
     canReadProject: (req,id)=>revokedTeamProjectMirrors.has(id)?Promise.resolve(false):enforceLocalProjectDataPlaneRequest({req,projectId:id,options:{mode:'read'},db,getWorkspaceProject,getWorkspaceProjectByProjectId}),
     syncLocal: (since,projectId)=>syncLocalUsageMessages(db,tokenToSea.usage,since,projectId),
+    syncDevice: (since, provider) => localAgentUsage.sync(since, provider),
+    fantaySessions: () => fantayUsageSessions(db),
     projectName: id=>getProject(db,id)?.name || undefined,
   });
   const materialsService = createMaterialLibrariesService({
@@ -9886,6 +9937,8 @@ export async function startServer({
   const fantayBoardService = registerBoardRoutes(app, { db, http: httpDeps, paths: pathDeps, projectStore: projectStoreDeps, projectFiles: projectFileDeps, authorizeProjectRequest, emitProjectEvent });
   registerMediaOpRoutes(app, { db, http: httpDeps, paths: pathDeps, projectStore: projectStoreDeps, projectFiles: projectFileDeps, authorizeProjectRequest, publicFileMutations });
   registerDesignDocumentRoutes(app, { db, http: httpDeps, paths: pathDeps, projectStore: projectStoreDeps, projectFiles: projectFileDeps, authorizeProjectRequest, publicFileMutations, legacyStore: new CanvasStore(RUNTIME_DATA_DIR), boardService: fantayBoardService });
+  registerSearchServiceRoutes(app, { searchService, requireLocalDaemonRequest });
+  registerVoiceInputRoutes(app, { voiceInput: new VoiceInputService(RUNTIME_DATA_DIR, tokenToSea), requireLocalDaemonRequest });
   registerMediaRoutes(app, {
     db,
     design,
@@ -10430,6 +10483,7 @@ export async function startServer({
     platformHintSignal,
     devicePlatformSignal = null,
     frozenSkillPackage,
+    memoryRecall = '',
   }) => {
     const project =
       typeof projectId === 'string' && projectId
@@ -10778,7 +10832,9 @@ export async function startServer({
     // empty; the composer drops the block on a falsy value.
     let memoryBody = '';
     try {
-      memoryBody = await composeMemoryBody(RUNTIME_DATA_DIR);
+      memoryBody = await composeMemoryBody(RUNTIME_DATA_DIR, {
+        projectId: project?.id ?? null,
+      });
     } catch (err) {
       console.warn('[memory] composeMemoryBody failed', err);
     }
@@ -11265,6 +11321,10 @@ export async function startServer({
           hasExistingDeckArtifact,
         })
       : undefined;
+    // An OD Next request freezes its whole prompt when the task is created, so the memory recalled for the
+    // request rides in the stable context, in a slot of its own that is quoted as a fact. Other runs carry
+    // the recall in the turn's user body instead (`composeChatUserRequestForAgent`).
+    const odNextRecalledMemory = typeof memoryRecall === 'string' ? memoryRecall.trim() : '';
     const odNextStableRequestContext = odNextStrategyRecipe
       ? {
           agentId,
@@ -11297,6 +11357,7 @@ export async function startServer({
           craftBody,
           craftSections,
           memoryBody,
+          recalledMemory: odNextRecalledMemory,
           locale: typeof locale === 'string' ? locale : undefined,
           sessionMode: normalizeConversationSessionMode(sessionMode),
           userInstructions,
@@ -11326,6 +11387,7 @@ export async function startServer({
           craftBody,
           craftSections,
           memoryBody,
+          recalledMemory: odNextRecalledMemory,
         },
         user_and_project_instructions: { userInstructions, projectInstructions },
       });
@@ -11409,6 +11471,8 @@ export async function startServer({
     getAgentDef,
     createAgentRuntimeToolPrompt,
     composeDaemonSystemPrompt,
+    // Read at call time: the bridge is created later in startup, and stays null in enterprise tenant mode.
+    recallMemory: (input) => studioMemoryBridge?.recallForRun(input) ?? Promise.resolve(''),
   });
   // Plan §3.I1 / §3.D / spec §10.1: fire the pipeline schedule on a
   // run's SSE stream. Synchronous first emit (the first
@@ -11718,19 +11782,7 @@ export async function startServer({
     // user's own endpoint. The run home (models.json, mcp.json, extension) is
     // written right before argv is built, once MCP servers are known.
     const bundledPiProvider = def.id === 'tokentosea'
-      ? buildTokenToSeaPiProvider({
-          daemonOrigin: `http://127.0.0.1:${resolvedPort}`,
-          token: tokenToSeaLease.token,
-          protocol: tokenToSeaNativeProtocol(tokenToSeaLease.model),
-          modelId: tokenToSeaLease.model.id,
-          modelName: tokenToSeaLease.model.name ?? tokenToSeaLease.model.model,
-          reasoningEffort: tokenToSeaLease.reasoningEffort,
-          maxOutputTokens: tokenToSeaAgentOutputLimit(tokenToSeaLease.model, tokenToSeaLease.reasoningEffort),
-          interleavedReasoning: tokenToSeaInterleavedReasoning(tokenToSeaLease.model),
-          ...(typeof tokenToSeaLease.model.contextWindow === 'number' && tokenToSeaLease.model.contextWindow > 0
-            ? { contextWindow: tokenToSeaLease.model.contextWindow }
-            : {}),
-        })
+      ? tokenToSeaLeaseProvider(tokenToSeaLease, `http://127.0.0.1:${resolvedPort}`)
       : def.id === BYOK_AGENT_ID
       ? buildByokPiProvider(
           byokProvider,
@@ -11815,6 +11867,23 @@ export async function startServer({
         console.warn('[memory] extractFromMessage failed', err);
       }
     }
+
+    // Memory recalled for this turn's user body, keyed on the latest user turn (headless callers put it in
+    // `message`; a post-tool resume carries host text, not a question). Started here so it overlaps the
+    // setup below; it settles to '' by itself when memory is off, finds nothing or is slow. An OD Next strategy
+    // run sends its frozen task text, which already carries the recall made when the task was created
+    // (`createOdNextInitialPromptBundleService`).
+    const userTurnText = typeof currentPrompt === 'string' && currentPrompt.trim() ? currentPrompt : message;
+    const latestUserTurn =
+      typeof userTurnText === 'string' && userTurnText !== POST_TOOL_RESUME_CONTINUATION_PROMPT ? userTurnText : '';
+    const memoryRecallPending =
+      studioMemoryBridge && !strategyTaskAtStart
+        ? studioMemoryBridge.recallForRun({
+            projectId: run.projectId,
+            conversationId: run.conversationId,
+            query: latestUserTurn,
+          })
+        : Promise.resolve('');
 
     // Resolve the project working directory (creating the folder if it
     // doesn't exist yet). Without one we don't pass cwd to spawn — the
@@ -12325,6 +12394,7 @@ export async function startServer({
             `SELECT content
                FROM messages
               WHERE conversation_id = ?
+                AND branch_visible = 1
                 AND role = 'user'
                 AND LENGTH(TRIM(content)) > 0
               ORDER BY COALESCE(ended_at, started_at, created_at, 0) DESC,
@@ -12832,6 +12902,7 @@ export async function startServer({
             resumeContinuationSeed.anchorAssistantMessageId,
           )
         : null;
+    const memoryRecall = await memoryRecallPending;
     const userRequestPrompt = isOdNextInitialRun
       ? resolveOdNextRequestUserPrompt({
           message,
@@ -12849,6 +12920,7 @@ export async function startServer({
             skipTranscript: agentResumePromptPolicy.skipTranscript,
             previousTurnTaskList,
             resumeContinuationOriginalRequest,
+            memoryRecall,
           },
         );
     // The stable instruction slice (daemon prompt + tool contract + system
@@ -15204,6 +15276,10 @@ export async function startServer({
         // conversation is still examined.
         conversationId: run.conversationId ?? null,
       };
+      // A project conversation learns through the memory engine instead of the general extractor pass: one
+      // switch (Settings → 记忆 → 从对话中学习, checked inside the bridge), one model call, made with this
+      // run's provider choice. Without the bridge (enterprise tenant) or a conversation, the extractor runs.
+      const studioLearning = studioMemoryBridge && run.projectId && run.conversationId ? studioMemoryBridge : null;
       void import('./memory-llm.js')
         .then(({ extractWithLLM, distillAnnotationsToMemory }) => {
           // Read the reply HERE, in the post-import microtask, not in the
@@ -15212,14 +15288,28 @@ export async function startServer({
           // final buffered frame first and a reply that ends without a trailing
           // newline isn't truncated.
           const captured = memoryReplyText;
-          const generalPass = extractWithLLM(
-            RUNTIME_DATA_DIR,
-            {
-              userMessage: userMsg,
-              assistantMessage: captured,
-            },
-            memoryOptions,
-          );
+          const generalPass = studioLearning
+            ? studioLearning.afterRun({
+                projectId: run.projectId,
+                conversationId: run.conversationId,
+                userText: latestUserTurn,
+                assistantText: captured,
+                assistantMessageId: run.assistantMessageId,
+                llm: memoryEngineLlm(RUNTIME_DATA_DIR, {
+                  projectRoot: PROJECT_ROOT,
+                  chatAgentId: memoryOptions.chatAgentId,
+                  chatModel: memoryOptions.chatModel,
+                  chatProvider: memoryChatProvider,
+                }),
+              })
+            : extractWithLLM(
+                RUNTIME_DATA_DIR,
+                {
+                  userMessage: userMsg,
+                  assistantMessage: captured,
+                },
+                memoryOptions,
+              );
           // Auto-distill any inline preview feedback (comments / highlights /
           // drawn marks) from this turn into durable feedback + rule memory.
           // This closes the "interaction → memory" loop automatically: the
@@ -18399,11 +18489,34 @@ export async function startServer({
     db: paKernel.storage.db, dataDir: paKernel.storage.dataDir, projectsDir: paKernel.storage.projectsDir,
     runtime: paKernel.credentials.runtime, kernel: paKernel, acceptsNewWork,
   });
+  // The engine judges, merges and learns with the Settings → 记忆 model. Project conversations reach it only
+  // when it lives in the daemon database; a tenant database (enterprise mode) holds no project conversations.
+  const memoryLlm = memoryEngineLlm(RUNTIME_DATA_DIR, { projectRoot: PROJECT_ROOT });
+  if (paKernel.storage.db === db) {
+    // Personal mode only. A tenant's memory text must stay with the organization's managed models, so there the
+    // engine gets no model of its own: merge drafts join the two texts and the built-in rules find conflicts.
+    personalAgent.memory.setLlm(memoryLlm);
+    const { createStudioMemoryBridge } = await import('./services/memory/studio-bridge.js');
+    studioMemoryBridge = createStudioMemoryBridge({
+      engine: personalAgent.memory, db, dataDir: RUNTIME_DATA_DIR, llm: memoryLlm,
+    });
+    // Conversations from before the engine existed become searchable shortly after startup, in the background.
+    const backfillBridge = studioMemoryBridge;
+    setTimeout(() => void backfillBridge.backfillAll(), STUDIO_MEMORY_BACKFILL_DELAY_MS).unref();
+  }
   const { PersonalAgentChannels } = await import('./services/personal-agent-channels.js');
   const { registerPersonalAgentChannelRoutes } = await import('./routes/personal-agent-channels.js');
   const personalAgentChannels = new PersonalAgentChannels({ core: personalAgent, dataDir: paKernel.storage.dataDir, acceptsNewWork });
+  const { createPaSpeech } = await import('./services/personal-agent-soul-speech.js');
+  personalAgent.soul.attachSpeech(createPaSpeech({ projectRoot: PROJECT_ROOT, dataDir: paKernel.storage.dataDir }));
   registerPersonalAgentRoutes(app, { personalAgent, personalAgentChannels });
   registerPersonalAgentChannelRoutes(app, personalAgentChannels);
+  const { registerMemoryCenterRoutes } = await import('./routes/memory-center.js');
+  registerMemoryCenterRoutes(app, {
+    personalAgent,
+    db: paKernel.storage.db,
+    runtimeDataDir: paKernel.storage.dataDir,
+  });
   if (paKernel.mode === 'personal') personalAgentChannels.start();
 
   registerRoutineRoutes(app, {
@@ -18419,6 +18532,9 @@ export async function startServer({
   // Restore the plugin-runs-must-go-through-daemon gate by adding it
   // to chat-routes.ts if needed.
 
+  registerSideDialogue(app, {
+    db, dataDir: RUNTIME_DATA_DIR, daemonOrigin: () => `http://127.0.0.1:${resolvedPort}`, authorizeProjectRequest, requireLocalDaemonRequest,
+  });
   registerChatRoutes(app, {
     db,
     design,

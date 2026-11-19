@@ -1,0 +1,263 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The outline: a reading column on paper. Each slide is a number in a narrow gutter and its words
+   beside it; slides are set apart by space, not rules. Body text is one step quieter than titles,
+   and a list level is an indent with a small mark, the way an outliner shows it. */
+
+.outline {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  outline: none;
+  background: var(--paper);
+  overscroll-behavior: contain;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.outline:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--focus-ring-color);
+}
+
+.column {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 20px 28px 56px;
+}
+
+/* A line about the outline as a whole (text only; cut short). */
+.lead {
+  margin: 0 0 20px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.list + .lead {
+  margin: 24px 0 0 40px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entry {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: baseline;
+}
+
+/* The slide's number: tabular, right-aligned, on the title's baseline. */
+.number {
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  line-height: 22px;
+  text-align: right;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+}
+
+.title[data-untitled] {
+  color: var(--ink-faint);
+  font-weight: 500;
+}
+
+/* A small word on tone: "Hidden", "Chart". */
+.tag {
+  flex: none;
+  padding: 0 6px;
+  border-radius: var(--radius-tag);
+  background: var(--sub);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+/* ── body text ───────────────────────────────────────────────────────────────────────────────── */
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.paragraph {
+  position: relative;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.paragraph[data-level] {
+  padding-left: 14px;
+}
+
+.paragraph[data-level='2'] {
+  margin-left: 14px;
+}
+
+.paragraph[data-level='3'] {
+  margin-left: 28px;
+}
+
+.paragraph[data-level='4'] {
+  margin-left: 42px;
+}
+
+/* The mark of a nested item, centred on the first line. */
+.paragraph[data-level]::before {
+  position: absolute;
+  top: calc(0.825em - 1.5px);
+  left: 3px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--ink-ghost);
+  content: '';
+}
+
+.none {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.65;
+}
+
+/* ── table ───────────────────────────────────────────────────────────────────────────────────── */
+
+.tableWrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  border-collapse: collapse;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.table td {
+  padding: 5px 16px 5px 0;
+  border-bottom: 1px solid var(--line-soft);
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.table td:last-child {
+  padding-right: 0;
+  white-space: normal;
+}
+
+.table tr:first-child td {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.table tr:last-child td {
+  border-bottom: 0;
+}
+
+/* ── chart ───────────────────────────────────────────────────────────────────────────────────── */
+
+.chart {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.65;
+}
+
+.chartAxis {
+  color: var(--ink-faint);
+}
+
+/* ── speaker notes ───────────────────────────────────────────────────────────────────────────── */
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 2px;
+  padding: 8px 12px 9px;
+  border-radius: var(--radius-control);
+  background: var(--sub);
+}
+
+.notesLabel {
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.notesText {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@container artifact (max-width: 460px) {
+  .column {
+    padding: 14px 16px 40px;
+  }
+
+  .entry {
+    grid-template-columns: 20px minmax(0, 1fr);
+    column-gap: 10px;
+  }
+
+  .list + .lead {
+    margin-left: 30px;
+  }
+}

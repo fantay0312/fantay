@@ -16,6 +16,16 @@ it('stores exact microdollars and distinguishes zero from unknown',()=>{
   ledger.begin('a','unknown','m','chat');ledger.finish('a','unknown');
   expect(ledger.summary('a').totals).toMatchObject({requests:2,unknown:1,inputTokens:2,outputTokens:3,chargedUsd:'0.000000'});
 });
+it('keeps native estimates separate from reported and charged money in every scope',()=>{
+  const ledger=store();
+  ledger.recordLocal({key:'app',provider:'claude',model:'m',context:{},usage:{input_tokens:5},reportedUsd:'0.100000',at:Date.now()});
+  ledger.recordLocal({key:'native',provider:'codex',model:'m',context:{},origin:'external',sessionId:'s',usage:{input_tokens:10},estimatedUsd:'0.200000',at:Date.now()});
+  expect(ledger.summary(null).totals).toMatchObject({requests:1,estimatedUsd:'0.000000'});
+  const device=ledger.summary(null,30,undefined,undefined,'UTC',{scope:'device'});
+  expect(device.totals).toMatchObject({requests:2,reportedUsd:'0.100000',chargedUsd:'0.000000',estimatedUsd:'0.200000',estimatedRequests:1,unknown:1});
+  expect(device.series[0]?.costUsd).toBe('0.100000');
+  expect(ledger.summary(null,30,undefined,undefined,'UTC',{scope:'device',fantaySessions:new Set(['codex:s'])}).totals.requests).toBe(1);
+});
 it('upserts repeated final receipts and polling without multiplying usage or fees',()=>{
   const ledger=store();ledger.begin('a','key','model','chat',{projectId:'project-a'});
   const receipt={tokentosea:{runId:'run',chargedUsd:'0.123456'},usage:{prompt_tokens:100,completion_tokens:20}};
@@ -50,9 +60,10 @@ it('imports only persisted usage events and deduplicates request ids across mess
 it('rotates failed reconciliation attempts so later receipts are not starved',()=>{
   const ledger=store();
   for(let i=0;i<21;i++){ledger.begin('a',`key-${i}`,'m','chat');ledger.observe('a',`key-${i}`,{},`run-${i}`);}
-  const first=ledger.pending('a').slice(0,20);
+  const queued=ledger.pending('a');
+  const first=queued.slice(0,20);
   for(const row of first)ledger.markReconciled('a',row.requestKey);
-  expect(ledger.pending('a')[0]?.requestKey).toBe('key-20');
+  expect(ledger.pending('a')[0]?.requestKey).toBe(queued[20]?.requestKey);
 });
 it('buckets a custom local range by hour or day, filters by provider and reports activity',()=>{
   const ledger=store(),now=Date.parse('2026-11-02T12:00:00Z');

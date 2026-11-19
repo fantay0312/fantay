@@ -1,0 +1,446 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Memory Center dialogs: the frame (fixed header and footer around one scrolling body) and the pieces
+   every dialog shares — section headings, hairline group blocks, fact rows, the memory text, diff marks,
+   quiet tags, loading and error states. The Modal primitive brings the surface, corner, shadow and the
+   fx-modal-in/out motion. Ink only; warm (--warning) only for "needs you"; failed is --accent-ink. */
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  max-height: min(720px, calc(100dvh - 48px));
+}
+
+.form {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.header {
+  flex: none;
+  padding: 18px 22px 14px;
+}
+
+.lede {
+  margin-top: 4px;
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+.body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 0;
+  padding: 2px 22px 22px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  text-wrap: pretty;
+}
+
+.footer {
+  flex: none;
+  align-items: center;
+  margin: 0;
+  padding: 12px 22px 16px;
+  border-top: 1px solid var(--line-soft);
+}
+
+/* A hairline under the header once the body scrolls, driven by the scroll position (no JS). */
+@supports (animation-timeline: scroll()) {
+  .modal {
+    timeline-scope: --memory-dialog-body;
+  }
+
+  .body {
+    scroll-timeline: --memory-dialog-body block;
+  }
+
+  .header {
+    position: relative;
+    z-index: 1;
+    animation: memory-dialog-edge linear both;
+    animation-timeline: --memory-dialog-body;
+    animation-range: 0 12px;
+  }
+}
+
+@keyframes memory-dialog-edge {
+  from {
+    box-shadow: 0 1px 0 transparent;
+  }
+  to {
+    box-shadow: 0 1px 0 var(--line-soft);
+  }
+}
+
+/* ── content arrives: one short rise, the repo's ease-out ─────────────────────────────── */
+
+.reveal {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  animation: memory-dialog-reveal var(--motion-enter) var(--ease-out-quint) both;
+}
+
+@keyframes memory-dialog-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    animation-name: memory-dialog-fade;
+    animation-duration: var(--motion-micro);
+  }
+}
+
+@keyframes memory-dialog-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── sections ─────────────────────────────────────────────────────────────────────────── */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  color: var(--ink);
+}
+
+.sectionCount {
+  font-size: var(--type-label);
+  line-height: 18px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.sectionAside {
+  margin-inline-start: auto;
+  font-size: var(--type-label);
+  line-height: 18px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.sectionNote {
+  margin: -2px 0 0;
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* ── hairline group blocks ────────────────────────────────────────────────────────────── */
+
+.group {
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+
+.group > * + * {
+  border-top: 1px solid var(--line-soft);
+}
+
+.groupPad {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px 16px;
+}
+
+/* label left, value right; values wrap and never ellipsize */
+.fact {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  min-height: 40px;
+  padding: 10px 16px;
+}
+
+.factLabel {
+  flex: none;
+  min-width: 72px;
+  font-size: var(--type-body);
+  line-height: 20px;
+  color: var(--ink-soft);
+}
+
+.factValue {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--type-body);
+  line-height: 20px;
+  color: var(--ink);
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* ── text roles ───────────────────────────────────────────────────────────────────────── */
+
+.text {
+  margin: 0;
+  font-size: var(--type-copy);
+  line-height: 1.65;
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.quiet {
+  margin: 0;
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+.caption {
+  font-size: var(--type-label);
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  min-width: 0;
+  font-size: var(--type-label);
+  line-height: 18px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.meta > * + *::before {
+  content: '·';
+  margin-inline-end: 6px;
+  color: var(--ink-ghost);
+}
+
+.clamp2,
+.clamp3,
+.clamp4 {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+}
+
+.clamp2 {
+  -webkit-line-clamp: 2;
+}
+
+.clamp3 {
+  -webkit-line-clamp: 3;
+}
+
+.clamp4 {
+  -webkit-line-clamp: 4;
+}
+
+/* ── tags ─────────────────────────────────────────────────────────────────────────────── */
+
+/* The same tag as the page's list rows (MemoryCenterView.module.css .warmTag): 18px, so it sits inside an
+   18px meta line without making the row taller. */
+.tag {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-tag);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/* "needs you" only */
+.tagWarm {
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+  color: var(--warning-ink);
+}
+
+.meta > .tag::before {
+  content: none;
+}
+
+/* ── diff marks: the same wash on both sides, so neither text reads as the wrong one ──── */
+
+.mark {
+  padding: 1px 1px;
+  border-radius: 3px;
+  background: var(--info-soft);
+  color: inherit;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.ins {
+  padding: 1px 1px;
+  border-radius: 3px;
+  background: var(--info-soft);
+  color: inherit;
+  text-decoration: none;
+}
+
+.del {
+  color: var(--ink-faint);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--ink-faint) 70%, transparent);
+}
+
+.legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--type-label);
+  line-height: 18px;
+  color: var(--ink-faint);
+}
+
+.legendSwatch {
+  width: 14px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--info-soft);
+}
+
+/* ── states ───────────────────────────────────────────────────────────────────────────── */
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.loadingLine {
+  height: 12px;
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.noticeText {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: var(--type-body);
+  line-height: 1.5;
+}
+
+.noticeDetail {
+  font-size: var(--type-label);
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+/* A one-line status at the top of a body (archived, superseded, has a disagreement). */
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 8px 8px 8px 14px;
+  border-radius: var(--radius-control);
+  background: var(--sub);
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.bannerWarm {
+  background: color-mix(in srgb, var(--warning) 12%, var(--surface));
+  color: var(--warning-ink);
+}
+
+.bannerText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* ── form bits ────────────────────────────────────────────────────────────────────────── */
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 560px) {
+  .fieldGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.optionSub {
+  color: var(--ink-faint);
+}
+
+/* A value that cannot change here (an edited memory's place), as a quiet field of control height. */
+.fixedField {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 32px;
+  margin: 0;
+  padding: 6px 11px;
+  border-radius: var(--radius-control);
+  background: var(--sub);
+  font-size: var(--type-body);
+  line-height: 1.4;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.counter {
+  float: inline-end;
+  font-variant-numeric: tabular-nums;
+}

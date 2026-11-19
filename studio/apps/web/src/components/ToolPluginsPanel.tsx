@@ -1,8 +1,9 @@
 import { useId, useState } from 'react';
-import { Plus, Puzzle, Search, Wrench, type LucideIcon } from 'lucide-react';
+import { ListTree, Plus, Puzzle, Search, Wrench, type LucideIcon } from 'lucide-react';
 import type { OpenDesignHostToolPlugin, OpenDesignHostToolPluginChangeResult } from '@open-design/host';
 
 import { resolvePluginText } from '../fantay/plugins/plugin-text';
+import { TIMELINE_DESCRIPTION, TIMELINE_NAME } from '../fantay/plugins/builtin/project-timeline/copy';
 import { useToolPlugins } from '../fantay/plugins/react';
 import { toolPluginRuntime, type ToolPluginClientState } from '../fantay/plugins/runtime';
 import { Button } from '../fantay/ui/button';
@@ -14,6 +15,7 @@ import { usePageNavigationReady } from '../observability/navigation-timing';
 import styles from './ToolPluginsPanel.module.css';
 
 type MessageKey = keyof Dict & `toolPlugins.${string}`;
+type PluginCopy = MessageKey | Record<string, string>;
 
 /** A sentence for the user, and the host's untranslated diagnostic when there is one. */
 interface Issue {
@@ -22,10 +24,15 @@ interface Issue {
 }
 
 /** Name, description and icon of the plugins that ship with Fantay; installed plugins bring their own. */
-const BUILTIN: Record<string, { name: MessageKey; description: MessageKey; icon: LucideIcon }> = {
+const BUILTIN: Record<string, { name: PluginCopy; description: PluginCopy; icon: LucideIcon }> = {
   'quick-search': { name: 'toolPlugins.searchName', description: 'toolPlugins.searchDescription', icon: Search },
   toolbox: { name: 'toolPlugins.toolboxName', description: 'toolPlugins.toolboxDescription', icon: Wrench },
+  'project-timeline': { name: TIMELINE_NAME, description: TIMELINE_DESCRIPTION, icon: ListTree },
 };
+
+function translateBuiltin(copy: PluginCopy, t: (key: MessageKey) => string, locale: string): string {
+  return typeof copy === 'string' ? t(copy) : resolvePluginText(copy, locale) ?? '';
+}
 
 function changeIssue(plugin: OpenDesignHostToolPlugin | undefined, result: OpenDesignHostToolPluginChangeResult): Issue | null {
   if (result.ok || result.reason === 'cancelled') return null;
@@ -60,7 +67,7 @@ function standingIssue(plugin: OpenDesignHostToolPlugin, client: ToolPluginClien
 /** The name a plugin goes by in the list: Fantay's own copy for built-ins, the package's for the rest. */
 function pluginName(plugin: OpenDesignHostToolPlugin, t: (key: MessageKey) => string, locale: string): string {
   const builtin = plugin.source === 'installed' ? undefined : BUILTIN[plugin.id];
-  return builtin ? t(builtin.name) : resolvePluginText(plugin.title, locale) ?? plugin.id;
+  return builtin ? translateBuiltin(builtin.name, t, locale) : resolvePluginText(plugin.title, locale) ?? plugin.id;
 }
 
 function ToolPluginRow({ plugin, client, pending, error, onChange, onDelete }: {
@@ -77,7 +84,7 @@ function ToolPluginRow({ plugin, client, pending, error, onChange, onDelete }: {
   const builtin = plugin.source === 'installed' ? undefined : BUILTIN[plugin.id];
   const Icon = builtin?.icon ?? Puzzle;
   const name = pluginName(plugin, t, locale);
-  const description = builtin ? t(builtin.description) : resolvePluginText(plugin.description, locale);
+  const description = builtin ? translateBuiltin(builtin.description, t, locale) : resolvePluginText(plugin.description, locale);
   const issue = error ?? standingIssue(plugin, client);
   const describedBy = [description && `${id}-description`, issue && `${id}-issue`].filter(Boolean).join(' ') || undefined;
   return (

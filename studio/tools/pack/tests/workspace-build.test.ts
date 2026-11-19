@@ -19,6 +19,7 @@ import {
 } from "@/workspace-build.js";
 
 const PACKAGE_DIRS = [
+  "native-tool/web_search",
   "packages/tokentosea",
   "packages/release",
   "packages/components",
@@ -43,6 +44,8 @@ const PACKAGE_DIRS = [
 ] as const;
 
 const OUTPUT_FILES = [
+  "native-tool/web_search/dist/index.js",
+  `native-tool/web_search/runtime/${process.platform}-${process.arch}/smart-search${process.platform === 'win32' ? '.exe' : ''}`,
   "packages/release/dist/index.mjs",
   "packages/release/dist/index.d.ts",
   "packages/components/dist/index.mjs",
@@ -417,7 +420,7 @@ describe("runWorkspaceBuild", () => {
   it("keeps the cache/artifact contract aligned with the packaged dependency closure", async () => {
     const workspaceRoot = fileURLToPath(new URL("../../../", import.meta.url));
     const packages = new Map<string, { dependencies: Record<string, string> }>();
-    for (const scope of ["packages", "apps"]) {
+    for (const scope of ["packages", "apps", "native-tool"]) {
       for (const entry of await readdir(join(workspaceRoot, scope), { withFileTypes: true })) {
         if (!entry.isDirectory()) continue;
         const manifest = JSON.parse(

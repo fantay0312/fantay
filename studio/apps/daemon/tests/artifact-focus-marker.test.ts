@@ -20,7 +20,7 @@ import {
   createArtifactFocusMarkerStripper,
   resolveArtifactFocusProjectPath,
 } from '../src/artifact-focus-marker.js';
-import type { ArtifactFocusSelection } from '@open-design/contracts';
+import { foldArtifactFocusSelections, type ArtifactFocusSelection } from '@open-design/contracts';
 
 /** 真实录制里的 done_key 就是 16 位十六进制,`<od-focus>` 复用同一枚 */
 const KEY = 'c07a83a9bc73cbd6';
@@ -401,6 +401,478 @@ describe('只认这一轮的 key', () => {
       { show: ['b.html'] },
       { open: 'b.html' },
     ]);
+    p.cleanup();
+  });
+});
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * 5. tool / url —— 标记点名「在哪个工具里看」
+ *
+ * 规矩只有两条:
+ *   · 标记带了能用的 open → tool 跟着这枚 open 一起过文件系统门,一起发;
+ *   · 标记没有能用的 open → tool 没有字节可等,key 对上就立刻发。
+ * ──────────────────────────────────────────────────────────────────────── */
+
+describe('tool:没有 open 时立刻发', () => {
+  it('只有 tool 的标记,key 对上就发 —— 不碰文件系统,也不等 settle', () => {
+    const p = makeProject();
+    for (const tool of ['code', 'files', 'board', 'design-system', 'preview'] as const) {
+      const h = harness(p.root);
+      expect(h.strip(`看这里。<od-focus key="${KEY}" tool="${tool}"/>`)).toBe('看这里。');
+      // 同步断言:strip 返回时事件已经发出去了
+      expect(h.emitted, `${tool} 应该立刻发`).toEqual([{ tool }]);
+      expect(h.probed).toEqual([]);
+    }
+    p.cleanup();
+  });
+
+  it('browser 带着校验过的地址一起发', () => {
+    const p = makeProject();
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="browser" url="https://example.com/docs"/>`);
+    expect(h.emitted).toEqual([{ tool: 'browser', url: 'https://example.com/docs' }]);
+    expect(h.probed).toEqual([]);
+    p.cleanup();
+  });
+
+  it('地址不合格:丢掉地址,browser 这个工具照发', () => {
+    const p = makeProject();
+    for (const bad of ['javascript:alert(1)', 'file:///etc/passwd', 'https://user:pw@example.com/', 'index.html']) {
+      const h = harness(p.root);
+      h.strip(`<od-focus key="${KEY}" tool="browser" url="${bad}"/>`);
+      expect(h.emitted, `${bad} 不许出现在事件里`).toEqual([{ tool: 'browser' }]);
+    }
+    p.cleanup();
+  });
+
+  it('地址只跟 browser 走 —— 别的工具带了 url 也不下发', () => {
+    const p = makeProject();
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="files" url="https://example.com/"/>`);
+    expect(h.emitted).toEqual([{ tool: 'files' }]);
+    p.cleanup();
+  });
+
+  /*
+   * 地址的查询串里全是 `名字=值`。少了契约里「先把 url 属性切出去」那一步,
+   * `?open=readme.md` 会被读成这枚标记自己的 open —— 然后被攒着等一个永远不会
+   * 出现的文件,浏览器永远不开。这里连「文件真的存在」的情况也一并钉住。
+   */
+  it('地址查询串里的 open= 不会被当成这枚标记的 open', async () => {
+    const p = makeProject();
+    writeFileSync(path.join(p.root, 'readme.md'), '# hi');
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="browser" url="https://example.com/s?open=readme.md&show=readme.md"/>`);
+    expect(h.emitted).toEqual([
+      { tool: 'browser', url: 'https://example.com/s?open=readme.md&show=readme.md' },
+    ]);
+    await h.settle();
+    expect(h.emitted).toHaveLength(1);
+    expect(h.probed).toEqual([]);
+    p.cleanup();
+  });
+
+  it('tool 和 show 写在同一枚上:一条事件,一起立刻发', () => {
+    const p = makeProject();
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="files" show="a.png, b.png"/>`);
+    expect(h.emitted).toEqual([{ show: ['a.png', 'b.png'], tool: 'files' }]);
+    p.cleanup();
+  });
+
+  /*
+   * open 越界被拒,不等于整枚标记作废:路径丢掉,它点名的工具照发。
+   * 关键是**不 probe** —— 拒绝发生在 stat 之前,这条和第 2 组是同一道门。
+   */
+  it('open 被路径门拒掉时,tool 按「没有 open」处理,立刻发', async () => {
+    const p = makeProject();
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="code" open="../../../etc/passwd"/>`);
+    expect(h.emitted).toEqual([{ tool: 'code' }]);
+    await h.settle();
+    expect(h.emitted).toEqual([{ tool: 'code' }]);
+    expect(h.probed).toEqual([]);
+    p.cleanup();
+  });
+});
+
+describe('tool:带着 open 时跟 open 一起等', () => {
+  it('文件还没字节:tool 不许先发,连同 open 一起攒着', async () => {
+    const p = makeProject();
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="code" open="src/app.ts"/>`);
+    await h.settle();
+    // 两样都没发 —— 尤其 tool 没有抢跑成一条 `{ tool: 'code' }`
+    expect(h.emitted).toEqual([]);
+
+    mkdirSync(path.join(p.root, 'src'));
+    writeFileSync(path.join(p.root, 'src/app.ts'), 'export const x = 1;\n');
+    expect(await h.settle()).toBe(true);
+    // 放行时是**一条**事件,tool 骑在 open 上
+    expect(h.emitted).toEqual([{ open: 'src/app.ts', tool: 'code' }]);
+    p.cleanup();
+  });
+
+  it('0 字节同样不放行 —— 空文件开在代码工具里一样是空白', async () => {
+    const p = makeProject();
+    writeFileSync(path.join(p.root, 'app.ts'), '');
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="code" open="app.ts"/>`);
+    await h.settle();
+    expect(h.emitted).toEqual([]);
+    writeFileSync(path.join(p.root, 'app.ts'), 'x');
+    await h.settle();
+    expect(h.emitted).toEqual([{ open: 'app.ts', tool: 'code' }]);
+    p.cleanup();
+  });
+
+  it('文件已经有内容:标记一到,open 和 tool 一条事件发出去', async () => {
+    const p = makeProject();
+    writeFileSync(path.join(p.root, 'app.ts'), 'export {};\n');
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="code" open="app.ts"/>`);
+    await vi.waitFor(() => expect(h.emitted).toEqual([{ open: 'app.ts', tool: 'code' }]));
+    p.cleanup();
+  });
+
+  it('tool="preview" open=… 和单写 open 走同一道门,只是事件里多一个 tool', async () => {
+    const p = makeProject();
+    writeFileSync(path.join(p.root, 'index.html'), '<!doctype html>');
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="preview" open="index.html"/>`);
+    await h.settle();
+    expect(h.emitted).toEqual([{ open: 'index.html', tool: 'preview' }]);
+    p.cleanup();
+  });
+
+  it('软链出界:open 不放行,骑在它上面的 tool 也不会漏出去', async () => {
+    const p = makeProject();
+    const outside = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'od-outside-')));
+    writeFileSync(path.join(outside, 'secret.ts'), 'TOP SECRET');
+    symlinkSync(path.join(outside, 'secret.ts'), path.join(p.root, 'leak.ts'));
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="code" open="leak.ts"/>`);
+    await h.settle();
+    expect(h.probed.length).toBeGreaterThan(0);
+    expect(h.emitted).toEqual([]);
+    rmSync(outside, { recursive: true, force: true });
+    p.cleanup();
+  });
+
+  it('show 照旧立刻发,open 连同 tool 等字节 —— 两条事件,各走各的钟', async () => {
+    const p = makeProject();
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="code" open="app.ts" show="app.ts"/>`);
+    expect(h.emitted).toEqual([{ show: ['app.ts'] }]);
+    writeFileSync(path.join(p.root, 'app.ts'), 'x');
+    await h.settle();
+    expect(h.emitted).toEqual([{ show: ['app.ts'] }, { open: 'app.ts', tool: 'code' }]);
+    p.cleanup();
+  });
+});
+
+describe('tool:认不出来的值', () => {
+  /*
+   * 「未知 tool 丢掉,其余照旧」。拿同一枚标记去掉 tool 之后的结果当基准比,
+   * 而不是把期望值再抄一遍 —— 这样「照旧」是被验证的,不是被复述的。
+   */
+  it('未知 tool 被丢掉,这枚标记和没写 tool 时逐字段一样', async () => {
+    const p = makeProject();
+    writeFileSync(path.join(p.root, 'index.html'), '<!doctype html>');
+    const baseline = harness(p.root);
+    baseline.strip(`<od-focus key="${KEY}" open="index.html" show="index.html"/>`);
+    await baseline.settle();
+
+    const h = harness(p.root);
+    expect(h.strip(`好了。<od-focus key="${KEY}" tool="terminal" open="index.html" show="index.html"/>`)).toBe('好了。');
+    await h.settle();
+    expect(h.emitted).toEqual(baseline.emitted);
+    expect(h.emitted).toEqual([{ show: ['index.html'] }, { open: 'index.html' }]);
+    p.cleanup();
+  });
+
+  it('只有一个未知 tool 的标记什么都不发 —— 但照样剥干净', () => {
+    const p = makeProject();
+    const h = harness(p.root);
+    expect(h.strip(`前。<od-focus key="${KEY}" tool="terminal"/>后。`)).toBe('前。后。');
+    expect(h.emitted).toEqual([]);
+    p.cleanup();
+  });
+});
+
+describe('tool:key 与剥离的规矩不变', () => {
+  it('key 不对:tool 和地址一个都不采纳,正文照样干净', async () => {
+    const p = makeProject();
+    const h = harness(p.root);
+    expect(
+      h.strip(`<od-focus key="deadbeefdeadbeef" tool="browser" url="https://evil.example/"/>好了。`),
+    ).toBe('好了。');
+    expect(h.strip(`<od-focus tool="files"/>完。`)).toBe('完。');
+    await h.settle();
+    expect(h.emitted).toEqual([]);
+    p.cleanup();
+  });
+
+  it('这一轮没有 key 时,带 tool 的标记同样只剥不认', () => {
+    const p = makeProject();
+    const h = harness(p.root, { key: null });
+    expect(h.strip(`<od-focus key="${KEY}" tool="code"/>好了。`)).toBe('好了。');
+    expect(h.emitted).toEqual([]);
+    p.cleanup();
+  });
+
+  /*
+   * 「不采纳」不只是「不发事件」:key 不对的标记也不许改动剥离器里攒着的状态。
+   * 只有 tool 的标记会把自己的 tool 交给还在等字节的 open —— 这条路要是排在
+   * key 校验前面,一段被模型读到的文字就能改写一枚真标记最后在哪个工具里打开。
+   */
+  it('key 不对的 tool 标记不许改写还在等字节的那枚 open', async () => {
+    const p = makeProject();
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="code" open="app.ts"/>`);
+    h.strip(`<od-focus key="deadbeefdeadbeef" tool="browser" url="https://evil.example/"/>`);
+    h.strip(`<od-focus tool="files"/>`);
+    await h.settle();
+    expect(h.emitted).toEqual([]);
+
+    writeFileSync(path.join(p.root, 'app.ts'), 'x');
+    expect(await h.settle()).toBe(true);
+    expect(h.emitted).toEqual([{ open: 'app.ts', tool: 'code' }]);
+    p.cleanup();
+  });
+
+  it('key 不对的标记也不许解开「重复不再发」的门闩', async () => {
+    const p = makeProject();
+    writeFileSync(path.join(p.root, 'app.ts'), 'x');
+    const h = harness(p.root);
+    const real = `<od-focus key="${KEY}" tool="code" open="app.ts"/>`;
+    h.strip(real);
+    await vi.waitFor(() => expect(h.emitted).toHaveLength(1));
+    // 要是这枚被采纳,面板就「去过别处」了,下面那枚原样重发会再开一次
+    h.strip(`<od-focus key="deadbeefdeadbeef" tool="files"/>`);
+    h.strip(real);
+    expect(await h.settle()).toBe(false);
+    expect(h.emitted).toEqual([{ open: 'app.ts', tool: 'code' }]);
+    p.cleanup();
+  });
+
+  it('带地址的标记被切在任何位置,地址的任何一截都不许上屏', () => {
+    const p = makeProject();
+    // 地址里有 `/`、`?`、`&`、`=` —— 每一个都是流式扫描器可能误判成标签边界的字符
+    const whole = `前。<od-focus key="${KEY}" tool="browser" url="https://example.com/a?b=1&c=2"/>后。`;
+    for (let cut = 1; cut < whole.length; cut += 1) {
+      const one = harness(p.root);
+      const shown = one.strip(whole.slice(0, cut)) + one.strip(whole.slice(cut)) + one.flush();
+      expect(shown, `切在第 ${cut} 个字符时漏了`).toBe('前。后。');
+      expect(one.emitted).toEqual([{ tool: 'browser', url: 'https://example.com/a?b=1&c=2' }]);
+    }
+    p.cleanup();
+  });
+});
+
+describe('tool:一轮里发了好几枚', () => {
+  it('同一个文件换一个工具再开一次,是一次真的请求', async () => {
+    const p = makeProject();
+    writeFileSync(path.join(p.root, 'app.ts'), 'x');
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="code" open="app.ts"/>`);
+    await vi.waitFor(() => expect(h.emitted).toHaveLength(1));
+    // 路径一样、工具不同 —— 旧的「同一路径不重发」门闩不许把它吞掉
+    h.strip(`<od-focus key="${KEY}" open="app.ts"/>`);
+    await vi.waitFor(() => expect(h.emitted).toHaveLength(2));
+    expect(h.emitted).toEqual([{ open: 'app.ts', tool: 'code' }, { open: 'app.ts' }]);
+    p.cleanup();
+  });
+
+  it('一模一样的标记再发一遍是空操作 —— 面板不会原地再跳一次', async () => {
+    const p = makeProject();
+    writeFileSync(path.join(p.root, 'app.ts'), 'x');
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="code" open="app.ts"/>`);
+    await vi.waitFor(() => expect(h.emitted).toHaveLength(1));
+    h.strip(`<od-focus key="${KEY}" tool="code" open="app.ts"/>`);
+    expect(await h.settle()).toBe(false);
+    expect(h.emitted).toEqual([{ open: 'app.ts', tool: 'code' }]);
+    p.cleanup();
+  });
+
+  /*
+   * 中间插了一枚只有 tool 的标记之后,面板已经不在原来那个文件上了,所以原样
+   * 重发前一枚 open 是真的请求,不是重复。
+   */
+  it('中间换过工具之后,原样重发前一枚 open 会再发一次', async () => {
+    const p = makeProject();
+    writeFileSync(path.join(p.root, 'app.ts'), 'x');
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="code" open="app.ts"/>`);
+    await vi.waitFor(() => expect(h.emitted).toHaveLength(1));
+    h.strip(`<od-focus key="${KEY}" tool="files"/>`);
+    h.strip(`<od-focus key="${KEY}" tool="code" open="app.ts"/>`);
+    await vi.waitFor(() => expect(h.emitted).toHaveLength(3));
+    expect(h.emitted).toEqual([
+      { open: 'app.ts', tool: 'code' },
+      { tool: 'files' },
+      { open: 'app.ts', tool: 'code' },
+    ]);
+    p.cleanup();
+  });
+
+  /*
+   * 只有 tool 的标记走同一条「重复是空操作」的规矩。模型常在收尾的总结旁边把
+   * 标记再写一遍;浏览器被叫去加载它已经停着的那一页,就是在用户眼前刷新一次。
+   */
+  it('只有 tool 的标记原样再发一遍是空操作 —— 同一页不会被重新加载', () => {
+    const p = makeProject();
+    const h = harness(p.root);
+    const marker = `<od-focus key="${KEY}" tool="browser" url="https://example.com/docs"/>`;
+    h.strip(marker);
+    h.strip(marker);
+    expect(h.emitted).toEqual([{ tool: 'browser', url: 'https://example.com/docs' }]);
+
+    // 换一个地址、或者这次不带地址,说的都不是同一件事 —— 照发
+    h.strip(`<od-focus key="${KEY}" tool="browser" url="https://example.com/other"/>`);
+    h.strip(`<od-focus key="${KEY}" tool="browser"/>`);
+    expect(h.emitted).toEqual([
+      { tool: 'browser', url: 'https://example.com/docs' },
+      { tool: 'browser', url: 'https://example.com/other' },
+      { tool: 'browser' },
+    ]);
+    p.cleanup();
+  });
+
+  it('面板去过别处之后,同一枚 tool 标记是真的请求', async () => {
+    const p = makeProject();
+    writeFileSync(path.join(p.root, 'index.html'), '<!doctype html>');
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="files"/>`);
+    h.strip(`<od-focus key="${KEY}" tool="board"/>`);
+    h.strip(`<od-focus key="${KEY}" tool="files"/>`);
+    expect(h.emitted).toEqual([{ tool: 'files' }, { tool: 'board' }, { tool: 'files' }]);
+
+    // 中间隔的是一枚 open 也一样:面板已经跳去那个文件了
+    h.strip(`<od-focus key="${KEY}" open="index.html"/>`);
+    await vi.waitFor(() => expect(h.emitted).toHaveLength(4));
+    h.strip(`<od-focus key="${KEY}" tool="files"/>`);
+    expect(h.emitted.slice(3)).toEqual([{ open: 'index.html' }, { tool: 'files' }]);
+    p.cleanup();
+  });
+
+  it('重复的 tool 标记只吞掉 tool,同一枚上的 show 照发', () => {
+    const p = makeProject();
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="files"/>`);
+    h.strip(`<od-focus key="${KEY}" tool="files" show="a.png, b.png"/>`);
+    expect(h.emitted).toEqual([{ tool: 'files' }, { show: ['a.png', 'b.png'] }]);
+    p.cleanup();
+  });
+
+  /*
+   * 重复的 tool 标记不发事件,但它仍然写在那枚等字节的 open **之后** —— 所以
+   * open 落地时带的必须是它的 tool,折叠结果才和标记的书写顺序一致。
+   */
+  it('重复的 tool 标记不发事件,但照样交给还在等字节的 open', async () => {
+    const p = makeProject();
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="files"/>`);
+    h.strip(`<od-focus key="${KEY}" tool="code" open="app.ts"/>`);
+    h.strip(`<od-focus key="${KEY}" tool="files"/>`);
+    await h.settle();
+    expect(h.emitted).toEqual([{ tool: 'files' }]);
+
+    writeFileSync(path.join(p.root, 'app.ts'), 'x');
+    expect(await h.settle()).toBe(true);
+    expect(h.emitted).toEqual([{ tool: 'files' }, { open: 'app.ts', tool: 'files' }]);
+    expect(foldArtifactFocusSelections(h.emitted)).toEqual(
+      foldArtifactFocusSelections([
+        { tool: 'files' },
+        { open: 'app.ts', tool: 'code' },
+        { tool: 'files' },
+      ]),
+    );
+    p.cleanup();
+  });
+
+  /*
+   * 一种事件要等字节、另一种不等,所以它们**出门的先后**可以和标记的先后不同。
+   * 保证的是结果:发出去的事件折叠之后,等于按标记书写顺序折叠的结果。
+   *
+   * 这里前一枚 open 还在等字节,后一枚只有 tool 的标记先发了出去。open 事件会
+   * 设置折叠后的 tool —— 要是它落地时还带着自己那枚旧的 `code`,就会把模型后说
+   * 的 `browser` 顶掉。所以等着的 open 接过后一枚的 tool 再发。
+   */
+  it('等字节的 open 落地时不会把后说的 tool 顶掉 —— 折叠结果以标记顺序为准', async () => {
+    const p = makeProject();
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="code" open="app.ts"/>`);
+    h.strip(`<od-focus key="${KEY}" tool="browser" url="https://example.com/docs"/>`);
+    await h.settle();
+    // 只有 tool 的标记既不替那枚 open 放行,也不把它作废
+    expect(h.emitted).toEqual([{ tool: 'browser', url: 'https://example.com/docs' }]);
+
+    writeFileSync(path.join(p.root, 'app.ts'), 'x');
+    expect(await h.settle()).toBe(true);
+    expect(h.emitted).toEqual([
+      { tool: 'browser', url: 'https://example.com/docs' },
+      { open: 'app.ts', tool: 'browser', url: 'https://example.com/docs' },
+    ]);
+    expect(foldArtifactFocusSelections(h.emitted)).toEqual(
+      foldArtifactFocusSelections([
+        { open: 'app.ts', tool: 'code' },
+        { tool: 'browser', url: 'https://example.com/docs' },
+      ]),
+    );
+    p.cleanup();
+  });
+
+  /*
+   * 同一件事的最常见形态:文件早就有内容,两枚标记挤在同一个 delta 里(有些
+   * 运行时整条消息只发一帧)。前一枚的 stat 还没回来,后一枚已经发了。
+   */
+  it('两枚标记挤在同一帧里,结果仍然以后一枚的 tool 为准', async () => {
+    const p = makeProject();
+    writeFileSync(path.join(p.root, 'app.ts'), 'x');
+    const h = harness(p.root);
+    h.strip(
+      `<od-focus key="${KEY}" tool="code" open="app.ts"/>中间一句。<od-focus key="${KEY}" tool="files"/>`,
+    );
+    await vi.waitFor(() => expect(h.emitted).toHaveLength(2));
+    expect(foldArtifactFocusSelections(h.emitted)).toEqual({ open: 'app.ts', tool: 'files' });
+    p.cleanup();
+  });
+
+  it('反过来:先说 tool、后说 open,open 落地时清掉前面的 tool', async () => {
+    const p = makeProject();
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="browser" url="https://example.com/docs"/>`);
+    h.strip(`<od-focus key="${KEY}" open="index.html"/>`);
+    writeFileSync(path.join(p.root, 'index.html'), '<!doctype html>');
+    await h.settle();
+    expect(h.emitted).toEqual([
+      { tool: 'browser', url: 'https://example.com/docs' },
+      { open: 'index.html' },
+    ]);
+    expect(foldArtifactFocusSelections(h.emitted)).toEqual({ open: 'index.html' });
+    p.cleanup();
+  });
+
+  /*
+   * 以标记的先后为准,不以 stat 返回的先后为准:后一枚 open 顶掉前一枚还没放行
+   * 的 open,前一枚之后即使有了字节也不再发。
+   */
+  it('后一枚 open 顶掉还在等字节的前一枚,连同它的 tool', async () => {
+    const p = makeProject();
+    const h = harness(p.root);
+    h.strip(`<od-focus key="${KEY}" tool="code" open="a.ts"/>`);
+    await h.settle();
+    h.strip(`<od-focus key="${KEY}" open="index.html"/>`);
+    await h.settle();
+    expect(h.emitted).toEqual([]);
+
+    writeFileSync(path.join(p.root, 'a.ts'), 'x');
+    writeFileSync(path.join(p.root, 'index.html'), '<!doctype html>');
+    expect(await h.settle()).toBe(true);
+    expect(await h.settle()).toBe(false);
+    expect(h.emitted).toEqual([{ open: 'index.html' }]);
     p.cleanup();
   });
 });

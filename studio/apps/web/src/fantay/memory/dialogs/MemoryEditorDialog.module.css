@@ -1,0 +1,22 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* 新建 / 编辑记忆. Frame, groups and text roles come from MemoryDialogFrame.module.css. */
+
+.content {
+  min-height: 136px;
+  resize: vertical;
+}
+
+.counter {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+}
+
+.due {
+  max-width: calc(50% - 8px);
+}
+
+@media (max-width: 560px) {
+  .due {
+    max-width: none;
+  }
+}

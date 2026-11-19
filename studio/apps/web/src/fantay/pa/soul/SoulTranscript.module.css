@@ -1,0 +1,794 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The companion transcript (Soul UI spec §4.3 b/c, §4.4). Everything on the paper reads `--pa-skin-*`; the task block
+   resets the skin and reads base tokens. The bubbles, separators, story frames, typing bubble and the lines under a
+   reply are the visual foundation's (SoulPrimitives.module.css); this module lays them out: clusters (portrait column
+   36 + 8, bubble gap 3, cluster gap 14), the hover pill, the variant bar and the story-card body.
+   Motion follows the PA grammar (--pa-dur-*, --pa-ease); nothing scales below .97. */
+
+/* The scroller is the inline-size container the narrow-bubble rule of SoulPrimitives queries (< 520 → 78 %). */
+.scroller {
+  container-type: inline-size;
+}
+
+.column[data-sheet] {
+  padding-inline: 16px;
+}
+
+/* ── intro ── */
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 24px 0 8px;
+  color: var(--pa-skin-ink);
+  text-align: center;
+}
+
+.introName {
+  max-width: 100%;
+  margin-top: 10px;
+  color: var(--pa-skin-ink);
+  font-family: var(--pa-skin-display-font);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+  overflow-wrap: anywhere;
+}
+
+.introTagline {
+  max-width: 360px;
+  margin-top: 2px;
+  color: var(--pa-skin-soft);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.introCaption {
+  max-width: 440px;
+  margin-top: 6px;
+  color: var(--pa-skin-meta);
+  font-size: 12px;
+  line-height: 1.55;
+  text-wrap: balance;
+  /* Break at spaces and punctuation, never inside a name; an overlong run still wraps. */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.introHi {
+  margin-top: 6px;
+  color: var(--pa-skin-soft);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.introFaces {
+  display: flex;
+  align-items: center;
+}
+
+.introFace {
+  display: inline-flex;
+  flex: none;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--pa-skin-paper);
+}
+
+[data-pa-frame='squircle'] .introFace {
+  border-radius: 30%;
+}
+
+.introFace + .introFace {
+  margin-inline-start: -12px;
+}
+
+.introMore {
+  display: grid;
+  box-sizing: border-box;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  background: var(--pa-skin-in-bg);
+  color: var(--pa-skin-in-ink);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* ── clusters ── */
+
+.cluster {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  margin-top: 14px;
+}
+
+:global([data-slot='soul-separator']) + .cluster,
+.intro + .cluster {
+  margin-top: 0;
+}
+
+.cluster[data-side='out'] {
+  justify-content: flex-end;
+}
+
+.clusterPortrait {
+  display: inline-flex;
+  flex: none;
+}
+
+.clusterBody {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cluster[data-side='in'] .clusterBody {
+  align-items: flex-start;
+}
+
+.cluster[data-side='out'] .clusterBody {
+  align-items: flex-end;
+}
+
+.clusterName {
+  max-width: 100%;
+  margin-bottom: 1px;
+  overflow: hidden;
+  color: var(--pa-skin-meta);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── one message: its bubbles, then the lines that belong to it ── */
+
+.item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+  border-radius: 12px;
+}
+
+.item[data-side='in'],
+.item[data-side='in'] .parts {
+  align-items: flex-start;
+}
+
+.item[data-side='out'],
+.item[data-side='out'] .parts {
+  align-items: flex-end;
+}
+
+.item[data-flash] {
+  animation: soul-flash 600ms var(--pa-ease);
+}
+
+.parts {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+}
+
+.parts[data-dir='next'] {
+  animation: soul-variant-next var(--pa-dur-enter) var(--pa-ease) backwards;
+}
+
+.parts[data-dir='prev'] {
+  animation: soul-variant-prev var(--pa-dur-enter) var(--pa-ease) backwards;
+}
+
+/* One bubble (or narration line) and, beside the last one, the hover pill on the free side. */
+.partRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.partRow[data-side='out'] {
+  flex-direction: row-reverse;
+}
+
+/* The quoted message at the top of a bubble. */
+.parts .quote {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 1px 0 6px;
+  padding: 0 0 0 8px;
+  border: 0;
+  border-inline-start: 2px solid var(--pa-skin-quote);
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-family: var(--pa-skin-font);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: start;
+  opacity: 0.8;
+  transition: opacity var(--pa-dur-quick) var(--pa-ease);
+}
+
+.item[data-side='out'] .parts .quote {
+  border-inline-start-color: var(--pa-skin-out-soft);
+}
+
+.parts .quote:hover:not([data-disabled]) {
+  background: transparent;
+  color: inherit;
+  opacity: 1;
+}
+
+.quote :global([data-slot='button-label']) {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── hover pill: time · copy · ⋯ (120 ms after hover, on focus, always without hover) ── */
+
+.pill {
+  display: inline-flex;
+  box-sizing: border-box;
+  flex: none;
+  align-items: center;
+  gap: 1px;
+  height: 24px;
+  margin-bottom: 2px;
+  padding: 0 2px 0 8px;
+  border: 1px solid var(--pa-skin-line);
+  border-radius: var(--radius-control);
+  background: var(--pa-skin-paper);
+  color: var(--pa-skin-meta);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--pa-dur-quick) var(--pa-ease);
+}
+
+.item:hover .pill,
+.item:focus-within .pill,
+.storyAnchor:hover .pill,
+.storyAnchor:focus-within .pill,
+.pill:has([data-state='open']) {
+  opacity: 1;
+  pointer-events: auto;
+  transition-delay: 120ms;
+}
+
+.item:focus-within .pill,
+.storyAnchor:focus-within .pill,
+.pill:has([data-state='open']) {
+  transition-delay: 0ms;
+}
+
+/* On a story card the pill floats over the card's top corner. */
+.pill[data-side='center'] {
+  position: absolute;
+  top: 0;
+  z-index: 1;
+  inset-inline-end: 10px;
+  margin: 0;
+}
+
+.pillTime {
+  padding-inline-end: 4px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.pill .pillButton {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  color: var(--pa-skin-meta);
+}
+
+.pill .pillButton:hover:not([data-disabled]),
+.pill .pillButton[data-state='open'] {
+  background: var(--pa-soul-chrome-hover);
+  color: var(--pa-skin-ink);
+}
+
+@media (hover: none) {
+  .pill {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* ── lines under a message (hidden caption, 想记下, failed, unsent) ── */
+
+.lineWrap {
+  max-width: 100%;
+  min-width: 0;
+  padding-inline: 4px;
+  transition: opacity var(--pa-dur-exit) var(--pa-ease);
+}
+
+.lineWrap[data-state='closed'] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.lineText {
+  min-width: 0;
+}
+
+.lineActions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+}
+
+.orphanFailure {
+  margin-top: 8px;
+}
+
+.partRow .unsentButton {
+  color: var(--accent-ink);
+}
+
+/* ── variant bar: ‹ 2/3 ›, then 换个说法 · 接着说 on hover or focus of the cluster ── */
+
+.variantBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  min-height: 24px;
+  padding-inline: 2px;
+  color: var(--pa-skin-meta);
+  font-size: 12px;
+}
+
+.variantSwitch {
+  display: inline-flex;
+  align-items: center;
+}
+
+.variantCount {
+  min-width: 30px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+  text-align: center;
+}
+
+.variantBar .barIcon {
+  width: 22px;
+  height: 22px;
+  color: var(--pa-skin-meta);
+}
+
+.variantBar .barIcon:hover:not([data-disabled]) {
+  background: var(--pa-soul-chrome-hover);
+  color: var(--pa-skin-ink);
+}
+
+.variantHover {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--pa-dur-quick) var(--pa-ease);
+}
+
+.cluster:hover .variantHover,
+.cluster:focus-within .variantHover {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .variantHover {
+    opacity: 1;
+  }
+}
+
+/* Quiet text buttons on the paper (换个说法, 接着说, 停止): no ring, the paper's meta ink, the soul hover fill. */
+:is(.variantBar, .typingRow) .barButton {
+  gap: 4px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: var(--radius-control);
+  box-shadow: none;
+  background: transparent;
+  color: var(--pa-skin-meta);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+:is(.variantBar, .typingRow) .barButton:hover:not([data-disabled]) {
+  box-shadow: none;
+  background: var(--pa-soul-chrome-hover);
+  color: var(--pa-skin-ink);
+}
+
+/* ── typing, branch line ── */
+
+.typingRow {
+  margin-top: 14px;
+}
+
+.typingRow + .typingRow {
+  margin-top: 6px;
+}
+
+/* The draft of a stopped or failed reply (stage 2): its line under the dimmed bubbles holds 复制 and 收起. */
+.draftRow :global([data-slot='soul-meta-line']) {
+  flex-wrap: wrap;
+}
+
+.draftRow .draftDismiss {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  color: var(--pa-skin-meta);
+}
+
+.draftRow .draftDismiss:hover:not([data-disabled]) {
+  background: var(--pa-soul-chrome-hover);
+  color: var(--pa-skin-ink);
+}
+
+.typingMore {
+  margin-top: 2px;
+  padding-inline-start: 44px;
+}
+
+.column[data-compact] .typingMore {
+  padding-inline-start: 36px;
+}
+
+.copiedLine {
+  margin: 10px 0 2px;
+}
+
+.copiedLine :global([data-slot='soul-meta-line']) {
+  justify-content: center;
+  text-align: center;
+}
+
+/* ── work turns: boxed with a task chip inside a companion chat, plain in a work chat ── */
+
+.taskBlock {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+.taskHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.taskHead .taskDetails {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.taskHead .taskDetails:hover:not([data-disabled]) {
+  color: var(--ink);
+}
+
+.workTurn {
+  margin-top: 24px;
+}
+
+.workTurn:first-child {
+  margin-top: 0;
+}
+
+/* ── story cards ── */
+
+.storyRow {
+  position: relative;
+  min-width: 0;
+}
+
+.storyAnchor {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.storyRow[data-hidden] :global([data-testid='pa-soul-story']) {
+  border-style: dashed;
+  opacity: 0.55;
+}
+
+.storyRow[data-flash] :global([data-testid='pa-soul-story']) {
+  animation: soul-flash 600ms var(--pa-ease);
+}
+
+.storyHidden {
+  margin-top: -8px;
+}
+
+.storyHidden :global([data-slot='soul-meta-line']) {
+  justify-content: center;
+}
+
+.rollOutcome {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  color: var(--pa-skin-meta);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.drawTitle {
+  color: var(--pa-skin-ink);
+  font-family: var(--pa-skin-display-font);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.drawText {
+  margin-top: 4px;
+  color: var(--pa-skin-soft);
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.drawHint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 10px;
+  margin-top: 8px;
+  color: var(--pa-skin-meta);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.drawHint .storyLink {
+  color: var(--pa-skin-ink);
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  text-underline-offset: 3px;
+}
+
+.drawSecret {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--pa-skin-line);
+}
+
+.drawSecretCaption {
+  color: var(--pa-skin-meta);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.eventTitle {
+  color: var(--pa-skin-ink);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.eventSummary {
+  margin-top: 2px;
+  color: var(--pa-skin-soft);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.eventPhase {
+  margin-top: 6px;
+  color: var(--pa-skin-meta);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+/* ── delete confirmation ── */
+
+.confirmLine {
+  display: block;
+}
+
+.confirmLine + .confirmLine {
+  margin-top: 4px;
+}
+
+.confirmCheck {
+  display: flex;
+  margin-top: 14px;
+}
+
+/* ── motion ── */
+
+@keyframes soul-variant-next {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+}
+
+@keyframes soul-variant-prev {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+}
+
+@keyframes soul-flash {
+  from {
+    background-color: var(--pa-soul-chrome-hover);
+    box-shadow: 0 0 0 6px var(--pa-soul-chrome-hover);
+  }
+  to {
+    background-color: transparent;
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .parts[data-dir='next'],
+  .parts[data-dir='prev'],
+  .item[data-flash],
+  .storyRow[data-flash] :global([data-testid='pa-soul-story']) {
+    animation: none;
+  }
+  .pill,
+  .variantHover,
+  .lineWrap,
+  .parts .quote {
+    transition: opacity 120ms linear;
+    transition-delay: 0ms;
+  }
+}
+
+/* ── stage 2: the standing picture, the journal head line, the journal layout ── */
+
+/* The standing picture (SoulStage, the first child of the transcript wrap) shares the composer's measure: the column
+   and the composer are both 784 wide, centred, with 32 px sides (PaConversation .column, PaComposer .wrap). The
+   picture stands in the first --pa-soul-stage-w of that measure's text box and the messages start 20 px after it (the
+   picture's paper fades out over those 20 px), so incoming portraits clear it and outgoing bubbles still end on the
+   composer's right edge. The scroller keeps its full width: the picture takes no pointer events, the wheel scrolls
+   under it. The transcript only shows the picture when it is at least 880 wide, so the measure is always whole here.
+   Inside the measure the picture has paper on both sides, so it stands on the transcript's own paper (pattern
+   included) instead of drawing a plain band with a fade: the figure is in front of the page. */
+.wrap[data-stage] > .stage {
+  inset-inline-start: max(0px, calc((100% - 784px) / 2 + 32px));
+  background: transparent;
+}
+
+.wrap[data-stage] > .stage::after {
+  display: none;
+}
+
+.scroller[data-stage] > .column {
+  padding-inline-start: calc(32px + var(--pa-soul-stage-w) + 20px);
+}
+
+/* Journal head line over an incoming cluster, in the theme's display face: the speaker's name, then the time of the
+   cluster's first message. Children: `.clusterHeadName` and `.clusterHeadTime` (the · between them is drawn here). */
+.clusterHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 6px;
+  max-width: 100%;
+  min-width: 0;
+  margin-bottom: 2px;
+  color: var(--pa-skin-ink);
+  font-family: var(--pa-skin-display-font);
+  font-size: 13.5px;
+  line-height: 20px;
+}
+
+.clusterHeadName {
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.clusterHeadTime {
+  color: var(--pa-skin-meta);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.clusterHeadTime::before {
+  margin-inline-end: 6px;
+  content: '·';
+}
+
+/* Journal (手帐): wider air between entries, a 48 px portrait (polaroid-ready) 12 px from the text, one reply as one
+   ruled entry (its parts touch so the margin rule runs through; the rules themselves are SoulPrimitives'), the quote
+   bar in the accent, and the lines under an entry starting at its text, past the rule. */
+:global([data-pa-layout='journal']) .cluster {
+  gap: 12px;
+  margin-top: 20px;
+}
+
+:global([data-pa-layout='journal']) :is(:global([data-slot='soul-separator']), .intro) + .cluster {
+  margin-top: 0;
+}
+
+:global([data-pa-layout='journal']) .clusterPortrait {
+  padding-top: 2px;
+}
+
+:global([data-pa-layout='journal']) .item[data-side='in'] .parts {
+  gap: 0;
+}
+
+:global([data-pa-layout='journal']) .item[data-side='in'] .parts .quote {
+  border-inline-start-color: var(--pa-skin-accent);
+}
+
+:global([data-pa-layout='journal']) .item[data-side='in'] > .lineWrap {
+  padding-inline-start: 14px;
+}
+
+:global([data-pa-layout='journal']) .item[data-side='in'] > :not(.parts, .lineWrap) {
+  margin-inline-start: 12px;
+}
+
+:global([data-pa-layout='journal']) .typingRow {
+  margin-top: 20px;
+}
+
+:global([data-pa-layout='journal']) .typingRow + .typingRow {
+  margin-top: 6px;
+}
+
+:global([data-pa-layout='journal']) .typingMore {
+  padding-inline-start: 60px;
+}
+
+:global([data-pa-layout='journal']) .column[data-compact] .typingMore {
+  padding-inline-start: 48px;
+}
+
+/* Polaroid faces in a room's intro: the paper ring follows the card, not a circle, and every second card leans the
+   other way, so the overlapping photos fan out instead of all leaning one way. */
+[data-pa-frame='polaroid'] .introFace {
+  border-radius: 2px;
+}
+
+[data-pa-frame='polaroid'] .introFace:nth-child(even) > :global([data-slot='soul-portrait'][data-size-lg]) {
+  transform: rotate(calc(var(--pa-soul-polaroid-tilt) * -1));
+}

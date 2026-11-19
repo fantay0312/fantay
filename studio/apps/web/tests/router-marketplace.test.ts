@@ -89,6 +89,12 @@ describe('router entry sub-views', () => {
     expect(parseRoute('/tools/toolbox')).toEqual({ kind: 'home', view: 'home' });
   });
 
+  it('round-trips a timeline entry opened from a sidebar project', () => {
+    const route: Route = { kind: 'tool', pluginId: 'project-timeline', pageId: 'timeline', itemId: 'note:123' };
+    expect(buildPath(route)).toBe('/tools/project-timeline/timeline/note%3A123');
+    expect(parseRoute(buildPath(route))).toEqual(route);
+  });
+
   it('round-trips entry sub-views through buildPath', () => {
     for (const route of [
       { kind: 'home', view: 'home' } as Route,

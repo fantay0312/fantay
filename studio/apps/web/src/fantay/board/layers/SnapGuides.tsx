@@ -31,7 +31,11 @@ export const SnapGuides = memo(function SnapGuides() {
         ),
       )}
       {slice.marquee ? <div className={styles.marquee} style={screenBox(slice.marquee)} data-testid="board-marquee" /> : null}
-      {slice.draw ? (
+      {slice.draw?.points ? (
+        <svg style={{ position: 'absolute', ...screenBox(slice.draw.rect) }} viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden>
+          <polyline points={slice.draw.points} fill="none" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+        </svg>
+      ) : slice.draw ? (
         <div className={styles.drawPreview} style={screenBox(slice.draw.rect)} data-tool={slice.draw.tool} data-testid="board-draw-preview" />
       ) : null}
       {slice.resize ? (

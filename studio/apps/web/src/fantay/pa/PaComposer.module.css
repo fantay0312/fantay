@@ -270,8 +270,17 @@
   padding-inline-end: 8px;
 }
 
+/* One line, cut with an ellipsis: beside the model picker in the narrowest chat column the capsule is too short for
+   the whole hint, and a wrapped hint would grow an empty input to two lines. Chromium draws the ellipsis only when
+   `text-overflow` is set on the textarea itself; typed text wraps, so it is not affected. */
+.input {
+  text-overflow: ellipsis;
+}
+
 .input::placeholder {
+  overflow: hidden;
   color: var(--ink-faint);
+  white-space: nowrap;
 }
 
 @supports not (scrollbar-color: auto) {
@@ -603,5 +612,516 @@
   .plusGlyph,
   .sendGlyph {
     transition: none;
+  }
+}
+
+/* ── Companion composer (Soul UI spec §4.5, §4.6) ───────────────────────────────────────────────
+   The tray, the state strip, the slash list, the play menu rows, the dice popover, the persona chip and the one
+   context chip. All of it is composer chrome: base tokens only, never the paper's `--pa-skin-*`. The paper of a themed
+   chat shows around the shell. */
+
+[data-pa-skin] .wrap {
+  background: transparent;
+}
+
+/* Tray: one slot above the shell. */
+.tray {
+  margin-bottom: 6px;
+  animation: pa-tray-in var(--pa-dur-enter) var(--pa-ease) both;
+}
+
+.trayRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  padding-inline: 4px;
+}
+
+.trayCaption {
+  flex: none;
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 28px;
+  white-space: nowrap;
+}
+
+.trayChips {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.trayChipSlot {
+  display: inline-flex;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.trayChipSlot[hidden] {
+  display: none;
+}
+
+/* The tray's choices are the character's own invitations: they rest fully on, in soft ink. */
+.tray [data-slot='chip'][data-variant='suggestion']:not([data-on]) {
+  opacity: 1;
+  color: var(--ink-soft);
+}
+
+.tray [data-slot='chip'][data-variant='suggestion']:hover:not([data-disabled]) {
+  color: var(--ink);
+}
+
+.wrap .trayClose {
+  flex: none;
+  margin-top: 2px;
+  color: var(--ink-faint);
+}
+
+.trayMember {
+  gap: 6px;
+  max-width: 100%;
+  padding-inline-start: 4px;
+}
+
+.trayChipText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trayCard {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+
+.trayCardText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.trayCard .trayCaption {
+  line-height: 16px;
+}
+
+.trayCardTitle {
+  margin-top: 2px;
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.trayCardSummary {
+  display: -webkit-box;
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.trayCardActions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
+
+@container (max-width: 519px) {
+  .trayCard {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .trayCardActions {
+    justify-content: flex-end;
+  }
+}
+
+/* State strip: one bare button on the inspector trough, whole cells only. */
+.strip {
+  position: relative;
+  margin-bottom: 6px;
+  animation: pa-tray-in var(--pa-dur-enter) var(--pa-ease) both;
+}
+
+.wrap .stripBar {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  height: 28px;
+  padding: 0 10px;
+  overflow: hidden;
+  border-radius: var(--radius-control);
+  background: var(--pa-inspector-trough);
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+.wrap .stripBar:hover:not([data-disabled]) {
+  background: color-mix(in srgb, var(--ink) 6%, var(--pa-inspector-trough));
+  color: var(--ink);
+}
+
+.stripBar > [data-slot='button-label'] {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.stripCell {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.stripCell[data-flash] {
+  animation: pa-strip-flash var(--pa-dur-swap) var(--pa-ease);
+}
+
+.stripNumber {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  gap: 6px;
+}
+
+.stripEnd {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  margin-inline-start: auto;
+  color: var(--ink-faint);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.stripMeasure {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  gap: 14px;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Slash list: the `@` list's surface, 36 px rows. */
+.slashList {
+  width: min(420px, 100%);
+}
+
+.slashList .slashRow {
+  gap: 10px;
+  height: 36px;
+  padding-block: 0;
+}
+
+.slashName {
+  flex: none;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+.slashLabel {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slashHint {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-inline-start: auto;
+  padding-inline-start: 8px;
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slashHint[data-invalid] {
+  color: var(--ink-soft);
+}
+
+/* Play menu rows: the label, then its slash in mono. */
+.plusAnchor {
+  display: inline-flex;
+  flex: none;
+}
+
+.playRow {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.playLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playSlash {
+  flex: none;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.playSub {
+  min-width: 160px;
+}
+
+.playMono {
+  font-family: var(--font-mono);
+}
+
+/* Dice popover. */
+.dice {
+  padding: 14px;
+}
+
+.diceForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.diceTitle {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.diceField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.diceError {
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.diceGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.dice .diceButton {
+  min-width: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.diceRow {
+  display: flex;
+  gap: 8px;
+}
+
+.diceLabel {
+  flex: 1 1 auto;
+}
+
+.dice .diceTarget {
+  flex: none;
+  width: 72px;
+}
+
+.diceFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.diceRespond {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+/* Persona chip (end cluster): avatar 20, the name up to 96, a caret; avatar only below a 520 px column. */
+.wrap .personaChip {
+  gap: 6px;
+  height: 28px;
+  max-width: 160px;
+  padding: 0 6px 0 4px;
+  border-radius: 14px;
+  box-shadow: none;
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.wrap .personaChip:hover:not([data-disabled]),
+.wrap .personaChip[data-state='open'] {
+  box-shadow: none;
+  background: var(--pa-composer-btn-hover);
+  color: var(--ink);
+}
+
+.personaName {
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.personaCaret {
+  color: var(--ink-faint);
+}
+
+@container (max-width: 519px) {
+  .personaName,
+  .personaCaret {
+    display: none;
+  }
+}
+
+.personaMenuLabel {
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+.personaRow {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.personaRowName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The one context chip of a companion composer: 26 high, the composer button fill, a trailing ×. */
+.soulChip {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  min-width: 0;
+  height: 26px;
+  padding: 0 1px 0 10px;
+  border-radius: var(--radius-control);
+  background: var(--pa-composer-btn-bg);
+  color: var(--ink-soft);
+}
+
+.soulChipText {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 26px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.soulChip .soulChipText {
+  height: auto;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 12.5px;
+}
+
+.soulChip .soulChipText:hover:not([data-disabled]) {
+  background: transparent;
+  color: var(--ink);
+}
+
+.soulChipText > [data-slot='button-label'] {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.soulChipClear {
+  flex: none;
+}
+
+@keyframes pa-tray-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pa-strip-flash {
+  from {
+    background-color: color-mix(in srgb, var(--ink) 10%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 10%, transparent);
+  }
+  to {
+    background-color: transparent;
+    box-shadow: 0 0 0 3px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tray,
+  .strip {
+    animation: pa-tray-fade 120ms linear both;
+  }
+  .stripCell[data-flash] {
+    animation: none;
+  }
+}
+
+@keyframes pa-tray-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

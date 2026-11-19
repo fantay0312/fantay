@@ -10,14 +10,15 @@ it('prepares matching checksums and independently downloadable GitHub metadata',
   const dir=await mkdtemp(join(tmpdir(),'fantay-distribution-'));
   try {
     const source=join(dir,'test.dmg');await writeFile(source,'fixture installer');
-    const out=await prepareFantayRelease(['--version','1.2.3','--mac-arm64',source,'--out',join(dir,'out')]);
+    const out=await prepareFantayRelease(['--version','26.1114.1','--mac-arm64',source,'--out',join(dir,'out')]);
     const primary=JSON.parse(await readFile(join(out,'metadata.json'),'utf8'));
     const github=JSON.parse(await readFile(join(out,'github/metadata.json'),'utf8'));
     const a=primary.platforms.mac.artifacts.dmg,b=github.platforms.mac.artifacts.dmg;
     expect(a.sha256).toBe(createHash('sha256').update('fixture installer').digest('hex'));
     expect(b.sha256).toBe(a.sha256);
     expect(a.fallbackUrls).toBeUndefined();
-    expect(b.url).toBe('https://github.com/fantay0312/fantay/releases/download/v1.2.3/Fantay-1.2.3-mac-arm64.dmg');
+    expect(b.url).toBe('https://github.com/fantay0312/fantay/releases/download/v26.1114.1/Fantay-26.1114.1-mac-arm64.dmg');
+    expect(await readFile(join(out,'release-notes.md'),'utf8')).toContain('26.1114.1');
     expect(primary.platforms.win).toBeUndefined();
   } finally { await rm(dir,{recursive:true,force:true}); }
 });

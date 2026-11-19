@@ -571,7 +571,7 @@ export const OD_NEXT_SEMANTIC_REQUEST_FACT_MAP_V1 = [
     id: 'project_and_design_context',
     classification: 'initial_bundle',
     producer: 'daemon_system_prompt',
-    source: 'metadata, template, host-detected deck intent, design-system fields, craftBody/craftSections and memoryBody',
+    source: 'metadata, template, host-detected deck intent, design-system fields, craftBody/craftSections, memoryBody and the memory recalled for the request (recalledMemory)',
     owner: 'Task 02 context serializer',
     textTarget: 'context/stable_request_context',
     note: 'Stable project/design facts currently nested in composeDaemonSystemPrompt().',

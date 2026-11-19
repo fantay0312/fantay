@@ -1,0 +1,657 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* The products of a turn, in the chat. One finished product is a cover card: its real preview over a
+   caption row. Several are compact rows in one shell. Tone does the grouping; the only hairline is
+   the one that keeps a white picture apart from its caption. Nothing is ever laid over a picture:
+   the two actions sit in the caption or at the end of the row. */
+
+.group {
+  /* The chat's motion grammar (components/chat/ChatRoot.module.css: `--chat-ease-out`,
+     `--chat-dur-quick | -enter | -turn`, `--chat-loop-shimmer | -pulse`), restated here because a
+     product module cannot read the chat seam. Keep the values in step with it. */
+  --cards-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --cards-quick: 120ms;
+  --cards-enter: 240ms;
+  --cards-turn: 360ms;
+  --cards-shimmer: 1.8s;
+  --cards-pulse: 1.4s;
+  /* A wash that reads on the shell and on a hovered row alike. */
+  --cards-wash: color-mix(in srgb, var(--ink) 6%, transparent);
+  /* The waiting band is always the lighter tone: paper over the ground here, a lift of ink in the dark. */
+  --cards-sheen: color-mix(in srgb, var(--surface) 80%, transparent);
+
+  container: product-cards / inline-size;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 440px;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  text-align: start;
+}
+
+:global([data-theme='dark']) .group {
+  --cards-sheen: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+
+/* ── the shell both layouts share ───────────────────────────────────────────────────────────── */
+
+.shell,
+.card[data-variant='cover'] {
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-ring);
+  /* `backwards` only: once it has landed the card keeps no transform, so the hover lift is free. */
+  animation: cards-in var(--cards-turn) var(--cards-ease) backwards;
+}
+
+@keyframes cards-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+    filter: blur(2px);
+  }
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+}
+
+.rowItem {
+  display: block;
+  min-width: 0;
+}
+
+/* ── one card ───────────────────────────────────────────────────────────────────────────────── */
+
+.card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+
+.card[data-variant='cover'] {
+  flex-direction: column;
+  transition:
+    transform var(--cards-quick) var(--cards-ease),
+    box-shadow var(--cards-quick) var(--cards-ease);
+}
+
+.card[data-variant='cover'][data-openable]:hover {
+  box-shadow: var(--shadow-ring-hover);
+  transform: translateY(-1px);
+}
+
+.card[data-variant='row'] {
+  border-radius: var(--radius-control);
+  transition: background-color var(--cards-quick) var(--cards-ease);
+}
+
+/* A row that joins a group already on screen (the next file of a running turn, a revealed row). */
+.card[data-variant='row'][data-late] {
+  animation: row-in var(--cards-enter) var(--cards-ease) backwards;
+}
+
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.card[data-variant='row'][data-openable]:hover,
+.card[data-variant='row'][data-selected] {
+  background: var(--sub);
+}
+
+/* The file whose tab is in front: tone and a firmer mark, no colour. */
+.card[data-variant='cover'][data-selected] .caption {
+  background: var(--sub);
+}
+
+/* The whole card is the open target. It lies over the preview instead of wrapping it: a frame or
+   a video may not live inside a button. Two-class selectors throughout, to outrank the app's rules
+   for a bare `button` element (its box, its hover wash, its 1px press and its thin focus line). */
+.card .open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  appearance: none;
+}
+
+.card .open:hover,
+.card .open:active {
+  border: 0;
+  background: transparent;
+  transform: none;
+}
+
+.card .open:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+/* Rows touch each other: the ring sits inside the row. */
+.card[data-variant='row'] .open:focus-visible {
+  outline-offset: -2px;
+}
+
+/* ── caption: name, facts, actions, open mark ───────────────────────────────────────────────── */
+
+.caption {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 8px 8px 8px 12px;
+  border-radius: 0 0 var(--radius-card) var(--radius-card);
+  transition: background-color var(--cards-quick) var(--cards-ease);
+}
+
+.card[data-variant='row'] .caption {
+  padding: 8px;
+  border-radius: inherit;
+}
+
+.text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.metaText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card[data-pending] .name,
+.card[data-missing] .name {
+  color: var(--ink-soft);
+}
+
+/* Still being written: a breathing dot, then the words. */
+.pulse {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-soft);
+  animation: cards-pulse var(--cards-pulse) ease-in-out infinite;
+}
+
+@keyframes cards-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Share and export: quiet until the card is pointed at or reached by keyboard. They stay in the
+   document (and in the tab order) all the time, because the menus they open are anchored to them. */
+.actions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: none;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--cards-quick) var(--cards-ease);
+}
+
+.card:hover .actions,
+.card:has(:focus-visible) .actions,
+.card[data-actions='pinned'] .actions {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .actions {
+    opacity: 1;
+  }
+}
+
+.go {
+  flex: none;
+  margin-inline-end: 2px;
+  color: var(--ink-ghost);
+  transition:
+    color var(--cards-quick) var(--cards-ease),
+    transform var(--cards-quick) var(--cards-ease);
+}
+
+.card[data-openable]:hover .go,
+.card:has(.open:focus-visible) .go {
+  color: var(--ink);
+  transform: translateX(1px);
+}
+
+.card[data-selected] .go {
+  color: var(--ink-soft);
+}
+
+/* ── the cover's preview ────────────────────────────────────────────────────────────────────── */
+
+.preview {
+  /* Height of a page frame's viewport; a motion composition overrides it inline on the frame. */
+  --artifact-frame-height: 900px;
+
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  background: var(--sub);
+  /* The page frame scales against this box (`cqw` / `cqh`). */
+  container-type: size;
+}
+
+/* A document's cover is a sheet peeking over the edge: lower than a picture, and lower still when
+   the file has no text to set on it. The height is decided by the file's type, never by whether
+   the lines have arrived, so the card does not grow under the reader. */
+.preview[data-face='document'] {
+  aspect-ratio: 3 / 1;
+}
+
+.preview[data-face='document'][data-text] {
+  aspect-ratio: 2 / 1;
+}
+
+/* ── the row's 36px tile ────────────────────────────────────────────────────────────────────── */
+
+.tile {
+  --artifact-frame-height: 900px;
+
+  position: relative;
+  display: grid;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  overflow: hidden;
+  border-radius: var(--radius-control);
+  background: var(--cards-wash);
+  color: var(--ink-soft);
+  container-type: size;
+  place-items: center;
+}
+
+/* A picture needs an edge on a white shell; a glyph tile does not. The edge is drawn over the
+   picture, because an inset shadow on the tile itself would sit under it. */
+.tile[data-face='page']::after,
+.tile[data-face='image']::after,
+.tile[data-face='video']::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--cards-wash);
+  content: '';
+  pointer-events: none;
+}
+
+.card[data-pending] .tile,
+.card[data-missing] .tile {
+  color: var(--ink-ghost);
+}
+
+/* ── faces ──────────────────────────────────────────────────────────────────────────────────── */
+
+/* A picture appears when it has loaded, by a fade, never a cut; by then its fit is known too. */
+.media {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity var(--cards-enter) var(--cards-ease);
+}
+
+.media[data-ready] {
+  opacity: 1;
+}
+
+.media[data-fit='cover'] {
+  object-fit: cover;
+}
+
+/* A page is recognised by its top. */
+.media[data-kind='page'] {
+  object-position: top center;
+}
+
+@keyframes face-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.glyph {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  color: inherit;
+  place-items: center;
+}
+
+/* A page drawn live: laid out at a desktop viewport (1440 wide, like the preview pane beside it,
+   so both land in the same responsive bucket), then scaled to the box. A frame's own size is its
+   viewport, so the base must be absolute pixels and the scaling a transform. */
+.frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1440px;
+  height: 900px;
+  border: 0;
+  background: var(--surface);
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(min(calc(100cqw / 1440px), calc(100cqh / var(--artifact-frame-height))));
+  transform-origin: center;
+  transition: opacity var(--cards-enter) var(--cards-ease);
+}
+
+/* In a tile the page fills the square and loses its sides instead of shrinking to a strip. */
+.tile .frame {
+  transform: translate(-50%, -50%) scale(max(calc(100cqw / 1440px), calc(100cqh / var(--artifact-frame-height))));
+}
+
+/* The frame stays `visibility: hidden` (inline, set by the cover frame) until its document has
+   loaded. Visibility cannot be interpolated, so opacity rides along and the transition above takes
+   over the moment the inline style is lifted. */
+.frame[style*='visibility: hidden'] {
+  opacity: 0;
+}
+
+/* What the cover frame shows in place of the page: nothing when the page cannot be drawn (the
+   fallback underneath shows through), the waiting sweep while it is on its way. */
+.frameGlyph {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.frameGlyph:global(.is-loading) {
+  overflow: hidden;
+}
+
+/* On a cover the waiting tone hides the fallback underneath; in a tile the type glyph stays in
+   view under the sweep until the page takes its place. */
+.preview .frameGlyph:global(.is-loading) {
+  background: var(--sub);
+}
+
+/* Waiting: one calm band of the surface tone crossing the box, linear, no hold. The chat's only
+   loop vocabulary; it moves by transform, so it composites instead of repainting. Physical `left`:
+   translateX is physical too. */
+.sheen {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.sheen::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 50%;
+  background: linear-gradient(90deg, transparent, var(--cards-sheen) 50%, transparent);
+  content: '';
+  transform: translateX(-100%);
+  animation: cards-sheen var(--cards-shimmer) linear infinite;
+}
+
+@keyframes cards-sheen {
+  to {
+    transform: translateX(200%);
+  }
+}
+
+/* ── the document cover: a sheet of the document's own paper ────────────────────────────────── */
+
+/* The ground is interface and follows the theme. The sheet is the document: white paper and dark
+   ink in both themes, like every paged document in the side workspace. */
+.sheetStage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  padding: 18px 18px 0;
+}
+
+.sheet {
+  --sheet-ink: #181818;
+  --sheet-soft: #666666;
+  --sheet-faint: #8a8a8a;
+
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 320px);
+  min-width: 0;
+  padding: 16px 18px 0;
+  overflow: hidden;
+  border-radius: 3px 3px 0 0;
+  background: #ffffff;
+  box-shadow: var(--shadow-ring);
+  color: var(--sheet-ink);
+}
+
+.sheetTag {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  color: var(--sheet-faint);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 14px;
+}
+
+.sheetTitle {
+  display: -webkit-box;
+  flex: none;
+  margin-top: 8px;
+  overflow: hidden;
+  color: var(--sheet-ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  animation: face-in var(--cards-enter) var(--cards-ease) backwards;
+}
+
+.sheetTitle[data-waiting] {
+  visibility: hidden;
+}
+
+/* The lines run off the lower edge; the last ones fade so the cut reads as "it goes on". */
+.sheetLines {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  margin-top: 6px;
+  overflow: hidden;
+  color: var(--sheet-soft);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 18px;
+  animation: face-in var(--cards-enter) var(--cards-ease) backwards;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 34px), transparent);
+}
+
+/* A paragraph may take two lines, like the document it comes from. */
+.sheetLine {
+  display: -webkit-box;
+  flex: none;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.sheetLine[data-heading] {
+  margin-top: 4px;
+  color: var(--sheet-ink);
+  font-weight: 600;
+}
+
+.sheet[data-style='mono'] .sheetLines {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  line-height: 17px;
+}
+
+.sheet[data-style='mono'] .sheetLine {
+  display: block;
+  overflow-wrap: normal;
+  text-overflow: ellipsis;
+  white-space: pre;
+}
+
+/* ── "N more" ───────────────────────────────────────────────────────────────────────────────── */
+
+/* The last line of the list: its chevron sits in the tile column, its words under the names. */
+.group .more {
+  justify-content: flex-start;
+  gap: 10px;
+  width: calc(100% - 8px);
+  height: 36px;
+  margin: -2px 4px 4px;
+  padding: 0 8px;
+  border-radius: var(--radius-control);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.group .more:hover {
+  background: var(--sub);
+  color: var(--ink);
+}
+
+.moreMark {
+  display: grid;
+  flex: none;
+  width: 36px;
+  place-items: center;
+}
+
+.moreMark svg {
+  transition: transform var(--cards-enter) var(--cards-ease);
+}
+
+.more[aria-expanded='true'] .moreMark svg {
+  transform: rotate(180deg);
+}
+
+/* ── narrow chat column ─────────────────────────────────────────────────────────────────────── */
+
+@container product-cards (max-width: 300px) {
+  .caption {
+    gap: 8px;
+  }
+
+  .sheetStage {
+    padding: 14px 14px 0;
+  }
+
+  .sheet {
+    padding: 12px 14px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell,
+  .card[data-variant='cover'],
+  .card[data-variant='row'][data-late],
+  .sheetTitle,
+  .sheetLines {
+    animation: none;
+  }
+
+  .card[data-variant='cover'],
+  .card[data-variant='row'],
+  .caption,
+  .actions,
+  .go,
+  .media,
+  .frame,
+  .moreMark svg {
+    transition: none;
+  }
+
+  .card[data-variant='cover'][data-openable]:hover,
+  .card[data-openable]:hover .go,
+  .card:has(.open:focus-visible) .go {
+    transform: none;
+  }
+
+  /* Reduced motion keeps the waiting marks still: a steady dot, the plain tone. */
+  .pulse {
+    animation: none;
+  }
+
+  .sheen::before {
+    animation: none;
+    opacity: 0;
+  }
+}

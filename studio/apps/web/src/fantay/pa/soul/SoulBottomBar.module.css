@@ -1,0 +1,120 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/* Bottom bar under the roster list (Soul UI spec §3.4) and the rail's stacked place buttons (§3.5). Ink only:
+   the warm pill and dot mean "needs you", nothing else is coloured. */
+
+.bar {
+  display: grid;
+  flex: none;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  height: 52px;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.cell {
+  height: 40px;
+  min-width: 0;
+  padding: 0 2px;
+  border-radius: var(--radius-control);
+  color: var(--ink-soft);
+  font-weight: 400;
+  transition:
+    background-color var(--pa-dur-quick) var(--pa-ease),
+    color var(--pa-dur-quick) var(--pa-ease);
+}
+.cell > [data-slot='button-label'] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+}
+.cell:hover {
+  --pa-avatar-collar: var(--sub);
+  background: var(--sub);
+  color: var(--ink);
+}
+.cell[data-active] {
+  --pa-avatar-collar: var(--paper-deep);
+  background: var(--paper-deep);
+  color: var(--ink);
+  transition: none;
+}
+.cell[data-active] .label {
+  font-weight: 600;
+}
+
+.glyph {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 18px;
+}
+
+/* Labels never clip: 58 px cells hold Library · Memory · Work · Connect at 11 px (spec §9.8). */
+.label {
+  max-width: 100%;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* Badges sit on the icon's top-right corner (offset −4 / −6) and never reach the label. */
+.pill {
+  position: absolute;
+  top: -4px;
+  inset-inline-start: calc(100% - 6px);
+  height: 15px;
+  min-width: 15px;
+  justify-content: center;
+  padding: 0 4px;
+  box-shadow: 0 0 0 2px var(--pa-avatar-collar);
+  font-size: 10px;
+}
+
+.dot {
+  position: absolute;
+  top: -2px;
+  inset-inline-end: -4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--warning);
+  box-shadow: 0 0 0 2px var(--pa-avatar-collar);
+}
+.dotPaused {
+  background: var(--ink-faint);
+}
+
+/* ── rail: four 32 px buttons, gap 4 ── */
+
+.rail {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.railSlot {
+  position: relative;
+  display: inline-flex;
+}
+
+.railDot {
+  position: absolute;
+  top: 3px;
+  inset-inline-end: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--warning);
+  box-shadow: 0 0 0 2px var(--pa-avatar-collar);
+  pointer-events: none;
+}
+.railDot.dotPaused {
+  background: var(--ink-faint);
+}

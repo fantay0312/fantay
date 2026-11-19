@@ -7,8 +7,8 @@
  *      不是空面板(这是产品拍的板:「不发标记要么按现在规则展示」);
  *   3. 标记不进 `content` —— `content` 是复制 / 导出 / 旧渲染路径读的东西。
  */
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -23,10 +23,13 @@ import {
   upsertMessage,
 } from '../src/db.js';
 import { daemonAgentPayloadToPersistedAgentEvent } from '../src/runtimes/chat-run-messages.js';
+import { createArtifactFocusMarkerStripper } from '../src/artifact-focus-marker.js';
 import {
+  foldArtifactFocusSelections,
   renderArtifactFocusMarkerExample,
   parseArtifactFocusMarker,
   stripArtifactFocusMarkers,
+  type ArtifactFocusSelection,
 } from '@open-design/contracts';
 
 /** 真实录制里的 done_key 形状(16 位十六进制) */
@@ -98,6 +101,65 @@ describe('artifact_focus 载荷 · 翻成可落库的事件', () => {
       }),
     ).toEqual({ kind: 'artifact_focus', show: ['index.html', 'report.md'] });
   });
+
+  it('tool 跟着 open 一起落库;browser 的地址也一起', () => {
+    expect(
+      daemonAgentPayloadToPersistedAgentEvent({ type: 'artifact_focus', open: 'src/app.ts', tool: 'code' }),
+    ).toEqual({ kind: 'artifact_focus', open: 'src/app.ts', tool: 'code' });
+    expect(
+      daemonAgentPayloadToPersistedAgentEvent({
+        type: 'artifact_focus',
+        tool: 'browser',
+        url: 'https://example.com/docs',
+      }),
+    ).toEqual({ kind: 'artifact_focus', tool: 'browser', url: 'https://example.com/docs' });
+  });
+
+  /*
+   * 「显示文件面板」不开任何文件、也不列任何卡,但它是一条完整的展示意图 ——
+   * 旧的「open 和 show 都空就不落库」会把它当成空事件丢掉,刷新之后工具就没了。
+   */
+  it('只有 tool 的载荷也要落库', () => {
+    for (const tool of ['code', 'files', 'board', 'design-system', 'preview', 'browser'] as const) {
+      expect(daemonAgentPayloadToPersistedAgentEvent({ type: 'artifact_focus', tool })).toEqual({
+        kind: 'artifact_focus',
+        tool,
+      });
+    }
+  });
+
+  it('认不出的 tool 不落库 —— 其余字段照旧;只剩它一个时整条不落', () => {
+    expect(
+      daemonAgentPayloadToPersistedAgentEvent({ type: 'artifact_focus', open: 'index.html', tool: 'terminal' }),
+    ).toEqual({ kind: 'artifact_focus', open: 'index.html' });
+    expect(daemonAgentPayloadToPersistedAgentEvent({ type: 'artifact_focus', tool: 'terminal' })).toBeNull();
+    expect(daemonAgentPayloadToPersistedAgentEvent({ type: 'artifact_focus', tool: 42 })).toBeNull();
+  });
+
+  /*
+   * 落库这一步不信载荷:地址重新过一遍契约的校验。否则任何能往这条通道里塞
+   * 载荷的路径,都能把一个 `javascript:` 地址存进会话,等刷新时再交给浏览器。
+   */
+  it('不合格的地址、或不属于 browser 的地址,不落库', () => {
+    for (const bad of ['javascript:alert(1)', 'file:///etc/passwd', 'https://user:pw@example.com/', 42, null]) {
+      expect(
+        daemonAgentPayloadToPersistedAgentEvent({ type: 'artifact_focus', tool: 'browser', url: bad }),
+        `${JSON.stringify(bad)} 不许落库`,
+      ).toEqual({ kind: 'artifact_focus', tool: 'browser' });
+    }
+    expect(
+      daemonAgentPayloadToPersistedAgentEvent({
+        type: 'artifact_focus',
+        tool: 'code',
+        open: 'src/app.ts',
+        url: 'https://example.com/',
+      }),
+    ).toEqual({ kind: 'artifact_focus', open: 'src/app.ts', tool: 'code' });
+    // 没有 tool 的地址无处可去,整条不落
+    expect(
+      daemonAgentPayloadToPersistedAgentEvent({ type: 'artifact_focus', url: 'https://example.com/' }),
+    ).toBeNull();
+  });
 });
 
 describe('artifact_focus 事件 · 落库与回放', () => {
@@ -130,6 +192,60 @@ describe('artifact_focus 事件 · 落库与回放', () => {
     // 一轮可以发好几枚,两枚都要留着 —— 折叠是消费者的事(按字段取最后一个)
     expect(message?.events ?? []).toContainEqual({ kind: 'artifact_focus', open: 'index.html' });
     expect(message?.events ?? []).toContainEqual({ kind: 'artifact_focus', show: ['index.html'] });
+  });
+
+  /**
+   * 整条链走一遍:标记 → 剥离器发出的载荷 → 落库 → 回放。
+   *
+   * 载荷的拼法照抄 `server.ts` 的 `send('agent', { type: 'artifact_focus',
+   * ...selection })`。回放出来的事件必须和实时发出去的**逐条相等**,折叠结果
+   * 也因此相同 —— 刷新前后侧栏停在同一个工具、同一个文件上。
+   */
+  it('带 tool / url 的事件:刷新之后回放的和实时发的是同一条', async () => {
+    const projectRoot = realpathSync(mkdtempSync(path.join(tempDir, 'project-')));
+    mkdirSync(path.join(projectRoot, 'src'));
+    writeFileSync(path.join(projectRoot, 'src/app.ts'), 'export const x = 1;\n');
+
+    const live: ArtifactFocusSelection[] = [];
+    const stripper = createArtifactFocusMarkerStripper({
+      key: KEY,
+      projectRoot,
+      emit: (selection) => live.push(selection),
+    });
+    let visible = stripper.strip(
+      `先看代码。<od-focus key="${KEY}" tool="code" open="src/app.ts" show="src/app.ts"/>`,
+    );
+    // show 立刻发;open 连同它的 tool 等 stat 回来
+    await vi.waitFor(() => expect(live).toHaveLength(2));
+    visible += stripper.strip(`再看文档。<od-focus key="${KEY}" tool="browser" url="https://example.com/docs"/>`);
+    visible += stripper.flush();
+    expect(live).toHaveLength(3);
+    expect(visible).toBe('先看代码。再看文档。');
+
+    const db = openDatabase(tempDir, { dataDir: tempDir });
+    seed(db);
+    const persisted = live.map((selection) =>
+      daemonAgentPayloadToPersistedAgentEvent({ type: 'artifact_focus', ...selection }),
+    );
+    for (const event of persisted) {
+      expect(event).not.toBeNull();
+      appendMessageAgentEvent(db, 'm1', event!);
+    }
+    finalizeMessageAgentEvents(db, 'm1');
+
+    const replayed = (listMessages(db, 'c1').find((m) => m.id === 'm1')?.events ?? []).filter(
+      (event) => event.kind === 'artifact_focus',
+    );
+    expect(replayed).toEqual(live.map((selection) => ({ kind: 'artifact_focus', ...selection })));
+    expect(replayed).toContainEqual({ kind: 'artifact_focus', open: 'src/app.ts', tool: 'code' });
+    expect(replayed).toContainEqual({
+      kind: 'artifact_focus',
+      tool: 'browser',
+      url: 'https://example.com/docs',
+    });
+    // 折叠是消费者的事,但两边折出来必须一样
+    const fold = (events: readonly ArtifactFocusSelection[]) => foldArtifactFocusSelections(events);
+    expect(fold(replayed as ArtifactFocusSelection[])).toEqual(fold(live));
   });
 
   /**

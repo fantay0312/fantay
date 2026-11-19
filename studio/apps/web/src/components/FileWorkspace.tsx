@@ -24,8 +24,6 @@ import {
   trackFileUploadResult,
   trackPageView,
   trackTabLauncherClick,
-  trackSketchSaveResult,
-  trackSketchExportResult,
 } from '../analytics/events';
 import { deriveUploadCohort } from '../analytics/upload-tracking';
 import { useI18n, useT, type Locale } from '../i18n';
@@ -47,7 +45,6 @@ import {
   updateDesignSystemDraft,
   type UploadProjectFilesResult,
   uploadProjectFiles,
-  writeProjectBase64File,
   writeProjectTextFile,
 } from '../providers/registry';
 import type { Dict } from '../i18n/types';
@@ -133,6 +130,7 @@ import {
 import type { PluginFolderAgentAction } from './design-files/pluginFolderActions';
 import { designSystemGithubEvidenceState, repoConnectCopy } from './design-system-github-evidence';
 import { APP_CHROME_FILE_ACTIONS_ID } from './AppChromeHeader';
+import { fileTabLabel } from '../fantay/workspace/tab-label';
 import { FileViewer, LiveArtifactViewer } from './FileViewer';
 import { useIframeKeepAlivePool } from './IframeKeepAlivePool';
 import { Icon, type IconName } from './Icon';
@@ -142,10 +140,10 @@ import { Toast } from './Toast';
 import { activeFileSharesBeforeDelete } from './project-actions/activeFileSharesBeforeDelete';
 import { ProjectDeleteConfirmDialog } from './project-actions/ProjectDeleteConfirmDialog';
 import { useProjectShareHistoryState } from './share/useProjectShareHistory';
-import { TabLauncherMenu } from './workspace/TabLauncherMenu';
-import type { WorkspaceTool } from './workspace/WorkspaceToolsPanel';
+import { TabLauncherMenu, type TabLauncherTrackInput } from './workspace/TabLauncherMenu';
 import { buildLauncherActions, type LauncherContext } from './workspace/tab-launcher';
 import { SideChatTab, type ActiveConversationChatState } from './workspace/SideChatTab';
+import { WORKSPACE_DIALOGUE_TAB } from '../fantay/workspace/workspace-roots';
 import { TerminalViewer } from './workspace/TerminalViewer';
 import { CURATED_PLUGIN_IDS_BY_CHIP, curatedPluginPriority } from './plugins-home/curatedPriority';
 import {
@@ -164,23 +162,19 @@ import { LiveArtifactBadges } from './LiveArtifactBadges';
 import { MissingBrandFontsBanner } from './MissingBrandFontsBanner';
 import { LibraryPicker } from './LibraryPicker';
 import { QuickSwitcher } from './QuickSwitcher';
-import { SketchEditor } from './SketchEditor';
-import { SketchEnginePrewarm } from './SketchEnginePrewarm';
 import { useWorkspaceTabsDockRef } from './workspaceTabsDock';
-import {
-  emptySketchScene,
-  isSketchJsonFileName,
-  parseSketchWorkspaceDocument,
-  serializeExcalidrawSketchScene,
-  type ExcalidrawSketchScene,
-  type SketchItem,
-} from './sketch-model';
 import { AnimatePresence } from 'motion/react';
 import type { ChatMessage } from '../types';
 import { runProgressSteps } from '../runtime/run-progress';
 import type { CommentSendResult } from './comment-send-result';
 // Fantay workspace shell (spec 02 §7.2, plan R8/R10, amendment C2; FANTAY.md hotspot).
-import { BOARD_TAB, FANTAY_BOARD_READY, PROJECT_DESIGN_SYSTEM_TAB, WORKSPACE_START_TAB, fantayDefaultRootTab, isFantayRootTabId, isRenderableFantayRootTab, normalizeFantayRootTab, useFantayWorkspace, type FantayWorkspaceController } from '../fantay/workspace';
+import { BOARD_TAB, FANTAY_BOARD_READY, PROJECT_DESIGN_SYSTEM_TAB, WORKSPACE_CODE_TAB, WORKSPACE_START_TAB, fantayDefaultRootTab, isFantayRootTabId, isRenderableFantayRootTab, normalizeFantayRootTab, useFantayWorkspace, type FantayWorkspaceController } from '../fantay/workspace';
+import { WorkspaceStart, type WorkspaceStartAction, type WorkspaceStartSuggestion, type WorkspaceStartTool } from '../fantay/workspace/start/WorkspaceStart';
+import { FilesSurface } from '../fantay/workspace/files';
+import { publishActiveArtifact } from '../fantay/artifact/cards/active-artifact';
+import { requestCodeSurface } from '../fantay/workspace/surfaces/code-surface-store';
+import { suggestSurfaces } from '../fantay/workspace/surfaces/surface-router';
+import { useLatestTurnChanges } from '../fantay/workspace/surfaces/use-turn-changes';
 import { useFantayShellEnabled } from '../fantay/shell/flags';
 import { useFantayShell } from '../fantay/shell/shell-context';
 import { useEditorContext } from '../fantay/editors/editor-context-store';
@@ -365,6 +359,7 @@ interface Props {
   // launcher affordance to create new side chats — only persisted `chat:` tabs
   // are restored.
   chatConfig?: AppConfig;
+  renderSideDialogue?: (visible: boolean) => ReactNode;
   chatAgentsById?: Map<string, AgentInfo>;
   handoffAgents?: AgentInfo[];
   handoffArtifactId?: string;
@@ -444,68 +439,6 @@ function rejectRenameWhileMaterializing(): null {
   return null;
 }
 
-interface SketchState {
-  version: number;
-  rawItems: unknown[];
-  discardRawItemsOnSave: boolean;
-  items: SketchItem[];
-  scene: ExcalidrawSketchScene;
-  sourceKey?: string;
-  dirty: boolean;
-  persisted: boolean;
-  loaded: boolean;
-  saving: boolean;
-  savedAt?: number;
-}
-
-function defaultSketchState(name: string, scene: ExcalidrawSketchScene = emptySketchScene(name)): SketchState {
-  return {
-    version: 2,
-    rawItems: [],
-    discardRawItemsOnSave: false,
-    items: [],
-    scene,
-    dirty: false,
-    persisted: false,
-    loaded: true,
-    saving: false,
-  };
-}
-
-function loadedSketchStateFromDocument(
-  doc: ReturnType<typeof parseSketchWorkspaceDocument>,
-  sourceKey: string,
-): SketchState {
-  return {
-    version: doc.version,
-    rawItems: doc.rawItems,
-    discardRawItemsOnSave: false,
-    items: doc.items,
-    scene: doc.scene,
-    sourceKey,
-    dirty: false,
-    persisted: true,
-    loaded: true,
-    saving: false,
-  };
-}
-
-function sketchFileSourceKey(projectId: string, file: Pick<ProjectFile, 'name' | 'path' | 'size' | 'mtime'>): string {
-  return `${projectId}:${file.path ?? file.name}:${file.size}:${file.mtime}`;
-}
-
-function shouldKeepCurrentSketchState(
-  current: SketchState | undefined,
-  name: string,
-  sourceKey: string,
-  saveInFlight: Set<string>,
-): boolean {
-  if (!current) return false;
-  if (!current.persisted) return true;
-  if (current.dirty || current.saving || saveInFlight.has(name)) return true;
-  return current.loaded && current.sourceKey === sourceKey;
-}
-
 export const DESIGN_FILES_TAB = '__design_files__';
 export const DESIGN_SYSTEM_TAB = '__design_system__';
 
@@ -522,6 +455,8 @@ function workspaceToolTabDetails(name: string, isMotion: boolean): {
     case WORKSPACE_START_TAB: return { id: 'workspace-start-tab', icon: 'plus', label: 'workspace.newTab' };
     case BOARD_TAB: return { id: 'fantay-workspace-root-board', icon: 'layout', label: 'fantayShell.workspace.board' };
     case DESIGN_FILES_TAB: return { id: 'design-files-tab', icon: 'folder', label: 'fantayShell.workspace.files' };
+    case WORKSPACE_CODE_TAB: return { id: 'workspace-code-tab', icon: 'file-code', label: 'workspace.code.title' };
+    case WORKSPACE_DIALOGUE_TAB: return { id: 'workspace-dialogue-tab', icon: 'comment', label: 'workspace.dialogue.title' };
     default: return {
       id: 'fantay-workspace-root-designSystem', icon: 'palette',
       label: isMotion ? 'motion.style.workspaceTitle' : 'fantayShell.workspace.designSystem',
@@ -555,7 +490,6 @@ const RETAINED_VIEWER_INACTIVE_STYLE = {
   pointerEvents: 'none',
 } satisfies CSSProperties;
 const QUICK_SWITCHER_DOCUMENT_CLASS = 'od-quick-switcher-open';
-const SKETCH_AUTOSAVE_DELAY_MS = 800;
 
 // Stable empty folder list so the render-phase project-switch reset is
 // idempotent (passing a fresh `[]` each render would re-trigger the reset).
@@ -1249,32 +1183,6 @@ interface DesignSystemProjectSection {
   requiredFile?: string;
 }
 
-interface SaveSketchOptions {
-  activate?: boolean;
-  refreshFiles?: boolean;
-  showSaving?: boolean;
-}
-
-interface PendingSketchSave {
-  scene: ExcalidrawSketchScene;
-  revision: number;
-  options: SaveSketchOptions;
-  resolvers: Array<(value: boolean | undefined) => void>;
-}
-
-interface QueuedSketchAutosave {
-  scene: ExcalidrawSketchScene;
-  revision: number;
-  options: SaveSketchOptions;
-}
-
-function mergeSketchSaveOptions(a: SaveSketchOptions, b: SaveSketchOptions): SaveSketchOptions {
-  return {
-    activate: a.activate !== false || b.activate !== false,
-    refreshFiles: a.refreshFiles !== false || b.refreshFiles !== false,
-    showSaving: a.showSaving !== false || b.showSaving !== false,
-  };
-}
 
 function consumeFileWorkspaceTabShortcut(event: KeyboardEvent) {
   event.preventDefault();
@@ -1445,6 +1353,7 @@ export function FileWorkspace({
   commentPortalId,
   onCommentModeChange,
   chatConfig,
+  renderSideDialogue,
   chatAgentsById,
   handoffAgents,
   handoffArtifactId,
@@ -1500,11 +1409,11 @@ export function FileWorkspace({
   const fantayShellEnabled = useFantayShellEnabled();
   const fantayShell = useFantayShell();
   const fantayWorkspace = fantayWorkspaceProp ?? fantayShellEnabled;
+  // The Files tab: the product shell opens the library, the inherited shell its own panel. Same props.
+  const FilesTabPanel = fantayWorkspace ? FilesSurface : DesignFilesPanel;
   const fantayRef = useRef<FantayWorkspaceController | null>(null);
   const defaultRootTab = fantayDefaultRootTab(fantayWorkspace, Boolean(designSystemProject)) ?? (designSystemProject ? DESIGN_SYSTEM_TAB : DESIGN_FILES_TAB);
   const emptyWorkspaceTab = fantayWorkspace ? WORKSPACE_START_TAB : DESIGN_FILES_TAB;
-  // Persisted tabs come from the parent. Active tab can transiently point
-  // at a pending sketch — pending sketches are not in tabsState.tabs.
   const persistedTabs = tabsState.tabs;
   // Launcher "create" actions (New Terminal / Side Chat) resolve
   // asynchronously; keep the latest committed tab state out of render
@@ -1520,6 +1429,8 @@ export function FileWorkspace({
     tabsState.active ?? defaultRootTab,
   );
   const [fantayBoardContext, setFantayBoardContext] = useState<WorkspaceContextItem | null>(null);
+  // The file the 代码 surface is showing; offered to the composer as the active context.
+  const [codeSurfaceFile, setCodeSurfaceFile] = useState<ProjectFile | null>(null);
   const fantayEditorContext = useEditorContext(projectId, activeTab);
   // `materializationPending` can briefly become true again while the router
   // commits a file-tab URL. Once this project has rendered real workspace
@@ -1550,21 +1461,9 @@ export function FileWorkspace({
   const [uploadError, setUploadError] = useState<string | null>(null);
   useExperienceError(uploadError, 'workspace_upload', projectId);
   // The folder the Design Files panel is currently viewing (synced via
-  // onCurrentDirChange). New files — uploads, pastes, sketches, dropped files —
+  // onCurrentDirChange). New files — uploads, pastes, dropped files —
   // are created under this folder instead of the project root.
   const [uploadDir, setUploadDir] = useState<string>('');
-  const [sketches, setSketches] = useState<Record<string, SketchState>>({});
-  const sketchesRef = useRef<Record<string, SketchState>>({});
-  sketchesRef.current = sketches;
-  const activeProjectIdRef = useRef(projectId);
-  activeProjectIdRef.current = projectId;
-  const sketchAutosaveTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-  const sketchAutosaveDraftsRef = useRef<Map<string, QueuedSketchAutosave>>(new Map());
-  const sketchSceneRevisionRef = useRef<Map<string, number>>(new Map());
-  const sketchSaveInFlightRef = useRef<Set<string>>(new Set());
-  const pendingSketchSavesRef = useRef<Map<string, PendingSketchSave>>(new Map());
-  const flushPendingSketchAutosavesRef = useRef<() => void>(() => {});
-  const sketchPreloadInFlightRef = useRef<Map<string, Promise<boolean>>>(new Map());
   const [quickSwitcherOpen, setQuickSwitcherOpen] = useState(false);
   const [projectFolders, setProjectFolders] = useState<ProjectFolder[]>(EMPTY_PROJECT_FOLDERS);
   // Reset the folder list during render — NOT in an effect — when the project
@@ -1785,11 +1684,6 @@ export function FileWorkspace({
     ],
     [communityPluginPresets],
   );
-  const sketchFiles = useMemo(
-    () => visibleFiles.filter((file) => isSketchName(file.name)),
-    [visibleFiles],
-  );
-
   useEffect(() => {
     setPageCreatorCategory('slides');
     setPageCreatorPreviewId(defaultPagePresetId(projectKind));
@@ -1810,52 +1704,6 @@ export function FileWorkspace({
       window.removeEventListener('open-design:plugins-changed', load);
     };
   }, [workspaceContext]);
-
-  const loadSketchFile = useCallback((file: ProjectFile): Promise<boolean> => {
-    const sourceKey = sketchFileSourceKey(projectId, file);
-    const startedRevision = sketchSceneRevisionRef.current.get(file.name) ?? 0;
-    const current = sketchesRef.current[file.name];
-    if (shouldKeepCurrentSketchState(current, file.name, sourceKey, sketchSaveInFlightRef.current)) {
-      return Promise.resolve(true);
-    }
-    const existing = sketchPreloadInFlightRef.current.get(sourceKey);
-    if (existing) return existing;
-
-    const inFlight = { promise: null as Promise<boolean> | null };
-    const promise = (async () => {
-      try {
-        const text = workspaceContext
-          ? await fetchProjectFileText(projectId, file.name, { workspaceContext })
-          : await fetchProjectFileText(projectId, file.name);
-        const doc = parseSketchWorkspaceDocument(text);
-        if (activeProjectIdRef.current !== projectId) return false;
-        setSketches((curr) => {
-          const activeRevision = sketchSceneRevisionRef.current.get(file.name) ?? 0;
-          if (activeRevision !== startedRevision) return curr;
-          const existingState = curr[file.name];
-          if (shouldKeepCurrentSketchState(existingState, file.name, sourceKey, sketchSaveInFlightRef.current)) {
-            return curr;
-          }
-          sketchSceneRevisionRef.current.set(file.name, 0);
-          return {
-            ...curr,
-            [file.name]: loadedSketchStateFromDocument(doc, sourceKey),
-          };
-        });
-        return true;
-      } catch (err) {
-        console.warn('[FileWorkspace] sketch load failed', file.name, err);
-        return false;
-      } finally {
-        if (sketchPreloadInFlightRef.current.get(sourceKey) === inFlight.promise) {
-          sketchPreloadInFlightRef.current.delete(sourceKey);
-        }
-      }
-    })();
-    inFlight.promise = promise;
-    sketchPreloadInFlightRef.current.set(sourceKey, promise);
-    return promise;
-  }, [projectId, workspaceContext]);
 
   const liveArtifactEntries = useMemo(
     () => liveArtifacts.map(liveArtifactSummaryToWorkspaceEntry),
@@ -1908,38 +1756,7 @@ export function FileWorkspace({
     setBrowserNavigateRequests({});
     browserTabSequenceRef.current = 0;
     setLauncherOpen(false);
-    sketchPreloadInFlightRef.current.clear();
   }, [projectId]);
-
-  useEffect(() => {
-    return () => {
-      flushPendingSketchAutosavesRef.current();
-      sketchSceneRevisionRef.current.clear();
-    };
-  }, []);
-
-  useEffect(() => {
-    const flush = () => flushPendingSketchAutosavesRef.current();
-    window.addEventListener('pagehide', flush);
-    window.addEventListener('beforeunload', flush);
-    return () => {
-      window.removeEventListener('pagehide', flush);
-      window.removeEventListener('beforeunload', flush);
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      for (const file of sketchFiles) {
-        if (cancelled) return;
-        await loadSketchFile(file);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [loadSketchFile, sketchFiles]);
 
   useEffect(() => {
     const nextBrowserTabs = browserTabsFromState(tabsState.browserTabs);
@@ -2157,12 +1974,6 @@ export function FileWorkspace({
     onTabsStateChange(next);
   }, [onTabsStateChange]);
 
-  function activatePending(name: string) {
-    // Pending sketches are not in tabsState.tabs — flip the local
-    // activeTab without round-tripping through the parent.
-    afterActiveManualEditSettles(() => setActiveTab(name));
-  }
-
   // Promote the active browser tab to the front of the keep-alive LRU (and cap
   // it). Activating a browser tab is the only thing that mounts its webview.
   useEffect(() => {
@@ -2184,7 +1995,7 @@ export function FileWorkspace({
 
   // When the persisted tab list changes and the active tab is gone, fall
   // back to the last remaining tab. Skip transient activeTab values
-  // (DESIGN_FILES_TAB, pending sketches) since those aren't in persistedTabs.
+  // such as the files root, which can be outside persistedTabs.
   useEffect(() => {
     const latestPersistedTabs = tabsStateRef.current.tabs;
     if (
@@ -2199,7 +2010,6 @@ export function FileWorkspace({
       }
       return;
     }
-    if (sketches[activeTab] && !sketches[activeTab]!.persisted) return;
     if (!latestPersistedTabs.includes(activeTab)) {
       setPersistedActive(latestPersistedTabs[latestPersistedTabs.length - 1] ?? null);
     }
@@ -2310,7 +2120,7 @@ export function FileWorkspace({
       // cannot be overwritten by the activation that was waiting on it.
       const currentTabs = tabsStateRef.current.tabs;
       const shouldPersistTab =
-        options?.forcePersist === true || isPrimaryWorkspaceTab(name, visibleFiles, liveArtifactEntries, sketches);
+        options?.forcePersist === true || isPrimaryWorkspaceTab(name, visibleFiles, liveArtifactEntries);
       const isNewTab = shouldPersistTab && !currentTabs.includes(name);
       const nextBrowserTabs = isNewTab
         ? reanchorBrowserTabsToCurrentOrder(orderedWorkspaceTabs, browserTabs)
@@ -2415,12 +2225,6 @@ export function FileWorkspace({
   }
 
   function activateWorkspaceTab(tabId: string) {
-    const sketchEntry = sketches[tabId];
-    if (sketchEntry && !sketchEntry.persisted) {
-      setUploadError(null);
-      activatePending(tabId);
-      return;
-    }
     focusWorkspaceTab(tabId);
   }
 
@@ -2502,23 +2306,6 @@ export function FileWorkspace({
       });
       terminalLiveSessionsRef.current.delete(originalId);
     }
-    const sketchEntry = sketches[name];
-    const isPending = sketchEntry && !sketchEntry.persisted;
-    const hasUnsavedStrokes = sketchEntry && (sketchEntry.dirty || !sketchEntry.persisted);
-    if (hasUnsavedStrokes && !confirm(t('sketch.closeConfirm'))) return;
-    if (isPending) {
-      setSketches((curr) => {
-        const next = { ...curr };
-        clearSketchAutosave(name);
-        sketchSceneRevisionRef.current.delete(name);
-        delete next[name];
-        return next;
-      });
-      if (activeTab === name) {
-        setPersistedActive(persistedTabs[persistedTabs.length - 1] ?? null);
-      }
-      return;
-    }
     const current = tabsStateRef.current;
     const nextTabs = current.tabs.filter((n) => n !== name);
     const closingActive = current.active === name || activeTab === name;
@@ -2528,15 +2315,6 @@ export function FileWorkspace({
         : current.active;
     commitTabsState(workspaceTabsState(nextTabs, nextActive, current.browserTabs ?? []));
     if (activeTab === name) setActiveTab(nextActive ?? emptyWorkspaceTab);
-    setSketches((curr) => {
-      const next = { ...curr };
-      const entry = next[name];
-      if (entry && !entry.persisted) {
-        clearSketchAutosave(name);
-        delete next[name];
-      }
-      return next;
-    });
   }
 
   function reorderPersistedTab(
@@ -2813,12 +2591,6 @@ export function FileWorkspace({
           const nextActive = tabsState.active === name ? null : tabsState.active;
           onTabsStateChange(workspaceTabsState(nextTabs, nextActive));
         }
-        setSketches((curr) => {
-          const next = { ...curr };
-          clearSketchAutosave(name);
-          delete next[name];
-          return next;
-        });
       }
     } finally {
       fileDeletePendingRef.current = false;
@@ -2851,15 +2623,6 @@ export function FileWorkspace({
             tabsState.active && deletedSet.has(tabsState.active) ? null : tabsState.active;
           onTabsStateChange(workspaceTabsState(nextTabs, nextActive));
         }
-        setSketches((curr) => {
-          const next = { ...curr };
-          for (const name of deleted) {
-            clearSketchAutosave(name);
-            sketchSceneRevisionRef.current.delete(name);
-            delete next[name];
-          }
-          return next;
-        });
       }
       if (failed.length > 0) {
         alert(t('workspace.deleteSelectedFilesPartial', { n: failed.length }));
@@ -2871,15 +2634,6 @@ export function FileWorkspace({
 
   async function handleRename(oldName: string, nextName: string): Promise<ProjectFile | null> {
     if (viewerOnly) return null; // read-only viewer of a team-shared project
-    const hasPendingSketchConflict = Object.entries(sketches).some(
-      ([name, sketch]) => !sketch.persisted && sameFileName(name, nextName),
-    );
-    if (nextName !== oldName && hasPendingSketchConflict) {
-      throw new Error(
-        `A pending sketch named "${nextName}" is already open. Save or close it before renaming.`,
-      );
-    }
-
     const result = await renameProjectFile(projectId, oldName, nextName, workspaceContext);
     const renamed = result.file;
     await onRefreshFiles();
@@ -2890,64 +2644,7 @@ export function FileWorkspace({
     onTabsStateChange(workspaceTabsState(nextTabs, nextActive));
     if (activeTab === oldName) setActiveTab(renamed.name);
 
-    setSketches((curr) => {
-      const entry = curr[oldName];
-      if (!entry) return curr;
-      const next = { ...curr };
-      clearSketchAutosave(oldName);
-      const revision = sketchSceneRevisionRef.current.get(oldName);
-      sketchSceneRevisionRef.current.delete(oldName);
-      if (revision !== undefined) sketchSceneRevisionRef.current.set(renamed.name, revision);
-      delete next[oldName];
-      next[renamed.name] = isSketchName(renamed.name)
-        ? { ...entry, sourceKey: sketchFileSourceKey(projectId, renamed) }
-        : entry;
-      return next;
-    });
-
     return renamed;
-  }
-
-  async function startNewSketch() {
-    const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const base = `sketch-${stamp}.sketch.json`;
-    // Create under the folder currently being viewed, if any. The slash-joined
-    // name flows through as the sketch's tab id and save path; the daemon's
-    // sanitizePath turns it into a real subdirectory on save.
-    const name = uploadDir ? `${uploadDir}/${base}` : base;
-    const scene = emptySketchScene(name);
-    sketchSceneRevisionRef.current.set(name, 0);
-    setSketches((curr) => ({
-      ...curr,
-      [name]: {
-        version: 1,
-        rawItems: [],
-        discardRawItemsOnSave: false,
-        items: [],
-        scene,
-        dirty: false,
-        persisted: false,
-        loaded: true,
-        saving: true,
-      },
-    }));
-    activatePending(name);
-    const ok = await saveSketch(name, scene, {
-      activate: true,
-      refreshFiles: true,
-      showSaving: false,
-    });
-    if (ok === false) {
-      setSketches((curr) => ({
-        ...curr,
-        [name]: {
-          ...(curr[name] ?? defaultSketchState(name, scene)),
-          dirty: true,
-          persisted: false,
-          saving: false,
-        },
-      }));
-    }
   }
 
   async function createMarkdownDocument() {
@@ -3002,284 +2699,6 @@ export function FileWorkspace({
     }
   }
 
-  const activeSketchFile = useMemo(() => {
-    if (!isSketchName(activeTab)) return null;
-    return visibleFiles.find((file) => file.name === activeTab) ?? null;
-  }, [activeTab, visibleFiles]);
-  const activeSketchSourceKey = activeSketchFile ? sketchFileSourceKey(projectId, activeSketchFile) : null;
-  const activeSketchEntry = isSketchName(activeTab) ? sketches[activeTab] : undefined;
-  const activeSketchLoaded = Boolean(
-    activeSketchEntry?.loaded
-    && (
-      !activeSketchEntry.persisted
-      || (activeSketchSourceKey !== null && activeSketchEntry.sourceKey === activeSketchSourceKey)
-    ),
-  );
-
-  // When the active tab is a sketch we don't have items for yet, load from
-  // disk. Pending sketches start with loaded=true and skip this path.
-  useEffect(() => {
-    if (activeTab === DESIGN_FILES_TAB) return;
-    if (!isSketchName(activeTab)) return;
-    if (activeSketchLoaded) return;
-    if (!activeSketchFile) return;
-    void loadSketchFile(activeSketchFile);
-  }, [activeSketchFile, activeSketchLoaded, activeTab, loadSketchFile]);
-
-  function setSketchScene(
-    name: string,
-    scene: ExcalidrawSketchScene,
-    options: { markDirty?: boolean; discardLegacyItems?: boolean } = {},
-  ) {
-    sketchSceneRevisionRef.current.set(name, (sketchSceneRevisionRef.current.get(name) ?? 0) + 1);
-    setSketches((curr) => ({
-      ...curr,
-      [name]: {
-        ...(curr[name] ?? {
-          version: 1,
-          rawItems: [],
-          discardRawItemsOnSave: false,
-          items: [],
-          scene: emptySketchScene(name),
-          persisted: false,
-          loaded: true,
-          saving: false,
-        }),
-        scene,
-        items: options.discardLegacyItems ? [] : (curr[name]?.items ?? []),
-        dirty: options.markDirty === false ? (curr[name]?.dirty ?? false) : true,
-        discardRawItemsOnSave: options.discardLegacyItems ?? curr[name]?.discardRawItemsOnSave ?? false,
-      } as SketchState,
-    }));
-    if (options.markDirty !== false) {
-      queueSketchAutosave(name, scene);
-    }
-  }
-
-  function clearSketch(name: string) {
-    const scene = emptySketchScene(name);
-    sketchSceneRevisionRef.current.set(name, (sketchSceneRevisionRef.current.get(name) ?? 0) + 1);
-    setSketches((curr) => ({
-      ...curr,
-      [name]: {
-        ...(curr[name] ?? {
-          version: 1,
-          rawItems: [],
-          discardRawItemsOnSave: false,
-          items: [],
-          scene: emptySketchScene(name),
-          persisted: false,
-          loaded: true,
-          saving: false,
-        }),
-        items: [],
-        scene,
-        dirty: true,
-        discardRawItemsOnSave: true,
-      } as SketchState,
-    }));
-    queueSketchAutosave(name, scene);
-  }
-
-  async function saveSketch(
-    name: string,
-    sceneOverride?: ExcalidrawSketchScene,
-    options: SaveSketchOptions = {},
-    revisionOverride?: number,
-  ): Promise<boolean | undefined> {
-    const entry = sketches[name] ?? (sceneOverride ? defaultSketchState(name, sceneOverride) : null);
-    if (!entry) return;
-    const scene = sceneOverride ?? entry.scene;
-    const currentRevision = sketchSceneRevisionRef.current.get(name) ?? 0;
-    const revision = revisionOverride ?? currentRevision;
-    if (revision === currentRevision) clearSketchAutosave(name);
-    if (sketchSaveInFlightRef.current.has(name)) {
-      if (options.showSaving !== false) {
-        setSketches((curr) => ({
-          ...curr,
-          [name]: {
-            ...(curr[name] ?? entry),
-            saving: true,
-          },
-        }));
-      }
-      return new Promise((resolve) => {
-        const pending = pendingSketchSavesRef.current.get(name);
-        pendingSketchSavesRef.current.set(name, {
-          scene,
-          revision,
-          options: pending ? mergeSketchSaveOptions(pending.options, options) : options,
-          resolvers: [...(pending?.resolvers ?? []), resolve],
-        });
-      });
-    }
-    return runSketchSave(name, entry, scene, options, revision);
-  }
-
-  async function runSketchSave(
-    name: string,
-    entry: SketchState,
-    scene: ExcalidrawSketchScene,
-    options: SaveSketchOptions,
-    revision: number,
-  ): Promise<boolean | undefined> {
-    sketchSaveInFlightRef.current.add(name);
-    const showSaving = options.showSaving !== false;
-    if (showSaving) {
-      setSketches((curr) => ({
-        ...curr,
-        [name]: {
-          ...(curr[name] ?? entry),
-          saving: true,
-        },
-      }));
-    }
-    const text = serializeExcalidrawSketchScene(scene, name);
-    const startedAt = Date.now();
-    let result: boolean | undefined;
-    try {
-      const file = await writeProjectTextFile(projectId, name, text, undefined, workspaceContext);
-      const elapsed = Date.now() - startedAt;
-      // Ensures saving UI shows so the button does not flicker
-      if (showSaving && elapsed < 500) await new Promise((resolve) => setTimeout(resolve, 500 - elapsed));
-      if (file) {
-        const savedSourceKey = sketchFileSourceKey(projectId, file);
-        const hasPendingSave = pendingSketchSavesRef.current.has(name);
-        const savedRevisionIsCurrent = revision === (sketchSceneRevisionRef.current.get(name) ?? 0);
-        const savedAt = Date.now();
-        setSketches((curr) => {
-          const current = curr[name] ?? entry;
-          return {
-            ...curr,
-            [name]: hasPendingSave || !savedRevisionIsCurrent
-              ? {
-                ...current,
-                sourceKey: savedSourceKey,
-                persisted: true,
-                loaded: true,
-                saving: hasPendingSave,
-              }
-              : {
-                ...current,
-                version: 2,
-                rawItems: [],
-                items: [],
-                scene,
-                sourceKey: savedSourceKey,
-                discardRawItemsOnSave: false,
-                dirty: false,
-                persisted: true,
-                saving: false,
-                savedAt,
-              },
-          };
-        });
-        if (!hasPendingSave) {
-          // Promote the previously-pending sketch into the persisted tab list.
-          const currentTabs = tabsStateRef.current.tabs;
-          if (options.activate !== false || !currentTabs.includes(name)) {
-            const nextTabs = currentTabs.includes(name) ? currentTabs : [...currentTabs, name];
-            const nextActive = options.activate === false ? (tabsStateRef.current.active ?? null) : name;
-            commitTabsState(workspaceTabsState(nextTabs, nextActive));
-          }
-          if (options.activate !== false) setActiveTab(name);
-          if (options.refreshFiles !== false) {
-            await onRefreshFiles();
-            await refreshProjectFolders();
-          }
-        }
-        result = true;
-      } else {
-        const hasPendingSave = pendingSketchSavesRef.current.has(name);
-        setSketches((curr) => ({
-          ...curr,
-          [name]: {
-            ...(curr[name] ?? entry),
-            saving: hasPendingSave,
-          },
-        }));
-        result = false;
-      }
-    } finally {
-      sketchSaveInFlightRef.current.delete(name);
-    }
-
-    const pending = pendingSketchSavesRef.current.get(name);
-    if (pending) {
-      pendingSketchSavesRef.current.delete(name);
-      const pendingResult = await saveSketch(name, pending.scene, pending.options, pending.revision);
-      for (const resolve of pending.resolvers) resolve(pendingResult);
-      return pendingResult;
-    }
-
-    return result;
-  }
-
-  function queueSketchAutosave(name: string, scene: ExcalidrawSketchScene) {
-    clearSketchAutosave(name);
-    const revision = sketchSceneRevisionRef.current.get(name) ?? 0;
-    const options: SaveSketchOptions = {
-      activate: false,
-      refreshFiles: false,
-      showSaving: false,
-    };
-    if (sketchSaveInFlightRef.current.has(name)) {
-      const pending = pendingSketchSavesRef.current.get(name);
-      pendingSketchSavesRef.current.set(name, {
-        scene,
-        revision,
-        options: pending ? mergeSketchSaveOptions(pending.options, options) : options,
-        resolvers: pending?.resolvers ?? [],
-      });
-      return;
-    }
-    sketchAutosaveDraftsRef.current.set(name, { scene, revision, options });
-    const timer = setTimeout(() => {
-      sketchAutosaveTimersRef.current.delete(name);
-      sketchAutosaveDraftsRef.current.delete(name);
-      void saveSketch(name, scene, options, revision);
-    }, SKETCH_AUTOSAVE_DELAY_MS);
-    sketchAutosaveTimersRef.current.set(name, timer);
-  }
-
-  function clearSketchAutosave(name: string) {
-    const timer = sketchAutosaveTimersRef.current.get(name);
-    if (timer) clearTimeout(timer);
-    sketchAutosaveTimersRef.current.delete(name);
-    sketchAutosaveDraftsRef.current.delete(name);
-  }
-
-  function flushPendingSketchAutosaves() {
-    const queued = Array.from(sketchAutosaveDraftsRef.current.entries());
-    if (queued.length === 0) return;
-    for (const [name, draft] of queued) {
-      const timer = sketchAutosaveTimersRef.current.get(name);
-      if (timer) clearTimeout(timer);
-      sketchAutosaveTimersRef.current.delete(name);
-      sketchAutosaveDraftsRef.current.delete(name);
-      void saveSketch(name, draft.scene, draft.options, draft.revision);
-    }
-  }
-  flushPendingSketchAutosavesRef.current = flushPendingSketchAutosaves;
-
-  async function exportSketchImage(
-    sketchName: string,
-    base64: string,
-    imageFileName: string,
-  ): Promise<{ fileName: string } | false> {
-    const targetDir = parentDirForProjectFile(sketchName);
-    const targetName = targetDir ? `${targetDir}/${imageFileName}` : imageFileName;
-    const file = await writeProjectBase64File(projectId, targetName, base64, workspaceContext);
-    if (!file) {
-      setUploadError(t('common.exportImageFailed'));
-      return false;
-    }
-    setUploadError(null);
-    await onRefreshFiles();
-    await refreshProjectFolders();
-    return { fileName: file.name };
-  }
-
   const activeFile = useMemo<ProjectFile | null>(() => {
     if (
       activeTab === DESIGN_FILES_TAB
@@ -3292,24 +2711,15 @@ export function FileWorkspace({
       const retainedEditorFile = resolveRetainedFantayEditorFile(activeTab, visibleFiles);
       if (retainedEditorFile) return retainedEditorFile;
     }
-    const activeSketch = sketches[activeTab];
-    if (isSketchName(activeTab) && activeSketch && !activeSketch.persisted) {
-      return {
-        name: activeTab,
-        path: activeTab,
-        type: 'file',
-        size: 0,
-        mtime: Date.now(),
-        kind: 'sketch',
-        mime: 'application/json',
-      };
-    }
     return null;
-  }, [activeTab, fantayWorkspace, persistedTabs, visibleFiles, sketches]);
-  const activeViewerFile =
-    activeFile && !(activeFile.kind === 'sketch' && isSketchName(activeFile.name))
-      ? activeFile
-      : null;
+  }, [activeTab, fantayWorkspace, persistedTabs, visibleFiles]);
+  const activeViewerFile = activeFile;
+  const workspaceHidden = fantayShell?.workspaceCollapsed === true && !focusMode;
+  const frontArtifactName = workspaceHidden ? null : (activeViewerFile?.name ?? null);
+  useEffect(() => {
+    publishActiveArtifact(projectId, frontArtifactName);
+  }, [projectId, frontArtifactName]);
+  useEffect(() => () => publishActiveArtifact(projectId, null), [projectId]);
   const activeHtmlViewerFile = activeViewerFile?.kind === 'html' ? activeViewerFile : null;
   const observedActiveFileRef = useRef<string | null>(null);
   useEffect(() => {
@@ -3721,7 +3131,22 @@ export function FileWorkspace({
   );
 
   const activeWorkspaceContext = useMemo<WorkspaceContextItem | null>(() => {
+    if (fantayWorkspace && activeTab === WORKSPACE_DIALOGUE_TAB) {
+      return { id: WORKSPACE_DIALOGUE_TAB, tabId: activeTab, kind: 'side-chat', label: t('workspace.dialogue.title') };
+    }
     if (fantayWorkspace && activeTab === BOARD_TAB) return fantayBoardContext;
+    if (fantayWorkspace && activeTab === WORKSPACE_CODE_TAB) {
+      if (!codeSurfaceFile) return null;
+      const filePath = codeSurfaceFile.path ?? codeSurfaceFile.name;
+      return {
+        id: `file:${filePath}`,
+        kind: 'file',
+        label: filePath.split('/').filter(Boolean).pop() || filePath,
+        tabId: activeTab,
+        path: filePath,
+        ...(resolvedDir ? { absolutePath: joinDisplayPath(resolvedDir, filePath) } : {}),
+      };
+    }
     if (fantayEditorContext && activeFile) return fantayEditorContext;
     if (activeTab === DESIGN_SYSTEM_TAB && designSystemProject) {
       return {
@@ -3804,6 +3229,7 @@ export function FileWorkspace({
     activeLiveArtifact,
     activeTab,
     browserTabs,
+    codeSurfaceFile,
     conversations,
     designFilesTabIsEmpty,
     designFilesTabActive,
@@ -3820,21 +3246,14 @@ export function FileWorkspace({
     onActiveContextChange?.(activeWorkspaceContext);
   }, [activeWorkspaceContext, onActiveContextChange]);
 
-  // Tabs rendered are persisted tabs plus any pending (un-saved) sketches.
   const tabNames = useMemo(() => {
     const seen = new Set(persistedTabs);
     const extras: string[] = [];
     if (fantayWorkspace && isWorkspaceToolTab(activeTab) && !seen.has(activeTab)) {
       extras.push(activeTab);
     }
-    for (const name of Object.keys(sketches)) {
-      if (!sketches[name]?.persisted && !seen.has(name)) {
-        extras.push(name);
-        seen.add(name);
-      }
-    }
     return [...persistedTabs, ...extras];
-  }, [activeTab, fantayWorkspace, persistedTabs, sketches]);
+  }, [activeTab, fantayWorkspace, persistedTabs]);
 
   const orderedWorkspaceTabs = useMemo(
     () => orderWorkspaceTabs(tabNames, browserTabs),
@@ -3847,9 +3266,9 @@ export function FileWorkspace({
         if (entry.kind === 'browser') return true;
         if (isWorkspaceToolTab(entry.name)) return fantayWorkspace
           && (entry.name !== BOARD_TAB || FANTAY_BOARD_READY);
-        return isPrimaryWorkspaceTab(entry.name, visibleFiles, liveArtifactEntries, sketches);
+        return isPrimaryWorkspaceTab(entry.name, visibleFiles, liveArtifactEntries);
       }),
-    [fantayWorkspace, liveArtifactEntries, orderedWorkspaceTabs, sketches, visibleFiles],
+    [fantayWorkspace, liveArtifactEntries, orderedWorkspaceTabs, visibleFiles],
   );
 
   const workspaceTabIds = useMemo(() => {
@@ -3865,6 +3284,7 @@ export function FileWorkspace({
   }, [designSystemProject, fantayWorkspace, visibleOrderedWorkspaceTabs]);
 
   const isMotionWorkspace = projectKind === 'video' || projectKind === 'hyperframes' || visibleFiles.some((file) => file.name === 'movie-studio.json');
+  const turnChanges = useLatestTurnChanges(messages ?? [], visibleFiles, resolvedDir ?? null);
   const fantay = useFantayWorkspace({
     enabled: fantayWorkspace, projectId, projectName: projectName ?? '', resolvedDir: resolvedDir ?? null,
     viewerOnly: Boolean(viewerOnly), streaming: Boolean(streaming), runInFlight: Boolean(runInFlight),
@@ -3874,6 +3294,7 @@ export function FileWorkspace({
     files: visibleFiles, filesRefreshKey, filesGeneration, liveArtifacts: liveArtifactEntries, browserTabs,
     messages: messages ?? [], conversations: conversations ?? [], activeConversationId: activeConversationId ?? null,
     previewComments: previewComments ?? [],
+    turnChanges, onCodeActiveFileChange: setCodeSurfaceFile,
     isDeckProject: isDeck, filesAuthoritative, initialMaterializationPending,
     setPersistedActive, focusWorkspaceTab, openFile: (name) => openFile(name, { forcePersist: true }),
     openBrowserTab: (url) => (url ? openRequestedBrowserTab({ url, nonce: Date.now() }) : openBrowserTab()),
@@ -3895,9 +3316,7 @@ export function FileWorkspace({
         setPersistedActive(key);
         return;
       }
-      const sketchEntry = sketches[key];
-      if (sketchEntry && !sketchEntry.persisted) activatePending(key);
-      else setPersistedActive(key);
+      setPersistedActive(key);
     },
     close(key: string) {
       if (isBrowserTabId(key)) closeBrowserTab(key);
@@ -4019,6 +3438,10 @@ export function FileWorkspace({
       }
 
       const name = entry.name;
+      if (name === WORKSPACE_DIALOGUE_TAB) {
+        push({ id: name, tabId: name, kind: 'side-chat', label: t('workspace.dialogue.title') });
+        continue;
+      }
       if (isTerminalTabId(name)) {
         const terminalId = terminalIdFromTabId(name);
         const ordinal = terminalTabNames.indexOf(name) + 1;
@@ -4056,7 +3479,7 @@ export function FileWorkspace({
       }
 
       const file = filesByName.get(name);
-      if (file || (isSketchName(name) && sketches[name])) {
+      if (file) {
         const filePath = file?.path ?? file?.name ?? name;
         push({
           id: `file:${filePath}`,
@@ -4077,7 +3500,6 @@ export function FileWorkspace({
     liveArtifactEntries,
     orderedWorkspaceTabs,
     resolvedDir,
-    sketches,
     t,
     tabNames,
     uploadDir,
@@ -4161,8 +3583,6 @@ export function FileWorkspace({
     if (!projectShareMenuOpen) setProjectShareAccessMenuOpen(false);
   }, [projectShareMenuOpen]);
 
-  const isActiveSketch = activeFile?.kind === 'sketch' && isSketchName(activeFile.name);
-  const activeSketch = activeFile && isActiveSketch ? sketches[activeFile.name] : null;
   // The "+" launcher's create-new actions come from the registry. `openTab`
   // reuses the same tab-state path as opening a file so a new terminal:<id>
   // tab is focused; `createBrowser` opens an embedded browser tab.
@@ -4182,7 +3602,6 @@ export function FileWorkspace({
     // entry is a plain tab, so this is the only entry point to the page
     // creator. The dialog itself still owns the actual write (createBlankPage).
     createPage: () => setPageCreatorOpen(true),
-    createSketch: () => void startNewSketch(),
     createDocument: () => void createMarkdownDocument(),
     uploadDesignFiles: () => fileInputRef.current?.click(),
     // Terminal needs only the project id — spawn the PTY here and hand the
@@ -4200,48 +3619,131 @@ export function FileWorkspace({
   };
   // A read-only viewer gets no launcher edit actions (new file, import, etc.).
   const launcherActions = viewerOnly ? [] : buildLauncherActions(launcherContext);
-  const workspaceTools: WorkspaceTool[] = [];
-  if (fantayWorkspace) {
-    if (FANTAY_BOARD_READY) {
-      workspaceTools.push({
-        id: 'board', iconName: 'layout', labelKey: 'fantayShell.workspace.board',
-        run: () => openWorkspaceTool(BOARD_TAB),
-      });
-    }
-    workspaceTools.push(
-      {
-        id: 'files', iconName: 'folder', labelKey: 'fantayShell.workspace.files',
-        run: () => openWorkspaceTool(DESIGN_FILES_TAB),
-      },
-      {
-        id: 'design-system', iconName: 'palette',
-        labelKey: isMotionWorkspace ? 'motion.style.workspaceTitle' : 'fantayShell.workspace.designSystem',
-        run: () => openWorkspaceTool(designSystemProject ? DESIGN_SYSTEM_TAB : PROJECT_DESIGN_SYSTEM_TAB),
-      },
-    );
-  }
-  function renderTabLauncher(inline: boolean) {
+  const trackLauncher = (input: TabLauncherTrackInput) =>
+    trackTabLauncherClick(analytics.track, {
+      page_name: 'file_manager',
+      area: 'tab_launcher',
+      ...(projectId ? { project_id: projectId } : {}),
+      ...input,
+    });
+  function renderTabLauncher() {
     return (
       <TabLauncherMenu
-        inline={inline}
         anchor={launcherBtnRef.current}
         files={visibleFiles}
         workspaceContexts={workspaceContexts}
         openTabNames={tabNames}
         actions={launcherActions}
-        tools={inline ? workspaceTools : undefined}
         launcherContext={launcherContext}
         onOpenFile={openFile}
         onOpenTab={focusWorkspaceTab}
-        onTrack={(input) =>
-          trackTabLauncherClick(analytics.track, {
-            page_name: 'file_manager',
-            area: 'tab_launcher',
-            ...(projectId ? { project_id: projectId } : {}),
-            ...input,
-          })
-        }
+        onTrack={trackLauncher}
         onClose={() => setLauncherOpen(false)}
+      />
+    );
+  }
+  // The start page (the workspace's new-tab surface): the tools a user can open by hand, the create
+  // actions, and what the surface router suggests for the task at hand. The same surfaces are what the
+  // agent and the activity engine open on their own (see fantay/workspace/surfaces).
+  function renderWorkspaceStart() {
+    const browserAction = launcherActions.find((action) => action.id === 'new-browser');
+    const tools: WorkspaceStartTool[] = [];
+    if (renderSideDialogue) {
+      tools.push({ id: 'side-dialogue', iconName: 'comment', label: t('workspace.dialogue.title'),
+        hint: t('workspace.dialogue.hint'), run: () => openWorkspaceTool(WORKSPACE_DIALOGUE_TAB) });
+    }
+    if (FANTAY_BOARD_READY) {
+      tools.push({
+        id: 'board', iconName: 'layout',
+        label: t('fantayShell.workspace.board'), hint: t('workspace.start.tool.boardHint'),
+        run: () => openWorkspaceTool(BOARD_TAB),
+      });
+    }
+    tools.push(
+      {
+        id: 'files', iconName: 'folder',
+        label: t('fantayShell.workspace.files'), hint: t('workspace.start.tool.filesHint'),
+        run: () => openWorkspaceTool(DESIGN_FILES_TAB),
+      },
+      {
+        id: 'code', iconName: 'file-code',
+        label: t('workspace.code.title'), hint: t('workspace.start.tool.codeHint'),
+        run: () => openWorkspaceTool(WORKSPACE_CODE_TAB),
+      },
+    );
+    if (browserAction) {
+      tools.push({
+        id: 'browser', iconName: 'globe',
+        label: t('workspace.start.tool.browser'), hint: t('workspace.start.tool.browserHint'),
+        run: () => {
+          trackLauncher({ element: 'create', action_id: browserAction.id });
+          browserAction.run(launcherContext);
+        },
+      });
+    }
+    tools.push({
+      id: 'design-system', iconName: 'palette',
+      label: t(isMotionWorkspace ? 'motion.style.workspaceTitle' : 'fantayShell.workspace.designSystem'),
+      hint: t('workspace.start.tool.designSystemHint'),
+      run: () => openWorkspaceTool(designSystemProject ? DESIGN_SYSTEM_TAB : PROJECT_DESIGN_SYSTEM_TAB),
+    });
+    const actions: WorkspaceStartAction[] = launcherActions
+      .filter((action) => action !== browserAction)
+      .map((action) => ({
+        id: action.id,
+        iconName: action.iconName,
+        label: t(action.labelKey),
+        run: () => action.run(launcherContext),
+      }));
+    // "Latest result" is a claim about the agent's work: only a file written since this conversation
+    // began can be one. A file the user brought in earlier is just a file, and Recent already lists it.
+    const chat = messages ?? [];
+    const conversationStart = chat.some((message) => message.role === 'assistant')
+      ? chat.find((message) => typeof message.createdAt === 'number')?.createdAt ?? null
+      : null;
+    const resultFiles = conversationStart === null
+      ? []
+      : visibleFiles.filter((file) => (file.mtime ?? 0) >= conversationStart);
+    const changedPaths = new Set(turnChanges.map((change) => change.path));
+    const surfaceSuggestions = suggestSurfaces({ turnChanges, files: resultFiles, openTabNames: tabNames });
+    const offersChanges = surfaceSuggestions.some((suggestion) => suggestion.kind === 'changes');
+    const suggestions: WorkspaceStartSuggestion[] = surfaceSuggestions
+      // One row per thing: a file the changes row already leads to is not offered a second time.
+      .filter((suggestion) => suggestion.kind !== 'latest' || !offersChanges || !changedPaths.has(suggestion.fileName))
+      .map((suggestion) => {
+        if (suggestion.kind === 'changes') {
+          return {
+            id: 'changes',
+            iconName: 'sparkles',
+            label: t('workspace.start.suggest.changes'),
+            meta: t('workspace.start.suggest.changesMeta', { count: suggestion.fileCount }),
+            run: () => {
+              requestCodeSurface(projectId, { file: suggestion.intent.file ?? null, view: 'changes' });
+              openWorkspaceTool(WORKSPACE_CODE_TAB);
+            },
+          };
+        }
+        const fileName = suggestion.fileName;
+        return {
+          id: 'latest',
+          iconName: 'eye',
+          label: t('workspace.start.suggest.latest', { name: fileName.split('/').pop() || fileName }),
+          meta: t('workspace.start.suggest.latestMeta'),
+          run: () => openFile(fileName),
+        };
+      });
+    return (
+      <WorkspaceStart
+        tools={tools}
+        actions={actions}
+        suggestions={suggestions}
+        files={visibleFiles}
+        openTabs={workspaceContexts.filter((item) => item.tabId && tabNames.includes(item.tabId))}
+        openTabNames={tabNames}
+        onOpenFile={openFile}
+        onOpenTab={focusWorkspaceTab}
+        onShowAllFiles={() => openWorkspaceTool(DESIGN_FILES_TAB)}
+        onTrack={trackLauncher}
       />
     );
   }
@@ -4310,7 +3812,6 @@ export function FileWorkspace({
           }}
         />
       ) : null}
-      <SketchEnginePrewarm />
       <div className="ws-tabs-shell" data-workspace-root={fantay.root}>
         {onFocusModeChange && focusMode ? (
           <button
@@ -4435,12 +3936,9 @@ export function FileWorkspace({
                 />
               );
             }
-            const sketchEntry = sketches[name];
-            const dirtyMark =
-              sketchEntry && (sketchEntry.dirty || !sketchEntry.persisted) ? ' •' : '';
             const onDisk = visibleFiles.find((f) => f.name === name);
             const liveArtifact = liveArtifactEntries.find((entry) => entry.tabId === name);
-            const kind = liveArtifact ? 'live-artifact' : onDisk?.kind ?? (isSketchName(name) ? 'sketch' : 'text');
+            const kind = liveArtifact ? 'live-artifact' : onDisk?.kind ?? 'text';
             const isTerminal = isTerminalTabId(name);
             const isSideChat = isSideChatTabId(name);
             // Terminal and side-chat tabs are not files: give them a friendly
@@ -4459,7 +3957,9 @@ export function FileWorkspace({
               );
               label = conv?.title?.trim() || t('workspace.sideChatDefaultTitle');
             } else {
-              label = `${liveArtifact?.title ?? name}${dirtyMark}`;
+              // Product shell: the tab carries the file's own name (its folder is in the viewer's bar).
+              const shown = liveArtifact?.title ?? (fantayWorkspace ? fileTabLabel(name, tabNames) : name);
+              label = shown;
             }
             const iconNameOverride: IconName | undefined = isTerminal
               ? 'terminal'
@@ -4542,7 +4042,7 @@ export function FileWorkspace({
           {fantay.headerActions}
         </div>
       </div>
-      {!fantayWorkspace && !initialMaterializationPending && launcherOpen ? renderTabLauncher(false) : null}
+      {!fantayWorkspace && !initialMaterializationPending && launcherOpen ? renderTabLauncher() : null}
       {/* Workspace-owned toasts anchor to this pane's bottom-center instead of
           the viewport's: a bare fixed .od-toast centers across the whole
           window, drifting over the chat pane and covering the composer send
@@ -4645,6 +4145,9 @@ export function FileWorkspace({
           </div>
         )) : null}
         {fantay.boardLayer}
+        {fantay.codeLayer}
+        {fantayWorkspace && !initialMaterializationPending && (activeTab === WORKSPACE_DIALOGUE_TAB || tabNames.includes(WORKSPACE_DIALOGUE_TAB))
+          ? renderSideDialogue?.(activeTab === WORKSPACE_DIALOGUE_TAB) : null}
         {initialMaterializationPending ? (
           <DesignFilesPanel
             projectId={projectId}
@@ -4663,11 +4166,10 @@ export function FileWorkspace({
             onUpload={noop}
             onUploadFiles={noop}
             onPaste={noop}
-            onNewSketch={noop}
           />
         ) : fantayWorkspace && activeTab === WORKSPACE_START_TAB ? (
-          renderTabLauncher(true)
-        ) : fantay.boardActive ? null : fantay.body ? (
+          renderWorkspaceStart()
+        ) : fantay.boardActive || fantay.codeActive || (fantayWorkspace && activeTab === WORKSPACE_DIALOGUE_TAB) ? null : fantay.body ? (
           fantay.body
         ) : activeTab === DESIGN_SYSTEM_TAB && designSystemProject ? (
           <DesignSystemProjectPanel
@@ -4695,7 +4197,7 @@ export function FileWorkspace({
             githubConnected={githubConnected}
           />
         ) : designFilesTabActive ? (
-          <DesignFilesPanel
+          <FilesTabPanel
             key={projectId}
             projectId={projectId}
             projectKind={projectKind}
@@ -4716,20 +4218,7 @@ export function FileWorkspace({
             onCurrentDirChange={setUploadDir}
             navState={designFilesNavRef.current}
             onNavStateChange={onDesignFilesNavStateChange}
-            onOpenFile={(name) => {
-              // Re-engagement entry: opening an existing sketch from the file
-              // list (new_sketch already covers fresh creation).
-              if (isSketchName(name)) {
-                trackFileManagerClick(analytics.track, {
-                  page_name: 'file_manager',
-                  area: 'file_manager',
-                  element: 'open_sketch',
-                  project_id: projectId,
-                  project_kind: projectKind,
-                });
-              }
-              openFile(name);
-            }}
+            onOpenFile={openFile}
             onOpenLiveArtifact={(tabId) => openFile(tabId)}
             onRenameFile={handleRename}
             onDeleteFile={(name) => {
@@ -4772,16 +4261,6 @@ export function FileWorkspace({
                 project_kind: projectKind,
               });
               void createMarkdownDocument();
-            }}
-            onNewSketch={() => {
-              trackFileManagerClick(analytics.track, {
-                page_name: 'file_manager',
-                area: 'file_manager',
-                element: 'new_sketch',
-                project_id: projectId,
-                project_kind: projectKind,
-              });
-              void startNewSketch();
             }}
             onOpenBrowser={() => {
               trackFileManagerClick(analytics.track, {
@@ -4826,49 +4305,6 @@ export function FileWorkspace({
           />
         ) : isBrowserTabId(activeTab) ? (
           null
-        ) : isActiveSketch && activeFile ? (
-          activeSketch?.loaded ? (
-            <SketchEditor
-              fileName={activeFile.name}
-              scene={activeSketch.scene}
-              legacyItems={activeSketch.items}
-              hasPreservedRawItems={
-                !activeSketch.discardRawItemsOnSave && activeSketch.rawItems.length > activeSketch.items.length
-              }
-              onSceneChange={(scene, options) => setSketchScene(activeFile.name, scene, options)}
-              onClear={() => clearSketch(activeFile.name)}
-              onSave={async (scene) => {
-                // Fires only on the explicit "Save" button — background
-                // autosave calls saveSketch() directly and is not tracked.
-                const result = await saveSketch(activeFile.name, scene);
-                trackSketchSaveResult(analytics.track, {
-                  page_name: 'file_manager',
-                  area: 'sketch_editor',
-                  result: result === false ? 'failed' : 'success',
-                  project_id: projectId,
-                  project_kind: projectKind,
-                });
-                return result;
-              }}
-              onExportImage={async (base64, fileName) => {
-                const result = await exportSketchImage(activeFile.name, base64, fileName);
-                trackSketchExportResult(analytics.track, {
-                  page_name: 'file_manager',
-                  area: 'sketch_editor',
-                  result: result === false ? 'failed' : 'success',
-                  project_id: projectId,
-                  project_kind: projectKind,
-                });
-                return result;
-              }}
-              onOpenExportedImage={openFile}
-              saving={activeSketch.saving}
-              dirty={activeSketch.dirty || !activeSketch.persisted}
-              savedAt={activeSketch.savedAt}
-            />
-          ) : (
-            <div className="viewer-empty">{t('workspace.loadingSketch')}</div>
-          )
         ) : isSideChatTabId(activeTab) && chatConfig && chatAgentsById ? (
           <SideChatTab
             key={`${projectId}:${activeTab}`}
@@ -7340,7 +6776,6 @@ function isPrimaryWorkspaceTab(
   name: string,
   files: ProjectFile[],
   liveArtifactEntries: LiveArtifactWorkspaceEntry[],
-  sketches: Record<string, SketchState>,
 ): boolean {
   if (
     isBrowserTabId(name)
@@ -7356,7 +6791,7 @@ function isPrimaryWorkspaceTab(
     return file.type !== 'dir';
   }
   if (/\.html?$/i.test(name) || isRetainedFantayEditorPath(name)) return true;
-  return Boolean(isSketchName(name) && sketches[name]);
+  return false;
 }
 
 function pageDisplayName(name: string): string {
@@ -9037,7 +8472,7 @@ function kindIconName(
   return 'file';
 }
 
-function isBrowserTabId(tabId: string): boolean {
+export function isBrowserTabId(tabId: string): boolean {
   return tabId.startsWith(BROWSER_TAB_PREFIX);
 }
 
@@ -9144,20 +8579,6 @@ function orderWorkspaceTabs(
   }
 
   return ordered;
-}
-
-function isSketchName(name: string): boolean {
-  return isSketchJsonFileName(name);
-}
-
-function parentDirForProjectFile(name: string): string {
-  const normalized = name.replace(/\\/g, '/');
-  const slash = normalized.lastIndexOf('/');
-  return slash > 0 ? normalized.slice(0, slash) : '';
-}
-
-function sameFileName(a: string, b: string): boolean {
-  return a === b || a.toLocaleLowerCase() === b.toLocaleLowerCase();
 }
 
 function isLiveArtifactImplementationPath(name: string): boolean {
