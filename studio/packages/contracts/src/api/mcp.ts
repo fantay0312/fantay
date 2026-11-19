@@ -29,6 +29,8 @@ export interface McpServerConfig {
    * spawn so users can keep credentials around without them being wired into
    * every run. */
   enabled: boolean;
+  /** Forward tools through Fantay's lazy discovery hub. Omitted for direct registrations. */
+  onDemand?: boolean;
   /** HTTP/SSE only: whether OpenDesign should offer its managed OAuth flow.
    * `none` means no daemon-managed OAuth; credentials, if any, are supplied
    * by headers or by a trusted local server. */

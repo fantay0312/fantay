@@ -333,7 +333,7 @@ export function createOdNextInitialPromptBundleService(
       }
     }
     const connectedExternalMcp = enabledPromptMcp
-      .filter((server) => connectedPromptServerIds.has(server.id))
+      .filter((server) => !server.onDemand && connectedPromptServerIds.has(server.id))
       .map((server) => ({ id: server.id, label: server.label }));
     // The Bundle is a tree, so the recipe head, the frozen Skill roster, the
     // Skill bodies, and the attachment identities are four separate slots

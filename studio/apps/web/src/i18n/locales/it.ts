@@ -5215,6 +5215,7 @@ export const it: Dict = {
   'mcp.fieldEnv': 'Env (KEY=VALUE)',
   'mcp.fieldEnvShort': 'Env',
   'mcp.fieldHeaders': 'Headers (KEY=VALUE)',
+  'mcp.onDemand': "Carica gli strumenti su richiesta (connessione diretta per app e risorse MCP)",
   'mcp.fieldId': 'ID',
   'mcp.fieldOAuthMode': 'OAuth mode',
   'mcp.fieldTransport': 'Transport',

@@ -5215,6 +5215,7 @@ export const ko: Dict = {
   'mcp.fieldEnv': 'Env (KEY=VALUE)',
   'mcp.fieldEnvShort': 'Env',
   'mcp.fieldHeaders': 'Headers (KEY=VALUE)',
+  'mcp.onDemand': "필요할 때 도구 검색 (MCP 앱과 리소스는 직접 연결)",
   'mcp.fieldId': 'ID',
   'mcp.fieldOAuthMode': 'OAuth mode',
   'mcp.fieldTransport': 'Transport',

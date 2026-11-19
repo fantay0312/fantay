@@ -336,20 +336,20 @@ function observeCatalogRead(options: CatalogReadObserver | undefined, success: b
 
 export async function fetchSkills(
   workspaceContext?: WorkspaceCollabContext | null,
-  options?: CatalogReadObserver,
+  options?: CatalogReadObserver & { bundledOnly?: boolean; fallbackToBundled?: boolean },
 ): Promise<SkillSummary[]> {
   try {
     const resp = await fetch(
-      '/api/skills',
+      options?.bundledOnly ? '/api/skills?source=built-in' : '/api/skills',
       workspaceContext ? { headers: workspaceProjectHeaders(workspaceContext) } : undefined,
     );
-    if (!resp.ok) { observeCatalogRead(options, false); return []; }
+    if (!resp.ok) throw new Error('Skill catalog unavailable');
     const json = (await resp.json()) as { skills: SkillSummary[] };
     observeCatalogRead(options, Array.isArray(json.skills));
     return json.skills ?? [];
   } catch {
     observeCatalogRead(options, false);
-    return [];
+    return options?.fallbackToBundled ? fetchSkills(null, { bundledOnly: true }) : [];
   }
 }
 
@@ -647,10 +647,11 @@ export async function deleteSkill(
 export async function fetchSkill(
   id: string,
   workspaceContext?: WorkspaceCollabContext | null,
+  bundledOnly = false,
 ): Promise<SkillDetail | null> {
   try {
     const resp = await fetch(
-      `/api/skills/${encodeURIComponent(id)}`,
+      `/api/skills/${encodeURIComponent(id)}${bundledOnly ? '?source=built-in' : ''}`,
       workspaceContext ? { headers: workspaceProjectHeaders(workspaceContext) } : undefined,
     );
     if (!resp.ok) return null;

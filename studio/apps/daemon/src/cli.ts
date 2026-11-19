@@ -118,6 +118,7 @@ const MCP_STRING_FLAGS = new Set([
   'daemon-url',
 ]);
 const MCP_BOOLEAN_FLAGS = new Set([
+  'full-tools',
   'help',
   'h',
 ]);
@@ -2631,6 +2632,10 @@ Stock search:
 // ---------------------------------------------------------------------------
 
 async function runMcp(args) {
+  if (args[0] === 'route' || args[0] === 'hub') {
+    const { runExternalMcpRouter } = await import('./mcp-external-router.js');
+    return runExternalMcpRouter(args[0] === 'hub' ? 'standalone' : 'run');
+  }
   if (args[0] === 'install') {
     return runMcpInstall(args.slice(1));
   }
@@ -2658,6 +2663,7 @@ async function runMcp(args) {
   const { runMcpStdio } = await import('./mcp.js');
   await runMcpStdio({
     daemonUrl,
+    fullTools: Boolean(flags['full-tools']),
     ...(flags['daemon-url']
       ? {}
       : {
@@ -2667,7 +2673,7 @@ async function runMcp(args) {
 }
 
 function printMcpHelp() {
-  console.log(`Usage: od mcp [--daemon-url <url>]
+  console.log(`Usage: od mcp [--daemon-url <url>] [--full-tools]
 
 Run a stdio MCP (Model Context Protocol) server that proxies project
 tool calls to a running Fantay daemon. Wire it into a coding agent
@@ -2698,7 +2704,11 @@ Environment:
                        can be set to 0 to keep the process alive until
                        the MCP client disconnects.
 
-Tools exposed:
+By default find_tools and describe_tool discover one schema on demand, and
+call_tool runs that operation. find_skills and read_skill page through visible
+workflows. Use --full-tools for hosts requiring native per-tool registrations.
+
+Project operations include:
   list_projects                  list every Fantay project
   get_active_context             what project/file the user has open right now
   get_artifact([project, entry]) bundle: entry file + every referenced sibling
@@ -2718,6 +2728,10 @@ For the copy-paste, per-client snippet (with absolute paths resolved
 for your machine, plus a one-click deeplink for Cursor), open Settings
 → MCP server in the Fantay app. The daemon must be running locally
 for tool calls to succeed.
+
+To access enabled third-party servers marked for on-demand discovery from an
+external host, add a second registration with the same runtime and OD_DATA_DIR,
+invoking od mcp hub. It picks up changes to the saved server settings.
 
 To register this server into a coding agent's own config automatically:
   od mcp install <agent> [--uninstall] [--print] [--json] [--daemon-url <url>]
@@ -10496,6 +10510,8 @@ async function runSkills(args) {
     console.log(`Usage:
   od skill install <https://github.com/owner/repo|github:owner/repo|https://…tar.gz|https://…tgz> [--json]
   od skill list [--workspace <id> --workspace-member <id>]
+  od skill find [query] [--offset <n>] [--json]
+  od skill read <id> [--file SKILL.md|references|references/<path>] [--offset <n>] [--json]
   od skill show <id> [--workspace <id> --workspace-member <id>]
   od skill uninstall <id>
 
@@ -10504,6 +10520,27 @@ async function runSkills(args) {
   }
   if (args[0] === 'install' || args[0] === 'add') return runSkillInstall(args.slice(1));
   if (args[0] === 'uninstall' || args[0] === 'remove') return runSkillUninstall(args.slice(1));
+  if (args[0] === 'find' || args[0] === 'read') {
+    const strings = new Set([...LIBRARY_STRING_FLAGS, 'file', 'offset']);
+    const rest = args.slice(1);
+    const flags = parseFlags(rest, { string: strings, boolean: LIBRARY_BOOLEAN_FLAGS });
+    const values = positionalArgs(rest, strings);
+    const base = await libraryDaemonUrl(flags);
+    const reading = args[0] === 'read';
+    if (reading && !values[0]) throw new Error('Usage: od skill read <id> [--file <path>] [--offset <n>]');
+    const url = new URL(reading ? `/api/skills/${encodeURIComponent(values[0])}` : '/api/skills', base);
+    if (reading) url.searchParams.set('file', flags.file ?? 'SKILL.md');
+    else {
+      url.searchParams.set('discover', '1');
+      url.searchParams.set('query', flags.query ?? values.join(' '));
+    }
+    url.searchParams.set('offset', flags.offset ?? '0');
+    const scope = flags.workspace !== undefined || flags['workspace-member'] !== undefined ? flags
+      : { workspace: process.env.OD_WORKSPACE_ID, 'workspace-member': process.env.OD_WORKSPACE_MEMBER_ID };
+    const resp = await fetch(url, { headers: workspaceHeadersFromExplicitFlags(scope) ?? {} });
+    if (!resp.ok) return structuredHttpFailure(resp);
+    return writeJson(await resp.json());
+  }
   return runLibraryList('skills', args);
 }
 

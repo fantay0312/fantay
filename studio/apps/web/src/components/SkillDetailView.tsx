@@ -92,7 +92,10 @@ export function SkillDetailView({
     setDetail(null);
     setLoading(true);
     setLoadFailed(false);
-    void fetchSkill(summary.id, workspaceContext).then((next) => {
+    const request = summary.source === 'built-in'
+      ? fetchSkill(summary.id, null, true)
+      : fetchSkill(summary.id, workspaceContext);
+    void request.then((next) => {
       if (cancelled) return;
       setDetail(next);
       setLoadFailed(!next);
@@ -101,7 +104,7 @@ export function SkillDetailView({
     return () => {
       cancelled = true;
     };
-  }, [summary.id, reloadToken, workspaceContext]);
+  }, [summary.id, summary.source, reloadToken, workspaceContext]);
 
   useEffect(() => {
     titleRef.current?.focus();

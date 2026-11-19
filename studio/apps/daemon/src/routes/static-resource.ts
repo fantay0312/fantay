@@ -23,6 +23,7 @@ import {
   updateUserSkill,
 } from '../skills.js';
 import { workspaceTeamSkillBindingResourceId } from '../skills/workspace-team-binding.js';
+import { findSkills, readSkillPage } from '../skills/discovery.js';
 import { parseFrontmatter } from '../design-systems/frontmatter.js';
 import {
   deleteWorkspaceResourceByResourceId,
@@ -499,17 +500,25 @@ export function registerStaticResourceRoutes(app: Express, ctx: RegisterStaticRe
       // Workspace-scoped (see `skillVisibleFromWorkspace` in skills.ts): a
       // skill imported into a different workspace than the caller's is
       // hidden, same one-way rule `GET /api/plugins` already applies.
-      const authority = await resolveWorkspaceAuthority(req, res, {
+      const bundledOnly = req.query.source === 'built-in';
+      const authority = bundledOnly ? null : await resolveWorkspaceAuthority(req, res, {
         verifyAuthority:
           ctx.verifyWorkspaceReadAuthority
           ?? ctx.verifyWorkspaceRequestAuthority,
       });
       if (authority === undefined) return;
       const workspaceId = authority?.workspaceId ?? null;
-      const skills = await listAllSkills({
+      const skills = bundledOnly ? await listSkills(SKILLS_DIR, { firstRootSource: 'built-in' }) : await listAllSkills({
         workspaceId,
         workspaceMemberId: authority?.workspaceMemberId ?? null,
       });
+      if (req.query.discover === '1') {
+        try {
+          return res.json(findSkills(skills, String(req.query.query ?? ''), Number(req.query.offset ?? 0)));
+        } catch (error) {
+          return res.status(400).json({ error: (error as Error).message });
+        }
+      }
       // Strip full body + on-disk dir from the listing — frontend fetches the
       // body via /api/skills/:id when needed (keeps the listing payload small).
       res.json({
@@ -525,15 +534,24 @@ export function registerStaticResourceRoutes(app: Express, ctx: RegisterStaticRe
 
   app.get('/api/skills/:id', async (req, res) => {
     try {
-      const authority = await resolveWorkspaceAuthority(req, res);
+      const bundledOnly = req.query.source === 'built-in';
+      const authority = bundledOnly ? null : await resolveWorkspaceAuthority(req, res);
       if (authority === undefined) return;
       const workspaceId = authority?.workspaceId ?? null;
-      const skills = await listAllSkills({
+      const skills = bundledOnly ? await listSkills(SKILLS_DIR, { firstRootSource: 'built-in' }) : await listAllSkills({
         workspaceId,
         workspaceMemberId: authority?.workspaceMemberId ?? null,
       });
       const skill = findSkillById(skills, req.params.id);
       if (!skill) return res.status(404).json({ error: 'skill not found' });
+      if (typeof req.query.file === 'string') {
+        try {
+          return res.json(await readSkillPage(skill, req.query.file, Number(req.query.offset ?? 0)));
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code) return res.status(404).json({ error: 'Reference unavailable' });
+          return res.status(400).json({ error: (error as Error).message });
+        }
+      }
       const { dir: _dir, ...serializable } = skill;
       res.json(serializable);
     } catch (err: any) {

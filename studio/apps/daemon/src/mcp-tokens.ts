@@ -24,6 +24,8 @@ import path from 'node:path';
  * authorization.
  */
 export interface StoredMcpToken {
+  /** MCP endpoint origin used for this authorization, which can differ from the OAuth audience. */
+  serverOrigin?: string;
   /** The bearer token to send as `Authorization: Bearer …`. */
   accessToken: string;
   /** Refresh token (RFC 6749 §6) if the auth server issued one. */
@@ -133,6 +135,7 @@ function sanitizeToken(raw: unknown): StoredMcpToken | null {
       ? raw.resourceUrl.trim()
       : undefined;
   const out: StoredMcpToken = { accessToken, tokenType, savedAt };
+  if (typeof raw.serverOrigin === 'string') out.serverOrigin = raw.serverOrigin;
   if (refreshToken) out.refreshToken = refreshToken;
   if (scope) out.scope = scope;
   if (expiresAt !== undefined) out.expiresAt = expiresAt;

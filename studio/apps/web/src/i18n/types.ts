@@ -5485,6 +5485,7 @@ export interface Dict extends PaDict {
   'mcp.fieldEnv': string;
   'mcp.fieldEnvShort': string;
   'mcp.fieldHeaders': string;
+  'mcp.onDemand': string;
   'mcp.fieldId': string;
   'mcp.fieldOAuthMode': string;
   'mcp.fieldTransport': string;

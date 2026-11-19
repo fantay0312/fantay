@@ -5215,6 +5215,7 @@ export const fr: Dict = {
   'mcp.fieldEnv': 'Env (KEY=VALUE)',
   'mcp.fieldEnvShort': 'Env',
   'mcp.fieldHeaders': 'Headers (KEY=VALUE)',
+  'mcp.onDemand': "Charger les outils à la demande (connexion directe pour les applications et ressources MCP)",
   'mcp.fieldId': 'ID',
   'mcp.fieldOAuthMode': 'OAuth mode',
   'mcp.fieldTransport': 'Transport',

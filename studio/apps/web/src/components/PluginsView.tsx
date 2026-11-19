@@ -1464,16 +1464,17 @@ export function ExtensionsMarketplace({
       && marketplaceIdentityRef.current === issuedIdentity
       && read.isStillCurrent(emContextRef.current);
     if (readMode === 'blocked') {
-      const [bundled, catalogs] = await Promise.all([
-        listPlugins({ includeHidden: true }),
+      const [bundled, catalogs, shippedSkills] = await Promise.all([
+        listPlugins({ includeHidden: true, bundledOnly: true }),
         listPluginMarketplaces(),
+        fetchSkills(null, { bundledOnly: true }),
       ]);
       if (!isCurrent()) return;
       // The shipped catalog is readable without workspace authority.
       setPlugins([]);
       setAllInstalledPlugins(bundled.filter(plugin => plugin.sourceKind === 'bundled'));
       setMarketplaces(catalogs.filter(catalog => catalog.id === 'official'));
-      setSkills([]);
+      setSkills(shippedSkills.filter(skill => skill.source === 'built-in'));
       setLoadedMarketplaceIdentity(issuedIdentity);
       setLoading(false);
       return;
@@ -1488,7 +1489,7 @@ export function ExtensionsMarketplace({
       // its workspace-scoped filter — mirrors `listPlugins`'s
       // `workspaceContext` in `PluginsView` above (routes/plugins/index.ts's
       // `GET /api/plugins`).
-      fetchSkills(read.context),
+      fetchSkills(read.context, { fallbackToBundled: true }),
     ]);
     // Discard an answer for an identity the user has left. `setLoading(false)` is
     // deliberately skipped too: a stale response is not evidence that the CURRENT
@@ -2212,7 +2213,7 @@ export function ExtensionsMarketplace({
     return cards.filter((card) => {
       if (category && card.category?.slug !== category) return false;
       if (!q) return true;
-      return `${card.title} ${card.description}`.toLowerCase().includes(q);
+      return `${card.id} ${card.title} ${card.description}`.toLowerCase().includes(q);
     });
   }, [cards, category, query]);
   const catalogLoading =

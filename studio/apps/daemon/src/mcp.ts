@@ -40,6 +40,7 @@ import {
   type WorkspaceProjectsResponse,
 } from '@open-design/contracts';
 import { randomUUID } from 'node:crypto';
+import { describeTool, findTools, lookupTool, resultPageTool, RoutedResults, routeOffset, routeQuery, routerTools, skillTools, targetArguments } from './mcp-discovery.js';
 
 import { postCreateArtifactRequest } from './artifacts/create.js';
 import { resolveMcpWorkspaceContext } from './mcp-workspace-context.js';
@@ -80,6 +81,7 @@ export const MCP_SERVER_INSTRUCTIONS = [
 
 type JsonObject = Record<string, unknown>;
 interface RunMcpOptions {
+  fullTools?: boolean;
   daemonUrl: string | URL;
   resolveDaemonUrl?: () => Promise<string | URL>;
 }
@@ -116,6 +118,8 @@ interface McpToolCallResult {
 }
 
 const SAFE_MCP_DAEMON_RETRY_CALLS = new Set([
+  'find_skills',
+  'read_skill',
   'get_active_context',
   'get_artifact',
   'get_file',
@@ -366,6 +370,7 @@ const EXTERNAL_PLUGIN_CONTEXT_ARG = {
 } as const;
 
 export const TOOL_DEFS = [
+  ...skillTools,
   {
     name: 'collect_brief',
     description:
@@ -900,9 +905,29 @@ export function localMcpToolDefinitions() {
   return TOOL_DEFS;
 }
 
+const directTools = TOOL_DEFS.filter(tool => ['collect_brief', 'confirm_brief', 'find_skills', 'read_skill'].includes(tool.name));
+// Keep the interactive brief on its native tool, with its UI resource metadata.
+// list_skills remains available to legacy clients; the routed equivalent is find_skills.
+const routedTools = TOOL_DEFS.filter(tool => !directTools.includes(tool) && tool.name !== 'list_skills');
+const toolSearchTerms: Record<string, string> = {
+  list_projects: '列出项目 项目列表', get_project: '项目详情 预览', get_active_context: '当前项目 活动文件',
+  create_project: '创建项目 新建项目', delete_project: '删除项目',
+  get_file: '读取文件 内容', list_files: '列出文件 文件目录', search_files: '搜索文件 搜索项目文件 查找内容',
+  write_file: '写入文件 保存文件', delete_file: '删除文件', get_artifact: '读取作品 设计产物 源文件',
+  create_artifact: '创建作品 生成文件', start_run: '启动任务 生成设计', get_run: '任务进度 运行状态',
+  cancel_run: '取消任务 停止运行', workbench_find: '搜索工作台 灵感 素材库',
+  workbench_read: '读取素材 笔记 高亮', list_agents: '可用智能体', list_plugins: '插件列表 专家套件',
+  get_tokentosea_login_help: '登录帮助', get_tokentosea_login_status: '登录状态',
+};
+export const compactMcpTools = [...routerTools, resultPageTool, ...directTools];
+
 type RuntimeJsonSchema = {
   type?: string;
   enum?: unknown[];
+  const?: unknown;
+  minimum?: number;
+  maximum?: number;
+  maxLength?: number;
   required?: string[];
   properties?: Record<string, RuntimeJsonSchema>;
   items?: RuntimeJsonSchema;
@@ -914,6 +939,13 @@ function validateRuntimeJsonSchema(
   schema: RuntimeJsonSchema,
   path: string,
 ): void {
+  if (schema.const !== undefined && value !== schema.const) throw pluginContractError(`${path} is not an allowed value`);
+  if (typeof value === 'string' && schema.maxLength !== undefined && value.length > schema.maxLength) {
+    throw pluginContractError(`${path} is too long`);
+  }
+  if (schema.type === 'integer' && !Number.isSafeInteger(value)) throw pluginContractError(`${path} must be an integer`);
+  if (typeof value === 'number' && ((schema.minimum !== undefined && value < schema.minimum)
+    || (schema.maximum !== undefined && value > schema.maximum))) throw pluginContractError(`${path} is out of range`);
   if (schema.enum && !schema.enum.includes(value)) {
     throw pluginContractError(`${path} is not an allowed value`);
   }
@@ -945,13 +977,13 @@ function validateRuntimeJsonSchema(
   }
   const record = value as Record<string, unknown>;
   for (const required of schema.required ?? []) {
-    if (!(required in record)) {
+    if (!Object.hasOwn(record, required)) {
       throw pluginContractError(`${path}.${required} is required`);
     }
   }
   const properties = schema.properties ?? {};
   if (schema.additionalProperties === false) {
-    const unsupported = Object.keys(record).find((key) => !(key in properties));
+    const unsupported = Object.keys(record).find((key) => !Object.hasOwn(properties, key));
     if (unsupported) {
       throw pluginContractError(`${path}.${unsupported} is unsupported`);
     }
@@ -1939,7 +1971,11 @@ async function runMcpStdioImplementation(options: RunMcpOptions): Promise<void> 
     { name: SERVER_NAME, version: SERVER_VERSION },
     {
       capabilities: { tools: {}, resources: {} },
-      instructions: [
+      instructions: !options.fullTools ? [
+        'Fantay desktop. Search workflows with find_skills and read_skill. For project and run operations use find_tools, describe_tool, then call_tool.',
+        'Project defaults to the active project. For a new design use collect_brief unless skipped. Reuse the same requestId when retrying start_run. Poll get_run until terminal.',
+        MCP_SERVER_INSTRUCTIONS,
+      ].join(' ') : [
         MCP_SERVER_INSTRUCTIONS,
         '',
         'Fantay (OD) is a local-first design workspace. The user typically',
@@ -2050,13 +2086,20 @@ async function runMcpStdioImplementation(options: RunMcpOptions): Promise<void> 
       ].join('\n'),
     },
   );
+  const pages = new RoutedResults();
 
   server.setRequestHandler(ListToolsRequestSchema, withMcpActivity(async () => ({
-    tools: TOOL_DEFS,
+    tools: options.fullTools ? TOOL_DEFS : compactMcpTools,
   })));
 
-  server.setRequestHandler(ListResourcesRequestSchema, withMcpActivity(async () => {
-    return await _listMcpResources(daemonTarget);
+  server.setRequestHandler(ListResourcesRequestSchema, withMcpActivity(async (req) => {
+    const { resources } = await _listMcpResources(daemonTarget);
+    if (options.fullTools) return { resources };
+    const cursor = req.params?.cursor ?? '0';
+    if (!/^\d+$/.test(cursor) || !Number.isSafeInteger(Number(cursor))) throw new Error('Invalid resource cursor');
+    const start = Number(cursor);
+    return { resources: resources.slice(start, start + 12).map(r => ({ ...r, description: r.description.slice(0, 180) })),
+      ...(start + 12 < resources.length ? { nextCursor: String(start + 12) } : {}) };
   }));
 
   server.setRequestHandler(ReadResourceRequestSchema, withMcpActivity(async (req) => {
@@ -2065,10 +2108,23 @@ async function runMcpStdioImplementation(options: RunMcpOptions): Promise<void> 
   }));
 
   server.setRequestHandler(CallToolRequestSchema, withMcpActivity(async (req) => {
-    const name = req.params?.name;
-    const args: McpArgs = {
+    let name = req.params.name;
+    let args: McpArgs = {
       ...((req.params?.arguments ?? {}) as McpArgs),
     };
+    if (!options.fullTools) {
+      try {
+        if (name === resultPageTool.name) return ok(pages.read(args));
+        if (name === 'find_tools') return ok(findTools(routedTools, args, toolSearchTerms));
+        if (name === 'describe_tool') return ok(describeTool(routedTools, args));
+        if (name === 'call_tool') {
+          name = lookupTool(routedTools, args).name;
+          args = targetArguments(args);
+          validateMcpToolArgs(name, args);
+        }
+        // Exact calls from existing integrations still use the native dispatcher.
+      } catch (err) { return errorResult(errorMessage(err)); }
+    }
     if (name === 'collect_brief' && args.locale === undefined) {
       const locale = _localeFromMcpToolMetadata(
         (req.params as { _meta?: unknown } | undefined)?._meta,
@@ -2082,13 +2138,14 @@ async function runMcpStdioImplementation(options: RunMcpOptions): Promise<void> 
     );
     const observability = await observabilityPromise;
     observability.updateBaseUrl(baseUrl);
-    return observeMcpToolCall(
+    const result = await observeMcpToolCall(
       observability,
       briefStore,
       daemonTarget,
       name,
       args,
     );
+    return req.params.name === 'call_tool' ? pages.bound(result) : result;
   }));
 
   const transport = new StdioServerTransport();
@@ -2178,6 +2235,9 @@ function publicVelaLoginStatus(status: unknown): unknown {
 // 400 with WORKSPACE_CONTEXT_REQUIRED (#6569). These resolve the signed-in
 // workspace and send x-od-workspace-* headers on every daemon call.
 const PROJECT_OR_RUN_TOOLS = new Set([
+  'find_skills',
+  'read_skill',
+  'list_skills',
   'list_projects',
   'get_project',
   'get_file',
@@ -2376,7 +2436,17 @@ async function handleMcpToolCall(
       case 'create_project':
         return await createProject(baseUrl, args, headers);
       case 'list_skills':
-        return ok(await getJson<SkillsPayload>(`${baseUrl}/api/skills`));
+        return ok(await getJson<SkillsPayload>(`${baseUrl}/api/skills`, headers));
+      case 'find_skills': {
+        const query = new URLSearchParams({ discover: '1', query: routeQuery(args), offset: String(routeOffset(args)) });
+        return ok(await getJson(`${baseUrl}/api/skills?${query}`, headers));
+      }
+      case 'read_skill': {
+        requireString(args.id, 'id');
+        if (args.file !== undefined && typeof args.file !== 'string') throw new Error('file must be a string');
+        const query = new URLSearchParams({ file: args.file ?? 'SKILL.md', offset: String(routeOffset(args)) });
+        return ok(await getJson(`${baseUrl}/api/skills/${encodeURIComponent(args.id)}?${query}`, headers));
+      }
       case 'list_plugins':
         return ok(await listPlugins(baseUrl));
       case 'list_agents':

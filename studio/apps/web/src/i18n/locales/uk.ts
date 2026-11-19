@@ -5215,6 +5215,7 @@ export const uk: Dict = {
   'mcp.fieldEnv': 'Env (KEY=VALUE)',
   'mcp.fieldEnvShort': 'Env',
   'mcp.fieldHeaders': 'Headers (KEY=VALUE)',
+  'mcp.onDemand': "Шукати інструменти за потреби (для застосунків і ресурсів MCP використовуйте пряме з’єднання)",
   'mcp.fieldId': 'ID',
   'mcp.fieldOAuthMode': 'OAuth mode',
   'mcp.fieldTransport': 'Transport',

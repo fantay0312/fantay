@@ -17,6 +17,7 @@
 
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { realpathSync } from 'node:fs';
+import { openRouterHandoff } from './mcp-router-handoff.js';
 import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 import { buildPiMcpConfig as buildPiMcpConfigFromServers, type PiMcpConfig, type PiMcpServerInput } from './runtimes/bundled-pi.js';
@@ -33,6 +34,7 @@ export type McpAuthMode = 'none' | 'oauth';
 
 export interface McpServerConfig {
   id: string;
+  onDemand?: boolean;
   label?: string;
   templateId?: string;
   transport: McpTransport;
@@ -182,6 +184,7 @@ export function sanitizeMcpServer(raw: unknown): McpServerConfig | null {
 
   const next: McpServerConfig = {
     id,
+    ...(raw.onDemand === true ? { onDemand: true } : {}),
     transport,
     enabled: raw.enabled !== false,
   };
@@ -368,6 +371,37 @@ function mergeAuthHeader(
     merged['Authorization'] = `Bearer ${bearer}`;
   }
   return Object.keys(merged).length > 0 ? merged : undefined;
+}
+
+/** A reused server id must not carry an old OAuth grant to another origin. */
+export function routedTokenMatchesServer(server: McpServerConfig, resourceUrl?: string) {
+  if (!server.url || !resourceUrl) return false;
+  try { return new URL(server.url).origin === new URL(resourceUrl).origin; }
+  catch { return false; }
+}
+
+export function routedMcpEntries(servers: McpServerConfig[], tokens: Record<string, string>) {
+  return servers.filter(s => s.enabled && s.onDemand).map(s => {
+    if (s.transport === 'stdio') return s;
+    const { headers: configured, ...entry } = s;
+    const headers = mergeAuthHeader(configured, effectiveMcpAuthMode(s) === 'oauth' ? tokens[s.id] : undefined);
+    return { ...entry, ...(headers ? { headers } : {}) };
+  });
+}
+
+export async function routeExternalMcpServers(
+  servers: McpServerConfig[], tokens: Record<string, string>, command: string, cliPath: string,
+) {
+  const entries = routedMcpEntries(servers, tokens);
+  if (!entries.length) return { servers, close: null };
+  let id = 'fantay-router';
+  while (servers.some(s => s.id === id)) id += '-hub';
+  const handoff = await openRouterHandoff(entries);
+  const hub: McpServerConfig = {
+    id, transport: 'stdio', enabled: true, command, args: [cliPath, 'mcp', 'route'],
+    env: { ELECTRON_RUN_AS_NODE: '1', ...handoff.env },
+  };
+  return { servers: [...servers.filter(s => !s.onDemand), hub], close: handoff.close };
 }
 
 /**

@@ -339,6 +339,7 @@ export function registerMcpRoutes(app: Express, ctx: RegisterMcpRoutesDeps) {
         authServerIssuer: pending.authServerIssuer,
         redirectUri: pending.redirectUri,
         resourceUrl: pending.resourceUrl,
+        serverOrigin: pending.serverOrigin,
       };
       await setToken(RUNTIME_DATA_DIR, pending.serverId, stored);
       res.type('html').send(renderOAuthResultPage({

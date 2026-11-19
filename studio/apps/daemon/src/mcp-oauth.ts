@@ -69,6 +69,7 @@ export interface OAuthTokenResponse {
 /** In-flight authorization request. Stashed in memory while the user
  * approves in their browser. */
 export interface PendingAuthState {
+  serverOrigin?: string;
   serverId: string;
   authServerIssuer: string;
   tokenEndpoint: string;
@@ -585,6 +586,7 @@ export async function beginAuth(
   const authorizeUrl = buildAuthorizeUrl(authUrlInput);
 
   const pending: PendingAuthState = {
+    serverOrigin: new URL(input.serverUrl).origin,
     serverId: input.serverId,
     authServerIssuer: authServer.issuer,
     tokenEndpoint: authServer.token_endpoint,

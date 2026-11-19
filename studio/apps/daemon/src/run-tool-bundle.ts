@@ -142,7 +142,7 @@ export function validateRunToolBundleForAgent(
   if (agent.externalMcpInjection === 'pi-mcp-json') {
     // pi's MCP client speaks stdio and streamable HTTP only.
     const unsupported = servers.findIndex(
-      (server) => server.enabled && server.transport === 'sse',
+      (server) => server.enabled && !server.onDemand && server.transport === 'sse',
     );
     if (unsupported === -1) return { ok: true };
     return {
@@ -155,7 +155,7 @@ export function validateRunToolBundleForAgent(
 
   if (agent.externalMcpInjection === 'acp-merge') {
     const unsupported = servers.findIndex(
-      (server) => server.enabled && server.transport !== 'stdio',
+      (server) => server.enabled && !server.onDemand && server.transport !== 'stdio',
     );
     if (unsupported === -1) return { ok: true };
     return {

@@ -661,6 +661,8 @@ import {
   MCP_TEMPLATES,
   buildAcpMcpServers,
   buildClaudeMcpJson,
+  routeExternalMcpServers,
+  routedTokenMatchesServer,
   buildOpenCodeMcpConfigContent,
   buildPiMcpConfig,
   isManagedProjectCwd,
@@ -1594,6 +1596,7 @@ async function refreshAndPersistToken(dataDir, serverId, current) {
     authServerIssuer: current.authServerIssuer,
     redirectUri: current.redirectUri,
     resourceUrl: current.resourceUrl,
+    serverOrigin: current.serverOrigin,
   };
   await setToken(dataDir, serverId, next);
   return next;
@@ -1962,6 +1965,7 @@ export function createAgentRuntimeToolPrompt(
     '- On PowerShell use `& $env:OD_NODE_BIN $env:OD_BIN tools ...`; on cmd.exe use `"%OD_NODE_BIN%" "%OD_BIN%" tools ...`.',
     tokenLine,
     '- Prefer project wrapper commands through `OD_NODE_BIN` + `OD_BIN` over raw HTTP. The wrappers read these environment values automatically.',
+    '- To discover a Fantay workflow, use the wrapper with `skill find "<task>"`, then `skill read <id>`. Both inherit the run scope. Follow nextOffset only when more text is needed.',
     '- For dynamic Skill reads pass --workspace "$OD_WORKSPACE_ID" --workspace-member "$OD_WORKSPACE_MEMBER_ID" (use the corresponding environment-variable syntax on other shells). This pair is pinned to this run, not the UI\'s current Workspace. Both values are empty for unbound local runs; never substitute a different Workspace or member when either is missing.',
   ].join('\n');
 }
@@ -12042,6 +12046,8 @@ export async function startServer({
         const stored = await readAllTokens(RUNTIME_DATA_DIR);
         for (const [serverId, tok] of Object.entries(stored)) {
           if (!persistedTokenServerIds.has(serverId)) continue;
+          const selected = enabledExternalMcp.find(s => s.id === serverId);
+          if (selected?.onDemand && !routedTokenMatchesServer(selected, tok.serverOrigin ?? tok.resourceUrl)) continue;
           // Default to the persisted access token; null it out if expired so
           // we never inject a stale `Authorization: Bearer …` header. The
           // model treats a server with a Bearer pinned as connected and
@@ -12082,7 +12088,7 @@ export async function startServer({
       }
     }
     const connectedExternalMcp = enabledExternalMcp
-      .filter((s) => typeof oauthTokensForSpawn[s.id] === 'string')
+      .filter((s) => !s.onDemand && typeof oauthTokensForSpawn[s.id] === 'string')
       // The bundled pi speaks stdio and streamable HTTP only; do not tell the
       // model about legacy SSE servers it cannot reach.
       .filter((s) => !(isBundledPiAgent(def.id) && s.transport === 'sse'))
@@ -13917,6 +13923,9 @@ export async function startServer({
       finishStrategyAwarePhysicalRun(status, code, signal);
       return false;
     };
+    const routing = await routeExternalMcpServers(def.externalMcpInjection ? enabledExternalMcp : [], oauthTokensForSpawn, OD_NODE_BIN, OD_BIN);
+    const forwardMcp = routing.servers;
+    if (routing.close) void design.runs.wait(run).finally(routing.close);
     const mcpServers = buildLiveArtifactsMcpServersForAgent(def, {
       enabled: Boolean(toolTokenGrant?.token),
       command: process.execPath,
@@ -13971,7 +13980,7 @@ export async function startServer({
         if (enabledExternalMcp.length > 0) {
           try {
             const claudeMcp = buildClaudeMcpJson(
-              enabledExternalMcp,
+              forwardMcp,
               oauthTokensForSpawn,
             );
             if (claudeMcp) {
@@ -14006,7 +14015,7 @@ export async function startServer({
       enabledExternalMcp.length > 0 &&
       def.externalMcpInjection === 'acp-merge'
     ) {
-      const acpExternal = buildAcpMcpServers(enabledExternalMcp);
+      const acpExternal = buildAcpMcpServers(forwardMcp);
       mcpServers.push(...acpExternal);
     }
     // OpenCode: serialise enabled MCP servers into its `mcp` config schema
@@ -14025,7 +14034,7 @@ export async function startServer({
     if (isOpenCodeContent || isMiMoContent || isKiloContent) {
       try {
         opencodeConfigContent = buildOpenCodeMcpConfigContent(
-          isKiloContent ? [] : enabledExternalMcp,
+          isKiloContent ? [] : forwardMcp,
           oauthTokensForSpawn,
           {
             allowedDirectories: [effectiveCwd, ...extraAllowedDirs],
@@ -14042,7 +14051,7 @@ export async function startServer({
     if (bundledPiProvider) {
       let piMcpConfig = null;
       try {
-        piMcpConfig = buildPiMcpConfig(enabledExternalMcp, oauthTokensForSpawn);
+        piMcpConfig = buildPiMcpConfig(forwardMcp, oauthTokensForSpawn);
       } catch (err) {
         console.warn(
           '[mcp-config] failed to build pi mcp.json:',

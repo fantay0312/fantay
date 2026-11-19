@@ -236,6 +236,14 @@ describe('GET /api/skills — workspace visibility scope', () => {
 
     expect(mine?.source).toBe('user');
     expect(other?.source).toBe('built-in');
+    const headers = workspaceHeaders('member-owner', 'member', 'ws-scope-shadow');
+    const find = await fetch(`${baseUrl}/api/skills?discover=1&query=${skillId}`, { headers });
+    expect(await find.json()).toMatchObject({ items: expect.arrayContaining([expect.objectContaining({ id: skillId, source: 'user' })]) });
+    const read = await fetch(`${baseUrl}/api/skills/${skillId}?file=SKILL.md`, { headers });
+    expect(await read.json()).toMatchObject({ text: expect.stringContaining(`Body for ${skillId}`) });
+    const official = await fetch(`${baseUrl}/api/skills/${skillId}?source=built-in&file=SKILL.md`, { headers });
+    expect(official.status).toBe(200);
+    expect(await official.json()).toMatchObject({ text: expect.not.stringContaining(`Body for ${skillId}`) });
   });
 
   it('keeps a built-in edit shadow private and rejects a same-id overwrite by another member', async () => {

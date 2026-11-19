@@ -5215,6 +5215,7 @@ export const th: Dict = {
   'mcp.fieldEnv': 'Env (KEY=VALUE)',
   'mcp.fieldEnvShort': 'Env',
   'mcp.fieldHeaders': 'Headers (KEY=VALUE)',
+  'mcp.onDemand': "ค้นหาเครื่องมือเมื่อต้องการ (ใช้การเชื่อมต่อโดยตรงสำหรับแอปและทรัพยากร MCP)",
   'mcp.fieldId': 'ID',
   'mcp.fieldOAuthMode': 'OAuth mode',
   'mcp.fieldTransport': 'Transport',

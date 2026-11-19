@@ -154,6 +154,8 @@ export function findSkillById(skills: unknown, id: unknown): SkillInfo | undefin
 }
 
 export interface ListSkillsOptions {
+  /** Source of a single-root scan, e.g. the public bundled-only catalog. */
+  firstRootSource?: SkillSource;
   /**
    * Narrow the listing to skills visible from this workspace (see
    * `workspace_resources` in `db.ts`). Requires `db` — both are optional so
@@ -239,7 +241,7 @@ export async function listSkills(
   for (let rootIdx = 0; rootIdx < roots.length; rootIdx += 1) {
     const skillsRoot = roots[rootIdx];
     if (!skillsRoot) continue;
-    const source: SkillSource = rootIdx === 0 ? "user" : "built-in";
+    const source: SkillSource = rootIdx === 0 ? options.firstRootSource ?? "user" : "built-in";
     let entries: Dirent[] = [];
     try {
       entries = await readdir(skillsRoot, { withFileTypes: true });

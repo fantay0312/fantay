@@ -5215,6 +5215,7 @@ export const hu: Dict = {
   'mcp.fieldEnv': 'Env (KEY=VALUE)',
   'mcp.fieldEnvShort': 'Env',
   'mcp.fieldHeaders': 'Headers (KEY=VALUE)',
+  'mcp.onDemand': "Eszközök igény szerinti betöltése (MCP-alkalmazásokhoz és erőforrásokhoz közvetlen kapcsolat)",
   'mcp.fieldId': 'ID',
   'mcp.fieldOAuthMode': 'OAuth mode',
   'mcp.fieldTransport': 'Transport',

@@ -5658,6 +5658,7 @@ export const zhCN: Dict = {
   'mcp.fieldEnv': '环境变量（KEY=VALUE）',
   'mcp.fieldEnvShort': '环境变量',
   'mcp.fieldHeaders': '请求头（KEY=VALUE）',
+  'mcp.onDemand': "按需发现工具（MCP 应用与资源请使用直连）",
   'mcp.fieldId': 'ID',
   'mcp.fieldOAuthMode': 'OAuth 模式',
   'mcp.fieldTransport': '传输方式',

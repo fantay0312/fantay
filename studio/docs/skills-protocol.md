@@ -272,6 +272,30 @@ The split keeps DESIGN.md authors free of universal-craft duplication and keeps 
 
 ## 6. Skill inspection and distribution
 
+For agent discovery, `od skill find "<task>"` returns up to six summaries.
+Use `od skill read <id>` for the first 4,000 UTF-16 positions of the chosen
+workflow, `--file references` for companion filenames, and `--file <path>`
+for a listed reference. Pass `--offset <nextOffset>` to continue. Both
+commands inherit the run's Workspace and member or accept an explicit pair.
+
+An external agent connected through `od mcp` can use `find_skills` and
+`read_skill` with the same paging semantics. Project tools are discovered via
+`find_tools`, inspected with `describe_tool`, and executed via `call_tool`.
+Use `read_result_page` for a large textual reply. Its handle is local to the
+session and expires on eviction or disconnect. Hosts that need native tool
+names for per-tool approvals can register `od mcp --full-tools`.
+
+For third-party servers forwarded into a Fantay run, enable **Discover tools
+on demand** in the server's MCP settings. The agent browses `find_servers`
+and supplies a server ID to discover or call a tool. The upstream connection
+opens on the first lookup for that server. Use a direct connection for native
+MCP apps, prompts, resources or host-specific per-tool permissions.
+
+To expose those selected third-party servers to an external coding agent,
+add a second stdio registration using the runtime, CLI and `OD_DATA_DIR` from
+Fantay's installation snippet, with CLI arguments `mcp hub`. The hub checks
+the current enabled servers on each lookup and tool call.
+
 ```sh
 od skills list
 # → id and display label for entries returned by /api/skills

@@ -161,6 +161,7 @@ function rowsToServers(rows: DraftRow[]): McpServerConfig[] {
       id: r.id,
       transport: r.transport,
       enabled: r.enabled,
+      ...(r.onDemand ? { onDemand: true } : {}),
     };
     if (r.label) out.label = r.label;
     if (r.templateId) out.templateId = r.templateId;
@@ -192,6 +193,7 @@ function rowFromTemplate(
     id,
     label: tpl.label,
     templateId: tpl.id,
+    onDemand: true,
     transport: tpl.transport,
     enabled: true,
     ...(tpl.transport === 'http' || tpl.transport === 'sse'
@@ -210,6 +212,7 @@ function rowFromTemplate(
 function rowFromBlank(taken: ReadonlySet<string>): DraftRow {
   return {
     id: suggestMcpServerId('custom', taken),
+    onDemand: true,
     label: '',
     transport: 'stdio',
     enabled: true,
@@ -948,6 +951,11 @@ function McpRow({ row, idx, total, template, onChange, onRemove, onMoveUp, onMov
               />
             </label>
           </div>
+
+          <label className="mcp-row-field">
+            <span><input type="checkbox" checked={row.onDemand === true}
+              onChange={(event) => onChange({ onDemand: event.target.checked })} /> {t('mcp.onDemand')}</span>
+          </label>
 
           {row.transport === 'stdio' ? (
             <>

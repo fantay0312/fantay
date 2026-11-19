@@ -50,7 +50,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       'interchangeable surfaces.',
     bullets: [
       'CLI — `od <command>` for headless scripts, CI, and shell automation.',
-      'MCP server — wires Fantay as a Model Context Protocol server so any MCP-capable agent can list skills, run scenarios, and read artifacts.',
+      'MCP server — search for a skill or tool, inspect its instructions or input schema, and run the selected operation.',
       'HTTP API — `http://127.0.0.1:7456/api/*` REST + SSE endpoints; the same surface the web UI uses.',
       'Skills — drop-in `SKILL.md` packs (Claude-compatible) that any agent already on your PATH can invoke without Fantay at all.',
       'Standard artifacts — seed real HTML projects from Skills, bundled default plugins, and community plugin examples before the daemon starts.',
@@ -168,9 +168,9 @@ export const GUIDE_SECTIONS: GuideSection[] = [
           'od files read "$PROJECT_ID" index.html --daemon-url "$DAEMON_URL" | head',
       },
       {
-        label: 'Inventory locally available skills and design systems',
+        label: 'Find and read one design workflow',
         language: 'bash',
-        body: 'od skills list --json\nod design-systems list --json',
+        body: 'od skill find animation --json\nod skill read ui-animation --json',
       },
       {
         label: 'Check seeded artifacts through the CLI',
@@ -204,6 +204,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       'shelling out manually. The daemon publishes a ready-to-paste install ' +
       'snippet via `GET /api/mcp/install-info` for each major client.',
     bullets: [
+      'Use find_tools, describe_tool and call_tool for project operations. Use find_skills and read_skill for workflows and references. Large text results can be continued with read_result_page.',
       'Stdio transport — no extra port, the client spawns `od mcp` directly.',
       'Auto-discovers the live daemon URL via the local IPC status socket when launched as a sidecar.',
       'Falls back to `--daemon-url http://127.0.0.1:<port>` for plain installs so the MCP process always finds a running daemon.',

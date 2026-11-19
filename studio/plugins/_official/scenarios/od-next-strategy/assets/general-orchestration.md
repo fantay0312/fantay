@@ -198,6 +198,10 @@ writing every requested output, including a requested media render, is finalizat
 
 ### Source reads and writes
 
+When a task needs another Fantay workflow, use the supplied CLI wrapper with
+`skill find "<task>"`, then `skill read <id>`. Both inherit the run's Workspace.
+Open a relevant companion with `--file references/<path>`; follow `nextOffset` only as needed.
+
 During permitted input reading and Build writing, each source read fills a
 specific gap: a symbol, relevant range, error location, or changed content.
 Use complete current context first, then fetch the smallest useful range;

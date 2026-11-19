@@ -1921,6 +1921,7 @@ export async function persistTabsToDaemonNow(
 //     the prompt block to the frozen view)
 
 export interface ListPluginsOptions {
+  bundledOnly?: boolean;
   includeHidden?: boolean;
   /**
    * When present, attaches the same workspace identity headers project reads
@@ -1988,7 +1989,7 @@ function cacheVisiblePlugins(
 export async function listPlugins(
   options: ListPluginsOptions = {},
 ): Promise<InstalledPluginRecord[]> {
-  const cacheKey = pluginCatalogCacheKey(options);
+  const cacheKey = pluginCatalogCacheKey(options) + (options.bundledOnly ? ':bundled' : '');
   const requestGeneration = (pluginCatalogCacheGenerations.get(cacheKey) ?? 0) + 1;
   pluginCatalogCacheGenerations.set(cacheKey, requestGeneration);
   // NOT single-flighted, deliberately. `FileWorkspace`'s load effect fires this
@@ -2003,7 +2004,7 @@ export async function listPlugins(
   // to decide.
   try {
     const resp = await fetch(
-      '/api/plugins',
+      options.bundledOnly ? '/api/plugins?source=bundled' : '/api/plugins',
       options.workspaceContext ? { headers: workspaceProjectHeaders(options.workspaceContext) } : undefined,
     );
     if (!resp.ok) return [];

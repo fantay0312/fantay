@@ -5665,6 +5665,7 @@ export const zhTW: Dict = {
   'mcp.fieldEnv': '環境變數（KEY=VALUE）',
   'mcp.fieldEnvShort': '環境變數',
   'mcp.fieldHeaders': '標頭（KEY=VALUE）',
+  'mcp.onDemand': "按需探索工具（MCP 應用程式與資源請使用直接連線）",
   'mcp.fieldId': 'ID',
   'mcp.fieldOAuthMode': 'OAuth 模式',
   'mcp.fieldTransport': '傳輸方式',
